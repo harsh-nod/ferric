@@ -1,0 +1,23 @@
+{
+  "schema": "FerricV14UpstreamSourceAuditV1",
+  "observed_utc": "2026-10-05T19:44:46Z",
+  "qualified_revision": "eded9474bff22aeb8a942061f3e956c234a0ce7f",
+  "v15_candidate_base": "bee71f6b4aaa507a5bcefcf23d5bcd562ee145cd",
+  "observed_main": "60dc6edb2ffa07a56ddc53e2bf9a3d202bdbfd8f",
+  "previous_audit": "whole-token-v14-upstream-audit.json",
+  "changed_paths_since_candidate_base": [
+    "crates/fe2o3-compiler-execution-deployment/src/boot.rs",
+    "crates/fe2o3-compiler-execution-deployment/src/boot_image_v160.rs",
+    "crates/fe2o3-compiler-execution-deployment/src/boot_runtime_v86.rs",
+    "crates/fe2o3-compiler-execution-deployment/src/boot_runtime_v86_tests.rs",
+    "crates/fe2o3-compiler-execution-deployment/src/lib.rs",
+    "crates/fe2o3-protected-service-profile/src/observation_tests.rs",
+    "docs/compiler-execution-service-v1.md"
+  ],
+  "same_nine_current_wire_dependency_trees_as_qualified_revision": true,
+  "same_root_manifest_and_lock_as_qualified_revision": true,
+  "verification": "git diff --quiet returned zero for the nine dependency trees, Cargo.toml and Cargo.lock between eded9474 and 60dc6edb.",
+  "scope": "Read-only source identity audit, not a rebuild or binary-equivalence claim.",
+  "decision": "Keep frozen V14 identities. Keep V15 qualification attributed to bee71f6 plus its isolated patches; refresh/rebase again before publication.",
+  "new_speedup_claimed": false
+}

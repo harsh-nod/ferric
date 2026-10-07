@@ -1,0 +1,61 @@
+{
+  "schema": "FerricNativeGateUpCpuCheckpointR3",
+  "date": "2026-10-06",
+  "status": "current-runtime-cpu-qualified-proposal-native-measurement-pending",
+  "integrated_into_default": false,
+  "current_wire_revision_tested": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+  "current_wire_crates": 9,
+  "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+  "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119",
+  "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+  "source_files": 1441,
+  "changed_from_formatted_a008_r2": [
+    "adapters/m1-engineering-execution-v1/Cargo.toml",
+    "adapters/m1-engineering-execution-v1/Cargo.lock",
+    "adapters/m1-engineering-execution-v1/tests/source_policy.rs"
+  ],
+  "legacy_dependency_records_unchanged": true,
+  "historical_kernel_images_unchanged": true,
+  "cpu_host": "mi300x-2",
+  "cpu_profile": "FerricCpuFourCore42GiBEmitterV1",
+  "focused_tests": {
+    "library": {"passed": 11, "ignored": 1},
+    "worker": {"passed": 6, "ignored": 0},
+    "profile": {"passed": 4, "ignored": 1},
+    "source_policy": {"passed": 58, "ignored": 0}
+  },
+  "full_entrypoint_tests": {
+    "live": {"passed": 156, "ignored": 18},
+    "counters": {"passed": 156, "ignored": 18},
+    "note": "Shared controller code is exercised twice, not 312 distinct behaviors."
+  },
+  "separately_invoked_actual_input_tests_passed": 6,
+  "strict_clippy": "passed",
+  "default_all_targets": "passed",
+  "token_program_and_timestamps_feature_union": "passed",
+  "release_binaries": {
+    "live": "60bf47551d1ebdfc91f49b529dab8211e3f860a07bdd05921e642b72d505e9a4",
+    "counters": "fa2049edf8daed70ba268be1b6799f5a4ba42e106e27025f776509876f371231"
+  },
+  "compiler_roster_sha256": "54f6c32544669ad4407643e12eb6c22efc0a24967f20ea2d695e24f46488e379",
+  "graphs": {
+    "control": "3df9f1a8e4db8f618e2f6c65c5868ea72b6d91605d2ea899d1ab70fc94075057",
+    "candidate": "81089c41901ba372220ccde0c6402f4b299be8be994df3e4db7b2d45bd5826b1",
+    "weights": "synthetic capacity-only fixtures, not real model weights"
+  },
+  "retention": {
+    "archive_sha256": "30c950c4c4da0cf12731553334ba0f0ec3a570ea2b935923fa595a91e2c6d58c",
+    "receipt_sha256": "20b243fba61d1d4c566ec082127e2b95b69f04a76a2cdf443e2df0136741729e",
+    "archive_bytes": 53082863,
+    "members": 1605,
+    "independent_final_audit": "passed: all members, source, 18 phase chains, raw test counts and six ELFs verified"
+  },
+  "native_launch_binding": "a008 corrected artifact staging is CPU-qualified; native a003 passes both counter arms and one control timing cell, then stops at the root-disk floor",
+  "harness_checkpoint": "native-gate-up-harness-a008-checkpoint.json",
+  "native_model_parity": true,
+  "native_model_parity_scope": "8 completed requests, 1024 exact generated token IDs; no complete paired timing campaign",
+  "model_ttft_tpot_measured": false,
+  "vendor_comparison_performed": false,
+  "performance_qualified": false,
+  "serving_qualified": false
+}

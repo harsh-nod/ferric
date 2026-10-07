@@ -1,0 +1,9360 @@
+# M1 Team Progress
+
+Updated: 2026-10-05 PDT. This is an implementation checkpoint, not a qualification
+receipt. The 33 M1 roadmap gates remain open.
+
+## Latest Checkpoint
+
+The [V14 implementation swarm](M1_PERFORMANCE_SWARM_V14.md) is active with
+separate runtime, Ferric integration, and measurement/verification lanes.
+fe2o3 main is refreshed to `40695ecf5ffd7f3ec2bca8fd138a89cb675b57c6` in an
+isolated worktree. The first target is a current-runtime control followed by
+default-off whole-token submission on the identical graph. Every change gets
+an explicit TTFT/TPOT ledger entry; unmeasured work is not counted as a speedup.
+
+The [V13 same-day comparison](M1_PERFORMANCE_SWARM_V13.md) completes fresh
+Ferric and vLLM HTTP cohorts on mi350. Qwen3-8B uses the same checkpoint,
+BF16 decoder with explicit FP32 head, TP1/C1, 128-input/128-output requests,
+context 8,192, greedy generation and prefix caching/speculation off. Each engine
+has ten excluded warmups, thirty measured requests and two untimed diagnostics.
+Ferric records **827.434 ms TTFT, 59.780 ms TPOT and 15.201 output tokens/s**;
+vLLM records **19.671 ms, 4.245 ms and 228.823 output tokens/s**. Ferric has
+14.08x higher TPOT; vLLM has 15.05x higher finite output rate. We are not faster.
+Independent raw arithmetic, configuration, numerical and lifecycle-receipt
+audits pass. Empty vendor KFD samples do not positively attribute vendor users
+or prove continuous container visibility/exclusivity. This is one sequential
+engineering cell, not sustained throughput, TP8, stock BF16-head ranking or
+statistical qualification.
+
+The selected packed-down profile is the latest CPU-qualified experiment, not
+all optimizations combined. Current execution modes explicitly exclude several
+combinations. Its fresh native ABBA is mixed: TPOT improves 13.52% in AB but
+regresses 3.78% in BA; TTFT regresses in both orders. All 2,048 native output
+IDs/bytes match and all starts close cleanly. No slow sample is discarded and
+no default promotion or repeatable packed-down model speedup is claimed.
+
+The first HTTP launch fails before measurement on the host's ordinary mapped
+access marker; a parser-only successor passes 86 remote tests and completes
+Ferric. The first vendor startup crosses the unchanged root-disk floor. A
+separate cache-only successor passes 103 remote tests, uses bounded private
+shared-memory cache and completes vLLM with unchanged inference settings.
+Both failed attempts remain retained. Full original and final custody verifies
+1,500 files and 101,692,681 bytes. After one preserved process-census refusal,
+restrictive permission normalization and unchanged guarded retirement succeed;
+all five native/input/HTTP stages, the owned vendor container and its private
+cache are absent. No local build, new worktree, inference-source change, commit
+or push occurs in this comparison. The frozen worker is not relabeled as latest
+fe2o3 main. All 33 M1 gates remain open.
+
+## October 3 Checkpoint
+
+The [V11 parallel campaign](M1_PERFORMANCE_SWARM_V11.md) has completed the
+default-off TP1 prefill scheduling experiment. Six clean runs preserve all
+768 output tokens exactly. Grouping the unchanged prefill commands reduces
+prefill publications from 576 to 80 and TTFT by 13.44% in AB order and 10.56%
+in BA order. The two-sample-per-policy means are 891.25 -> 784.14 ms
+(12.02% lower). Decode and finite-rate comparisons are mixed; this is a cold,
+instrumented prefill improvement, not an established TPOT gain or a vLLM win.
+Full evidence is retained. Two unchanged cleanup checks refused process-census
+churn before deletion; the owned native stages remain and no benchmark process
+is running.
+
+The kernel lane completed the pack-inclusive down-projection experiment:
+18 finite parity cells and 16 timing cells pass, with 512 retained samples.
+Controller-wall means improve 13.02% for single operations and 39.98% for groups
+of five; all eight paired comparisons improve. Activation packing is included.
+This is a repeated synthetic matrix diagnostic, not a full-model gain. The exact
+14 qualified source files are imported into Ferric's independent packed-down
+device crate, without enabling a model selector. Native stage/transport cleanup
+passes after full custody. The profiling lane completed a separate 30-request warm vLLM
+baseline (17.81 ms TTFT, 4.288 ms TPOT, 227.58 output tokens/s) and a separate
+instrumented trace. The trace identifies split-K GEMV as the largest aggregate
+GPU-duration category, but profiling itself inflates TPOT by 5.21x. Its 434
+kernels per replay cover the captured graph only, excluding the head and other
+outside-graph work. These results are not a new matched Ferric comparison.
+Current-baseline Ferric packet diagnostics now pass CPU qualification and the
+full native request: all 128 tokens match, with 87,711 raw intervals and clean
+unsignaled exits. The owned capture roots are retired after custody. Decode KV
+append ranks first by accumulated intervals for a tagged operation, not longest
+individual call or calibrated GPU time. Its one-leader 1,024-component copy
+makes existing parallel V19 the next current-runtime A/B requalification target.
+Its current-client CPU qualification now passes 18 ordinary library tests,
+four selector/runtime tests, two actual-image tests and four feature-union
+rejection tests, strict Clippy and release. The initial miscounted/misfiltered
+receipts remain separately retained; exact-name coverage supplies the missing
+runtime case without rerunning the passing cohorts. All 17 remote harness
+fixtures and actual source/build binding pass. Native ABBA now completes four
+fresh starts, each with one excluded warmup and three measured requests. All
+2,048 IDs/bytes match, and inner/outer processes exit cleanly without signals.
+Independent raw identity, parity and timing audits pass. TPOT falls
+63.979 -> 59.537 ms in AB (6.94%) and 63.903 -> 53.358 ms in BA (16.50%);
+finite output rate improves 5.52% / 17.49%. TTFT worsens 11.82% / 1.26%, with
+material candidate variability and no excluded slow request. This uninstrumented
+native result is not HTTP, sustained throughput, statistical confidence or a
+vendor comparison. V19 remains default-off. Full custody is retained. Guarded
+retirement initially removed the native stage and refused the inputs root on
+process-census churn. One bounded retry passed the unchanged checks; all three
+native/input/upload roots are now absent and the retained final KFD check is
+empty. Both the original refusal and successful retry remain retained.
+Root coordinates the bounded remote CPU and native GPU leases. The following
+sections retain their qualified historical checkpoints.
+
+The [live site](https://harsh-nod.github.io/ferric/) now includes the prefill
+result through deploy-only commit `f8de8075fb5156ae09559e58834a0bc208206101`.
+Remote eight-viewport validation, corrected focused visual review, successful
+deployment run `36919533626` and seven matching live-file hashes pass. No local
+or GitHub-hosted build ran; historical metrics, defaults and open gates remain
+unchanged. A second static checkpoint with packed-down and completed V19 results
+passes remote validation and independent visual review. Its deploy-only
+candidate `628b96386ef58a215bd7f642dc96c7a1546298c7` remains unpublished: the first
+read-only GitHub API call failed before any remote mutation or workflow launch.
+
+The [V12 swarm](M1_PERFORMANCE_SWARM_V12.md) completed source implementation and
+independent review of an explicit default-off packed-down model profile, including
+its separate CLI and metadata. No outstanding production defect was found by
+inspection. Only decode is eligible; one-row final prefill retains the old path.
+Both benchmark arms load the same images and additional storage, with activation
+packing included in candidate timing. SSH is restored. The original remote run
+passes 97 focused test executions across ten library/CLI/runtime/feature groups,
+including explicit actual-image checks; 25 native-harness fixtures also pass.
+Source policy stopped at 52 pass / 3 fail on stale entrypoint/order assertions.
+A separate policy-only correction now passes all 56 tests without altering the
+already-tested production source or rewriting its failed receipt. Release,
+independent retained-ELF hashing and final source custody pass. Strict Clippy
+initially finds missing panic documentation; a 103-byte documentation-only
+successor passes the unchanged strict command after a reserve-limited first
+attempt. Both original Clippy failures remain explicit, including the stopped
+attempt's `cleanup_ok: false`. All 37 successor harness fixtures, BuildV4
+assembly and final binding validation pass. Native a1 accepts its first baseline
+with all 512 tokens/bytes exact, then stops during candidate setup when foreign
+KFD work appears. Its outer status 125 and `cleanup_ok: false` remain explicit.
+Recorded owned processes are subsequently absent and KFD empty. Fresh identical
+a2 completes an independently audited AB pair: TTFT 863.879 -> 872.063 ms
+(0.95% worse), TPOT 71.285 -> 66.174 ms (7.17% lower), and finite output rate
+12.907 -> 13.798 tokens/s (6.91% higher). Each arm has one excluded warmup and
+three measured 128/128 requests; all 1,024 IDs and streamed/final bytes match.
+Both accepted arms close naturally without signals. Another Ferric TP2 job on
+the same GPU interrupts candidate-BA, leaving the outer status 125,
+TERM/KILL and `cleanup_ok: false`. No reverse-order result, full ABBA,
+repeatable gain, default promotion or vLLM win is claimed.
+
+Later inspection finds an orphaned candidate-BA controller/worker; both are
+already absent when exact-identity cleanup arrives, with no additional signals
+sent. A premature archival snapshot stays separately labeled. Fresh final
+post-quiescence custody and full local verification pass. Unchanged guarded
+retirement removes all four owned native/input roots from a1 and a2; original
+failed cleanup receipts remain unchanged. No owned benchmark process remains,
+and the interfering job is untouched. Missing local scratch inputs and receipts
+were recovered from the remote stage. File-only cleanup reclaimed 322,359,296
+allocated bytes from 16 independently retained obsolete transports; refused
+expanded-directory cleanup remains untouched. The reserve-restoration operation
+is not a build/test receipt. Existing build limits remain unchanged, and no new
+worktree was created.
+
+The engine lane completes a source-only full-token submission handoff against
+audited fe2o3 main `0955563481ce092c813b097fa37f3ce5c5d44ca6`. Token programs
+already exist, but the backend still executes eleven synchronous groups per
+652-packet decode and clears 40.75 MiB of kernarg slots per token. The proposed
+default-off backend targets one whole-program publication/wait with bounded
+owned storage and unchanged safety checks. This is not implemented or measured;
+it does not establish that host overhead explains the full vendor gap. Generic
+runtime work stays in fe2o3, kernel/model work in Ferric. Main must be refreshed
+before implementation; the conflicted local fe2o3 checkout remains untouched.
+
+The current compiler capture patch is published separately to fe2o3 main as
+`4d6c6ae83`, after rebasing onto `b8194784a` and remote formatting. Compiler
+qualification remains bound to the original `962044346` source plus patch;
+the intervening main changes were documentation-only. GitHub CI was skipped
+and the post-push API check reports zero runs. The temporary publication
+worktree was removed after retaining the patch. A later refresh finds upstream
+main at `071105ad4`, adding compiler/debugger/documentation work, including a
+format-sensitive capture-test fix; no KFD or SDK changes since 4d were found.
+This later revision is audited but not built by this campaign. Frozen A/B inputs
+are not relabeled; the next producer qualification starts from refreshed main.
+A further refresh to `7c4d69959` adds one documentation checkpoint only.
+Packed-down CPU tests (30), native-harness fixtures (14 + 13 + 31), image
+emissions and native finite timing pass. Guarded cleanup restored build headroom, and
+the release baseline check plus both strict Clippy checks pass. The failed
+reserve-limited baseline check is
+retained without changing its status. The packed-down component gain above is
+not a model TTFT/TPOT gain, default promotion or vLLM win.
+
+## Previous Checkpoint
+
+Remote connectivity is restored; all builds/tests remain on `mi300x`.
+The latest observed fe2o3 main, `fe0b352`, builds its standalone worker and passes
+106 selected library tests plus six CLI tests. The current-wire client resolves
+offline with an independently reviewed lock. After the first focused check
+finds a mixed-SDK batch32 roster boundary error, the separate V5 roster bridge
+resolves it: the combined library, packed entry, ordered-host diagnostic and
+source-policy check passes remotely. Remote formatting and lock output are
+integrated after local preimage checks; kernel source and legacy host pins
+remain unchanged. Seven active-poll selector tests pass in each of three feature
+configurations, alongside 54 source-policy tests, one roster test and one
+explicit canonical V5 artifact-admission test. The standalone bridge's
+`tests::generated_roster_retains_full_and_wave_profile_names` test also passes.
+The actual ordered64 host release build and strict Clippy pass. The ordinary
+host ELF SHA256 is
+`a2ea6d961895644011b382017b1c42538ab2e568e531ba8e613a675679fec757`.
+Fresh compiler-producer qualification remains open. The separately validated
+current controller/worker now complete the six-run native model diagnostic below;
+CPU success alone is not a performance result.
+
+Kernel team: B4/a002's retrieved receipt shows a busy-GPU refusal before launch,
+zero cells, and no timings. Its stage is retired after full retention. Fresh
+same-payload a003 accepts 13 parity cells, then stops on a process-census failure
+during the next cell's teardown. All worker cleanup records are clean, but the
+outer campaign is interrupted and no timing cells run. Full raw evidence is
+retained, and a003's stage/upload are verified removed. Improved census failure
+diagnostics pass 31 tests on each Python version; the pin-only successor
+launcher passes 11 on Python 3.10. A004 then refuses before child launch with
+zero cells because the staged worker is mode 0600 instead of 0700. This is a
+staging error, not a new census failure; its original failed cleanup receipt
+remains unchanged. Full evidence is retained and the exact owned stage/upload
+are retired. Fresh a005 independently passes all 20 finite parity cells,
+140 buffer/guard checks and 80 parity dispatches, with 20 clean unsignaled
+worker closes and clean outer status 0. Zero timing cells run. Its retained
+stage/upload are also retired. The older census failure cause remains
+unestablished. Fresh a006 then completes 20 parity and 16 timing cells, with
+36 clean workers and 512 independently audited timing samples. Five-pair groups
+reduce controller-wall latency by 8.6454-10.5860% across all four comparisons;
+single-pair results range from a 1.5750% regression to a 0.8744% improvement and
+are inconsistent by order. This is a cache-hot kernel diagnostic with packing
+and uploads excluded, not GPU time or a full-model gain. R4 is not promoted.
+A006's full raw archive is retained, and its exact stage/upload are retired.
+
+Wait-policy team: default-off active-poll r2 is integrated in the working source.
+The scoped Rust selector tests pass as recorded above. The separate evidence validator
+passes all 19 tests under each of Python 3.12 and 3.10, with clean remote receipts.
+The new harness passes all 48 fixtures, and the actual nine-phase raw build
+binding passes. The separately named G28 CPU profile passes 23 fixtures;
+its 28 GiB stage cap preserves four cores, 8 GiB aggregate RSS, nice 19,
+1,200 seconds and a 512 MiB stage reserve. Existing native guards are unchanged.
+Both native ELF loader checks pass on mi350. Two correctness runs and four
+same-binary timing runs now pass, with 768 exact output-token checks and clean,
+unsignaled controller/worker and supervisor teardown. Each fresh process runs
+one Qwen3-8B TP1/C1 128-input/128-output request; both correctness timings are
+excluded. The unchanged images use BF16 decoder/FP32 head, 8,192-token context,
+greedy output, no speculation or prefix caching, and identical instrumentation.
+
+| Order | Policy | TTFT (ms) | TPOT (ms) | Finite Output Tokens/s | Worker CPU (s) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| AB | Default | 859.967 | 70.378 | 13.064 | 0.95 |
+| AB | Active | 835.992 | 69.782 | 13.198 | 9.43 |
+| BA | Active | 785.728 | 62.188 | 14.740 | 8.53 |
+| BA | Default | 814.453 | 63.099 | 14.499 | 0.82 |
+
+Active polling reduces observed TPOT by 0.8475%/1.4440% and TTFT by
+2.7879%/3.5269%, while worker CPU rises 9.9263x/10.4024x. Finite ingress rate
+rises 1.0283%/1.6633%. These are two instrumented samples per policy, not
+statistical significance, sustained throughput, HTTP latency or a vendor win.
+The material drift between orders also remains visible. The small latency
+change does not justify enabling active polling by default; it stays off.
+CPU seconds cover the request endpoints, excluding model setup and teardown.
+Full campaign custody and independent raw audit pass. All six native stages,
+the shared campaign input directory and both uploads are verified removed after
+fresh no-use checks; models and CPU build inputs are untouched. Complete archive:
+`E/products/activepoll-campaign-a001/full-campaign.tar.gz`, SHA256
+`825da54ebdf4b5bfc065f4b6b3fc1f0b9fce0a7c12a7ae7f2b73f0ff08ac459d`.
+
+Custody: [full source audit](/home/harsh/.codex-tmp/ferric-perf-swarm-v6/proposals/perf-v10-latest-core-followup-r1/FULL_SOURCE_AUDIT.json)
+checks all 1,372 files; [CPU build binding](/home/harsh/.codex-tmp/ferric-perf-swarm-v6/products/activepoll-binding-a001.tar.gz)
+retains the nine actual phase triples. The
+[a005 independent audit](/home/harsh/.codex-tmp/ferric-perf-swarm-v6/proposals/perf-v10-a005-retrieval-r1/a005-result-audit.json)
+binds the finite-only result. The
+[a006 timing audit](/home/harsh/.codex-tmp/ferric-perf-swarm-v6/proposals/perf-v10-a006-retrieval-r1/a006-result-audit.json)
+and [active-poll comparison](/home/harsh/.codex-tmp/ferric-perf-swarm-v6/products/activepoll-campaign-a001/comparison-a001.json)
+retain the distinct timing results. Comparison SHA256 is
+`788ac3b171aad83387ecb3a4dc21f93fb6b3f98403c380883f400abc992aabee`.
+Full pins are in
+[Performance Swarm V10](M1_PERFORMANCE_SWARM_V10.md#current-continuation).
+Both October 1 site snapshots pass remote JavaScript, structural and
+eight-viewport browser checks using private dependencies. The second carries
+these timing results and passes focused desktop/mobile/narrow visual review.
+The [live site](https://harsh-nod.github.io/ferric/) is updated through deploy-only
+`pages/prebuilt` commit `d71d482e6f96e2560170a68ab222cb23ee4cf43d`.
+Deployment run `36801884010` succeeds; ordinary verified HTTPS on mi300x confirms
+all seven live static files match the validated artifact. No GitHub-hosted build,
+protection change or publishing worktree was needed.
+The site's pinned top-level date remains September 29. The current
+September 28 matched vLLM loss, historical metrics, defaults and 33 open gates
+remain unchanged.
+
+The completed isolated experiment compares unrestricted and GPU-local CPU affinity
+with identical packed-path binaries and workload. Eleven remote harness tests
+and independent source review pass. The first native run stopped on loss of
+KFD-process visibility during its reverse pair; its partial results and failed
+supervisor receipt are retained. The completed first pair did not improve
+latency. Fresh R2 A/B/B/A measurement completes with all 2,048 output checks,
+clean teardown and independent audit. GPU-local affinity worsens TPOT by 5.258%
+and 18.059% in the two orders; TTFT also regresses. It is not adopted, and no
+new vLLM comparison or speedup is claimed. Both runs are archived, and their
+temporary GPU stages are removed after successful all-UID no-use checks.
+The original mi300x build host has space again and ten
+bounded bootstrap fixtures pass. Pinned fe2o3 `1a5999f6` build inputs are
+inventoried separately without changing the measurement baseline; full existing
+nightly verification failed. The privately staged complete toolchain now passes
+all 5,603 file hashes and reports the pinned compiler version; 14 fresh
+allowlisted-environment fixtures pass. Fresh offline metadata passes, and the
+unmodified pinned compiler backend/extractor and CLI builds pass within the
+limits and their artifacts are retained. The CLI phase ran from 18:59:59 to
+19:01:03 UTC, status 0 with clean unsignaled teardown and peak sampled RSS
+2,217,259,008 bytes. All nine private gfx950 provider inputs match current CMake
+hashes. The capture-1a599 patch is now applied, its producer rebuild and 99
+unique compiler tests pass, and the LLVM worker builds with all six CPU CTests
+passing. Its 27,990-file input inventory remains unchanged after validation.
+Initial SDK-backed host checks pass 21 tests in each fixed-safe default/feature mode,
+22 in each batch32 default/K2 mode and 34 for the packed R2 baseline; fixed-safe
+strict Clippy and 13 native-harness CPU fixtures also pass. The first batch32
+attempt failed on a missing shared source; its corrected staging retry passes.
+Vendor a001 failed on missing `dlmalloc`. Subsequently, eight std-transport and
+six merge fixtures pass, all 80 selected inputs are verified, and an absent-only
+merge creates 30 files and reuses 50 exact matches. Offline locked vendor a002
+succeeds. Both failed attempts remain retained. Packed R2 baseline capture/plain
+emissions now succeed with byte-identical HSACO `fdffa040ad947234` and manifest
+`e215ce56af578694`. Fixed-safe emission a001 failed an old build-route assertion;
+the failure is archived. The corrected source passes 27 feature tests at a003,
+27 default tests at a002 and strict Clippy a002. Feature a002 tested the earlier
+unstaged source and is excluded as post-fix evidence. Emission a002 then fails
+LLVM subgroup convergence at `bb18`, operation 0; that failure is retained too.
+The fixed-shape SDK-view r3 correction preserves compiler checks and passes
+30 tests per feature mode and strict Clippy. Candidate emission a003 succeeds
+from 20:20:51 to 20:26:59 UTC, producing image `4f6ebd3d2294f20e` and manifest
+`4192c310614955cb`. Finite-only static review finds a 1,852 -> 1,760-byte body and
+SGPR 35 -> 30, with VGPR 18 unchanged; the two weight guards/load-wait pattern
+remain. No loop-guard elimination or measured speedup is claimed.
+
+G24 remote checks pass 19 single-GPU profile fixtures and nine launcher fixtures,
+cleanly reaped and unsignaled. Subsequent actual census requires an exact
+UID1001-owned executable pin for the root-running monitor; that corrected
+21-test profile and nine-test launcher repin now pass a002, cleanly reaped and
+unsignaled. Real monitor-only profile preflight and CPU actual-data admission
+also pass. The first GPU-host launcher attempt stops before any GPU worker or
+launch outputs because system Python 3.10 lacks `hashlib.file_digest`. Private
+prebuilt CPython 3.12.13, downloaded with `uv` on mi300x rather than built, passes
+13 harness, 21 profile and nine launcher fixtures plus actual-data admission;
+after transfer, native attempt a001 returns status 125 before child/worker
+creation because this private Python build lacks `os.pidfd_open`. The process
+ownership check remains intact. Cleanup reports true, no signals were sent,
+and postflight finds only the bound zero-work monitor, no owned or foreign KFD
+users. Complete native-attempt archive SHA256 is
+`471e8808e03db16eb9af019e8cef2a8d5f20401a11ae256a5182730c2420b3f1`.
+
+A versioned Python 3.10 support copy preserves the original frozen bundle and
+changes only streaming SHA256 and dependent pins. Its 18 compatibility tests
+pass on mi300x under prebuilt Python 3.10.20 and system Python 3.12. Python 3.10
+also passes 13 fixed-harness fixtures, 21 profile fixtures at verbose a002 and
+nine launcher-r2 fixtures, including old-manifest rejection. Launcher r2 SHA256
+is `ba4b7e376e4af03e609eb74036f2bda81456fa2ebfa6a221e3cc175c6e00a669`.
+Input bundle a002 is assembled with plan SHA256
+`f36f9ed53c90b41d3d6b7e814e5fe349c6551391264f279f67e8c1de1d672742`;
+actual-data admission and native retry a002 now pass. The images, pinned
+compiler and historical `dd6bd3b4` runtime are unchanged. The native run lasts
+about 12 minutes, 23:27:48.122908 to 23:39:48.454260 UTC, and exits status 0 with
+clean reaped teardown, no signals/errors, and monitor-only KFD postflight.
+All 36 cells pass: ten finite cases at two activation epochs and 16 timing cells,
+with two excluded warmup groups and 32 measured groups per timing cell. All seven
+buffer/guard records and final timing-cell checks pass. Independent data-only
+audit matches all result files and protocol snapshots, packet counts, worker
+elapsed samples and 512 controller samples; all eight comparisons recompute exactly.
+
+The following instrumented controller-wall numbers are microseconds per cache-hot
+gate/up pair, with prepacking/uploads excluded. Positive improvement means lower
+candidate latency. They are not GPU time or serving/model metrics.
+
+| Pairs/Group | Epoch | Order | Baseline (us/Pair) | R3 (us/Pair) | Improvement |
+| ---: | ---: | --- | ---: | ---: | ---: |
+| 1 | 0 | AB | 624.215 | 623.537 | +0.1086% |
+| 1 | 0 | BA | 624.504 | 624.165 | +0.0543% |
+| 1 | 1 | AB | 626.242 | 625.710 | +0.0851% |
+| 1 | 1 | BA | 623.300 | 625.341 | -0.3275% |
+| 5 | 0 | AB | 217.030 | 217.230 | -0.0920% |
+| 5 | 0 | BA | 218.166 | 218.418 | -0.1153% |
+| 5 | 1 | AB | 218.988 | 219.872 | -0.4037% |
+| 5 | 1 | BA | 206.882 | 217.991 | -5.3698% |
+
+R3 shows no useful gain and is not promoted. The faster final baseline remains
+included, not pooled away. Complete result archive SHA256 is
+`ceed68468e5b30e30dc64fa89b9cdf79cc3cc421b9703fe5141a8a8bf352a5c0`.
+Each 32-group cell records 321 operational-currentness checks, about 384-387
+us/pair at one pair per group versus 77-79 at five. No measured transfers or
+kernel admissions occur. Currentness amortization and batching are prioritized
+inference-engine/runtime bottlenecks to investigate; the counter scopes overlap
+and cannot be added or subtracted to infer GPU time. The final baseline's lower
+worker/wait scopes and 145 versus 159-160 polls correlate with its lower wall
+time, but do not establish causality.
+
+Separate r4 finite-check hoist now passes 36 CPU tests per feature mode and
+strict Clippy, plus 16 native-harness and 11 launcher fixtures. Emission a001
+failed before launch on a missing output parent and remains retained. Emission
+a002 succeeds cleanly, status 0, from 23:37:11.701955 to 23:43:19.934447 UTC,
+with peak sampled aggregate RSS 2,996,101,120 bytes. Actual ISA/ELF metadata are
+captured; independent static review accepts the finite-only diagnostic.
+Native r3-versus-r4 a001 accepts six parity cells, then interrupts the seventh
+(`tail-one`) before any timing cell. Supervisor status 125 records `complete
+privileged read-only census failed`; owned TERM is sent, no KILL, and its child
+is reaped with clean cleanup. The immediate postflight has no owned or foreign
+KFD users beyond the bound monitor. Three later censuses succeed and capture
+transient foreign `/usr/bin/python3.12` PID 97300, which root later observes
+absent. Its relationship to the failed census is unproven; the underlying
+census error is not present in retained stderr. Failed archive SHA256 is
+`5ba67da3f137a93925d1d0996736ebe42e7469ed6c049f7302ab406e71fe2206`.
+Same-payload B4 uses fresh stage `/tmp/ferric-opt-v10-fixed-safe.0c21e874`
+and plan SHA256
+`c616bc6c660fed34c4bfc3ff23252585c00fc85a835b992c0c590c6032b4e38b`.
+CPU admission passes, then B4/a002 refuses before child launch because the GPU
+is busy, with zero cells. Its retrieved failure is preserved and the stage is
+retired. Later a003/a004 failures and the clean finite-only a005 pass are
+recorded above. No R4 timing gain is accepted or stacked into r3.
+
+After the isolated r4 comparison, prioritize latest-client qualification and
+a separately controlled active-poll experiment. Token programs are already integrated and
+were measured on historical `807f0bef`: ordinary/token TPOT is 60.702/55.296 ms
+in AB and 54.161/55.297 ms in BA, with 2,048 exact output tokens and no repeatable
+gain. The retained ABBA archive SHA256 is
+`421788f3be9ebc42dcd590dd1e3c208b605415eedb640afa88d442aa0a98967c`.
+The earlier 4fb8 source review indicates the same minimum ten currentness checks per
+backend group for token and matched ordered64 paths, plus five outer token
+checks. This is source-count reasoning, not measured token counters; token
+framing alone does not reduce the per-group checks. The privately staged stable toolchain's full inventory passes
+after restoring 11 inner directories from mode 0700 to recorded 0755, and its
+reported version is Rust 1.97.1. Initial client metadata fails on missing `onig`.
+A separate `client-cargo-home` now contains the verified 293 registry versions,
+260 sparse-index entries and copied private bare Git databases, without changing
+the compiler cache. Subsequent offline metadata/lock resolution, the V5 bridge
+and scoped current-client tests/builds pass as recorded above; full-model
+acceptance remains pending.
+Existing full-model decode is already packed as ten 64-packet groups plus one
+12-packet tail for all 127 decode batches (82,804 dispatches, 1,397 groups).
+Retained decode host scopes record 8.207 s batch wall, 7.426 s worker
+publication/completion wall and 0.0217 s controller packing. A separate
+whole-request counter capture records 10.025 s command, 9.258 s wait and 0.573 s
+operational-currentness scope, plus 92,969 polls; it has no prefill/decode split.
+These are overlapping host scopes, not additive GPU durations or pure IPC.
+Test the existing core active-poll policy against unchanged sleep behavior;
+the separate Ferric selector is now integrated and scoped CPU-tested, but no
+speedup follows from these diagnostics. Prefill group utilization is a
+separate question, not missing decode packing. Source/evidence handoff is
+`E/proposals/perf-v10-runtime-isolation-review-r1/review.json`.
+mi350's unrelated vLLM jobs are untouched.
+Authorized mi350-2 is a separate one-MI350X finite-diagnostic host,
+not TP8 or a matched vendor comparison. Finite native parity is accepted, but
+rejection/trap qualification, model promotion and a speedup are not. The
+experiment stays pinned to `1a5999f6`;
+the earlier main observation `f2dd128e35d5345cf4b7f6fb3f71480ee483c961` has source
+and runtime audits. The preceding main observation was
+`4fb8ae500e38ad22475861aae7c3b3ef238068f6`; its separate core worker builds and
+passes 106 library plus six CLI tests, including source support for token-program
+and ordered64 paths. The fresh `4fb8ae5` capture producer build and nine backend
+capture tests also pass. Backend regressions, CLI capture tests and CLI
+regressions pass: 9 backend capture, 14 backend regression, 10 CLI capture and
+27 CLI regression executions, representing 50 unique tests because CLI cohorts
+overlap. Fresh fe0 producer, extractor and changed-transitive qualification
+remain pending. Full compiler/runtime/client adoption
+remains open, not silently substituted into the measured r3 campaign.
+R1 affinity retirement succeeds at a001, V9 at a003 after two refused checks,
+and R2 at a002 after one refused check. All three target directories are verified
+absent, reclaiming 97,427,456 allocated file bytes, about 92.9 MiB; failed history
+is preserved and no checks are weakened.
+The two completed mi350-2 fixed-safe stages, `bce279a1` and `19e4c57b`, are now
+removed after retention and verified absent by a subsequent nonquiet SSH `stat`.
+That separate retirement reclaims 273,275,815 logical file bytes, not measured
+allocated storage; no other stages or shared work are touched.
+The first r3-versus-r4 stage `74ab3e90` is subsequently verified removed after
+full failed-result retention and a privileged `lsof` check finding no open
+users. No reclaimed-byte count is recorded for that retirement. Retry stage
+`0c21e874` is subsequently retired after its actual busy-GPU failure receipt
+and full evidence retention; the earlier `cleanup_ok=false` record is preserved.
+Raw CPU custody a004 SHA256 is
+`a616b2f4f21331ce405a2de24cf0a6c22962176f0f9b85298b7106155c493d49`;
+compiler binary custody a001 SHA256 is
+`1413057b4e8388a5a96ee3a9092cb1a67d29b019ca85a941c81ac296b752abd3`.
+New raw CPU custody a005 SHA256 is
+`358eeac3c4e89a369dab126c75bde08596a40998f5a2ed141d1034e31e81569a`;
+the successful std merge/vendor retry and new emission/fixture results are
+later root-reported results. Baseline emission archive SHA256 is
+`c50f68ecfb7e275d11ceaeab625c5c38f92293c3f2ea2178f3f63cdf475d5b71`;
+failed candidate a001 archive SHA256 is
+`5b2303796ead80e01624a6213b3825617894440eef32f7d3b7f1967d4f2c0edd`.
+The subsequent a007 raw custody SHA256 is
+`3e4ea24d45657df3b481f10aa78bbe4e0f4b34d040f340ea6a76ebd3d6fe3a38`.
+See [Performance Swarm V10](M1_PERFORMANCE_SWARM_V10.md).
+
+The September 29 implementation swarm adds two opt-in kernel candidates and a
+packed-path host-wall diagnostic. Final remote checks pass 19 projection host
+tests, seven prefill host tests, 111 controller tests (11 existing ignores), 14
+analyzer fixtures and nine native-harness fixtures: 160 focused passes. The
+diagnostic controller builds using frozen historical dependencies within the
+existing resource limits. Both mi350 native captures pass exact reference
+outputs and clean teardown. Worker publication/completion intervals account for
+about 77% of packed decode batch wall time; controller argument packing is below
+1%. These intervals include GPU execution, polling and fences, not just GPU
+time. That diagnostic checkpoint did not qualify the new kernels' SDK,
+emission or native path; later CPU progress is recorded above, without a new
+TTFT/TPOT gain. At that diagnostic checkpoint, observed fe2o3 main
+was `c508e7a2`, not the historical runtime binary used for the capture.
+See [Performance Swarm V9](M1_PERFORMANCE_SWARM_V9.md) for team ownership and gates.
+
+The opt-in packed gate/up path passes its full CPU matrix, native output
+parity and a new September 28 matched HTTP pair on mi350. Ferric is still
+slower than vLLM on the fixed Qwen3-8B TP1/C1 128/128 workload:
+
+| Mean / Finite Metric | Ferric | vLLM 0.28.0 |
+| --- | ---: | ---: |
+| HTTP TTFT (ms) | 888.594 | 20.125 |
+| HTTP TPOT (ms) | 55.775 | 4.230 |
+| Finite output tokens/s | 16.054 | 229.386 |
+
+This is one fresh pair with 10 excluded warmups and 30 measured requests per
+engine, BF16 decoder/FP32 head, greedy output, prefix cache and speculation off.
+All numerical and cleanup gates pass; Ferric TPOT is 13.184x vLLM's. The rate
+includes finite-cohort gaps/drain and is not sustained throughput. It is not a
+stock BF16-head ranking, TP8 result or speculative-decoding comparison.
+
+The earlier token-program four-arm native ABBA campaign passes all 2048 token-ID/decoded-byte
+checks, but does not show a repeatable token-program speedup: TPOT improves
+8.9% in AB and regresses 2.1% in BA. Keep the feature opt-in. That measurement
+uses the retained qualified client; the measured runtime is `807f0bef`, not
+latest main. Latest-runtime adoption and remaining M1 gates stay open.
+See [current packed measurement and evidence](M1_PERFORMANCE_SWARM_V8.md#packed-matched-http-result).
+The separately measured September 26 token-program pair remains 51.443 versus
+4.377 ms TPOT; comparing those two different starts/compositions does not
+isolate the packed feature's effect.
+
+The completed standalone packed gate/up experiment remains default off.
+Its default-off 20-file integration and independent source review now pass;
+1320 unrelated paths remain unchanged. After two test-formatting corrections
+and removal of one redundant test match arm, fresh R4 remote preparation,
+production compilation and token-feature strict Clippy pass. All 44 focused
+tests and 53 policy tests pass, then the TP-family Clippy check finds two
+feature-disabled test variants. Four matching test-only feature guards are
+applied; all 13 R5 phases now pass, including the 44 focused tests, 53 policy
+tests and all 14 production check/strict Clippy commands. The complete R3/R4
+matrix now passes independent raw audit: 36 target cells, 5813 passed test
+executions, 341 disclosed ignores, seven existing filtered tests, both
+53-method policy suites, 39 explicit image checks, actual ABI and the new
+release controller. R3 union's extra after-phase planning-floor failure
+remains failed; the continuation reuses its exact compilation and ELFs but
+reruns its full suites under a clean R4 owner. The hard cap/reserve are unchanged.
+All 26 final actual-bound native-harness fixtures and 49 actual-bound HTTP
+fixtures also pass. Both cold real-model arms pass all 256 token-ID and streamed-byte
+checks, with identical setup allocation and unchanged inputs. Independent raw
+audit accepts clean process cleanup and exact schedules. The separate four-start
+native ABBA also passes all 2048 output checks. Packed TPOT improves 8.634% in
+AB and 10.300% in BA, while TTFT worsens 11.566% and 8.828%. Keep the feature
+opt-in. This finite native screen is separate from the new matched HTTP loss
+above. See the [packed timing record](M1_PERFORMANCE_SWARM_V8.md#packed-native-timing).
+Parallel source reviews clear the standalone packed-down and fixed-shape
+safe-load proposals; neither is integrated, compiled or native-qualified.
+The packed-down 413 revision-transition harness now passes all 23 fresh remote
+fixtures, with unchanged kernel arithmetic and only four reviewed revision
+literals changed. This is not SDK or kernel qualification. Rust compilation
+is held: comparable historical workload growth is about 1.07 GiB, versus
+roughly 216 MiB available above the unchanged CPU-stage reserve. Whole-process
+cleanup inspection is unavailable at root PID1 on mi300x-2, so no cache reclaim
+or budget relaxation is claimed.
+The September 26 Pages snapshot is now published. Remote rendering catches a
+mobile overflow from an unbroken commit hash; a bounded DOM diagnostic confirms
+it and a scoped text-wrapping fix is applied. All browser widths subsequently
+pass, but an independent screenshot check catches an offscreen mobile-header
+capture bug. Its narrow correction passes a bounded three-viewport diagnostic
+and fresh full remote QA. All 159 PNGs are retained and 22 selected images
+reviewed. Deploy-only commit `391b2a54`, workflow `36455572213`, and all seven
+live-file byte checks pass without a local or GitHub-hosted project build.
+The frozen public snapshot remains dated September 26, not today's new result.
+No packed vendor win is claimed.
+Completed earlier GPU measurement stages and
+temporary manifests are removed after retention/no-use checks, reclaiming
+about 63 MB of allocated file storage without touching the borrowed model.
+The newly completed packed cold, HTTP and ABBA stages are also removed after
+full retention and exact all-UID no-use checks, reclaiming another 44093440
+allocated file bytes. The first cold cleanup refusal remains in the record;
+one quiet retry succeeds without weakening its checks or touching the model.
+
+On resumption, mi350's eight accelerators are visible but the driver is not
+loaded. A bounded explicit load of the installed module restores KFD and all
+eight idle GPUs without package, configuration or reboot changes. Latest
+observed fe2o3 main is `238879e3`; its runtime source closure matches the prior
+`1f4d` observation. Qualified `807` worker and historical compiler identities
+remain unchanged; latest-runtime adoption is not implied.
+
+## Earlier Implementation Checkpoints
+
+The September 24 implementation continuation is tracked in
+[Performance Swarm V8](M1_PERFORMANCE_SWARM_V8.md). Parallel agents own a fused
+Ferric gate/up candidate, latest-base fe2o3 wait-policy work and independent
+verification. The interrupted packed-pair retry is retained, and its failed
+GPU stage is removed after archive and no-use checks. After the user coordinates
+an idle window, the occupying jobs exit without our sending signals; a fresh
+packed-pair campaign passes all 33 cells and independent audit. Synthetic warm
+gate/up controller time is 1.67..1.74x faster, including activation packing;
+this is not a full-model result. Both fixed-b7d runtime candidates now pass all
+twelve remote CPU phases and independent audit. The token successor includes
+677 library passes, six CLI tests and 54 doctests. All eight fused-kernel scoped
+host phases also pass. The wait candidate's first attempt stops at active-arm
+utilization admission; the bounded-settle successor passes 28 CPU fixtures and
+both native arms, each with 210 packets and 528 guard checks, plus independent
+native audit. The token-native harness passes 30 CPU fixtures and all three GPU
+cases, including 195 exact dependent packets, with independent native audit.
+The fixed TP1/C1 client, policy and actual-ABI test overlays start as unqualified
+source candidates. The user approves a separate 24-GiB client build-stage cap;
+its 30 profile fixtures pass. After a retained test-only digest-formatting
+failure, the corrected initial client passes 463 library and 98 binary tests
+with independent audit; disclosed ignores and the existing exclusion remain.
+The exact qualified runtime is pushed to fe2o3 main as `807f0bef`, atop latest
+`2af2a8d7`, with `[skip ci]` and no GitHub Actions run. The client's offline
+public-Git-SDK migration passes independent audit, preserving historical pins
+and every Rust byte. Fresh compilation and the full matrix/ABI gates remain.
+The first public-Git token-family attempt stops during Clippy on a resource
+census race with a removed rustc temporary file. It remains failed; the bounded
+guard correction passes all 38 remote fixtures without changing resource
+limits. The retry's owner exits cleanly, but strict Clippy finds five new-client
+lint errors. The three-file correction passes preparation and recipe fixtures;
+the lint-first retry then detects an oversized worker enum caused by the new
+optional token state. The reviewed allocation and test-only lint repairs now
+pass the R8 token family: production checks, strict all-target Clippy and full
+release tests for its six selected targets. The default family then fails on
+a token-only enum variant referenced through `cfg!`, which still type-checks
+disabled code. R9's true compile-time gates pass both token and default families.
+The TP production check passes, but strict Clippy finds two ordered helpers
+whose receivers are unused without ordered batching. R10 fixes those and its
+diagnostic-first preflight passes all seven production checks and four strict
+Clippy configurations. Timestamp configurations report three test-only Boolean
+conversions; union and token-union also report one test-only narrowing cast.
+The aggregate gate stops before full tests. R11 repairs all four locations and
+passes all 14 check/Clippy commands. Independent source review then finds a
+stale source-policy literal expecting an unbraced selector closure. Root stops
+at the next phase boundary without signals or source changes; the aggregate
+gate is not launched. R12's assertion repair and early policy run pass source
+review, actual preparation and six recipe fixtures. All 14 fresh diagnostics,
+their aggregate and all seven full Rust families pass: 5168 executions across
+32 test ELFs, with 278 documented ignores and seven instances of the existing
+exclusion. Both 52-test policy gates, ten image checks and ABI production pass.
+ABI consumption fails on 2569 pointer fixups versus an expected 2279. Independent
+analysis identifies the missing 290 zero-length RMSNorm buffer arguments in
+the test expectation. R13's focused correction passes all 14 fresh diagnostics,
+five affected binary suites, both policy gates, ten image checks and the full
+ABI encoder/fake-IPC check. The other 27 targets retain explicit R12 dependency
+and result provenance. Both release controllers compile, but retention rejects
+Cargo's two hard-linked executable names. A locked read-only census confirms
+both exact owned aliases. R14's six regression fixtures, independent copies
+and final collection pass, with no source change or Rust rebuild. Independent
+audit confirms the complete mixed-generation 32-target evidence and retained
+controllers. Root integrates the exact 21-file patch and verifies all postimages,
+modes and 1311 untouched paths. All actual owners finish cleanly and unsignaled;
+the failed R13 retention owner remains failed in the evidence. Native model
+comparison remains open. The R5 model harness passes source review, but its
+24 CPU fixtures await the separate stage-scope approval and have not run.
+Historical fe2o3 main `89c8c899` retains all 762 runtime
+crate files, but two of the broader 896 mapped inputs differ: the root lock
+and artifact-crate dependency manifest. The new artifact-schema dependency is
+outside this client's runtime closure; this run stays pinned to `807f0bef`.
+The 06:20 UTC main observation `fd1b32e8` adds KFD conditional-dispatch support:
+eight runtime trees remain identical, but KFD changes three files and adds two.
+Existing gfx950 token, ordered-queue and wait source files are unchanged; a
+new SDK/client/worker qualification is still needed to adopt that revision.
+Neither latest-compiler qualification nor a new Git-pin build is claimed. All four
+completed GPU stages and temporary cleanup manifests are removed after
+archive-backed no-use checks, reclaiming about 1.63 GB. No new model result
+or vLLM win is accepted.
+
+Continuation toward the matched vLLM target is now implementing the packed
+gate/up candidate selected by the accepted raw attribution. Parallel lanes own
+latest producer/workload qualification, a V19/V27/split8-preserving opt-in model
+integration, and bounded CPU execution. The selected compiler/SDK revision is
+`413ba987b8878f53e13127fdb53f9e1495ab93b3`; the capture source rebase preserves
+its new ordered-origin code. Isolated model integration remains incomplete.
+The user explicitly approves a temporary 20 GiB
+private CPU-stage cap for this qualification, with all other resource and
+cleanup checks unchanged. The prior 14 GiB diagnostic approval is not reused.
+The new profile passes all 30 remote fixtures and independent audit; the pair
+campaign driver passes all 14 remote lifecycle/schedule fixtures and raw review.
+An exact-413 offline SDK bundle is retained for guarded import. All 19 current
+compiler CPU stages pass, including the fresh CLI/backend/extractor builds,
+27 CLI regressions, 223 driver regressions, 95 newer backend cases, 26 extractor
+regressions and five source-policy tests. Existing ignores remain disclosed.
+The separate current-warning collector passes all 16 fixtures and admits the
+actual producer under its exact 31+1 warning policy, not strict backend or
+dependency lint. Independent final raw-evidence review passes. All ten workload
+CPU stages also pass: 34 Rust, six component and 20 recipe cases, strict Clippy
+on both arms and exact offline SDK resolution. The emission recipe passes all
+25 fixtures; both full-N GPU binaries are emitted and independently raw-audited,
+including all five clean guards and actual sidecar bindings. All four stable
+host-roster stages pass with 12 fresh fixtures. All eight raw ISA captures pass;
+independent manual review finds no static blocker. The native harness passes
+all 80 fresh tests with independent source/raw/guard review. The bundle's 14
+fixtures and actual-data inventory replay pass: 2,441 logical paths reduce to
+1,378 unique objects containing 1,607,497,581 bytes. A duplicate copy would exceed
+remaining CPU-stage headroom by 325,824,512 bytes; no limit is raised. Root instead
+selects bounded streaming into the existing 2 GiB native-stage allowance, followed
+by read-only admission over the copied bytes before any GPU worker. The actual
+plan and ISA bindings pass two independent reviews. Transfer and frozen copied-byte
+admission now pass. The first native attempt passes all 65,536 packing patterns
+and all 16 finite-parity cells. It stops in the first timing cell's warmup when
+the host load generator restarts. No measured timing interval is retained: the
+outer guard reports status 125, TERM, a reaped child and cleanup_ok false after
+being unable to inspect the foreign root-owned KFD process. This failed campaign
+is retained, not promoted to complete native qualification. A 25-minute idle
+window has been requested through the load generator's scheduler; its supervisor
+was not signaled. A fresh main snapshot is
+`091856733e7053f9f50b7b205f85d4654d467e65`: 60 commits after 413, with changes to
+22 SDK crate trees and the actual KFD dependency. The old runtime-equivalence
+finding no longer applies; a latest-main run needs a coordinated compiler, SDK
+and worker refresh. The 413/5e2 results retain their historical identities.
+No new performance result or vLLM win is claimed. The isolated model review found no concrete routing/count
+defect, but identified missing production packed-upload/failure-path tests. An
+isolated R3 successor now shares production setup with eight authored full-shape
+upload/failure tests; it remains unapplied to the production worktree.
+The separate 20 GiB recipe passes all 12 remote checks. Fresh preparation verifies
+all 1324 source files, limits formatting to the 19 intended Rust paths and passes
+locked offline metadata resolution. The ordered release library compiles in
+50.60 seconds with peak observed RSS 1653100544 bytes, under a clean unsignaled
+20 GiB guard. All eight targeted setup methods now pass separately from the same
+retained ELF: one exact pass, zero failures/ignores and 493 deliberately filtered
+methods per invocation. They cover 72-matrix authentication/upload and allocation,
+aliasing, partial-upload, scratch and teardown failures. All 67 predecessor
+binaries, totaling 857434302 bytes, remain unchanged before/after cache reuse.
+Independent audit passes over complete raw logs, the actual test ELF, all 16
+clean serial guard records, source bindings and before/after keeper identities.
+These focused passes do not qualify the full feature matrix, latest SDK, native
+controller or performance. Site progress copy is updated locally but remains
+unvalidated and unpublished pending remote QA. A redundant 265,355,264-byte
+partial local transfer is removed only after its exact prefix is verified in
+the retained complete archive; failed-run records remain unchanged.
+
+The plain fixed-091 ordinary KFD worker now passes all ten remote CPU phases:
+20 recipe fixtures, exact 571-name test listing, 570 full-suite passes with the
+one existing hardware-only ignore, 13 focused reruns, 31 doctests, strict Clippy,
+the retained ROCr ABI oracle, release build and retention. The 7117-file source
+matches the fixed Git tree and remains unchanged. The new 1798544-byte worker is
+`42f9bc93d54b4f59ad5800539e16d7bb763c677e19ecd0925a72406a1e9c178c`.
+All 68 prior retained binaries (876585046 bytes) match before/after cache reuse.
+Final stage usage is 20190535680 bytes, within the approved cap and reserve;
+no resource or cleanup exception is applied. Complete raw custody is retained
+and independent final audit passes: 174 files, all 14 clean serial guards,
+actual test outcomes, both retained ELFs, source/tool bindings and all 68
+unchanged keepers. The audit is
+`E6/proposals/core-worker-091-actual-cpu-audit-r1.md`, SHA256
+`1631d7fa7c4d6ad1e4ce23583dc13b93a915124540a2e30fcbbdbbcfd71ae63f`.
+The 31 doctests are compile-fail cases. Cargo's existing duplicate-target
+manifest warning remains disclosed; strict Clippy does not mean warning-free
+logs. The new worker has not run on a GPU or replaced
+the historical worker in a native campaign. Coordinated compiler/SDK refresh,
+same-worker native smoke and model performance qualification remain pending.
+A read-only MI350 check completed at 2026-09-24 02:56:24 UTC and still reports
+all eight GPUs at 100% utilization. No GPU run or process signal follows this
+check. An obsolete 19589120-byte local source-transfer envelope is removed
+after byte-for-byte reconstruction from retained complete custody; source,
+binaries and raw results remain available. No remote cleanup check is bypassed.
+
+The V7 swarm has completed the separate host diagnostic: five feature checks,
+strict selected-target lint, 1263 Rust test executions, 47 source-policy tests,
+19 Python fixtures, and an exact-output MI350 native replay pass. The cold
+instrumented request has TTFT 818.53 ms and TPOT 64.64 ms, not a new vendor
+comparison. Mean decode batch wall is 64.626 ms: worker publication/completion
+accounts for 58.473 ms (90.48%), while controller packing is only 0.171 ms
+(0.265%). Worker wall includes GPU work, polling and fences, not GPU time alone.
+A separately selected runtime-counter extension now passes all seven remote CPU
+gates, including 394 CLI test executions, 48 source-policy tests and 23 measurement
+fixtures. Its native run also passes exact 128-token replay and clean teardown.
+Whole-request worker command time is 10.025 seconds, including 9.258 seconds of
+completion waiting; operational currentness is 0.573 seconds, preparation 0.080
+seconds and publication 0.054 seconds. These scopes overlap and are not GPU time.
+The counter-profile TPOT of 86.38 ms is not comparable with the separate host-only
+run. The immediate candidate composes the already accepted V19 parallel
+single-token KV-copy kernel with ordered64, split8 and V27 parallel prefill.
+Both arms will admit the same nine images and differ only in copy selection;
+no new kernel emission is needed. That integration and its matched harness are
+source-complete and independently reviewed. Fresh remote preparation, five
+feature checks, strict Clippy, library/CLI suites, six actual-image inspections
+and all 16 benchmark-harness fixtures pass. The library/CLI suites total 1473
+passing executions; 49 policy tests pass on the separately inventoried one-file
+correction. After archive-backed cleanup, controller build a002 passes in 58
+seconds with clean teardown; the original reserve-stopped attempt is retained.
+The amended CPU qualification is accepted. The same-controller native AB/BA
+campaign passes all 2048 output IDs and decoded bytes. TPOT falls
+64.454714 -> 52.819936 ms in AB and 63.878421 -> 52.755369 ms in BA, reductions
+of 18.051% and 17.413%; finite-window output rate rises 19.619% and 18.504%.
+TTFT worsens 0.322% and 2.435%, respectively. These small native cohorts are not
+a stable gain or a vendor comparison. The independent same-contract repeat
+also passes all 2048 tokens: TPOT falls 77.743166 -> 59.667637 ms in AB and
+71.797674 -> 59.939340 ms in BA, reductions of 23.250% and 16.516%. Repeat TTFT
+falls 9.095% and 4.545%. Absolute timings drift; the two campaigns and every
+sample are retained separately, including the first campaign's TTFT regression.
+Both raw-artifact audits find no mismatch; defaults remain unchanged.
+The opt-in nine-image packet-tick diagnostic is now integrated. Its first
+remote preparation and five feature checks pass; strict union Clippy finds an
+import-placement issue. A semantics-neutral import move is in a fresh R2
+snapshot; preparation, feature checks, strict Clippy, ordered suites (818 passes)
+and model suites (628 passes) pass. Union-library testing finds one incorrect
+recording-transport assertion after 476 passes: the recorded Submit count
+includes ordered packets. A reviewed R3 test-only correction distinguishes
+87711 total, 87700 ordered and 11 direct packets; production dispatch is unchanged.
+Fresh R3 preparation and union testing pass (1000 executions, 59 ignored and
+one documented library exclusion), as do all seven focused reruns. The release
+build reaches the unchanged disk reserve and stops at status 125 with TERM,
+no KILL and cleanup_ok false. All recorded build PIDs are absent afterward;
+the original uncertainty is retained. That failed attempt remains unselected.
+After the user's temporary 14 GiB cap approval, all eleven CPU gates pass on
+the identical frozen R3 source. The original three 12 GiB passes keep their
+actual generation; eight new gates use the separately qualified 14 GiB guard.
+There are 2585 passing Rust executions, 137 existing ignored executions and
+the sole existing library exclusion in each of three feature suites. Release
+build a002 passes cleanly; controller SHA256 is
+`53998fdba1c80aef0f3967b0edf835efe14884886fe27e238e207805d7dc412b`.
+The original collector fails on expected SIGABRT-child output interleaving,
+not a failing Rust test. A separately preserved parser successor passes all
+23 fixtures, including replay of all 31 actual transcripts, and attributes
+exactly three source-bound nested blocks without changing raw logs or skips.
+The accepted mixed-generation V2 CPU receipt is independently audited:
+`92606ee41b9bbfda016136ce99d769ad0098004fdd0597952b329c63d33b3a96`.
+The separate measurement harness R1 retains 23 passes and one positive-fixture
+TMPDIR error. Fresh R3 fixes fixture placement without loosening the production
+stager's direct-/tmp restriction, passes all 24 unique unskipped fixtures and
+clean test/collection guards, and passes independent artifact review. Its
+accepted harness-only receipt is
+`344667b8fc84b0b798d48e7167009cfd6599f6b4172a5dde84f49da289d489b9`.
+Its separately qualified R4 successor admits the mixed-generation CPU proof
+and passes all 31 actual fixtures with clean test/collection guards. Receipt:
+`f7e5a0c7953d5bca656abee1dcfeae8256b215db6fa8bf4ef54321a7830c177b`.
+Only the CPU-receipt reader grows to 2 MiB; native resource, log and sidecar
+bounds stay unchanged. The current native capture completes on mi350 after
+fresh idle/KFD checks and matches all 128 output IDs and decoded bytes. It
+records 87711 packets in 135 batches: 1397 decode and 576 prefill ordered groups,
+plus 11 direct prefill packets. Controller and supervisor exit cleanly without
+signals, and post-run KFD is empty. The complete archive matches a second
+independent remote stream, SHA256
+`aae4f2542809942a30f3fd4087dade8f521a908f7690ad11af8611a4c558c9a7`.
+Independent raw-interval and custody reviews pass: all nine images, 27 symbols,
+87711 records and 43 summaries agree. Decode gate/up/down intervals remain
+stable across thirds and layers; attention partial grows with context. The next
+candidate is qualification of the existing packed gate/up pair, including
+packing cost and preserving V19, not an automatic model integration. These
+unknown-frequency packet ticks are not shader-only timings, additive time
+shares or a new performance result; the matched vLLM comparison is unchanged.
+Bounded wait-policy and packed gate/up proposals remain isolated follow-on
+work. The full-N gate/up pair benchmark component passes all
+17 remote CPU fixtures; its native launcher and image qualification remain
+pending. The opt-in 32-row/two-page prefill implementation and separate live
+CLI are integrated and independently source-reviewed. Remote preparation,
+three feature checks, strict ordered/combined-feature Clippy and all 22
+measurement-harness fixtures pass. R1 ordered-library testing reports 458 passes,
+one failure, 11 ignored and one filtered test. The failing rollover fixture did
+not fill the actual 131072-packet ring; a minimal test-only correction is now in
+a fresh R2 source snapshot. All eleven CPU phases now pass: preparation, feature checks,
+strict Clippy, ordered suites (810 passes), combined-feature suites (783), plain
+suite (72), focused tests (14), image inspections (six) and measurement fixtures
+(22), release controller and the separate 50-test policy amendment. Original
+policy a001 retains its 49 passes and one stale batch-only preflight assertion;
+the test-only correction passes all 50 unchanged test names with zero ignored
+or filtered. Controller build a001 was stopped at the private-stage reserve and
+remains unsuccessful; a002 passes after exact-path cleanup, with no resource-limit
+changes. Actual controller SHA is `06a6605c0879e9b30cd6a1c5cac2d79362f50710d9b9f6d120db71d2ca55928b`.
+The final amended CPU receipt is accepted, SHA256
+`f51a854e0429abd9e0c40e6878e8bc48fcd4199c6dc91579a56fd6be974620b2`.
+It records 1735 passing Rust executions, 94 existing ignored executions and
+22 measurement fixtures; native and performance qualification remain false. Failed R1
+evidence is retained at `E6/products/prefill32-failed-ordered-v7-r1`. The separate
+two-half parity harness passes all 22 CPU fixtures. The first native attempt
+stops before launching on busy GPUs; a later attempt stops when the same
+eight worker jobs relaunch. Both unsuccessful runs remain retained. Under
+explicit user authorization, exactly those eight verified `/tmp/worker.py`
+processes receive TERM through held pidfds and exit without KILL. A fresh
+unchanged retry passes all 20 copy-parity cells and clean unsignaled teardown
+with empty postflight KFD. Independent audit checks all 99 bound files and
+13 CPU-qualified helpers. Report SHA256 is
+`d8a5df743cd9d30ca714d02e8aa7a24774b36067bda80afbbe3c633deb825508`.
+This validates isolated byte/guard parity, not full-model performance. The
+separate completed full-model AB/BA comparison matches all 2048 output IDs and
+decoded bytes. Both arms use chunk32 and fixed V19 decode. Candidate TTFT falls
+2041.379 -> 565.331 ms in AB and 1954.125 -> 597.046 ms in BA (72.306% and
+69.447% lower), but TPOT rises 65.646 -> 70.619 ms and 61.811 -> 66.836 ms
+(7.575% and 8.130% worse). Independent artifact/token/timing review passes.
+The option remains disabled by default. These native cohorts are not HTTP,
+sustained throughput, a stable gain or a vLLM win. The completed raw packet
+capture and independent analysis select packed gate/up qualification next.
+See [V7 tracking](M1_PERFORMANCE_SWARM_V7.md) for retained evidence and limits.
+
+Builds/tests remain on mi300x-2 and GPU work on mi350. At the completed
+diagnostic checkpoint, observed GitHub main was
+0fa063fd17921d24f955479bb4736d0a8beb1cf2. Its 96 changed paths since bcd add
+debugger/runtime observations and simulator allocation/lifecycle behavior.
+The complete nine-crate worker closure is unchanged from built-at 5e2;
+manifests, root lock, toolchain, host SDK and all eight capture-overlay paths
+are unchanged from bcd. This is a source audit, not a 0fa build or emission.
+The previous bcd174bbc334c8d80be6083e039fce7cdc2de821 checkpoint's 75 changed paths
+after f4 add device ordered-program diagnostics and change the backend trusted
+source closure. The complete nine-crate runtime closure remains identical to
+built-at 5e2; Cargo manifests, lock, toolchain and host SDK are unchanged from f4. The
+actual KFD source tree remains identical to
+the built-at 5e2 worker. The preceding dc48 changed compiler prefix handling.
+The capture overlay on actual 431
+now passes remote CLI/backend builds and seven capture-focused tests. This is
+a build screen, not full producer qualification or new kernel emission. The
+source-only bcd rebase preserves all 75 additional upstream file/mode changes
+and the unchanged eight-file overlay. The matching full-N workload successor
+also corrects an inherited stale SDK assertion. Neither successor is built or
+qualified. The host diagnostic
+preserves actual matched 13e/5e2 identities to isolate timing instrumentation;
+the latest compiler qualification remains a separate track. Obsolete
+intermediates and retained old source snapshots have been retired without
+discarding actual test ELFs or evidence. The diagnostic-only temporary cap
+approval below does not change any other resource limit.
+A further completed guarded retirement removes 566 disposable Rust intermediate
+files and reclaims 2068094976 allocated bytes. All 6357 planned keepers,
+including 284 ELF files, survive the independently audited before/after census.
+A later custody-backed retirement removes 20 historical ELF files and reclaims
+685387776 allocated bytes; original 13e and current prerequisite keepers remain.
+Another exact 19-path target cleanup reclaims 246489088 allocated bytes while
+preserving all other target entries and independent historical/current keepers.
+The consumed R1 source is retained locally with all 1312 file hashes verified
+before removing its remote copy; failed results remain available.
+September 23 cleanup removes four unused verified Cargo checkouts and completes
+an exact 930-file non-ELF intermediate retirement (2305048576 allocated bytes).
+The initial census/unlink race and failed finisher attempt stay failed; the
+corrected finisher passes without changing limits or deletion scope. All 17
+independently bound prefill keepers match before and after. No new worktree is
+created, and no active worktree or unrelated file is removed.
+An additional exclusive-lock cleanup removes 1728 exact archive-backed source,
+check-only metadata and duplicate target-ELF files (398794752 allocated bytes),
+preserving all 56 independently retained keepers. This cleanup-only operation
+does not claim a build/test guard receipt or change resource limits.
+All three completed native parity/model stages on mi350 are removed after
+hash-matched local custody and no-use checks (371 files, 37347328 allocated bytes).
+The model and retained next-run inputs stay in place. The older local scratch
+worktree has a modified scheduler file and is preserved.
+The completed packet-tick native stage is also removed after two-stream archive
+custody, independent manifest/source review and fresh owned-process reference
+checks: 100 files, 35 directories and 24662016 allocated file bytes reclaimed.
+Five otherwise uninspectable owned processes receive real read-only privileged
+inspection; deletion remains unprivileged. The model and reusable inputs are
+preserved. No new worktree is created and no build/test process remains running.
+Further CPU cleanup stops before unlinking because the non-dumpable user
+session manager cannot be inspected without sudo. Its visible identity is not
+treated as proof of no open descriptors. A bounded temporary 14 GiB stage cap
+is now explicitly approved for the remaining diagnostic validation. Isolated
+14 GiB guard/phase successors pass their 30 and eight remote fixtures and
+complete the diagnostic CPU validation. Four cores, 8 GiB observed RSS, nice 19, 1200 seconds, the 512 MiB
+reserve and all host/cleanup checks remain unchanged. The three existing
+12 GiB passes and failed build/a001 retain their original records. The failed
+build requires a fresh target
+census before any earlier cleanup plan can be reused.
+Before the release retry, fourteen completed site snapshots lose only their
+reproducible installed dependencies. Three old source archives are removed
+after local hash-matched custody. Eleven R2 target test-executable duplicates
+are removed after fresh identity/no-use checks; all eleven independent remote
+and local review copies remain unchanged. No user worktree or model is removed.
+
+The V7 static update is live at <https://harsh-nod.github.io/ferric/> from
+commit `8d936afd64def9b4370e10993e077dacde4fe95b`, deployment `35783426921`.
+All seven served files match the remotely validated artifact. All four site
+QA phases, 28 publication fixtures and guarded static preparation pass. The
+team reviewed all 139 captured views (five new views plus 134 preserved views).
+The site includes both separate KV-copy campaigns, the unchanged matched
+vendor result and first host diagnostic. Only public/index.html and the
+existing workflow's static bindings changed. No private implementation or
+GitHub-hosted build is published.
+The September 23 prefill32 result and pending packet-attribution checkpoint are
+now integrated into site source. Fresh remote QA and static publication remain
+pending; the deployed site above is unchanged.
+
+Ferric has not beaten vLLM. The fresh ordered64 HTTP campaign completes all
+three declared alternating pairs. Ferric/vLLM mean TPOT is 63.833496/4.227510,
+79.534571/4.380342 and 67.801331/4.393673 ms: 15.100x, 18.157x and 15.432x
+slower. The mean paired TPOT ratio is 16.229x, not a pooled latency or confidence
+bound. Mean TTFT ranges 811.950..992.806 ms for Ferric versus 19.089..19.916 ms;
+finite-cohort output rate ranges 11.537..14.350 versus 221.301..229.694 tokens/s. These
+are TP1/C1, 128/128, BF16 checkpoint with explicit FP32 head, prefix caching
+and speculation off. All pairs pass exact-output diagnostics, timing replay
+and owned cleanup. The aggregator accepts repeated-pair screening with no
+errors, but competitiveness, stable-tail and framework-win qualification remain
+false. The earlier roughly 69/4.35 ms
+campaign remains separate, including its rejected third pair.
+The new ordered64 native screen completes at 00:37:05 on September 22: all
+2,048 output IDs and decoded bytes match, with clean owned teardown. TPOT is
+94.799826 -> 70.714876 ms in AB order and 80.273610 -> 70.180564 ms in BA,
+reductions of 25.406% and 12.573%. The small native cohorts are not HTTP or a
+vendor comparison, and the two orders are not pooled. The opt-in 17-file Ferric
+integration is complete; defaults and all 33 open M1 gates remain unchanged.
+A gated matched-HTTP successor passes all 47 remote fixtures at 00:42:30;
+its fresh three-pair campaign is declared. At 00:58 its first Ferric start is
+refused by GPU preflight: PID2267993, a separate `ferric-tp-peer` process,
+appears after the earlier idle snapshot. No model server or vendor container
+launches and timing is not admitted. The foreign process exits without our
+signals. All 58 files of that failed campaign are retained and verified before
+its private remote stage is removed. A wholly new three-pair campaign uses
+fresh bindings and authorizations, with no reused samples. All six starts and
+all three paired replays now pass; the complete series summary hashes to
+`579c4abeda3f56ca2a77ec1e1f63d37c0961cec92381f90da6a368d79ab3a3ec`.
+Packed-u32's four-core CPU qualification now passes all nine gates, including
+26 Rust tests and strict Clippy. All five emission gates now pass: preparation
+at 00:52:50, baseline at 00:53:39, candidate at 00:54:28 and collection at
+00:54:47. The baseline/candidate images and both complete captures are retained;
+manual IR/final-ISA review and final descriptor inspection find no payload
+arithmetic mismatch. FP32 descriptors preserve denormals; separate payload
+multiply/add and lane-time low/high accumulation survive. Geometry lowering
+does contain floating-point reciprocal/FMA instructions, so no whole-root
+integer-only or no-FMA claim is made. The actual images, manual ISA receipt
+and native plan pass independent review. The actual native finite campaign
+completes at 02:09:25: all 17 workers pass, including all 65,536 activation-pack
+bit patterns and eight finite cases in both arms. All worker and supervisor
+teardown is clean and unsignaled. Pack-inclusive controller wall per logical
+projection is 12.505..16.203% lower across the eight cells. This is a synthetic,
+cache-hot Q-only diagnostic, excluding one-time weight packing/upload, not GPU
+time or a model TPOT gain. Numerical-trap classification remains unsupported;
+performance qualification, model-inference and default promotion remain false.
+The report hashes to
+`cea4120ed4931ebba10cc73832c651ee8693166903d4cd83c772eb24ba74c3d3`.
+
+The ordered64 site update passes complete remote QA, all 23 publication tests,
+and root visual review of 127 unchanged screenshots through 32 contact sheets
+plus all seven new views at full size. Static-only commit `f6bcf9ae` deploys
+successfully in run `35675650152`; all seven served files match the actual
+remote-tested artifact. Only the public index and static workflow bindings
+change. No GitHub-hosted build or private implementation publication occurs.
+After local hash/length custody checks and a fresh unused-file census, ten
+site-only remote paths are removed: 242 files and 24 directories, reclaiming
+49,868,800 allocated bytes. Shared site/browser dependencies remain untouched.
+The completed ordered64 native, matched HTTP and packed-Q native GPU stages
+are subsequently removed after fresh currentness/unused-path checks and complete
+local SHA/length custody: 824 files, 77 directories and 57,774,080 allocated bytes.
+The seven-file retirement owner is also removed, reclaiming another 1,961,984
+bytes. No shared model path or unrelated process is changed. No unused worktree
+from this work remains; the active integration and unrelated scratch are kept.
+
+A direct upstream fetch at 00:44 observes fe2o3 main
+`39003edd3def08884261ef4da4dcedccb66de5b0`. Source review finds all nine runtime
+trees, all 53 packed dependency manifests and the engineering capture paths
+unchanged from the tested 13e snapshot. Two dependency trees differ: model
+examples and a separate source-publication helper/tests. Normal publication
+still uses `sync_all`; its new callback is test-only. Emission proceeds with
+the actual qualified 13e producer, not a relabeled 390 build or a claim of
+whole-repository/binary equivalence. The independent boundary audit is retained.
+Another direct fetch at 01:36 confirms the same main revision. A separate
+down-projection packed-u32 proposal pins this actual 390 revision, preserves
+FP32 output and ordered accumulation, and passes all 30 Rust tests.
+Its actual offline SDK import passes under the approved four-core profile at
+01:49:49. The earlier import attempt failed cleanly because the operator started
+before file transfer completed; that failed receipt is retained. All nine fresh
+CPU gates pass by 02:02:59, including 21 recipe fixtures, actual 163-package
+resolution, formatting, 30 Rust tests and strict all-target Clippy. Compilation
+takes 177.855 seconds including its guard, with peak observed RSS 3,324,616,704
+bytes under the approved four-core/8 GiB profile. The down-projection candidate
+has no emission, native or performance pass yet.
+Its 401-file CPU review and four actual selected test ELFs are retained and
+hash-verified locally; the CPU qualification hashes to
+`e1a2f121ceebd4cf830dee7bdc62c1aa14c7b98fedd117d48adc0ef2536525d7`.
+
+A separate nine-file ordered64 host diagnostic is source-complete and
+independently reviewed. It adds bounded packing spans and the already-returned
+worker duration without changing arithmetic, scheduling, protocol, dependencies,
+defaults or matched contracts. Its 17 authored tests have not run. Remote
+format/build/lint/tests and a short supervised diagnostic remain the next gates;
+worker elapsed is not GPU time and overlapping spans cannot be added together.
+
+The partial-GEMV optimization is integrated as a 24-file private overlay.
+Its fresh remote recipe tests (12), preparation and default Rust check pass;
+the first plain controller check stops at the unchanged reserved-space boundary.
+Its failed attempt is retained, and a fresh process census finds no build
+processes left. After retaining and retiring obsolete cache, plain-check/a002
+and the all-binaries check pass. Strict Clippy then fails cleanly on two new
+four-boolean signatures. A reviewed four-file fix replaces the new selector
+with an explicit mode enum. Fresh R2 passes seven gates, including 13 recipe
+fixtures, early strict Clippy, all three check profiles and test compilation.
+Its focused routing run then fails two of six tests cleanly: the fixtures
+incorrectly expect split attention at contexts 1 and 17, outside its unchanged
+128..=256 domain. The failed run and actual test executable are retained.
+A test-only correction preserves the six tests and adds explicit post-prompt
+contexts 127, 128, 129, 256 and 257, including both split roots and full normalized
+command/group parity. Fresh R3 passes its first 16 gates, including strict
+Clippy, 457 library tests, 56 ordinary and 63 model CLI tests, both composed
+image checks, and the focused 6/2/1 cohorts. Its 24 native-harness fixtures also
+pass. Source policy then fails 1 of 45 tests: its whole-file flag prohibition
+mistakes an existing negative parser fixture for production support. A reviewed
+test-only correction requires the explicit test-module boundary and checks
+production code only, leaving the rejection fixture intact. Fresh R4 moves this
+gate earlier; all prior failures and test executables remain retained. No
+production routing or native 128/128 schedule changed. R4's 13 recipe fixtures
+and 24 native-harness fixtures now pass remotely; the latter finishes cleanly
+at 18:54:30 UTC in 84.457 seconds. All 21 pre-build gates now pass, including
+45 source-policy, 457 library, 56 ordinary CLI and 63 model CLI tests, the
+focused 6/2/1 cohorts and six explicit actual-image tests. All 22 R4 CPU gates
+now pass: the release build finishes cleanly at 19:24:17 UTC. The BuildV4
+collector finishes cleanly at 19:24:52, worker admission at 19:25:44 and plan
+preparation at 19:27:06. The HTTP successor's 44 tests pass with clean completion
+at 19:28:29. Fresh native AB/BA completes cleanly at 19:41:36 on mi350 in
+`/tmp/ferric-opt-v5-v25.cpys8E7W`, with all 2,048 output IDs and decoded bytes
+matching. It is not a performance improvement: AB TPOT is 79.613330 ms baseline
+versus 82.110499 ms candidate; BA is 91.893385 versus 91.870497 ms. TTFT worsens
+in both orders. The candidate is not promoted to HTTP or made the default.
+These small native cohorts are not a vendor comparison. The roughly 16x matched TPOT
+gap and the rejected third historical HTTP pair remain unchanged. Existing
+ignores/exclusion, warning limitations and all 33 open M1 gates remain explicit.
+Packed-u32 R3 remains source-reviewed, not Rust-tested or measured. Fresh
+packed/compiler work is being moved to current fe2o3 rather than extending
+the historical c60 campaign. Compiler capture's scoped CLI lint passes; strict
+backend lint fails on 20 diagnostics in unchanged c60 files. A separate
+source-reviewed continuation admits only those exact warnings and keeps the
+strict failure explicit; its 12 fixtures and four phases remain unrun. No
+new capture producer or kernel emission is claimed. The queued compiler snapshot
+is `13e00263000362532d72a5dde52749349a9af122`. Its fresh 26 recipe tests,
+source preparation and scoped strict CLI Clippy now pass; the release CLI build
+passes cleanly at 19:59:41 UTC. At 20:01:20 the backend-warning gate fails:
+Cargo succeeds with the expected 19 backend warnings plus one extractor
+`prepare` argument-count warning omitted from the policy. The nine-argument
+signature already exists upstream; the original failed gate remains retained.
+The independently reviewed continuation pins its exact source, target and span;
+its 15 fixtures pass at 20:17:52 and its fresh closed-warning lint passes at
+20:18:07. All four test compilations and seven execution cohorts then pass:
+focused CLI/backend/extractor counts are 10/7/2, regression counts are
+27/214/24, and source policy passes five with one existing ignore. Backend
+regression retains 99 existing ignores. The final backend build stops at
+20:33:33 on the unchanged staging reserve, with its failed attempt retained.
+After removing locally archived diagnostic duplicates, backend-build/a002
+passes at 20:47:12 and actual ProducerV6 collection at 20:47:33. Producer SHA256
+is `40c552c254353fa12adc5f50c17ae75e46ed078766295f79399ea3e0ac362a13`.
+This retains the exact-warning limitation and does not qualify emission/native
+execution. Full selected-product/failure custody is streamed and verified
+locally; guarded retirement completes at 20:56:07, reclaiming 3,644,727,296
+allocated bytes while preserving six selected executable/library paths and
+successfully reconstructing V6 afterward. All build limits remain unchanged.
+Retained-product cache cleanup reclaims 4,430,888,960 bytes while
+preserving all 27 selected cache products and the unchanged resource reserve.
+A fresh direct GitHub check
+at 19:19 UTC finds main at `9d4387d2e30a92e9c2d0eea1117f1986d1dd16cf`:
+only two CI workflows and their resource-check script differ. Independent
+review confirms identical complete crate trees, manifests, lock, toolchain and
+capture-overlay bases, with no fe2o3 Git-HEAD build hook found. The actual 13e
+labels remain unchanged; this is not a 9d build or whole-repository qualification.
+The eight-file capture rebase is independently source-reviewed. All nine normal KFD crate trees are
+unchanged from the actual 5e2 worker, whose producer label stays unchanged.
+Compiler changes are substantial and need the remaining fresh qualification.
+The packed-u32 13e successor's exact offline SDK import passes at 20:04:21,
+its 14 recipe fixtures at 20:12:25 and preparation at 20:13:43. The actual
+resolved dependency lock is retained; its 26 Rust package tests, strict lint,
+emission and native measurement are still pending. It is not a measured kernel.
+The dirty fe2o3 worktree is untouched.
+
+Ordered64's 15 native-harness fixtures pass remotely at 20:54:10, and its eight
+CPU recipe fixtures pass at 20:56:32. Actual source/lock preparation passes at
+20:57:08, adding exactly nine runtime packages and one adapter edge while
+preserving 325 existing packages. The controller is not yet built or measured.
+Partial GEMV remains off in both
+planned arms. A separate bounded completion-polling candidate is source work
+only and will not be bundled into the ordered64 experiment.
+The existing nightly's offline locked rust-src metadata check passes at
+20:57:41, and all 16 same-producer packed-emission fixtures pass at 20:58:42.
+Actual packed kernel emission still awaits its remaining CPU gates.
+
+At 21:12:06 UTC, full local archive verification and guarded retirement of
+the two unused historical vendor trees reclaim 509,243,392 allocated bytes.
+The current producer, packed-emission recipe and unchanged-worker collectors
+do not depend on those trees. Ordered64 compilation starts in its fresh private
+target under unchanged limits. The new MI350 native owner is
+`/tmp/ferric-opt-v5-v25.v1fakSWO`; only immutable inputs and fresh helpers are
+being staged, not historical results. All eight GPUs are observed idle before
+staging; fresh launch admission is still required. By 21:27:30 UTC all five
+default/plain/ordered/model/union feature-profile checks pass at a001, bringing
+ordered64 to seven of eighteen CPU gates. Strict Clippy and actual executable
+test suites remain next; no native performance result is inferred. At 21:30:23,
+strict ordered Clippy fails cleanly on one new `struct_excessive_bools`
+diagnostic: adding the packet-width boolean gives the execution state four
+booleans. The actual failure and all seven passed gates are retained, with
+remote/local failure receipt SHA256
+`31a05c3ec71d51c26d763c63116c5c3c5822f66338dd3dc064b777c7b168a55e`.
+A private packet-width enum correction and fresh R2 qualification are being
+prepared. No warning suppression, inherited pass, controller or GPU launch
+is claimed; the owned cache remains available for the fresh build.
+The seven-file enum fix is independently reviewed and composed into R2.
+Fresh native-harness validation passes all 15 fixtures at 21:41:33; a dropped
+SSH client is resolved by reopening the complete clean guard and test logs,
+whose locally retained outer SHA256 is
+`f843e72c4638875fe8e369f1538cdebcdb45cbe9d16e0408cec65ffaa098fd24`.
+R2's eight recipe fixtures pass at 22:08:16, preparation at 22:08:56, strict
+ordered Clippy at 22:10:52 and strict combined-feature Clippy at 22:12:10.
+The actual source inventory is `7604ad3e...`; the resolved `a773a4dc...` lock
+and nine-package dependency delta are unchanged. All five fresh feature-profile
+checks pass by 22:19:50, completing nine of eighteen R2 CPU gates. Test-binary
+compilation is running; executable suites, the controller and a new native run
+remain required. No R1 gate is inherited. At 22:22:29, six obsolete historical
+prepared-source trees are retired after complete local archive verification,
+reclaiming 302,137,344 allocated bytes under unchanged resource limits. Their
+historical replays require archive restoration; no current dependency is removed.
+At 22:36:20, compile-ordered/a001 is interrupted by supervisor
+`ProcessLookupError`, status125, TERM and unverified cleanup. The failed receipt
+is retained as `52a9b830...`, not a compiler/test pass. A fresh process census
+finds no surviving candidate group/session/source/target processes; a002 resumes
+using only compilation cache under the unchanged guard. The likely per-PID
+exit race remains a source-reviewed diagnosis, not a proven traceback location.
+Compile-ordered/a002 passes at 22:43:21. Ordered suites pass at 22:47:27:
+433 library, 65 CLI and 76 peer tests, plus focused engine4/wire6; only existing
+ignores and the resource exclusion remain. Four actual-image fixtures pass at
+22:48:04, completing twelve R2 gates. Source-policy then reports 45 passed and
+one failed at 22:48:43: its old exact optional-dependency list omits the new
+`fe2o3-kfd-ordered64` alias. The dedicated new policy test already passes.
+The failed receipt is retained as `c9912b09...`; a one-line test-roster fix and
+fresh R3 handoff are being prepared without changing production behavior or
+waiving policy. R2's remaining feature tests do not count as R3 qualification.
+R3's eight recipe fixtures pass at 22:59:27 and its fifteen native-harness
+fixtures at 23:02:52. Preparation passes at 23:06:40 with actual source census
+`39f4dcb2...`, the same resolved `a773a4dc...` lock, and all 325 old dependency
+records preserved. Before cache reuse, all 1,301 R2 source files and eighteen
+selected ELF/rlib artifacts (96,569,138 bytes) are retained and hash-verified
+locally, alongside the complete R2 review and outer results. R3's runtime and
+policy gates remain fresh requirements; no performance result is implied.
+All seventeen pre-build R3 phases subsequently pass: both strict Clippy modes,
+all five feature checks, three test compilations, all 46 policy tests, complete
+ordered/plain/union suites and four actual-image fixtures. At 23:41:25 the final
+build/a001 stops on another supervisor `ProcessLookupError`, status125, with
+TERM and cleanup_ok=false. Its exact retained receipt is `e70c1ac1...`; this is
+not a compiler diagnostic or a successful controller build. A fresh owned
+process census is empty, without reclassifying that failed cleanup receipt.
+The user approves a separate four-core/four-job, 8-GiB-RSS profile for subsequent
+builds, preserving nice19, serialized builds, 12-GiB stage/512-MiB reserve and
+20-minute limits. Its 22 fixtures pass remotely at 23:43:51. A source-unchanged
+build-only continuation is being reviewed; the seventeen original passes keep
+their original one-core provenance. The first actual new-profile invocation
+passes all 17 packed-CPU recipe fixtures at 23:47:44, with CPUs0..3, jobs4,
+8-GiB RSS limit and clean unsignaled completion recorded. Its retained outer
+receipt is `7d6a310d...`; this is recipe qualification, not a Rust build or GPU
+result. The rebound emission recipe also passes all 21 fixtures at 23:50:21
+under the new profile; no image emission is inferred. No GPU launch or new
+timing result exists.
+The subsequent four-core controller build passes six continuation fixtures,
+then stops on the unchanged disk reserve at 23:58:26. Its failed result
+`349915dd...` remains status125/cleanupfalse, and a fresh owned-process census
+is empty. Two hash-verified obsolete archive duplicates are retired after
+complete local retention, reclaiming 33,882,112 bytes. Further source cleanup
+precedes the next attempt; the cap and 512-MiB reserve remain unchanged.
+The complete recovery subsequently reclaims 347,885,568 bytes after full
+retention, and four-core build/a002 passes cleanly at 00:15:29 on September22
+UTC. Actual controller `142cc297...` and receipt `65bc50bd...` are retained and
+remote/local hash-verified. Its six continuation fixtures and unchanged source,
+lock and seventeen original checks pass. The fifteen fresh mixed-provenance
+native-harness fixtures pass at 00:18:10; the BuildV2 collector passes cleanly
+at 00:19:19, with stdout `dd623168...` and outer receipt `e5e64735...`.
+The reviewed 17-file opt-in integration is applied to Ferric, with every file
+matching the remotely tested source/lock and all unlisted file hashes unchanged.
+Both new test files are included; Cargo.lock remains mode0600. This does not
+claim that unrelated dirty files match the remote snapshot. `git diff --check`
+passes, without any local builds or tests. A fresh supervised native AB/BA
+campaign is running on mi350 after idle/KFD admission; no GPU gain is claimed.
+The first ordered64 target-cache export fails cleanly on a broken archive
+receiver, before deletion. Its failure and intent remain retained; a reviewed
+namespace-only R2 retries with a corrected exclusive local receiver. No space
+reclamation is inferred from the failed export.
+R2 then succeeds: full local custody verification covers 2,214 files and 444
+directories, and guarded retirement reclaims 4,525,428,736 allocated bytes at
+00:34:41. All 21 selected file paths, both controller copies and direct-policy
+dependencies remain; exact mixed-profile build recollection passes afterward.
+The three completed/failed archive FIFOs are removed after no-use checks.
+Packed-u32's fresh four-core preparation passes at 00:35:43, and its Rust
+compilation passes at 00:39:20 (Cargo reports 2m51s, peak observed RSS
+3,247,116,288 bytes). All four test cohorts, 26 tests total, and strict Clippy
+then pass; all nine gates complete with retention at 00:41:42. Its separate
+native harness already passes all 36 synthetic CPU fixtures; no kernel image
+or GPU arithmetic pass is inferred.
+
+The [public site](https://harsh-nod.github.io/ferric/) now serves static-only
+commit `e8cd0f634de8eeb6b11399f1eb7b4db85c009309`, after remote browser QA,
+direct review of 113 screenshots and 23 publication tests. Deploy-only run
+`35562392538` succeeds, and the live index matches the validated artifact.
+No implementation source or GitHub build is involved.
+The subsequent R4 no-gain site update passes all four remote QA phases through
+20:10:51, including the 64 standard and 56 supplemental screenshot captures.
+All 120 captures receive delegated visual review; root directly reviews the
+seven new R4 captures, without finding a publication blocker. All 23 publication
+tests and static preparation pass remotely at 20:44:17 and 20:44:36.
+Static-only successor `1f749abdaf07226bb73ce22e4eb60517e82638db` is live;
+deploy-only run `35653097912` succeeds at 20:46:06. The directly fetched live
+index SHA256 matches the validated `47af5ec2...` artifact. No GitHub build ran.
+
+Root stopped the newly observed exact `ferric42-tp2-closed-token` run under
+the user's authorization: verified supervisor PID 1820595 received SIGTERM,
+and all four original processes exited without SIGKILL. Unrelated jobs were
+not signaled. SSH access to both hosts is restored on the user's update.
+At 16:38 UTC all eight mi350 GPUs are observed idle with no KFD owners;
+this is not future launch admission. CPU validation has resumed on mi300x-2.
+An exact archived R3 cleanup reclaims 286,621,696 allocated bytes, with full
+local member verification and clean guarded teardown. No local builds ran.
+Two separately verified duplicate archives reclaim 207,138,816 bytes. A
+subsequent guarded compiler-cache retirement reclaims 2,959,183,872 allocated
+bytes, preserving all six selected binary paths and rechecking their records.
+The source input for current 13e is frozen locally with exactly eight reviewed
+changed/added paths; it is not yet built or qualified.
+Detailed prior
+milestones below remain historical, including the earlier no-match check.
+
+## Active Performance Swarm
+
+[V6 tracks the new implementation teams](M1_PERFORMANCE_SWARM_V6.md):
+compiler/runtime dispatch profiling, composed packet packing/split attention,
+and repeated-pair measurement/verification. The opt-in composition and eight
+Rust tests are implemented; focused V25/V22, three CLI suites, 40 source-policy
+tests and 404 broader library tests pass remotely (nine ignored, one known
+high-memory test excluded). Strict lint and release build also pass. The native
+four-arm comparison passes all 2,048 IDs: composed TPOT is 70.242 ms versus
+84.737 ms baseline, a 17.11% reduction, with TTFT 0.52% worse. Fixed order and
+one warmup/three measurements per arm limit this to native screening, not a
+fresh HTTP comparison or vendor win.
+The four-arm harness passes 14 CPU tests. The existing V27 prefill-copy kernel
+passes 11 d10 SDK tests, strict Clippy, emission and 28 isolated native
+correctness cells; 12 diagnostic timing cells complete. V28 now passes native
+full-model parity for all 1,024 IDs and decoded bytes. Its fixed-order, small
+cohort reduces TTFT from 2312.564 to 808.974 ms (65.02%), with TPOT unchanged.
+This is separate native screening, not a new HTTP/vendor pair or a composed gain.
+The core profiling patch passes 13 focused and 518 library tests, doctests,
+strict Clippy, five policy tests, the pinned ROCr C ABI oracle and release build
+against d10. Its native harness passes all 12 CPU tests plus 210 dependent
+operations and 528 allocation guard checks on mi350. The validated core patch
+is published as 3d473f9ff after fresh main verification, with GitHub CI skipped.
+Model timestamp integration remains diagnostic-only work in progress. The
+validated diagnostic pin is `5e2f668d0e91815f6c7aafe18dbdf283ab0394aa`;
+the fresh worker passes all ten CPU phases and a new signal-free native smoke
+with 210 exact outputs and 528 allocation guards. Model controller CPU
+validation and full-model diagnostic correctness now pass. R2 passes 443 library
+tests and its first 13 phases, then the broader build catches crossed KFD wire
+types in a legacy peer module. The reviewed fix shares unchanged packing code
+under separate wire namespaces. Corrected R3 passes its first 17 phases,
+including 443 library tests, both CLI cohorts, 15 peer tests and actual V8
+metadata. Its direct-policy wrapper then stops on duplicate build/release
+dependency artifacts before invoking rustc. The narrow continuation passes its
+10 recipe tests, direct compilation and 43 policy tests, then strict Clippy
+rejects four documentation warnings and two unchecked diagnostic-summary casts.
+A checked-conversion fix and invariant test are integrated. Fresh Model R4
+passes 22 recipe tests, preparation and default checking; the first plain check
+stops at the reserved-space boundary; a fresh retry and all-binaries check
+pass after owned-file cleanup. Early Clippy then rejects one diagnostic
+queue-bound lint. Its independently reviewed equivalent one-line fix is
+integrated and frozen for fresh Model R5 validation. Model R5 reaches early
+Clippy after selected preparation and default/plain/all-binaries checks, then
+`clippy/a001` fails cleanly at 2026-09-21 00:52:26 UTC. The two diagnostics are
+unused `enable_model_timestamps` and `large_enum_variant`. A two-file fix boxes
+only the optional diagnostic state and adds a method-local dead-code allowance
+for shared, non-opting-in controllers. Frozen raw source R7 passes a separate
+development Clippy preflight. Fresh Model R6 then passes its first six gates,
+all `a001`: 22 recipe tests, preparation, default/plain/all-binaries checks and
+strict Clippy, the latter clean at 2026-09-21 01:21:19 UTC. Its prepared
+inventory is `8d1382a448cc4d22f7f06e9780b30d91e0b3eb3f981d2bec58d7724cf475a077`.
+Library compilation now passes, followed by 27 collector tests, one driver
+test and 444 library tests with 10 inherited ignored tests and one explicit
+high-memory exclusion. All four phases pass at `a001`; the library guard exits
+cleanly at 01:30:31 UTC. All 23 Model R6 phases subsequently pass at `a001`,
+including 52 ordinary CLI tests, 58 diagnostic CLI tests, four FIFO tests,
+15 peer tests, both actual-image metadata gates, 43 source-policy tests and
+both release builds. The CLI cohorts retain five ignored tests each and the
+peer cohort one. The R8 native harness separately
+passes 26 CPU tests in 46.238 seconds, with clean teardown at 01:14:13 UTC;
+its build collector and plan pass at 01:45:40 and 01:45:46 UTC. The actual
+ordinary controller is `0d652d96...` (10,191,928 bytes) and the diagnostic
+controller is `87045480...` (10,334,960 bytes). The supervised four-cold-arm
+campaign passes on mi350 after fresh all-eight-idle/no-KFD admission. All
+512 output IDs and decoded bytes match, and the two diagnostic captures
+validate 166,278 raw records and 20,478 original groups in total. Each arm
+preserves 83,139 dispatches/135 batches. The outer supervisor exits cleanly
+at 01:58:52 UTC without signals or remaining owned/foreign KFD PIDs. All four
+inner cleanup receipts retain TERM/KILL flags with exit zero and absent
+groups; the inspected ordinary-baseline pre-cleanup census contains only
+its controller zombie. This is not a signal-free inner-cleanup claim.
+Accepted report SHA256 is
+`122ed545e2ecf6b9547bdb47ebb29a2865270386a229cb8fd9dd065684f0e398`.
+These cold raw-dispatch diagnostics are not nanoseconds, shader-only duration
+qualification or a new performance comparison; recorder overhead is retained
+as a caveat. Earlier R6/R7 and R4
+native-harness results remain historical. At the earlier `91d989a5d`
+checkpoint, compiler code changed but all nine normal KFD crate trees stayed
+byte-identical to 5e2. The later compiler-capture failure and c60 successor
+are recorded below. Earlier failed model runs remain retained. The
+V28 R3 build fixes a duplicate-device-SDK compilation failure with a build-only
+string-roster bridge. All 26 selected CPU phases now pass, including 416 library
+tests (10 ignored, one known high-memory exclusion), 41 policy tests, strict
+Clippy, both image gates and release build. The first policy compile timeout is
+retained separately from the successful second attempt. All 19 native-harness
+tests pass. The first GPU launch rejected a flat V27 image directory before
+inference; the successful staging-only retry uses the required namespace/content-ID
+path. Both complete GPU attempts and the CPU evidence are retained locally.
+The Pages update is deployed
+at <https://harsh-nod.github.io/ferric/> from static-only commit
+`aebd59fa2ca83e1c6d772e5deaed8705fdbb8f97`;
+live bytes match the remotely tested artifact. The V28 update passes fresh
+remote QA, visual review of 64 QA and 27 supplemental screenshots, and all
+22 publication tests. Deploy-only run `35547903324` succeeds without GitHub
+builds. The
+comparison tool's V3 compatibility successor passes 24 remote CPU tests; the
+earlier retained-pair replay remains separate. Historical HTTP R2 is independently
+source-reviewed and frozen; all 39 CPU tests pass in 0.039 seconds, clean at
+01:04:46 UTC. This is not an HTTP benchmark. It adds the actual dd6/5e2
+worker-admission replay and 38-file native roster while keeping
+`NATIVE_BINDINGS=None`; the later R3 successor below binds the actual accepted
+build and four-arm native evidence. Composition CPU/native R5 is frozen and reviewed against
+actual Model R6 preparation plus the original ten-file overlay. Its 14 recipe
+tests and 22 native-harness CPU tests pass. Preparation `a001` fails cleanly
+at `format-check-1`, because rustfmt requires a second wrapping pass for one
+error return in `prefill_kv_copy_v28_live_contract.rs`. The failed attempt is
+retained locally at SHA256
+`217511b01712b3959025d714f71803d6ce4341952c4a1e33bcbdbff4ce9620d0`.
+A recipe-only bounded fixed-point formatting successor, composition R6, now
+passes all 33 phases at `a001`, with unchanged raw source. Actual counts are
+15 recipe tests, 420 library tests (10 ignored and one explicit high-memory
+exclusion), 44 policy tests, focused V28/V25/V22/V19/V17 cohorts of 10/17/6/10/4
+passes (V19 retains one ignored), and six live/model/V25/V22/V19/V17 CLI
+cohorts of 54/61/54/53/53/51 passes (six ignored each). The composed runner,
+dual-image admission and individual V5/V21/V27 image gates each pass one
+test; the native harness passes 22 CPU tests. Final build completes cleanly
+at 02:17:05 UTC, retaining controller
+`1ffd68bc905ed6a1cc1bfb7dfad88f64b519ed1aede5aa2c079768982960afe6`
+(10,224,264 bytes). The build collector, worker-admission and plan gates pass
+cleanly without signals at 02:17:21/27/33 UTC; all three complete outer
+directories and controller are retained locally. Their output hashes are
+`cd8a341e...`, `41a231b5...` and `c3851fc7...`, respectively.
+The separate `99je2Ebp` four-arm native campaign passes through the existing
+supervisor: all 16 requests match all 2,048 output IDs and decoded bytes,
+with clean outer exit zero, reaped child, no errors/signals or remaining KFD
+clients. Report SHA256 is `dbf5e34ea6466d84211c85b778fe668d046c5de931491c32b1f4a8118498bcd6`;
+the full retained native archive is
+`eb1f97196a736c2b9512a12c966a8ddb25d5aa3f09153ead95489dcf70ef564c`.
+
+| Composition R6 Native Arm | Mean TTFT (ms) | Mean TPOT (ms) | Output Tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline | 2430.855653 | 93.406125 | 8.954908643 |
+| Decode only | 2365.162141 | 76.228505 | 10.625352362 |
+| Prefill only | 1021.103724 | 93.120622 | 9.962451944 |
+| Prefill + decode | 855.944209 | 85.379419 | 10.940545624 |
+
+One warmup is excluded and three requests measured per arm, in fixed table
+order. Combined TTFT is 64.7884% lower than baseline, TPOT 8.5933% lower and
+finite measured-window rate 22.1737% higher, but TPOT is 12.0046% worse than
+decode-only. Runtime audit retains request TPOTs of 75.803/76.963/75.919 ms
+for decode-only and 75.904/100.344/79.890 ms for combined. The slower request
+has sustained in-batch delay, with no route mismatch or proven external cause;
+no sample is discarded. These are controller-ingress screening metrics, not
+HTTP, qualified GPU durations, confidence bounds or a vendor win. The owned
+inner TERM/KILL flags remain separate from the clean outer supervisor.
+The obsolete unlaunched R4 binding
+cannot stand in for validation of the latest fix. The approved private
+compiler-stage cap is now 12 GiB, with the 512 MiB reserve and all other
+limits unchanged. A composition admission refused a newly appeared foreign GPU
+worker before spawning a child; the full failed stage is retained locally and
+the owned remote stage was removed. The earlier successful composition, timestamp and
+V27 stages were also removed after checksum-verified local retention. Existing
+V5 results below remain the historical reference; the fresh R3 pair is recorded separately.
+Two additional, fully retained retirements reclaim 208,416,768 allocated bytes
+from obsolete compiler source roots and 700,166,144 allocated bytes from the
+exact 12 old tool files and their three roots. Current tools, LLVM worker,
+toolchain and receipts remain intact; the guard and reserve are unchanged.
+A separate six-tree compiler-history export and full local acknowledgement
+remain retained. Its first two retirement attempts failed cleanly at `fuser`
+before intent or deletion. A bounded observer then records
+`one_complete_scan_clear` across all 41,091 paths; it does not itself authorize
+cleanup. Fresh retirement `a003` passes the unchanged checks, exits cleanly at
+01:33:17 UTC and reclaims 638,459,904 allocated bytes. Both failures and the
+successful receipts are retained locally. On mi350, the user authorized stopping only
+`ferric42-tp2-closed-token`, but the integration lead found no active matching
+process/container, all eight GPUs idle and no KFD holders. No signals were
+sent; future launches still need fresh admission. The public site and its
+scoreboard remain unchanged; the accepted native screening does not replace
+the matched HTTP comparison.
+The completed Model R8 `634McnZ4` stage and its duplicate remote archive have
+been removed after complete local archive verification at SHA256
+`13447480bbc0804f2004724de7a1d429676daf099b810c59c0ac2295fc4b89a1`
+(8,569,256 bytes); the new native stage is separate. This cleanup sends no
+new signals. The later `target-stable` retirement retains 24 selected files
+and their re-collected producer evidence, removing 14,778 files and 2,995
+directories after verified retention. It reclaims 6,264,061,952 allocated
+regular-file bytes; source/toolchain/reviews remain untouched. Its clean,
+signal-free outer completes at 02:35:47 UTC and observes stage usage
+6,026,477,568 bytes, without changing any limits.
+The c60 compiler-cache recovery retains its failed R1 export, which invoked
+the protected model collector under nightly rather than the recorded stable
+`PATH`. It failed cleanly before archive creation or deletion; recorded
+source/input hashes remain unchanged. R2 uses the hash-bound stable environment
+for that collector and passes export at 03:49:20 UTC. Its 139,364,727-byte
+archive is fully verified and retained locally at SHA256
+`bb59f26fefb7cabd22cefaf3391e32544e9b37e8a138a3fe692ef0867d13efd4`;
+the local acknowledgement is `3315a6b29ce74c89664db7cbdc29a74bc1020feea13264028ac6c44ba7824dee`.
+Source, tools, reviews and selected failure diagnostics are retained, not
+every disposable cache byte. Fresh retirement removes 3,514 files and 674
+directories from owned `target`, reclaiming 3,131,686,912 allocated regular
+bytes while preserving its root, `target-stable` and all protected products.
+Its clean, signal-free outer ends at 03:56:15 UTC with stage usage
+7,300,530,176 bytes; source/toolchain/reviews and guard limits are unchanged.
+HTTP R3 now binds the accepted native helpers and passes all 39 CPU tests
+with clean teardown at 02:39:11 UTC. Its manifest is `49781f13...`, policy
+`91d2d71c...` and prepared plan
+`981c0991d88692b36d53df47866b0292c16f843d281ffbbe74fdfc7c701b5e04`.
+Preparation is retained. The owner `/tmp/ferric-opt-v6-http.l1xwwb9Z` has six
+exact authorizations and a predeclared AB/BA/AB roster; copies are retained in
+`products/http-r3-launch-r1`, with roster SHA256
+`5f90db3624430bac988c865fb5744e489ece059b0d7f27c93b2cb184d8023642`
+and series SHA256
+`1753e5cb0fd40b7f4b6dcedef54d8dfa506915de26e317515e93c3354a5d17ee`.
+Pair 1 now passes both engines' gates and paired replay, in Ferric-first
+order. Each engine completes ten warmups, thirty measured requests and two
+untimed diagnostics. Ferric's 42 final requests match all 5,376 reference
+token IDs and all output bytes; controller/client cleanup exits zero without
+signals. The sampled KFD census accepts 1,059 observations without proving
+absence between samples. The accepted pair's standalone metrics are:
+
+| HTTP R3 Pair 1 | Mean TTFT (ms) | Mean TPOT (ms) | Measured-span output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric composed | 810.927514 | 69.587059 | 13.265064623 |
+| vLLM 0.28.0 | 20.148123 | 4.367310 | 222.524242491 |
+
+Ferric/vLLM latency ratios are 40.2483x TTFT and 15.9336x TPOT. The summary
+is retained with matching remote/local SHA256
+`d3fa11cce07e0181e155498b72191a47e88a3240abf8cd840dbd5c075c5e788e`;
+paired replay exits zero with empty stderr. This is a provisional result
+within the declared three-pair AB/BA/AB series, not repeated-start acceptance
+or a vendor win. Pair 2 also passes both engines' gates and paired replay,
+in vLLM-first order with the same complete request scope:
+
+| HTTP R3 Pair 2 | Mean TTFT (ms) | Mean TPOT (ms) | Measured-span output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric composed | 811.403565 | 69.185620 | 13.335104493 |
+| vLLM 0.28.0 | 18.835039 | 4.349581 | 223.905212947 |
+
+Its locally retained summary SHA256 is
+`e74214f1923eac3bbda26ae13acdaae0d0a2d1011ec3aa3cfce52338d5da4c97`.
+Pair 3's Ferric start fails on foreign KFD activity, with
+`timing_admitted=false`. Cleanup completes but requires forced shared-client
+cleanup; the third vendor start is not launched. The foreign process later
+exits without integration-lead signals. The immutable three-pair campaign is
+incomplete, with no series win. Both successful pairs and the failed third
+start remain evidence. The immutable aggregator exits one with
+`rejected-series`: two accepted pairs and a missing third pair summary.
+Its retained output SHA256 is
+`962bce221f76fee67bb40a71bd9e0302095eba742f60885ef0b6cd1fc2e03159`,
+and the failed Ferric receipt is
+`c8a69e6f21cc9fe08d161617ef4a100630bc32674270d6634bb49bf60e4bbe11`.
+The series is not repaired by substituting a start or historical V22 samples.
+Repeating unchanged software is deferred in favor of optimization. Retention
+R2 passes all seven remote CPU tests in 0.034 seconds, with clean, signal-free
+guard completion at 03:31:25 UTC and the complete outer receipt retained
+locally. Helper/manifest hashes remain `44a740e0...` / `5fd7fd91...`. Actual
+GPU-host retention subsequently exits zero for 390 input files / 17,630,313
+bytes. The locally retained archive SHA256 is
+`d6a4af0eb6fb7c2fa21bf9a3005cec051cb7813eb5fc605aaee49e1b0f109e4e`,
+and manifest SHA256 is
+`6c358f87d86e0e1a9ab1554a4499dbec99b73ac5dafaa0e0c93108fa291a0690`.
+Checksums match the remote file; all 391 archive members / 17,827,720 bytes
+pass the complete local member audit with no extras, omissions or extraction.
+Independent metadata review confirms checksums and the member-name roster.
+The launch record is explicitly an operator transcription of the tool result,
+not separately captured stdout/stderr or independent attestation. Failed and
+unlaunched attempts remain distinct. No timing readmission occurs. A later
+HTTP-only cleanup attempt fails before intent or deletion on the same-UID
+systemd process 634685's unreadable `/proc/634685/cwd`. Its retained result
+records `accepted=false` and zero removed files/directories; stdout/stderr
+and the complete external attempt are retained under
+`products/ferric-http-r3-cleanup-r1`. No workload signals are sent, no no-use
+check is relaxed, and the HTTP/native stages and model remain untouched.
+Actual original user-confirmation evidence is retained and hash-checked as
+`products/composition-r6-inputs/user-confirmation.json`, SHA256
+`6dcbd931b3ff6aee9db483b6485ceb3543a5bd4c6ff0bafaaa763e88b158d2a2`,
+for exact per-engine authorization by the integration lead. It is not a
+replacement for native acceptance, fresh admission or the authorization gate.
+Capture R3 at 91d fails cleanly in `cli-focused`, with nine tests passing and
+one formatting-sensitive source-string assertion failing. Its complete failed
+archive is locally/remotely hash-verified at
+`3c5a2ab0ceeaa8d34beb2a8ac2e614668dd8a0051d3fd92eb2ab1bf39e45c303`.
+The reviewed correction changes only the test to inspect AST call order.
+R4 remains an unstaged, unrun 91d checkpoint. R5 is based on
+`c60cd746e63b34b9072a493744d73b87ed1defc3`; actual fresh staging, 13 recipe
+tests, preparation and CLI build pass. R5 `compile-backend/a001` then fails
+on a stale R3 dependency artifact reported `fresh: true`, despite the API
+existing in current source. The earlier CLI pass is not proof of the current
+dependency closure. Following verified R2 cache retirement, the clean-cache
+CLI build/compilation and backend compilation pass at `a002`; extractor and
+policy compilation pass at `a001`. Focused CLI/backend/extractor tests pass
+10/7/2 cases; selected regressions pass 27/195/24 tests, with 91 inherited
+backend ignores. Source policy passes five tests with one inherited ignore.
+Strict `cli-clippy/a001` fails cleanly at 04:27:05 UTC on two unchanged
+upstream `fe2o3-kernel-ir` warnings: `chain_v1.rs:250` has eight arguments and
+`local_frame_effects_v1.rs:686` has a nonminimal boolean expression. The full
+inner review and failed outer are retained; no signals or cleanup errors
+occur. Backend Clippy, final backend build and producer retention remain
+unrun. No complete successor producer or emission pass is claimed.
+Latest observed main is `ecdbf612265e81395531184063c2bb33b3f6062b`.
+The retained content audit finds only three JavaScript debugger-script/test
+changes from c60, with identical `crates`, `Cargo.toml` and `Cargo.lock`
+Git objects. It does not relabel the c60 producer or constitute a new build;
+the new JavaScript tests remain unrun and any core main push requires fresh
+fetch/rebase. The nine normal KFD crate trees remain identical to 5e2, so the
+actual dd6 worker retains its 5e2 producer identity. Private packed-u32 GEMV and pair-only CPU
+proposals have 16 and 14 written, unrun tests respectively; the pair recipe's
+old R3 capture binding needs a successor before consuming R5 evidence.
+The HTTP R3/Composition R6/Model R8 site content and assertions are updated
+and reviewed. Its 34-file archive is frozen at SHA256
+`111ce8f63f926d26dfb95f4bf80a3a37d6d754a5e0280ca9534d876fd6262d0f`.
+Remote preparation passes cleanly at 03:51:37 UTC and a standalone
+`validate.mjs` structural/claim check at 03:52:59 UTC, with both outer
+receipts retained. Full npm/browser QA, the 64 standard and 49 supplemental
+captures, visual review and fresh publication gates remain unrun. The public
+static site and its matched scoreboard remain unchanged; the rejected HTTP
+series and both individual losses do not establish competitiveness.
+
+## Historical V5 Checkpoint
+
+Matched optimization V5 has completed a new sequential Ferric V22 packed and
+vLLM HTTP pair on mi350 physical GPU 0. Both raw receipts and paired replay
+pass correctness, sampled ownership and cleanup checks. The shared monitor
+passes 22 CPU tests on mi300x-2. This is a finite cohort, not sustained
+throughput, a vendor win or serving qualification.
+
+| Engine | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric V22 packed | 2329.922 | 83.598 | 9.885898 |
+| vLLM 0.28.0 | 18.636 | 4.252 | 228.904359 |
+
+Ferric has 19.66 times the mean TPOT and 125.02 times the mean TTFT in this
+cell. All thirty measured requests succeed per engine, but there is no win.
+Paired summary SHA256:
+`0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07`.
+
+Both cohorts use the same SSE client and Qwen3-8B TP1/C1, 128-input/128-output
+cell with context 8192, BF16 decoder and FP32 output-head profile, speculation
+and prefix caching off, ten excluded warmups, thirty measured requests and two
+untimed output diagnostics. Ferric uses the retained V22 packed controller
+`faf1aaa8...` and historical `f68e4219...` worker built against runtime
+`5ed3840a`; later compiler/runtime adoption does not relabel these products or
+the existing kernel-image producers. No new TP8 or SGLang result follows.
+The fixed order is vLLM then Ferric, one server start each. TTFT is client send
+to first nonempty text; TPOT is first-to-last text time divided by 127, not true
+token ITL. Output rate includes gaps and drain across the measured window.
+Ferric checks token IDs for all 42 requests; vLLM checks token IDs in two
+untimed diagnostics and decoded text/usage for 40 timed requests. Cleanup and
+GPU idle postflight pass. Replay compares retained pre/post model and image
+hash receipts; it does not independently rehash the model. There is no stable
+tail, confidence interval or stock BF16-output-head comparison claim.
+
+The prior V17 pair remains retained at summary `11c761a2...`: Ferric
+114.619 ms TPOT versus vLLM 4.232 ms. The new Ferric result is lower, but the
+two campaign rows are not a controlled V17-versus-V22 A/B. The separate native
+V22 A/B remains the evidence for its observed 11.63% TPOT reduction.
+
+| Team | V5 Progress | Next Dependency |
+| --- | --- | --- |
+| Measurement / integration | New V2 pair and replay accepted: Ferric 83.598 ms TPOT versus vLLM 4.252 ms; all 30 measured requests succeed per engine | Still 19.66x TPOT gap; evidence archived, further kernel optimization and repeated-start validation pending |
+| Kernels | V25 native retry passes all1,024 IDs; small cohort observes10.20% lower TPOT and8.95% higher output rate, TTFT1.25% worse; exact28-path opt-in source imported privately. V26/V27/V29/V30 pass c4c CPU checks; MFMA diagnostic passes40 native cells but all15 comparisons favor Wave | No new HTTP/vendor win. New-kernel emission needs nightly restoration; d10 import/preparation passes but its first test build reaches the unchanged stage reserve, later phases not admitted |
+| Compiler / runtime | Four-file vendor fixture repair built and four exact tests pass; rebased core fix pushed as 7dfbe5cc with CI skipped; identical upstream Clippy errors retained | Limited engineering emission only; no strict backend lint or formal qualification |
+| Engine completion packing | V22 privately committed as60153b82 after remote CPU checks, strict test Clippy, release build and native A/B; all1,024 output IDs match; short cohort observes11.63% lower TPOT; new matched HTTP pair accepted | No implementation push; still slower than vLLM, repeated-start validation remains required |
+| Larger runtime groups | Core ordered64 passes CPU/Clippy/build and251-packet native chain with594 guard checks; published to fe2o3 main d10f49bf after rebase, CI skipped; actual616-command packing,20-header decoding and both strict bridge Clippy commands pass | Original test failures retained; model integration and timing pending |
+| Runtime diagnostics | Instrumented V17 R2 accepted: all 256 output IDs match, 270 batches and 166,278 dispatches; execution and owned cleanup pass; 14 harness CPU tests pass, original fixture failure retained | Isolate operation-level costs; overlapping waits/currentness do not establish removable delay or an HTTP optimization gain |
+| Verification | Existing proof status unchanged; no new proof or M1 gate closure | Keep engineering observations separate from proof and protected-runtime qualification |
+| Site | Latest matched HTTP loss is live at static-only57db8612; remote responsive QA/64 captures, seven reviewed supplemental captures and15 publication tests pass; deployment35430034786 succeeds, all seven live files match | Original failures retained; private implementation and raw evidence remain unpublished; no GitHub build |
+
+The latest V25 focused retry retains status125/return-9 after the stage reserve
+is reached; its guard does not qualify detached cleanup. A later read-only check
+finds all known PIDs and the recorded process group absent, without relabeling
+the failure. The c4c kernel library and isolated adapter build script complete;
+the engine library and adapter tests still require a successful build. Five
+obsolete test executables and23 obsolete normal executable products are removed
+only after checksum-verified local retention, reclaiming about288MiB. Current
+libraries, current compiler tools, source and failure records remain intact.
+The unused nightly installation is separately removed after all5,603 file hashes
+match its retained local archive, reclaiming1.70GiB; V25 uses the preserved
+stable toolchain. The unchanged-source focused retry passes11 Rust tests and six
+receipt tests with a clean guard; ABI passes two tests with one explicitly ignored
+actual-image test, which remains scheduled separately. Future
+nightly emission requires restoring that exact installation. The10GiB
+stage cap and512MiB reserve are unchanged. The fixed-cadence ownership census
+passes22 deterministic remote tests and independent source review. Both engines
+use the same500ms sampling policy with sticky failure for observed foreign,
+unreadable or reused PIDs, bounded gaps and retained journals. This is sampled
+detection, not proof of absence between samples. Fresh V2 plan71855e76 passes
+preparation without launching a server; old vLLM timings cannot fill its new arm.
+
+The V2 vLLM arm subsequently completes with clean cleanup and an accepted
+192-sample ownership census (maximum gap 500.081 ms). Ferric also completes
+cleanly under the same plan; paired replay accepts both complete raw cohorts.
+Both earlier contention-rejected Ferric attempts remain rejected and retained.
+
+V25 shapes and bridge checks finish cleanly, but each takes about 315 seconds
+around a sub-second Cargo invocation. Review identifies 1,066 repeated source
+inventory walks in an ordinary phase. A successor caches only within one
+validation boundary and keeps separate fresh initial and final validation.
+The old loop was stopped by holding its build lock between phases: actual-ABI
+never admitted a child and has no result directory. This is not a status-125
+test failure, and the two real passes will not be relabelled. The successor's
+13 helper tests and preparation pass. Actual-ABI then passes the V21 and V5
+image tests but rejects a misnamed third selector that ran zero tests. This
+status-1 failure is retained; a separate exact-name retry is being prepared.
+Ordinary CLI passes 50 tests with five ignored. Legacy V17, V22 and diagnostic
+CLI checks pass 48, 50 and 51 tests respectively, each with five ignored.
+Source-policy passes 40 tests, and the library passes 398 with nine ignored and
+the known memory-heavy test explicitly excluded. Normal strict Clippy passes;
+test-target Clippy fails on one redundant closure and six missing semicolons
+in two test modules. The clean status-101 failure remains retained. A narrow
+test-only successor passes its six helper tests, eleven artifact tests (four
+ignored), eleven split tests, all three actual-image ABI tests, strict
+test-target Clippy and the release build. Six retention-policy tests also pass.
+Unchanged production checks are reused explicitly; the heavy-test exclusion
+remains. Controller593d8077 and build receipt5fffef64 stage successfully on
+mi350. A native baseline/split A/B under planc78bcec2 starts after a fresh
+all-eight-GPU idle check. The baseline checks512IDs, but a foreign TP2 worker
+arrives during the candidate; the supervisor rejects125/-9 with unqualified
+immediate cleanup. Later all five known owned PIDs are absent without extra
+signals; no foreign job is touched. The failure remains rejected and retained
+in archivedf7fcb14; no paired parity or speed result is claimed.
+
+A separate fresh V25 retry subsequently passes. Baseline versus split8 observes
+86.710 versus77.867ms native TPOT,2303.258 versus2331.938ms TTFT and9.612678
+versus10.473148 output tokens/s. One warmup plus three measured requests per arm
+are fixed-order, not an HTTP/vendor comparison. Independent raw review verifies
+all1,024 IDs, decoded text, timing arithmetic and counters. Reportcc9fc050 and
+archive3b967c53 retain both arm TERM/KILL flags: the frozen helper observes normal
+exit0 and a leader-only zombie before signalling the reserved group and reaping.
+Outer cleanup is normal and signal-free; no owned GPU job remains. The first
+attempt is still rejected. The exact28-path tested opt-in overlay is imported
+privately; existing defaults remain unchanged and there is no implementation push.
+
+Latest-SDK follow-through imports fe2o3 d10 and passes V26 revision-only source,
+lock and metadata preparation. Compilation then reaches the private stage
+reserve at10,193,813,504bytes: status125/return-15, TERMtrue, noKILL, unqualified
+detached cleanup. Later all four known PIDs and their group are absent. No d10
+test pass or subsequent phase is claimed. The10GiB cap/512MiB reserve remain;
+new emission needs additional headroom and restoration of the pinned nightly.
+
+V27 replaces the serial, single-leader prefill KV copy for an eligible aligned,
+exclusive 16-token page with raw u16 copies across 16,384 lanes. Both natural
+and final-token-first row orders pass CPU checks; defaults are unchanged.
+Retained prefill host spans are 2,282.387 ms across eight chunks, including
+1,889.415 ms in the attention group. These nested host spans are not isolated
+KV-copy or GPU timings. Emission, native parity and end-to-end measurement
+remain required before claiming a TTFT improvement.
+
+The V27 native harness separately passes 26 CPU-double tests on mi300x-2,
+covering ABI, raw-u16 permutations, guard preservation and timing rejection.
+This is not an emitted-image or native GPU pass. Restoring the retained nightly
+toolchain remains blocked by stage headroom: obsolete-backend retention stops
+at an unreadable user-systemd process before export or deletion. That process
+is left untouched, and no resource limit has been increased.
+
+The frozen f68/5ed runtime source routes persistent weights through
+VRAM|WRITABLE|PUBLIC allocations, uploading once into the same GPU-mapped BO;
+there is no application GTT fallback or per-token weight upload. Actual BO
+residency was not captured, so this is source evidence, not measured placement.
+The latest fe2o3 main was rechecked at 7dfbe5cc; historical products retain their
+original source identities.
+
+Accepted runtime diagnostic R2 is retained at report SHA-256
+`01869cfa796365849ef78d950dfef9e22f217996266abcdb8ea08306575c2642`.
+It contains one warmup plus one diagnostic request, not a measured benchmark
+cohort. Worker deltas record 23.000106146 seconds in dispatch waits and
+1.906193930 seconds across operational/full currentness scopes, against
+24.896958489 seconds of command time. The scopes overlap and are not additive;
+wait includes GPU work, polling and scheduling rather than GPU time alone.
+The interval includes warmup and snapshot overhead, so it cannot yield
+measured-only TPOT or HTTP throughput. Both process leaders inherit CPUs 0-255,
+nice0/priority20; these observations are not a scheduling trace or a controlled
+comparison with the earlier one-core/nice19 profile. V19 native correctness
+and operation-level isolation take priority; the duplicate-fence candidate
+remains unactivated. No new competitive or proof claim follows.
+
+V19 adapter validation passes 376 library tests with seven ignored and one
+explicit exclusion: the existing twenty-row resident-roster test exceeds the
+unchanged 4 GiB RSS limit, even when isolated. Failed receipts remain retained;
+there is no full-suite pass claim. Actual-image admission, strict Clippy,
+legacy CLI regressions and source policy pass. The accepted native A/B report
+is `93817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3`.
+The short fixed-order A/B is noisy and not HTTP or a vendor comparison.
+V19 remains opt-in; its default is not promoted. The operation-level diagnostic
+passes 19 remote CPU tests and all twelve native cells with complete pre/post
+input, output and guard checks. At group size 16, worker wall time per packet is
+16.341 us for residual, 239.570 us for attention at context 192, 47.626 us for
+width-128 Q normalization and 167.854 us for down projection. Larger groups
+amortize overhead, but heavy operations remain distinct. These synthetic
+cache-hot timings are not GPU durations or model/HTTP performance claims.
+Accepted report: `421e0964c3dce1eb4c4aa59f764811106590387be05eea4c70acdca5df794907`.
+
+The same thirty measured HTTP requests retain controller mean TPOT
+114.622051 ms versus client 114.619229 ms, with a maximum absolute per-request
+difference of 0.004851 ms. The cross-run gap from short native results is not
+evidence of 30 ms/token of post-completion HTTP delivery delay. Controller
+TPOT within the HTTP run rises from 94.153257 ms for requests 2..9 to
+112.332222 ms for 10..11 and 114.622051 ms for measured 12..41. This is
+observed drift, not proof of a request-age bug; scheduling and synchronous
+stdout backpressure remain hypotheses. The old HTTP record lacks individual
+batch events, so active execution cannot be separated from inter-batch gaps.
+
+A distinct steady-native proposal preserves the frozen HTTP f562 controller,
+f68 worker and five images. It uses one pre-diagnostic, ten warmups and three
+measured requests at the same ordinals 12..14, retaining all output/batch events
+and bounded CPU/RSS observations without changing affinity or priority.
+Thirteen focused CPU tests pass, followed by all fourteen native requests.
+Measured mean TTFT is 2313.017469 ms and TPOT 84.534652 ms. Ordinals 4..14 stay
+near 84..85 ms, so the historical HTTP drift is not reproduced by request age
+alone. All 1,792 IDs, 1,890 batches and 1,163,946 dispatches match. Raw events,
+CPU/RSS observations and clean exit receipts are retained. Offline replay
+passes twelve CPU tests and actual evidence validation: 84.528997 ms/token
+inside decode batches, 0.005657 ms/token between them, stable measured RSS.
+Stage A has reached its unchanged 10 GiB minus 512 MiB reserve and receives no
+new builds. V20's first strict Clippy attempt was space-terminated; its retry
+in existing stage C passes. V21's twelve tests and strict Clippy pass there
+as well. No guard limits are relaxed. The four-file compiler fixture repair
+builds and passes four focused regressions, without a vendor overlay. Strict
+Clippy fails before the backend on two unchanged dependency errors, reproduced
+identically by clean baseline and patched structured runs; this is not a lint
+pass. A limited engineering receipt permits experimental emission. The fix is
+rebased onto latest upstream and pushed as 7dfbe5cc with CI skipped; its clean
+temporary worktree is removed after retention. V20 emits and its scoped actual
+ISA review passes after distinguishing integer-index division from GEMV math;
+eight review-checker tests pass and the original overbroad rejection is retained.
+All twenty V20 native cells pass exact parity and cleanup. The isolated partial
+GEMV improvement is not a model or vendor win. V21 emission rejects its NaN
+fallback constant; a four-sentinel infinity correction awaits thirteen fresh
+CPU tests/Clippy and emission, without relaxing any compiler check.
+The first corrected-source test attempt reaches the unchanged space reserve;
+its status-125 failure is retained. After local evidence retention, unused
+nightly compiler debug cache is removed under the build lock (1,964,836 KiB),
+with copied-tool hashes intact. The thirteen-test retry and strict candidate
+Clippy pass under the same limits. Extraction then succeeds, but emission stops
+before HSACO creation because the LLVM worker's gfx950 device-library directory
+is absent; read-only runtime-path diagnosis is underway. The completed V20 GPU
+stage is removed after archive verification.
+V23's opt-in full-model integration passes independent source review after a
+test-only type correction; remote compilation and native acceptance are pending.
+The split-attention native harness passes nineteen
+CPU tests after a retained test-only fixture failure; two source reviews pass.
+V22 source and its native harness have independent reviews; six focused and
+twelve harness CPU tests pass. Broader regressions, build and GPU parity remain
+pending. Historical images and the matched HTTP baseline
+retain their pins. None of these candidates has a performance gain claim.
+
+All builds and CPU tests remain on mi300x-2; GPU validation remains on mi350.
+V5 site deployment `35411581137` succeeds, with no GitHub build. Private inference
+implementation, this tracker and raw evidence stay outside the Pages branch.
+All 33 M1 gates remain open.
+
+### Historical V4 Checkpoint
+
+The user-requested [performance swarm V4](M1_PERFORMANCE_SWARM_V4.md) is
+implemented privately at `1fc45a52`. Core-only runtime work is published on
+fe2o3 main at `5ed3840a`, after rebase and remote validation, with CI skipped.
+The final-pin adapter passes 367 release library tests (six ignored), 41 V17
+binary tests (four ignored), four composition tests, two real-metadata packing
+tests, strict Clippy, 39 source-policy tests and 48 source-gate tests. Runtime
+validation passes 494 CPU tests with one hardware ignore. All builds and CPU
+tests run on mi300x-2; no local or GitHub build is used.
+
+The four-arm mi350 TP1 probe completes all 16 reference-matched requests. With
+one warmup excluded and three measured requests per mode, combined V14/V15
+records 84.55 ms TPOT and 9.83 output tokens/s versus baseline 135.85 ms and
+6.43 tokens/s. These are fixed-order controller-ingress diagnostics, not HTTP,
+sustained throughput, TP8 or a vendor win. V14 alone differs by less than 1%;
+runtime and packing gains are not isolated. Independent raw replay and six
+audit tests pass. The [project site](https://harsh-nod.github.io/ferric/) is live
+at static-only commit `329a86b4`: remote structural/negative checks, widths
+320..1440, eight named viewports and 64 screenshots pass, and all seven deployed
+files match the validated artifact. Defaults, historical results and all 33
+open M1 gates remain unchanged. The obsolete clean core and Pages worktrees
+and 2.2 GiB of remote debug products
+have been removed; both completed GPU stages are also removed after retention.
+Active worktrees and model files are preserved. The final CPU archive is
+checksum-verified locally. Roughly 6.2 GiB of CPU-stage data remains on mi300x-2:
+cleanup stops because the host's same-UID systemd manager is not inspectable,
+so complete no-use admission is unavailable. No deletion guard is bypassed.
+
+### Historical V3 Checkpoint
+
+The user-requested [performance swarm V3](M1_PERFORMANCE_SWARM_V3.md) is active:
+runtime profiling, opt-in draft kernels and same-eight-GPU comparison reporting
+have source implementations. On user-authorized mi300x-2, the combined Python
+suite passes 115 tests and the stricter profiler passes retained C1 replay.
+The isolated draft kernel passes 14 tests, formatting and Clippy on the existing
+46d pin, intermediate 47d and frozen fe2o3 main f713; only that candidate adopts
+f713. The main adapter's compiler adoption and native emission remain pending.
+At 17:59:43 UTC mi350's driver/device nodes
+are restored and all eight GPUs report idle. This supersedes the driver blocker
+below, not its historical observations. mi300x root available space remains
+zero; the authorized build-host redirect supersedes that execution blocker.
+No new native result or performance gain is claimed.
+
+| Team | Implemented Or Validated | Next Dependency |
+| --- | --- | --- |
+| Engine | Fresh S8/T128 bootstrap and first S8/K4 round; 781 CPU tests pass on the retained R3 source; expanded tests and typed close status remain unvalidated | Validate admission/close tests and ignored public S8 hardware fixture |
+| Numerical | Explicit arithmetic capture; CPU checks pass; authenticated retained-reference reuse passes 11 regressions | Fresh native captures and recomputed tensor errors |
+| Compiler/Runtime | Validated 46d adapter adoption; newer f713 compiler delta reviewed and isolated v16 host checks pass | Full-adapter adoption, fresh compiler tools and kernel emission |
+| Verification | Retained R3 source coverage passes with 52 new bodies pending-Verus; six close-status bodies newly declared pending | Regenerate current coverage, then body proofs and protected-runtime qualification |
+| Site | R29 CPU progress draft committed; historical results keep their attribution | Move bounded QA to mi300x-2; deploy-only publication pending |
+
+The selected native GPU host is `mi350`, not `mi350-2`. SSH succeeds on
+September 18. Before the reboot described below, a passive observation finds
+a separate Ferric process on physical GPUs 0 and 1; that work is left untouched.
+The completed host-residual pair uses physical GPU 2, with a separate fresh
+admission for each arm.
+Availability snapshots are not reservations or launch admission. Builds and
+CPU tests now use user-authorized mi300x-2; no local or GitHub-hosted build is used.
+
+At 15:34--15:35 UTC, a fresh passive observation reaches the same mi350 host
+after a reboot (reported uptime two minutes). All eight accelerators remain
+visible on PCI, but amdgpu is not loaded, /dev/kfd and KFD topology are absent,
+and DRM exposes only the display adapter. No driver or host configuration is
+changed. Earlier device mappings and idle observations are historical; native
+launch requires fresh admission after the device nodes return.
+At 15:45:35 UTC the host reports 13 minutes uptime and the same absent driver
+and GPU nodes. Another passive check at 16:07:00 UTC reports 34 minutes uptime
+and still no amdgpu, /dev/kfd or KFD topology. The user has been asked whether
+host bring-up is still ongoing; no driver or host configuration is changed.
+At 16:17:32 UTC, SSH still succeeds and uptime is 45 minutes, but the same
+driver and device nodes remain absent. No native launch is attempted.
+At 17:01:44 UTC the host reports 1:29 uptime and still has no amdgpu,
+/dev/kfd or KFD topology. No driver changes or native launch are attempted.
+The final passive check at approximately 17:09 UTC confirms the same missing
+paths; SSH itself remains usable.
+
+### Current Resource And Publication Blockers
+
+The R29 site update is committed locally as `3224600e926cc5b2602e10500384370071ca9388`.
+Its four source files cover S8 bootstrap, explicit arithmetic capture,
+authenticated retained-reference reuse and the dated mi350 availability
+observation. Existing performance results keep their original attribution.
+The public site remains the previously deployed R28 artifact; R29 is not
+published and its full application/render checks have not run.
+
+The R1 syntax and lifecycle preflights pass on mi300x. After the narrow R2
+launcher adjustment, the R2 syntax phase stops before child execution at
+15:58:26 UTC: root free space is 21,151,716 KiB, below the unchanged
+23,068,672 KiB (22 GiB) floor. Wrapper status is 125 and cleanup status is zero.
+There is no child command status or group-after record because no child starts.
+R2 lifecycle and the main QA campaign do not run. All three actual preflight
+directories are retained locally; no missing records or successful outcomes
+are synthesized. A later passive observation at 16:01 UTC reports only
+12,857,908 KiB free on the shared root filesystem. Builds and tests are paused
+without lowering the admission floor or reusing the earlier reserve exception.
+The 16:19:19 UTC passive check reports 12,561,140 KiB root free and
+42,151,324 KiB tmpfs free; the root floor still fails.
+At 17:01:37 UTC, root available space has fallen to zero KiB (100% used).
+Tmpfs still has 43,352,376 KiB free and MemAvailable is 1,629,155,412 KiB;
+neither substitutes for the root-filesystem admission requirement. No build,
+test, coverage generator or application validation is launched.
+The approximately 17:09 UTC check again reports zero KiB root available.
+
+A read-only cleanup review identifies three old Cargo target directories under
+/home/harsh: ferric-m1-fe-416ef90d-ignored-target (3,113,172 KiB),
+ferric-m1-fe-e7be5c96-ignored-target (4,270,260 KiB) and
+ferric-target-m1-binder-ba666ef-debug (257,444 KiB). Although all are owned by
+the expected user, authoritative redundant-product custody is not established
+and lsof reports incomplete visibility. None is deleted. A follow-up filesystem
+check corrects the earlier hypothetical reclaim calculation: all three targets
+are on the separate /home volume, device 64513, not the root filesystem,
+device 66317. Deleting them would recover zero root-filesystem space.
+Five current-user Ferric directories directly under /tmp, which is on root,
+total 1,006,724 KiB and contain mixed controls/evidence. The only inspected
+generated child, /tmp/ferric-kv-v5.sFL42Paq/target, is 102,640 KiB; redundant
+custody and complete no-use admission are not established. No deletion is
+performed, and this bounded inventory cannot resolve the root-space deficit.
+
+A further read-only UID-1002 /tmp survey finds 226 directories matching
+fe2o3*, fc-*, cargo*, rust* or kernel*, totaling 20,072,124 KiB, plus
+488,520 KiB of matching regular files. The entire prefix scope is only
+19.61 GiB and includes source/evidence, not just disposable output. Four
+inspected projector Cargo target children total 2.88 GiB; their parents contain
+Git/source/perf-evidence, and complete no-use and redundant-product custody
+are not established. All eight inspection sessions finish with exit zero.
+Nothing is deleted; this review does not establish a 22-GiB recovery path.
+
+The local worktree review preserves both remaining candidate checkouts: the
+BF16 logical-sampler branch contains a unique unintegrated commit, and dispatch
+scratch contains substantial uncommitted scheduler changes. Neither is redundant;
+no worktree is removed and no new worktree is created for this checkpoint.
+
+### Current Compiler Source: 46d
+
+Ferric `8d66a6e35df1a46e22e984a95d968439253ae566`, tree
+`44421d4d931f7beea8cd28e8fc2f5969135922d9`, adopts fe2o3
+`46d189e5ca1c8d214d1abaf09e02f99f66e7917a`, the main tip observed when
+this campaign was frozen. The prepared 7e4 campaign was never launched:
+upstream advanced by one compiler numeric-cast/native-output commit, with no
+additional dependency, runtime/KFD or LLVM-worker change. Both unused empty
+7e4 remote owners were removed.
+
+All 50 main phases and nine preflights pass on mi300x, including 48 source-gate
+tests, 32 locked graphs, four inventories and normal source coverage. The
+80-file update adds exactly one reviewed lowerer-to-descriptor dev declaration
+and its combined-inventory counterpart. Runtime inventory, property binder,
+coverage and all other source remain unchanged. Independent review checks
+all 185 phase resource observations against the original limits.
+
+The 25,968,954-byte archive has SHA256
+`41e5d091e10e2f2358205b1fc7de0038f3a0804f665ed0f0c826aba0d0f8695b`.
+Retention and independent audit pass: 2,206 payloads, 2,207 safe members,
+23 external records, exact nanosecond metadata, both fresh source-gate ELF
+producers, 1,195-file original/final censuses and the exact patch. Fresh absence
+checks cover 125 recorded process entries. An initial external hash ledger
+included itself and was rejected and corrected before audit; payloads were
+unchanged and the rejected ledger remains separately retained.
+
+This is compiler source adoption, not rebuilt native compiler/worker/kernel
+products or new GPU results. Historical a167 CPU and 6f native evidence keeps
+its original provenance.
+
+A subsequent main-tip check returns `930342d945eae1d69bdbec025614bccaeb850ad5`.
+It directly descends 46d, adding checked-output F32 exp admission and compiler
+tests. No root manifest, lockfile, toolchain, runtime/KFD or LLVM-worker input
+changes. Ferric remains pinned to the validated 46d snapshot while the narrow
+930 adoption is prepared; the disabled 46d compiler build is not launched.
+
+Independent static review of the disabled 930 adoption finds and resolves
+three stale donor assumptions: an already-present DEV declaration was still
+being reconstructed as new, the auditor expected pre-S8 coverage, and the
+retention wrapper retained an enabled 46d sentinel. The corrected auditor
+requires revision-only TCB bytes, the existing declaration exactly once, and
+coverage `90e6e192f95775417411db7c23a24ae86401c8651839750b16a7cc81e6156a9b`.
+The retention wrapper now has COMPILER_930_READY=false. A second independent
+static review finds no remaining blocker in those edits, and both manifest
+payload checks pass. Remote validation and all actual outcome bindings remain
+pending; the compiler source pin is still 46d. The corrected audit manifest is
+`5df5e1a1bd0a6eda652e169cc19b4bcbbc88b5dd9e2b4bfd262f6065de7d2023`;
+the disabled retention control ledger is
+`24c8d34c15d32ff85782991561245a179a940fe3aa9557bc82e74396b1a93d86`.
+
+The next upstream check fetches fe2o3 main
+`3f53122fe08d9462f2e811927db3ef5bacecdc1a`, tree
+`8e30b417f5e7146db2aef0ba2c4b7214da0e3a29`. Its single-commit delta from
+930 contains 112 files, adding checked private-load forwarding and bounded
+scalar-helper expansion. It also advances Pliron from
+`cc902cc8c669b5de2b292ae8638d9e8311bc735b` to
+`7ebf6e6638c2a3bcec179423993b01211a9689b4`. Therefore the disabled 930
+revision-only proposal is not sufficient and is not launched. Independent
+static review identifies 58 existing Pliron package-source substitutions across
+29 Ferric lockfiles, matching source-gate/producer constants and existing TCB
+rows. No additional dependency rows or lock-edge promotions are identified;
+the property-binder exception, runtime inventory and coverage remain unchanged.
+The reviewed authorized macro closure is
+`56bb6c0704b781694e0eb11c3cbe883bdf1c8778f22b5a05b877a7531a364d58`.
+Runtime/KFD, HSA, device, AMD target, toolchain and LLVM-worker subtrees are
+unchanged across this delta. No concrete Ferric caller signature change is
+found. This is source review, not dual-pin adoption, tests, rebuilt products or
+new kernel emission; Ferric remains pinned to validated 46d.
+
+### S8 Test Candidate: Not Yet Validated
+
+Commit `07ed9c0f26cb3dfa38d1971631c6091406ed3cde` adds seven net CPU test
+functions to the bootstrap module, bringing its declared total to 13. The
+public addressless constructor is exercised against invalid roster and policy
+counts, prompt widths on all eight lanes, vocabulary boundaries, context
+overflow, equal-but-wrong workspace shapes and identity drift in either
+workspace copy. Rejections assert unchanged prompt/policy values and the
+original Vec buffers and boxed-plan allocations. Upper-bound positive cases
+and every admitted live count are also represented.
+
+The same commit adds the ignored hardware fixture
+`admitted_mi300x_runs_public_s8_prefill_and_mixed_first_round`. It reuses the
+singleton fixture's authenticated aggregate/model/KFD setup and calls the real
+public S8 bootstrap, physical prefill, first-round schedule, preparation,
+publication and completion APIs. Two ordered live requests occupy the physical
+eight-lane shape; the fixture asserts a continuing first member, a
+Deadline-cancelled second member and the exact next-active roster. At this
+commit it invokes close without asserting queue release; the subsequent typed
+close candidate below adds that assertion. Its inherited 1,000-ms per-queue
+wait remains untested for this shape.
+
+Independent static reviews find no concrete source/API blocker. Both edited
+files have byte-identical production prefixes before cfg(test), and git diff
+--check passes. Formatting, Clippy, compilation and test execution have not run
+because of the remote root-space admission failure. The ignored fixture also
+requires admitted exclusive gfx942 hardware and protected inputs; it cannot be
+validated by a CPU mock or counted as gfx950 evidence. These source additions
+do not replace the retained 781-test result, close the physical lifecycle
+coverage gap, or promote any M1 gate. No local or GitHub-hosted build is used.
+
+### S8 Close Status Candidate: Not Yet Validated
+
+The new M1AuthenticatedS8CloseV1 replaces the opaque Debug-only result on all
+five explicit S8 close/cancel methods. Callers can observe whether native queue
+release succeeded, whether that permits successful stopping, and the separate
+logical Engine quarantine state. Constructors and retained owners remain
+private; the result cannot be cloned or split. Release status comes from the
+existing lower teardown Result or failure disposition, not the Engine flag.
+Lower teardown/abort order and retained-owner drop order are preserved.
+Independent source review finds no concrete queue-status or ownership
+regression across the five paths. No NoQueue state applies to these owners.
+The public return-type change requires adjustment for external callers that
+explicitly expect Box<dyn Debug>; no incompatible in-tree caller is found.
+
+Four unit tests cover release/quarantine classification, retained non-Debug
+owners, relative drop order and all five public method return types. Two
+compile-fail examples cover attempted cloning and owner extraction. The ignored
+public S8 hardware fixture now requires queue_released and permits_stop_success
+after closing its first completed round. These tests and the hardware assertion
+have not run; none supplies new physical queue-release evidence yet.
+
+The six new production bodies are explicitly pending-Verus in
+proofs/UNVERIFIED_BODIES. The generated proofs/VERIFIED_MODULES file is left
+unchanged until the actual remote coverage generator can run. Current coverage,
+formatting, strict Clippy, compilation, unit tests and doctests are pending;
+the historical R3 coverage pass does not apply to this candidate. Source-only
+git diff --check passes. Independent inventory review confirms all six names
+and pending declarations, with no removed or reclassified old rows. No proof,
+hardware or performance gate is promoted.
+
+### S8 Implementation And Coverage
+
+`411dd0b5d771456fbf73bd7bb1a86094605819ef` and
+`c8b6102e6dc125d686119a29bfa81586747da1aa` repair the existing S8 window's
+coverage inventory: exactly 26 pending-Verus bodies and one module, with no
+proof promotion. R1's missing-admission failure remains retained. All eight
+R2 phases pass, using the authenticated retained a167 source-gate executable;
+this is not a fresh gate build. Normal coverage reports 178 modules and 8,717
+executable bodies.
+
+The engine team has implemented a fresh 1..=8-member S8/T128 bootstrap,
+authenticated prefill settlement and first S8/K4 round lifecycle, committed
+as `7544c3e4`. The numerical team has implemented a separate explicit-arithmetic
+final-stage capture and matching reference parser, committed as `affb1d48`.
+Static review and remote CPU validation are complete. Four formatter warnings
+about the unstable skip_children option are retained, not hidden.
+
+The S8 R1 compile stopped with ten E0277 errors because retained Engine owners
+were placed directly in Debug error containers. The correction uses the
+module's existing opaque custody wrapper and adds a non-Debug owner drop test;
+shared Engine APIs and teardown order remain unchanged. R2 passes preflight,
+extraction, source authentication and formatting, then strict Clippy stops on
+three redundant must_use annotations. All source/control preservation checks
+and owned-process-group checks pass. Neither failed attempt builds or runs
+tests, and their original raw records remain retained.
+
+Those three annotations are removed in the current 1,197-file R3 staged tree
+`390513c7d48f6489ef360f5970ac13551c6b0cb9`, excluding numerical changes.
+R3 passes preflight, extraction, source authentication, formatting, strict
+library Clippy, fresh test build and all eight focused test selections. The
+new modules report six bootstrap and four execution tests passed. The full
+engine library passes 781 tests, with zero failed and nine ignored, in 281.01
+seconds. All 17 phase triples are zero, owned groups are absent, and campaign
+completion is recorded at 2026-09-18T15:10:17Z. The fresh test ELF is 95,106,904
+bytes, SHA256 `828e93fce096ea8525b3c2c284b6228e5cb3b5a130c74285701f22ef947ca97d`.
+The nine subsequent coverage phases pass through the existing F5 wrapper,
+invoked individually without the rejected outer launcher. They add exactly
+52 pending-Verus bodies and two modules, with no proof promotion. Normal
+coverage reports 180 modules and 8,769 executable bodies. Patch SHA256 is
+`79394fa5b8de651d30bba32f3f200b58c4433a074b8c6b32dc12c3302eb66fd1`;
+the only generated source changes are the two proof inventory files.
+These CPU results do not promote any proof or hardware gate.
+The 43,336,433-byte retained archive has SHA256
+`164ffe8a02dd5f4bd96a94edd0f3a557a8e18f2357baaaaed5355d607668c961`.
+Independent static review checks all 467 payload hashes and archived file
+metadata, the full staged source tree, exact test producer, 29 historical and
+current phase records, 61 recorded process identities and 380 resource samples.
+The archive retains both failed attempts. Metadata and process checks describe
+retained observations, not an independent claim about current remote state.
+Initial R1 extraction also rejected Git's
+actual group-writable archive mode before creating any source or target; the
+corrected exact-mode check passes and the original failure is preserved.
+Cleanup of the three completed S8 targets stops before any deletion at the
+first lsof visibility check. Statuses are command=1, cleanup=0, wrapper=1;
+the owned process group is absent. All three target directories remain
+(448,920, 448,828 and 1,386,284 KiB). No visibility requirement is relaxed.
+Source review finds no additional standalone-path blocker, but the tests do
+not yet exercise the complete public physical-submit lifecycle. Resident
+deadline handling and mixed stop-token retirement remain separate service work.
+The new path does not compact a roster containing an initial stop token; that
+case fails closed. Serving admission and all 33 M1 gates remain unchanged.
+
+The independent arithmetic-capture candidate's first CPU attempt passes
+preflight, extraction and source authentication, then stops at a single
+formatter line wrap in the new tests before compilation. Applying that exact
+formatter output yields the separate 1,196-file staged tree
+`7ec5c18bc373e2a6454bd70ea38200e708b0422c` for the successful R2 campaign.
+All retries preserve the original shared-machine caps and 512 MiB build reserve.
+
+R2 passes formatting and strict Clippy, then builds the library test executable
+in 2m20s. The library reports 363 passed, zero failed and six ignored in
+1,053.73 seconds. CLI tests report 24 passed and three ignored; batch tests
+63 passed and three ignored. All 36 comparator and 27 reference-parser tests
+pass, including the unmocked implementation-roster check. All 11 phase triples
+are zero with owned groups absent, source/control checks pass, and the campaign
+finishes successfully at 15:36:35 UTC. This is CPU validation, not a native
+arithmetic tensor comparison. The successful retention contains all three exact
+Cargo test producers and executables, both frozen source/control sets, all 15
+attempt phase directories and both campaigns. Archive SHA256 is
+`8112b0b734f2efba6f6415456ec247ef69cfa0449cb92bf3a5e75f30103971a0`
+(37,652,689 bytes; 253 payloads totaling 126,852,756 bytes). Packaging statuses
+are zero and its owned group is absent. Independent audit checks all 30 external
+hashes, 253 payload hashes, nested source censuses, exact fresh Cargo producers,
+541 resource samples and 32 recorded process identities in retained snapshots.
+The audit finds no blocker; it makes no new remote-visibility claim. Numerical
+build directories have not been deleted.
+
+The next arithmetic comparison can reuse the two authenticated full-sequence
+gfx942 reference passes from September 18, 01:31:35--01:32:14 UTC. Archive
+`72237f9f2257205c46e19514cbb632c2d4a814914162aac793a304b32ad25683`
+contains both residual, normalized and logits tensors for consumed tokens
+`[785, 6722, 315, 9625, 374, 12095]`, positions `[4, 5]`, and the same b968
+Qwen3-8B revision. Both passes are byte-identical; independent static review
+checks all six tensor hashes, producer sources and retained terminal records.
+Reusing these immutable tensors requires matching the model bytes, consumed
+tokens and positions and recomputing new native error metrics. It is not a
+fresh reference run or numerical qualification, and needs no new Torch setup.
+The original public reference entrypoint still runs two fresh GPU passes.
+Commit `e336ac3a` adds a separate CPU-only retained-reference entrypoint that
+authenticates the historical comparison, all six tensors, canonical model
+content identity, complete consumed sequence, positions, original producer
+command/timestamps and implementation hashes before comparison. Both arithmetic
+modes use the same immutable reference bytes, with original attribution kept
+separate from the new comparator's identity. All 11 regression tests pass on
+mi300x in 8.387 seconds. A separate unmocked check admits the actual retained
+11-file input roster, without performing or claiming a new native execution,
+reference execution or numerical comparison. All three validation phases have
+zero statuses and absent owned groups. Fresh native captures remain required.
+
+### mi350 Paired Native Result
+
+Both sequential TP1 host-residual arms complete on physical GPU 2 on
+September 18: old-default from 12:53:45Z to 12:57:36Z and projection-first
+BF16 from 12:58:11Z to 13:04:53Z. The prompt is `The capital of France is`;
+each arm produces token IDs `[12095, 13]` and the exact text ` Paris.`.
+Both use the same b700 release controller, 6f-attributed debug worker, TP14
+artifact, authenticated Qwen3-8B checkpoint and workload. Each performs
+3,264 dispatches, closes its worker and process group, and restores GPU 2's
+idle allocation baseline of 297,766,912 bytes. Foreign GPU 0/1 work is untouched.
+
+The pair checker exits zero and independently reviewed archives agree on
+all fixed inputs and both token and byte outputs. The old-default archive is
+`4b42f42066739cfb1cbcd5dc11c5179890afbea4c6ddb17ecc6c1f8be09b4abb`
+(47,303 bytes); projection-first is
+`135291cbba170244136530d675554e4cc8a31150f0f5ecc099d82dfbba173119`
+(48,081 bytes). Each contains 69 authenticated payloads. Pair JSON SHA256 is
+`f60e3b1f7ba0c41ecdede2ea99459e79d019325312c52db3265c65030e27b694`.
+Launcher script and invocation observations are retained separately and are
+explicitly primary-agent observations, not independent remote attestation.
+
+This is a two-token functional TP1 result, not tensor or full numerical
+parity, gfx942 validation, TP8 inference, a serving qualification, or comparable
+TTFT/TPOT/throughput evidence. Existing GPU products retain their actual 6f
+provenance; the a167 source adoption does not relabel them. All 33 M1 gates
+remain open.
+
+Six temporary executable copies (43,714,848 logical bytes) remain: cleanup
+stops before deletion because a current-user process's mappings cannot be
+inspected. The initial empty-lock file-kind rejection and subsequent visibility
+failure are retained. Canonical runtime, model, artifacts and all logs remain.
+
+### Authenticated Two-Member S8 Window
+
+Ferric `c4e1c6cf4d64debf6560836eb318f3add04e4b87`, tree
+`0b3c54166f7520ffa5c3f908f2f7fbd30f7c2bcd`, adds an exact two-live-member
+S8/T128 paired-prefill replacement-window adapter for the existing S8/K4
+authenticated path. It binds ordered prompts and policies, retains six
+inactive physical lanes, passes only checked live lengths to request-local
+page admission, and preflights the registry before physical publication.
+Pre-detach failures retain retry ownership; later failures retain terminal
+registry and physical custody together.
+
+On mi300x with fe2o3 a167, formatting, strict library Clippy and the fresh
+library-test build pass. The complete retained test executable reports
+771 passed, nine ignored and zero failed in 280.30 seconds. Six focused
+selections pass with nonempty discovery; their counts overlap the full suite.
+All 15 R2 validation phases close successfully and preserve the exact
+1,173-file source census. R1's five lint diagnostics and exit 101 remain
+retained; R2 fixes the checked conversion, boxed input failure and error docs.
+
+The 34,346,172-byte evidence archive has SHA256
+`fd48fc4812bf7576061a6db33e0a66ed0eb51548fcbd0d3c7164fab57959c78e`;
+all 25 downloaded external records verify. Independent review authenticates
+all 394 payloads, exact nanosecond metadata, both source censuses and the fresh
+94,859,608-byte test executable's Cargo producer. All 331 resource samples
+remain within the unchanged caps. The tested target is removed only
+after executable-copy, source and process checks, reclaiming 1,385,584 KiB.
+The earlier failed target cleanup reclaimed 448,812 KiB. Source archives,
+test executable, producer records and failed/successful phase logs remain.
+
+This is not fresh-engine S8 bootstrap. Public-constructor error-recovery and
+complete authenticated physical submit/cancel fixtures remain to be added.
+Singleton serving admission is unchanged; CPU tests do not close hardware,
+formal, numerical, performance or M1 qualification gates.
+
+### Published September 18 Site Checkpoint
+
+The public site at https://harsh-nod.github.io/ferric/ now describes the a167
+source adoption and successful mi350 GPU2 host-residual pair, while preserving
+the existing performance history. Source commit
+`d2672b0ecce4760bc75ddf1a20fb928f04801dcc` restores the previously deployed
+site before applying the five-file status update; the initial stale proposal
+was rejected before QA or publication.
+
+All five R28 QA phases pass on mi300x, including eight fixed viewports and
+every width from 320 through 1440. Independent retention review authenticates
+133 payloads, 34 source files, 64 PNGs and seven deployables totaling 786,106
+bytes. Root reviews six desktop/mobile screenshots. The 11,789,963-byte
+archive is `6da4e4815aed0f59e6e0ad5919f041380f4b151eaa32447504a9a27991d10cfc`.
+Archive mtimes round the retained integer timestamps by at most 216 ns;
+exact-nanosecond tar timestamp preservation is not claimed.
+
+Static branch commit `467b4b866b08a9032c5b5b2a62001a2414e1691a` deploys through
+run `35352811713`, successful at 13:53:07Z on September 18. All seven canonical
+and seven cache-busted public downloads match the validated artifact. GitHub
+only authenticates and deploys prebuilt files; no GitHub-hosted or local build
+is run. Later S8 CPU results and the upstream 7e4 review remain separately
+documented here and are not relabeled as part of that frozen site candidate.
+
+The completed Pages cleanup attempt stops before deletion because scoped
+lsof reports incomplete visibility on shared mounts. Ownership, terminal
+records, six recorded process/group absence checks and archive/control hashes
+pass, but the strict no-warning condition does not. The three owned remote
+stages (52,420 KiB total) and complete failure records are retained; no shared
+cache, browser, system mount or other user's work is changed.
+The independently reviewed local screenshot extraction and clean standalone
+publication checkout are removed, reclaiming 7,920 KiB; the remote static
+commit, source repository and authoritative local evidence remain.
+
+### a167 Compiler Source Adoption
+
+Ferric `dc75d9282690ef16539a2434ed61af59f05eb443`, tree
+`e93d046ca1ac18baa659d375cccd1325fa9c3ec5`, adopts fe2o3
+`a1672a9fcca237d314193add170413718b61bf58`. This supersedes the source pin
+described in the historical 6f1b checkpoint below. It is not a claim that the
+existing compiler tools, worker or GPU kernels were rebuilt from a167.
+
+All 50 main and nine preflight phases pass on mi300x: 48 source-gate tests,
+32 locked graphs, 35 metadata records, four dependency inventories and normal
+coverage validation. The resource preflight includes 44 cases and preserves
+the ordinary 512 MiB compile-entry reserve. The exact 80-file revision update
+adds no dependency edge and preserves the runtime inventory, coverage and
+property-binder exception. All 1,172 integrated files match the audited final
+source census before this documentation update.
+
+Retention and the independent data-only audit pass. The 24,862,660-byte archive
+has SHA256 `9a335233d441a50e60b957117f447d26b475a22df52a1f0c90517aa9a6a3e85b`.
+The audit checks 2,183 payloads, 2,184 safe members, exact nanosecond metadata,
+23 external records, two fresh source-gate ELF producers and both source
+censuses. Fresh absence checks cover 125 recorded process entries. This is
+source adoption, not new engine, numerical, hardware or M1 qualification.
+
+After source, archive, retained executable and fresh process checks, cleanup
+removes only the a167 adoption target, reclaiming 57,316 KiB. Retained source,
+tools, evidence and borrowed caches remain unchanged.
+
+A subsequent September 18 upstream check observes fe2o3 main at
+`7e4f15bc4bb5a65d599f425c63d6a3843607f0e4`, tree
+`3a912859696d97818fdba242481e22b122d7fd17`. Its 12-commit, 117-path delta
+changes compiler context imports, checked arithmetic, Semantic MIR and CLI
+source policy; it is not production-source-equivalent to a167. Git-object
+review finds runtime/KFD/UAPI, host, optimizer, verifier, LLVM and the nightly
+pin unchanged. The two new dependency edges are dev-only, with no new registry
+packages or normal dependency edges.
+
+The next adoption needs one reviewed lowerer-to-kernel-descriptor declaration
+in the verifier DEV inventory and its combined counterpart, confirmed by
+actual metadata. The prior revision-only inventory assertion cannot simply
+be reused. Fresh source-gate/graph validation and compiler/vendor/TP14 products
+remain required before attributing results to 7e4. This is an upstream review,
+not an adoption or rebuild; a167 CPU and 6f GPU results retain their pins.
+
+### Host-Residual Release Controller
+
+The tested b700 host-residual implementation now has a fresh release
+controller: 9,375,464 bytes, SHA256
+`9a11a19e30275d49eb9fc855b3b2fc9936e5c2c68be3ab239ceb9ed1875e0c74`.
+The actual Cargo producer records optimization level 3, no debug assertions,
+only `tp-engineering`, and `fresh=false`. Independent custody review verifies
+all 480 payloads and retains the four earlier failed attempts alongside the
+successful tests and release. The 46,718,124-byte release-inclusive archive is
+`4093b5e922bbf8b2a4fdfcd2007045625ecd98ded94a76049ec7cc0bf0126f06`.
+Owned release intermediates were removed, reclaiming 934,976 KiB; the retained
+controller, sources, test products and borrowed caches remain.
+
+The new controller is transferred under a distinct immutable name on mi350;
+the historical runtime controller is not overwritten. Six passive loader
+checks pass for the controller and existing worker. GPU2 launch controls pass
+shell/AST checks and all 14 synthetic output-checker tests on mi300x. Paired
+native outcomes are not established by these preflights. The debug worker
+remains a functional diagnostic product, not a comparable performance build.
+
+### 6f1b Compiler Source And Fresh Tools Audited
+
+The adoption campaign's upstream check and fetch observes main at
+`6f1b38ea9764beb57168266e924dd5314b558337`. Ferric commit
+`3f5fb0ae8a03de3ecaf9a0c0db833a60aa182a39`, tree
+`2cd384dc194bb67487397802cedb1bbf51944e46`, adopts that exact revision.
+The compiler increment includes ranked native replay, checked arithmetic,
+verifier changes and ordered read-source indexing. Older tool and kernel
+products retain their actual producer revisions; they are not relabeled.
+
+A later upstream check observes main at
+`98ec3935544c45f03f37384a98c83f41cc6e4738`. Its 23-commit, 73-path delta
+changes compiler admission and formal-memory interfaces; runtime, KFD/UAPI,
+device API, toolchain, locks and the LLVM-worker subtree are unchanged.
+This revision is reviewed but not adopted or built here. Current diagnostic
+products remain attributed to `6f1b`; fresh graph and compiler validation is
+required before claiming `98ec` products.
+
+The mi300x adoption campaign runs from 08:38:43Z to 08:42:39Z on September 18.
+All 50 main phases and nine preflight phases pass, including 48 source-gate
+tests, 32 locked dependency graphs, 35 metadata records, four dependency
+inventories and coverage generation/validation. The exact 80-file transition
+changes revisions and refreshes the affected source-policy checksums. It adds
+no dependency edge: the earlier 29 lower-MIR promotions remain unchanged.
+Runtime inventory, coverage and the frozen property-binder pin remain intact.
+
+First-attempt retention and independent audit pass. The 24,831,050-byte archive
+has SHA256 `8e8bf266a6292fc9c644869d6978cc79d8d35e14b8702b235a47b6a546faf76a`.
+The audit verifies all 2,183 payloads, 2,184 safe archive members, exact
+nanosecond metadata, 23 external records, two fresh source-gate ELF producers
+and the complete original/final source census. All 1,169 integrated files match
+the audited final census before this progress-note update. Fresh absence
+checks cover 125 recorded process entries, not global host process visibility.
+
+The new four-tool build passes on mi300x from 08:51:39Z to 09:05:47Z on
+September 18, from the canonical 5,253-file compiler source package.
+All six command/cleanup/wrapper triples and campaign, launch, group, source
+and control checks are zero. Eight required preflight checks pass. A first
+retention-lifecycle invocation omits its required fixture argument and exits 1;
+the corrected invocation passes, and both records remain. An initial launch
+admission rejects mode 0755 introduced by directory transfer before any
+controller or build starts. Root restores only the owned directory to 0700;
+the separately admitted build then starts. CPU, memory, space, reserve and
+cleanup limits are unchanged.
+
+| Tool | Bytes | SHA256 |
+| --- | --- | --- |
+| `cargo-fe2o3` | 26,601,768 | `d338b4cc0ce98890110340b13a2ff71261f294dc008b49f96bc1f07122cd6cb3` |
+| `lld-proxy` | 454,512 | `fe505654643320fbae1deacd3d4ccd355968353f172d79a6ff234ea58f5ff219` |
+| `extractor` | 200,040 | `7f71cfa72f400f3c63eb8f28e86411d6d5aaa7e7e48d79ddfb5a25494c566d08` |
+| `backend.so` | 191,039,088 | `71bf52b2b50db06a75b936ff023381d82effa5367fdf651b40cd3a1be0c21364` |
+
+First-attempt retention and independent audit pass. The 83,160,028-byte
+archive has SHA256
+`56c0ee38c7aece87611701b8f86694390f521e8d3d7b94eb39fb67e3f5aeeac0`.
+All 176 payloads, 177 safe members, exact integer-nanosecond metadata,
+57 external records, 5,253 canonical source files and four actual fresh
+original/copied ELF producers pass. Source and original borrowed-cache
+preservation pass; the backend receipt binds the new CLI. Both audit phases
+have zero command/cleanup/wrapper statuses. Fresh absence checks cover
+44 recorded process entries and 17 unique IDs, not global visibility.
+All transferred evidence hashes pass locally. A stale local ready-copy audit
+manifest is reconciled without changing the explicitly hash-bound executed
+auditor, bindings or raw records.
+
+After independent custody review and fresh source/tool/hash/process/no-use
+checks, cleanup removes only the private compiler target and cache copy,
+reclaiming 3,233,044 KiB at 09:14:15Z. Source, all four tools, retained records
+and original borrowed caches remain. No local build or GitHub build runs.
+
+The current-pin TP14 source-binding campaign passes all four phases from
+09:16:03Z to 09:16:21Z, after independent static review and three passing
+remote preflight phases, including seven lifecycle fixtures. Launch,
+campaign and all four command/cleanup/wrapper triples are zero. Fresh nightly
+metadata resolves 163 packages, including 53 pinned compiler packages and
+two Pliron packages. Before/after checks preserve all 1,169 frozen files.
+The adoption's 48 tests remain explicitly inherited, not new executions.
+
+Its first retention attempt passes and all 23 downloaded external hashes
+verify. The 7,921,593-byte archive has SHA256
+`593c5b5011da98f5d7707ef860fca6f17177ba5dd1714276b473ac4a298ff59f`,
+with 111 payloads and 112 members. Independent review verifies every payload
+hash, mode/UID/GID/size and exact integer-nanosecond mtime; all 1,169 nested
+source files match the committed census. The actual metadata package origins,
+raw statuses and inherited producer/test/inventory fields agree with their
+separate adoption custody. All 15 resource samples satisfy the unchanged caps.
+This data review performs no fresh remote process probe. It is not new kernel
+emission or native execution.
+
+### Fresh Controller, Worker And Vendor Package
+
+The residual-capture controller now passes its twelve-phase mi300x campaign
+from 09:39:20Z to 10:00:01Z on September 18, using frozen Ferric `3f5fb0a`
+and fe2o3 `6f1b38e`. Formatting, strict scoped Clippy and all 189 tests pass;
+one test remains ignored. This includes six residual-boundary tests and the
+CLI exclusivity test. The fresh release controller is 9,307,808 bytes,
+SHA256 `8e3f1787686b6c1f508a7ea286d3833549c5ab62069afb32d0af8f1729872b77`.
+All command, cleanup, wrapper, campaign and launch statuses are zero.
+Independent custody review authenticates all 1,404 payloads, exact nanosecond
+metadata, 58 external records, canonical source and four fresh ELF producers.
+The 31,355,451-byte archive has SHA256
+`2dd246b85533a993c7285956f2d40973f7827822e23550fcf2d5ed284b253be1`.
+
+The fresh gfx950 KFD worker R2 builds on mi300x from 10:09:55Z to 10:10:21Z.
+Its actual producer is the frozen 6f source, in the non-test debug profile;
+this is a functional diagnostic worker, not a performance build. The copied
+5,196,152-byte worker has SHA256
+`47426e4f98a04feba3ed2c0783478e3d22bd4a0d3d02fcb5851321c2b4ed1477`.
+Its bytes equal the earlier worker, but the fresh producer is independently
+recorded. All statuses pass. Independent review verifies 57 payloads, exact
+nanosecond metadata, 51 external records and the canonical 5,253-file source.
+The 1,535,403-byte archive has SHA256
+`e3cc68a5b2d57fabdebdcc10667cb197492088b17550522fa24a7464974895fb`.
+R1 stopped before Cargo because its admission incorrectly counted the source
+root among descendant directories and rejected owner-write permissions.
+R2 corrects those assumptions without modifying the borrowed source or caps;
+the failed R1 records remain intact.
+
+Current vendor formation passes from 10:06:10Z to 10:07:49Z, retaining all
+198 packages and the ordinary 512 MiB reserve. Independent review verifies
+141 payloads, 143 archive members, exact nanosecond metadata, 43 external
+records, package origins and source/tool preservation. The 2,839,862-byte
+archive has SHA256
+`446491b204272240dd09f4b60306306c1d3076f0b4b65b6180a88ca5d9d6a8ed`.
+A resource-fixture invocation first fails on a missing owned parent directory;
+the corrected invocation passes, with both outcomes preserved.
+
+Both fresh executables are transferred to mi350 and their sizes and hashes
+match the mi300x products. All six passive loader checks pass there: readelf,
+system-loader verification and dependency listing for each ELF. These checks
+do not invoke either application entrypoint or open a GPU device. The new
+residual output checker also passes seven CPU test methods, covering twelve
+positive and negative cases, on mi300x.
+
+Current-pin TP14 emission R1 stops with launch/wrapper status 125 after the
+compiler produces an artifact. Its stage sampler encounters temporary-file
+removal during compiler cleanup; the recorded GNU du error uses an absolute
+program prefix and a missing-directory phrase outside the sampler's narrow
+retry matcher. The emit command is terminated (143), cleanup passes, and input
+and source preservation pass. Inspection is not run and the artifact is not
+accepted for native use. Independent failure-custody review passes all 609
+payloads and 611 members, exact nanosecond metadata and 50 external payloads.
+The 1,935,382-byte archive has SHA256
+`6b634e1a423e7e077cb54911f427ba9f6ae83bcd893485e14db1fc5753387bf5`;
+its success-consistency flag remains false. A separate R2 corrects only the
+missing-path matcher and attempt namespaces. All five preflight phases pass,
+including 34 sampler tests. Two early
+preflight launch calls encounter the still-held serial CPU lock and execute
+no command; subsequent independently recorded calls pass. Neither numerical
+tolerances nor resource caps are relaxed.
+
+The full R2 emission passes all thirteen phases from 10:40:28Z to 10:47:27Z.
+Independent custody review authenticates all 643 payloads, 645 archive members,
+exact nanosecond metadata, 50 external records, 55 process records and the
+unchanged source/tool/vendor inputs. The 1,972,773-byte archive has SHA256
+`a8eabe926555fb24560e6b003a79bb60980477c21941c899383692b82bfc87cf`.
+Inspection confirms fourteen gfx950/COV6 kernels with their descriptors,
+actual MFMA instructions and exact replay. The 111,768-byte HSACO has SHA256
+`d9ba14a65de179fd9143333d594950e57bbc369f5985c662e7b1a991e8809a37`.
+Both samplers succeed on their first samples; no live retry is claimed.
+
+The artifact transfers to mi350 with matching hashes, sizes and private file
+permissions. The first native admission attempt exits 1 at 10:57:46Z before
+starting the controller: its transferred intake authorization is mode 0644,
+while the runner requires 0600. It performs no model or GPU execution.
+Its complete failure records remain intact in a separate 46-payload archive,
+SHA256 `1ec3ee7a128339786510dc7f182bf2af7b51fa0c68514dc89949b2ebbf99fc91`.
+A second attempt uses fresh owners, verified 0600 intake files and fresh GPU0
+admission. It passes from 11:00:38Z to 11:04:30Z, generating token IDs
+`[12095, 13]` and text ` Paris.`. Launch, runner, controller and group-absence
+statuses are zero; the worker closes and selected GPU VRAM returns to its idle
+baseline. Both requested layer-zero residual captures are published, with
+manifest SHA256
+`bddd2bb93a6b766d069d1b49f9a9d228459656dd469be6c3e11c40079704f7d1`.
+The runner, limits and controller/worker/kernel bytes are unchanged.
+Independent custody review passes all 77 archived payloads, exact metadata,
+22 external records, six capture files and eight row slices. The 124,917-byte
+archive has SHA256
+`e559b73e4e37c79ddaa75c416ac1c02e479a158f96191361ab18942a2491e3f3`.
+Both rows preserve exact host-broadcast/GPU-hidden agreement. The earlier
+pre-launch failure also passes independent failure-custody review.
+
+### Same-Input Layer-Zero Residual Replay
+
+The held native capture now replays on mi300x. Extraction and all three
+source-before/replay/source-after phases have zero command, cleanup and wrapper
+statuses; the full 1,169-file source census remains unchanged. An earlier
+direct invocation of the non-executable wrapper is rejected before creating
+any phase; invoking that same script through Bash succeeds.
+The diagnostic performs two passes of each arithmetic case, retaining 48 raw
+tensor files. Every repeat pair is byte-identical and all compared values are
+finite. Native FP32 projection partials and BF16 post-residual hidden values
+match the source-ordered CPU replay exactly at both positions. Replaying the
+held native partial through the host reducer also matches exactly.
+
+| KV Position | Different Torch Hidden Elements | Maximum Absolute Error | RMSE |
+| --- | --- | --- | --- |
+| 4 | 1,188 / 4,096 | 0.0078125 | 0.0001702714864973519 |
+| 5 | 1,157 / 4,096 | 0.0078125 | 0.00021869217689438102 |
+
+The 37,680-byte diagnostic JSON has SHA256
+`8ca0cc3585f2ceb3d534d8c5aed32d8f1226a4dd678f4a6cc44376ed42b3f04c`.
+The CPU process completes in 22.75 seconds with peak RSS 1,310,648 KiB;
+these are diagnostic resource observations, not inference performance.
+ROCm imports retain warnings about the `-1` visibility syntax; the calculation
+uses explicit CPU tensors, not a hardware-isolation claim.
+
+Source review identifies a deliberate arithmetic-contract difference: Ferric
+adds the residual to FP32 projection partials and rounds once, whereas the
+exact pinned Qwen BF16 forward materializes the BF16 projection first.
+That three-case comparison changes both accumulation and rounding placement,
+so it does not isolate either as the cause. The following paired experiment
+holds the captured partial and residual fixed. A default production reducer
+change would also affect TP2/TP8 and requires explicit contract review.
+
+Replay retention and independent custody review pass. The 675,485-byte archive
+has SHA256
+`5f25064f069968d9d5bb3d4ed828337fe4330ee2728f47a5931ecd77d2703774`.
+All 128 payloads, exact nanosecond metadata, source preservation, raw phase
+statuses, recorded process absence, native bindings and 48 tensor hashes are
+verified. Independent byte comparisons confirm source/native agreement and
+repeat agreement. Floating-point metric values are consistency-reviewed
+against the JSON and payload identities, not independently recomputed.
+
+After fresh ownership, product-hash, recorded-process and scoped no-use checks,
+cleanup removes the completed controller and worker targets plus two empty
+private temporary directories, reclaiming 1,098,076 KiB on mi300x. Source,
+products, copied test records, raw logs and custody archives remain. Scoped
+process checks do not establish global host visibility. Separately, six
+verified duplicate local extraction trees are removed, reclaiming
+3,687,732 KiB while preserving their archives and evidence records.
+
+This is a two-token TP1 diagnostic with a debug worker and extra readbacks,
+not a TP8, numerical-acceptance or comparable TTFT/TPOT result. All 33 M1 gates
+remain open.
+
+### Paired Residual Rounding And Explicit Host Mode
+
+Ferric `fb2de404d611c00fb6eae8639234c9df562a5ce8` adds a fourth replay case:
+the same native FP32 projection is materialized as BF16 before the separate
+residual addition. The 11:27:55Z--11:29:52Z mi300x campaign passes all thirteen
+main phases, three preflights, 21 focused tests and 121 existing reference
+tests. All 32 selected source files remain unchanged.
+
+Both positions, 4 and 5, now match the pinned Torch post-residual hidden
+values bit for bit in both repeats. The native/default hidden values differ
+in 1,188 and 1,157 of 4,096 elements respectively; maximum absolute error is
+0.0078125. The narrowed native projection differs from Torch in one element
+at position 4 and none at position 5; that one difference disappears after
+the residual addition. This isolates rounding placement for these held
+inputs, not all layers, Down projections, TP8 or full-model numerical parity.
+
+Independent custody review verifies all 340 payloads, exact metadata, source
+and native bindings, all 64 tensor files and the unchanged 48 older tensors.
+The 988,818-byte archive has SHA256
+`887ad9e4e53001b4b5638c5eaeb4d070c478a7ceea70626cd5ca1978b99f2770`.
+The initial retention helper rejects digits in a phase name before archiving;
+the corrected helper passes, and both raw outcomes remain retained.
+
+Ferric `b70006fae208e48c7db656d3f48a501a2b5381fc` adds an explicit,
+host-only residual arithmetic selection to single and batched execution.
+The opt-in projection-first profile rounds only after the complete ascending
+rank FP32 sum, then adds the BF16 residual and rounds again. It covers O and
+Down with allocating or reused host staging. Omitted options preserve the
+original arithmetic and setup records; device and peer collectives are
+unchanged. Selection is one-shot, identity-bound in setup records and rejected
+by legacy capture modes. The batch comparator requires the exact external
+arithmetic expectation. This is an engineering ablation, not a default switch.
+
+The mi300x CPU campaign finishes at 12:16:14Z. Formatting and strict scoped
+Clippy pass, as do 357 library, 23 single-CLI, 63 batch-CLI and 36 comparator
+tests: 479 passed, 12 existing Rust tests ignored, zero failed. Tests cover
+TP1/2/8, both host staging paths, full mocked single/batch execution, ordering,
+overflow before publication, lifecycle restrictions and setup identities.
+All 1,172 integrated files match the tested R3 census before this note changes.
+No new release controller or native execution of this option is claimed.
+
+Failed attempts remain explicit: R1 stops at the excessive-boolean Clippy
+lint; R2 stops at formatting; R3 CLI and R4 comparator admission stop before
+application execution at the unchanged 512 MiB entry reserve. Successful
+Rust tests use R3 library and R4 CLI phases; the comparator and final source
+check use R5. Every retry retains the actual source/control identity.
+Cleanup removes only two verified archived source extractions (89,696 KiB),
+then the private debug directory (1,484,068 KiB before removal), preserving
+the three exact tested executables by hardlink. Shared caches remain intact.
+
+The 44,159,134-byte retained CPU evidence archive has SHA256
+`6f69f9a49ce69d6d3400fb3bd7fdd4e05021a2ee2834353e7033d7541cdad8ac`.
+It preserves 405 payloads and 25 completed pre-packaging phases, including
+failures; the closed packaging phase is retained separately. Packaging and
+cleanup complete with zero command/cleanup/wrapper statuses. Independent
+custody review verifies all 27 external files, exact payload metadata, three
+source censuses, control bindings and three actual fresh ELF producers.
+Recorded absence checks cover 50 PID/PGID values; 487 resource samples remain
+within the unchanged limits. These are retained observations, not fresh
+process probes. This checkpoint closes no M1 gate and makes no competitive
+TTFT/TPOT claim.
+
+### Historical 14ec Source And Tools
+
+Ferric `1997e1c32d3e298696d6a6f62a78b95f625eed6d` adopts published fe2o3
+`14ec7d2f75561977331e7a1ad5f916ada6d2ca59`. All 50 adoption phases and
+eight preflight phases pass on mi300x, including 48 source-gate tests,
+32 locked dependency graphs, 35 metadata records, four dependency inventories
+and normal coverage generation/validation. All 1,165 integrated source files
+match the independently audited final census.
+
+The exact 80-file transition includes one reviewed dependency promotion in
+29 lockfiles: `fe2o3-lower-mir-kernel` now depends on `fe2o3-kernel-opt` as a
+normal dependency. Production/dev/combined inventories record that change;
+runtime inventory, coverage and the deliberately frozen property-binder pin
+remain unchanged. No automatic unlocked lockfile repair occurs. Upstream's
+compiler changes require fresh compiler products; the previously built 1ca7
+tools are not relabeled.
+
+The retained adoption archive is 32,157,041 bytes, SHA256
+`cf309150897dc36d1d3b40e0d26d928425e86051772df7128cd18704900ebecf`.
+Independent review verifies all 2,177 payloads and 2,178 archive members,
+exact nanosecond metadata, 65 external files, raw terminal records, two fresh
+source-gate ELF producers, all source bytes and the exact patch. The first
+auditor incorrectly expects the frozen property-binder graph to follow the
+new compiler pin and exits 1. That failed audit remains intact; a separately
+recorded correction accepts only the graph's original reviewed pin and passes.
+Fresh absence checks cover 129 recorded process entries, not global visibility.
+
+The fresh 14ec four-tool campaign passes on mi300x from 06:34:37Z to 06:48:41Z
+on September 18, after eight passing compiler/retainer preflight phases and
+independent control review. All six command/cleanup/wrapper triples and the
+campaign, launch, group, source and control checks are zero. It keeps
+CPU0/nice19/jobs1, the 10 GiB owner cap, 1,907,900 KiB build reserve and the
+existing host free-space/memory floors. Initial build admission observes
+1,767,312 KiB owner usage and an empty target. Source and borrowed-cache
+preservation pass; all four tools have actual fresh Cargo producers, and the
+backend receipt binds the newly built CLI.
+
+| Tool | Bytes | SHA256 |
+| --- | --- | --- |
+| `cargo-fe2o3` | 26,599,216 | `d4875f6f125e2debf6150875bc771cb2f5a788f94c5669adadb473ec37c6215e` |
+| `lld-proxy` | 454,512 | `fe505654643320fbae1deacd3d4ccd355968353f172d79a6ff234ea58f5ff219` |
+| `extractor` | 200,040 | `7f71cfa72f400f3c63eb8f28e86411d6d5aaa7e7e48d79ddfb5a25494c566d08` |
+| `backend.so` | 190,552,360 | `92dfa7538f2553c84da50ddfcdfaf38152bd52b033b9b772ac801a516ec05634` |
+
+The first terminal-retention attempt passes. Its 82,951,673-byte archive has
+SHA256 `8702f9dbc9960f80fc154f637d5f55d6c90dbf7f3af9b97150f705bb0079d69e`.
+Independent review passes all 176 payloads, 177 archive members, exact signed
+nanosecond metadata, 57 external files, 5,233 canonical source files, four
+original/copied ELF identities and source/cache/control preservation. Both
+audit phases have zero command/cleanup/wrapper exits; 44 recorded process
+entries covering 17 unique IDs are absent. All transferred evidence hashes
+pass locally. No kernel emission, native execution or full compiler
+qualification follows from this four-tool build.
+
+After that independent ACK, fresh custody/tool hashes, recorded process
+absence and scoped no-use checks, the completed private compiler target and
+cache copy are removed, reclaiming 3,229,828 KiB. Canonical source, all four
+reusable tools, retained evidence and original borrowed caches remain. These
+scoped cleanup checks do not claim global process visibility.
+
+The four-phase TP source-binding/metadata campaign now passes on mi300x.
+Before/after source preservation authenticates all 1,165 files; fresh nightly
+metadata resolves 163 packages, including 53 pinned fe2o3 and two Pliron
+packages. The adoption's 48 source-gate tests are explicitly inherited, not
+rerun. Campaign, launch and all four command/cleanup/wrapper triples are zero.
+Its retained 7,831,226-byte archive has SHA256
+`cd7b42390a69a72fde0abb11794fa56e6d570c5652c91854db873dcb7914a3f0`.
+Independent data review verifies 111 payloads, 112 archive members, 23 external
+records and every source hash; exact PAX nanoseconds were not independently
+rechecked. The first retention attempt rejects an incorrect seven-file
+control-roster expectation; its exit 1 and cleanup 0 remain preserved. The
+corrected attempt accepts only the actual nine files and succeeds.
+
+Fresh current-source vendor formation, TP14 emission and separately admitted
+mi350 native validation remain necessary after the current-main adoption. No
+14ec tool or metadata record is relabeled. The LLVM worker subtree is unchanged
+at its actual older producer, fe406, 14ec and ec14, so any reuse retains that
+original producer attribution.
+All nine KFD/runtime dependency source trees and the compiler root manifest,
+lockfile and toolchain are identical between fe406 and 14ec. Any reused native
+worker still retains its actual old producer and requires fresh artifact and
+device admission; source equality is not a new native build or run.
+
+The opt-in layer-zero TP1 attention-output boundary capture now passes its
+CPU checks on the frozen 14ec source snapshot: 129 library tests (one ignored),
+22 CLI tests, 38 policy tests, strict scoped Clippy, formatting, four metadata
+queries, four dependency inventories and coverage generation/validation.
+It retains the actual projection input, host residual, native FP32 partial
+consumed by the reducer and GPU hidden readback after broadcast, with
+close-bound publication and no acceptance/timing claim. Six library tests and
+one CLI test cover the new mode. The optimized executable builds in 9m31s;
+all 23 R5 command/cleanup/wrapper triples, campaign and launch are zero.
+The fresh 9,349,440-byte controller has SHA256
+`456bba1ed9366849101a76ff02df96547c052ab02e1ada60a8d862d0833df369`.
+Its copied executable and original Cargo producer remain retained; the owned
+debug and release directories are removed. Native use is unexecuted.
+
+Failed validation attempts remain explicit: R1 exits 1 on an incorrect
+unchanged-source count; R2 exits 101 after Unix-socket fixtures exceed the
+temporary path limit; R3 exits 101 on two CLI Clippy diagnostics; R4 exits 101
+on a remaining semicolon lint. R5 uses a short owned TMPDIR and the corrected
+CLI, preserving old source censuses and test producers. It does not relax a
+test, lint, numerical tolerance or resource limit. The 46,786,238-byte retained
+archive has SHA256
+`674a23f8dbe876e635c83c2cdbd9a5d6c83f989539c4044cd5d331093a5f2524`;
+its semantic check succeeds while preserving those four failed attempts.
+Independent data review verifies all 1,889 payloads, exact archive metadata
+including timestamp strings, 79 external records, all 1,167 final source files,
+seven ELF producers, the generated inventories and raw phase/driver outcomes.
+Retained process snapshots record absence; this is not a fresh live-host claim.
+After that independent ACK, fresh recorded-process absence and archive/source/
+controller hash checks, the two copied test-product directories and empty
+owned short TMPDIR are removed, reclaiming 134,344 KiB. Cleanup and its syntax
+check finish with zero command/cleanup/wrapper exits. Source, controller and
+the complete archive remain; no shared cache or foreign job is touched.
+
+The CPU-only `engineering_tp1_layer0_residual_ablation.py` passes 16 focused
+tests and all 121 existing reference tests on mi300x, with its 32-file source
+bundle unchanged before and after. This includes a real synthetic 4096-by-4096
+overflow replay, exact tensor-digest rejection and wrong-tensor metadata
+rejection. For an authenticated future capture it repeats Torch BF16 linear,
+ascending separate FP32 multiply/add and native-partial host residual replay,
+retaining every raw pass. No native capture, canonical-model replay, numerical
+acceptance or performance result is produced by these tests. All 33 M1 gates
+remain open.
+Independent review authenticates all 229 retained CPU-test files, 13 zero
+phase triples, source preservation and resource bounds. ROCm imports warn
+about the `-1` visibility syntax; explicit CPU tensors are used, and these
+tests do not establish hardware isolation.
+
+### Same-Input LM Head Matches The Source-Ordered Replay
+
+Ferric `7a1f03fa88bcca704be217167acc85caf1824244` adds the CPU-only
+`engineering_tp1_lm_head_ablation.py` and 18 focused tests. All 121 tests pass
+on mi300x, including the 103 existing reference/arithmetic tests. The committed
+implementation and test bytes exactly match the remotely tested proposal.
+
+The real diagnostic authenticates the retained mi350 capture and canonical
+LM-head weight, then replays each identical normalized BF16 input twice using
+pinned Torch linear and twice using source-ordered FP32 multiply-then-add.
+At both positions, all 151,936 native BF16 logits match both source-ordered
+passes exactly: zero bit differences, ULP, absolute error and RMSE. All CPU
+repeat pairs are byte-identical, including the source FP32 accumulators.
+Torch differs slightly on these same inputs:
+
+| KV Position | Different Torch Logits | Maximum Absolute Error | Maximum BF16 ULP | RMSE |
+| --- | --- | --- | --- | --- |
+| 4 | 48 / 151,936 | 0.0625 | 3 | 0.0003476680966307658 |
+| 5 | 15 / 151,936 | 0.0625 | 1 | 0.00034249257232837817 |
+
+Every compared value is finite and all cases select the same tokens, 12095
+and 13. This localizes the final projection for two observed inputs; it does
+not establish general device/compiler behavior, explain upstream residual
+divergence, resolve the historical position-131 mismatch or admit a tolerance.
+No GPU or full model is executed. The diagnostic takes 64.43 seconds and peaks
+at 9,007,616 KiB RSS under the unchanged 16 GiB address-space cap; these are
+CPU diagnostic resource observations, not inference performance measurements.
+
+The first extraction command uses an incorrect destination prefix and exits
+2, with cleanup 0 and no extracted files. A separate correctly named extraction
+phase passes; exact eleven-file input and native-pin checks precede the real
+diagnostic. The original failure is preserved, so the 13-phase campaign is
+complete but not all-zero. All nine test suites and the diagnostic pass.
+The 17,277-byte diagnostic JSON has SHA256
+`889d8973357812c1c4a8e25a4c6d648c6b5b2f3d3d9171a2def21a68578df0a2`.
+The complete 255-file stage, including 16 raw diagnostic tensor payloads, is
+retained in a 7,968,027-byte archive with SHA256
+`15513dac57b9ed6c7058461d954af753753987243ca44e6c608a21fa657f294c`.
+All 58 external files pass transfer hashes. Independent custody review verifies
+every payload and its exact metadata, all raw phase/test records, source and
+native bindings, and all 16 tensor descriptors. Separate raw BF16 recomputation
+confirms the mismatch counts, ULP, maximum errors, argmax and repeat agreement.
+All 26 main and four external recorded process entries are absent. The first
+auditor assumes every timestamp has a PAX field and exits 1; a separate R2
+auditor correctly accepts integral tar-header timestamps when PAX omits that
+field, then passes. Both audit attempts remain retained. After fresh checks of
+all 255 payload hashes, 58 external hashes, 30 recorded process entries and
+scoped no-use checks, the completed validation and retention owners are removed,
+reclaiming 18,668 KiB. The 14 cleanup metadata files are downloaded and hash
+verified; canonical model, reference environment and borrowed caches remain.
+The downloaded head and compiler cleanup-metadata owners are subsequently
+removed, reclaiming another 236 KiB.
+All 33 M1 gates remain open.
+
+### Fresh 1ca7 Compiler Tools Built
+
+All six phases of the fresh mi300x four-tool campaign pass for published fe2o3
+`1ca7e12974ec77f28ea250847b7b3ae93182232c`, from 02:31:24Z to 02:45:25Z on
+September 18. The release CLI/linker proxy and debug extractor/backend have
+actual fresh Cargo producers; the backend receipt binds the newly built CLI.
+Command, cleanup, phase, campaign, launch and group checks all report zero.
+Source and borrowed-cache preservation checks pass. A later upstream check
+still reports the same main revision.
+
+| Tool | Bytes | SHA256 |
+| --- | --- | --- |
+| `cargo-fe2o3` | 26,593,944 | `da537f1cadd6dbd32498cc4f37481874e24d30fefecf9e26132a1241b61a7dc4` |
+| `lld-proxy` | 454,512 | `4ede0196e89f11c2e5684800c73d98683196b01dabcf51251ed2c5ee5ab4773c` |
+| `extractor` | 200,024 | `e0d4a04d042212977c0c1b8f3d69e0a7d57ad7969297b442fb34c2fb97744d1f` |
+| `backend.so` | 189,801,896 | `84c89fd613486009e42ac281e5ec5fa300b97eb40d58689d14b0e7f77bccdf93` |
+
+The reviewed launcher cleanup correction passes bounded mi300x preflights,
+including six actual owned-process fixtures. The launcher's SSH observation
+session ended before observation resumed; fresh remote process and terminal
+records establish completion, not the connection's exit status. The first
+retention attempt rejects the authenticated ledger's `./` filename prefix
+before creating an archive. Its command and wrapper exit 1; cleanup, process
+absence and controls checks pass. The separate parser-corrected R2 attempt
+passes after ten focused parser tests; it preserves the failed R1 unchanged.
+Its 82,757,336-byte archive has SHA256
+`586fdab2b732943b24d68aee09abf3995a4c9fb4db4d04e114cc9adbbdc229f4`.
+Independent review verifies all 298 payloads, 299 archive members, exact
+nanosecond metadata, 62 external files, all 5,218 canonical source files, four
+fresh Cargo/ELF producers and before/after cache records. The audit's command,
+cleanup and wrapper statuses are zero. Its fresh process check finds all 20
+unique recorded identities absent. After fresh custody/tool hashes, recorded
+process checks and scoped no-use checks, the private build target and cache
+copy are removed, reclaiming 3,225,976 KiB. Four reusable tools, canonical source,
+all evidence and borrowed caches remain. No global process-visibility claim is
+made by the scoped cleanup checks.
+
+The completed compiler preflights and external lifecycle fixture are retained
+in full: 501 files and 105 directories, including negative fixtures and failed
+audit attempts. The first custody readback fails directory-mtime comparison;
+the separate successor uses delayed tar directory restoration and passes the
+unchanged checks. Both attempts are downloaded and all 1,065 external manifest
+entries pass local hashes. Its successful archive SHA256 is
+`d1fa77639ad8c8542ab053ad0c8d7e6733b48571050997d382b8ce8ac6e93816`.
+After fresh source hashes, 28 actual process-record absence checks and scoped
+no-use checks, the two original and two custody owners are removed, reclaiming
+7,604 KiB. Nested fixture PIDs are retained data, not signaling authority.
+
+No native executable or kernel artifact is relabeled by this build. Fresh
+TP14 emission and matching native validation remain outstanding. Builds and
+CPU tests stay on mi300x; mi350 is the selected native host. The same-input
+LM-head diagnostic is recorded above. The Pages update is still an unpublished
+proposal. No numerical acceptance, performance, protected-proof or M1 gate claim
+follows.
+
+At the 1ca7 checkpoint, the planned successor was the dedicated 17-phase TP14
+source-gate workflow, vendor formation and the 13-phase emitter. The newer
+14ec adoption and reuse plan above supersede that proposed source binding;
+historical 1ca7 tools and results retain their actual attribution.
+
+### Same-Input Final RMS Matches Both CPU Replays
+
+Ferric `57ef4ed0` adds `engineering_tp1_rmsnorm_ablation.py`, which authenticates
+the retained mi350 capture and canonical checkpoint, then replays each exact
+native BF16 residual through actual pinned Qwen3 RMSNorm and the existing
+source-spelled serial-FP32 CPU arithmetic. Both captured positions, 4 and 5, have zero bit differences
+across all 4,096 normalized BF16 values in all three pairwise comparisons.
+Maximum BF16 ULP, absolute error and RMSE are all zero. The authenticated final
+RMS weight SHA256 is
+`4f4f6cc0467f0cf8516b154f3ec0748ed03d82ae24d435dfe678075e9a8e2070`.
+
+This narrows the final-RMS investigation for these two observed inputs; it
+does not establish general device/compiler behavior or explain the upstream
+residual divergence. The earlier full-model tensor differences and gfx942
+position-131 mismatch remain unresolved. No tolerance, numerical acceptance,
+performance, protected-proof or M1 gate claim follows. The diagnostic does not
+execute a full model or use a GPU.
+
+All 103 CPU tests pass on mi300x: 14 new diagnostic tests and 89 across seven
+existing reference/arithmetic suites. New coverage includes successful secure
+publication, existing-output preservation, capture/model-source drift refusal,
+actual pinned-Torch width-4,096 replay, and raw nonfinite native-output retention.
+Nonfinite replay inputs, weights or CPU intermediates still reject publication;
+the original native capture remains separately retained evidence.
+
+All eleven CPU phases complete with command, cleanup and wrapper exits zero.
+The real diagnostic JSON is 14,964 bytes with SHA256
+`4ee0e234bddd35eaf4a7ed95ad544e7450cd50d706f7696a501b7e44557556c8`.
+The complete 227-file stage, including all 21 raw tensor payloads, source,
+inputs, logs and terminal records, is retained without exclusions. Its
+3,711,398-byte archive has SHA256
+`26daed3ea4857871f58123a965211612623798037a9b18f6ebfb3fe13c108f6e`.
+Independent review passes every payload hash and archived size, mode, UID/GID
+and nanosecond mtime, all 52 external files, before/after ledgers, eleven raw
+phase terminal triples and 22 process-absence records. All seven implementation
+hashes, 21 output descriptors and native input bindings agree. The external
+Qwen module and original model shard are not copied into this archive; the
+authenticated captured weight and all native/diagnostic bytes are retained.
+After that ACK and fresh scoped no-use/hash checks, the completed RMS and
+retention owners are removed, reclaiming 8,952 KiB. Cleanup metadata is retained
+locally and then removed remotely. No new worktree or local build was created.
+
+### 1ca7 Compiler Source Adoption Complete
+
+Ferric `c3707b89c360909435df2882bf5be6902f89fb4a` adopts published fe2o3 main
+`1ca7e12974ec77f28ea250847b7b3ae93182232c`. A fresh upstream check still finds
+that revision. All 50 adoption phases pass on mi300x: 32 locked dependency
+graphs, 35 metadata records, both formatting editions, two fresh source-gate
+executables, 48 gate tests, four inventory derivations and normal coverage
+generation/validation. The integrated exact 80-file change and all 1,161 file
+hashes match the independently reviewed final census. Runtime inventory,
+coverage and the property-binder pin remain unchanged; no lock repair or new
+verification claim is introduced.
+
+Independent custody review passes all 2,128 payloads, exact archived metadata,
+2,129 archive members, 52 external files, raw terminal records and producer
+bindings. The 32,067,636-byte archive has SHA256
+`142e0c2aefbf0c628e5e86a51b4e7ebb841c5e8d16315be6c7558dc4e7b8d7ca`.
+Builds and CPU tests remain on mi300x; native execution uses mi350. Existing
+native binaries retain their original producers. At that adoption checkpoint,
+fresh four-tool builds and TP14 emission were outstanding. Review found a
+forced-cleanup gap in the proposed launcher, and no build was launched from
+that unready proposal. The corrected, reviewed and tested successor's actual
+four-tool build is recorded above; TP14 emission remains outstanding.
+
+After integration, independent custody ACK and fresh hash/process/no-use checks,
+the completed adoption and retention owners are removed from mi300x, reclaiming
+185,940 KiB. A first pre-deletion check resolved six archive-only control paths
+under the wrong owner and stopped before any deletion; that record is retained.
+The corrected owner mapping checks all retained files before cleanup. Local
+archives, borrowed caches, canonical models and reusable runtimes remain.
+Two redundant local transfer archives are also removed after byte-for-byte
+hash agreement with the audited archive members, reclaiming 14,629,316 bytes.
+
+### mi350 TP1 Capture And Independent Reference Complete
+
+The user-selected mi350 completes the new final-stage capture on physical GPU
+0 (gfx950). Ferric consumes tokens `[785, 6722, 315, 9625, 374, 12095]` and
+emits `[12095, 13]` (` Paris.`). Positions 4 and 5 retain the completed residual,
+normalized vector and all 151,936 BF16 logits. The raw logits are finite and
+their CPU argmax agrees with the actual GPU choice at both positions. Native
+process, wrapper and process-group checks pass, and the selected GPU returns
+to its exact pre-run allocation baseline without observed foreign use.
+
+The committed comparator from `3d728704` then runs the full consumed sequence
+twice, without a KV cache, using the pinned Torch/Transformers runtime on
+separately admitted mi300x GPU4 (gfx942). Both reference passes are byte-identical
+at all three captured stages and select the same two tokens as Ferric. Native
+and reference tensors are not byte-identical:
+
+| KV Position | Logit RMSE | Maximum Logit Absolute Error | Different Logit Elements |
+| --- | --- | --- | --- |
+| 4 | 0.03887744076021193 | 0.1875 | 120,171 / 151,936 |
+| 5 | 0.050558859857054335 | 0.1875 | 114,323 / 151,936 |
+
+Differences are also present in the pre-final-RMS residual and normalized
+vectors. All captured/reference values are finite, but no tolerance is reviewed
+or numerical pass claimed. This cross-host, cross-target diagnostic does not
+identify a cause, resolve the retained gfx942 position-131 mismatch, qualify
+either target, or establish TP8 or serving correctness. Capture-mode timings
+are not comparable performance measurements.
+
+The native producer remains the actual `6756cd67`/`70aadc0` controller, with
+the separately attributed `fe406` worker and `59822`/`fe406` TP14 artifact.
+The comparator revision does not relabel those binaries. A fresh upstream
+check still finds fe2o3 main at `1ca7e129`; adoption was outstanding at that
+capture checkpoint and is now recorded above. Fresh artifact emission remains
+outstanding.
+
+Independent native custody audit passes all 85 payload hashes, exact archived
+metadata, before/after ledgers, terminal witnesses and six BF16 row-slice hashes.
+The 2,963,872-byte native archive has SHA256
+`3f9f0cc6ba3b2939543173bf8be206a63e12217440dd958eb177e53f6be720aa`;
+capture manifest SHA256 is
+`9fb44cff540f4adb2ee9465263e349e3b87922a46b14a7f05e6d42396986d200`.
+Independent reference custody audit also passes all 591 payload hashes and
+exact archived metadata, all 15 CPU phase terminal triples, reference terminal
+checks, and 32 recorded process-absence checks. The six raw reference files
+match their declared hashes. The 4,547,955-byte reference archive has SHA256
+`72237f9f2257205c46e19514cbb632c2d4a814914162aac793a304b32ad25683`;
+comparison JSON SHA256 is
+`556872313ab799547778ebc842095709d3e388b97930edd54c7324b6334a6c88`.
+The regenerable reference compiler cache alone is excluded, with its complete
+351,294,064-byte roster, hashes and nanosecond stats recorded before and after.
+All builds and CPU validation remain on mi300x. No new worktree was created.
+After retention and fresh scoped no-use checks, the completed mi350 control,
+run, admission, intake and retention owners are removed, reclaiming 27,300 KiB.
+The completed mi300x control, reference/cache and retention owners are also
+removed after the reference audit, reclaiming 355,484 KiB. Raw evidence remains
+retained locally; canonical models and reusable runtimes remain untouched.
+
+### TP1 Independent Comparator Host-Validated
+
+The additive `engineering_tp1_final_stage_reference.py` now implements the
+independent comparison for the new capture. It authenticates frozen native
+controller/worker/model/artifact/device/workload pins, exact payload and row
+hashes, the four linked stdout records, and retained successful process/wrapper
+and group-absence witnesses. Those external terminal assertions are not an
+independent process-lifetime proof. The original M5 protocols and tolerances
+are unchanged.
+
+The comparator executes the exact consumed token sequence twice without a KV
+cache, captures final-norm input/output and full selected-row logits, and
+checks that the LM head receives the captured normalized values. Both raw
+reference passes are retained even when nonfinite or different. Error metrics,
+lowest-ID finite argmax and repeat agreement are diagnostics; all numerical
+pass, tolerance, causality, performance and qualification claims remain false.
+Reference execution still admits only the pinned gfx942 runtime on mi300x.
+Comparing it with gfx950 native bytes does not qualify either target.
+
+All 82 CPU tests across six reference suites pass on mi300x: 19 new TP1 tests,
+13 final-RMS, four M5, eight rank diagnostic, 23 core reference and 15 original
+engineering reference tests. The frozen eleven-file reference policy passes
+on its unchanged package projection. The separate pinned-Torch RMSNorm
+ablation suite was not rerun. No GPU inference or new performance measurement
+is part of this comparator checkpoint.
+
+At 2026-09-18T00:49:01Z, SSH to the user-selected mi350 succeeds and reports
+eight MI350X/gfx950 GPUs at 0% busy, with no KFD PIDs listed. This is a fresh
+observation, not a reservation. The retained 70aadc-built controller can
+collect a diagnostic with the separately attributed fe406 worker and TP14
+artifact; latest-compiler claims still require the new adoption and emission.
+
+### TP1 Final-Stage Capture Implemented
+
+Ferric `6756cd6704875cfc70862a0ebdab37bf8e35cae9` adds an opt-in final-stage
+capture to the token-at-a-time TP1 engineering command. Selected consumed KV
+positions retain the completed pre-final-RMS residual, normalized vector and
+full BF16 logits. Normal dispatches and the GPU-selected token are unchanged.
+Nonfinite logits and CPU/GPU argmax disagreement are retained as diagnostics,
+not replaced or treated as successful parity. Publication requires the complete
+declared sequence and successful actual worker teardown. Capture timings are
+explicitly non-comparable.
+
+On mi300x, the final revision passes 122 default-library tests, 123 TP-library
+tests, 21 CLI tests and 38 source-policy tests. The one ignored test in each
+library configuration remains unrun. Ten new capture tests cover completion
+ordering, exact readback extents, failed-read poisoning, selection and epoch
+drift, identity/close rejection, raw nonfinite retention, ties and exclusive
+publication. Both strict Clippy configurations and formatting pass. Normal
+source-gate inventory, generation and validation preserve all four dependency
+inventories and existing coverage byte-for-byte; no verification row is added.
+The validated source census contains 1,159 files.
+
+The fresh mi300x release controller is 9,225,344 bytes with SHA256
+`42d35b30ec875843b95303402eb231d64e9ecd5527d5c01d73a25aa413eb8c41`.
+Its actual Cargo producer and copied ELF agree; the maximum observed GLIBC
+requirement is 2.39, matching mi350's observed userspace. The final host collector
+passes. Owned debug and release target cleanup reclaims about 2.24 GiB after
+retaining the needed products. No local build, GPU run or new worktree is used.
+
+The first test compile's SHA-formatting error, one Clippy borrow warning, and
+two prelaunch reserved-space stops remain recorded. Fixes and owned cleanup
+precede the passing reruns. Test executables are retained before removing
+build intermediates. That implementation-only checkpoint included no native
+capture or numerical-parity result; the later real capture and independent
+comparison are recorded above.
+
+The user-selected native host is mi350. At 2026-09-18T00:05:24Z, SSH succeeds
+and all eight gfx950 devices report idle with baseline VRAM. This is not a
+continuing reservation. Builds and CPU tests remain on mi300x; each native
+launch needs a fresh shared-host admission check. gfx950 evidence does not
+replace gfx942 qualification.
+
+### New Upstream Delta Observed
+
+During the capture controller release build, main advances to
+`1ca7e12974ec77f28ea250847b7b3ae93182232c`. The 28-file compiler change adds
+checked store forwarding and guarded output stages, including worker-handoff
+handling. Independent Git-object review finds the complete KFD local dependency
+closure, LLVM worker subtree, workspace manifests, lock and toolchains unchanged.
+Whole-compiler equivalence does not hold. The present host validation remains
+70aadc-attributed; the new pin needs adoption validation and fresh matching
+compiler tools/TP14 emission before latest-compiler native claims.
+
+### 70aadc Compiler Adoption Checkpoint
+
+The preceding adoption fetch observed fe2o3 main
+`70aadc048a25b17ccc1bb2b185163df0256e1931`. Its one commit after `e364682e`
+changes 20 files, adding MemorySSA and closed Policy3 output admission. The
+earlier whole-production-source equivalence bridge no longer covers main.
+Independent Git-object review finds the KFD runtime and complete local
+dependency chain, LLVM worker subtree, workspace manifests, lock and toolchain
+unchanged. Those limited source bridges do not relabel existing binaries.
+
+Ferric `e3477526caffd954e6b283e061aa040ecd5a11fd`, tree
+`b966fc043aeb2f2847feda61bb35c9c81e8e2019`, now adopts `70aadc0`. All 50
+adoption phases pass on mi300x: 32 locked graphs, 35 offline metadata queries
+after one fetch, both owning-edition formatting checks, two fresh source-gate
+executables, 48 source-gate tests, four inventory derivations and normal
+coverage generation/validation. The exact 80-file change and all 1,157 files
+match the retained final census. Inventory changes are revision-only; no new
+declarations, lock repairs, coverage, runtime-TCB or property-binder changes
+are admitted. `70aadc0` was main at that checkpoint; the later delta is recorded
+above.
+
+The successor adoption wrapper checks resource observations and terminal
+writes, preserves the first command failure, handles repeated cleanup signals
+and stops both captured leader and group before setsid can complete. Remote
+preflights pass nine Python ASTs and 57 lifecycle, inventory-transition,
+resource, terminal-write and actual pre-setsid cleanup cases. Original CPU0,
+nice19, ordered locks, stage/cache limits and reserved headroom remain intact.
+
+Independent custody and source review checks 2,124 payloads/2,125 members,
+exact nanosecond metadata, 51 external files, all raw phases and both actual
+source-gate producers. The 24,669,140-byte archive has SHA256
+`4f3eeb4f15da81b672eb7f2ca11aec8031217eca363d5b36ba702d2086d46492`.
+Campaign and retention exits are zero. This does not establish engine, native
+GPU or protected-proof validation. The native result below remains
+Ferric59822 / fe406-produced. Fresh compiler tools and TP14 emission are still
+required before a `70aadc0`-produced artifact can be used. All builds and CPU
+tests remain on mi300x; native execution uses the selected eight-GPU mi350.
+
+After the independent ACK and fresh hash/process/no-use checks, the completed
+owned remote retainer is removed, reclaiming 25,008 KiB. The authoritative
+local archive and useful adoption/cache/model owners remain. Scoped lsof
+reports no users but warns about inaccessible unrelated mounts, so no global
+host-visibility claim is made. No new worktree was created.
+
+### Team Priorities After Adoption
+
+| Team | Current Evidence | Next Work |
+| --- | --- | --- |
+| Compiler integration | 1ca7e129 adoption and fresh four-tool build pass. Independent retention review passes; the completed private target and cache are removed. Existing native binary producers remain unchanged. | Fresh current-source TP metadata, vendor formation and TP14 emission with the new tools. |
+| Kernels and numerics | Final RMS matches both same-input CPU replays; the LM head matches source-ordered replay exactly at positions 4 and 5. Full-model tensors still differ; the retained gfx942 position-131 mismatch remains unexplained. | Localize upstream residual divergence without changing tolerances or treating cross-target diagnostics as qualification. |
+| Inference integration | Fresh gfx950 TP1 smoke and capture complete; older TP8 evidence remains separately attributed. | Validate fresh TP8 producers after emission. Sustained request-driven speculation remains beyond the existing two-round K4 canary. |
+| Verification | Capture tests, source-adoption coverage checks, 121 reference/arithmetic tests and independent native/reference/same-input/compiler custody audits pass; no protected proof runtime has become available. | Keep numerical acceptance and protected-proof requirements open; validate fresh kernel artifacts before native execution. |
+| Website | R26 remains published. A parallel source-only proposal includes the newer compiler and numerical checkpoints. | Complete remote-only site validation and publish the validated static output. |
+
+The numerical task targets R07/R12/R21/R29 evidence, not a new qualification
+framework. Capture-mode timings will not be benchmark-comparable, and gfx950
+observations cannot replace gfx942 evidence. All 33 M1 gates remain open.
+
+### R26 Website Checkpoint Published
+
+The validated mi350 transport/source-gate snapshot is live at
+https://harsh-nod.github.io/ferric/. All five mi300x QA phases pass, including
+every width from 320 through 1440 and 64 retained screenshots. Independent
+custody checks 133 payloads/134 members and 20 downloaded external records;
+two source-review supplements have separately identified local provenance.
+The initial lifecycle fixture's PID-observer cleanup bug is fixed only in a
+fresh fixture revision; all 28 cases then pass, with the failed record retained.
+
+Static revision `8ce1d92fefa181fec7ace02a634235f21d85c97c` deploys successfully
+in run `35284983178`, without a GitHub build. All seven canonical and seven
+cache-busted live-file hashes match the admitted artifact. The completed clean
+source worktree and redundant screenshot/artifact extraction are removed,
+reclaiming 15,840 KiB; archives and active work remain. The published snapshot
+predates the native attempts below and claims no new Qwen result.
+
+After access returns, the three completed owned mi300x Pages stage, retention
+and input directories are also removed, reclaiming 52,392 KiB. Fresh owner,
+path, archive-hash and recorded-process absence checks precede deletion.
+Scoped lsof checks observe no users; warnings about inaccessible unrelated
+mounts limit host-wide visibility. Authoritative local evidence, active build
+and model inputs, and shared jobs remain untouched.
+
+### Fresh TP14 And mi350 TP1 Pass
+
+Fresh Ferric59822 / fe406 vendor formation on mi300x passes with the normal
+512 MiB reserve. Cargo normalizes all 55 Git packages in the 198-package view;
+143 registry packages and both historical source views remain unchanged.
+Formation receipt SHA256 is
+`ec864a74487edc01018ce521a462d54feed1fadd12ac8341eb830bbae31975cc`.
+The genuine normalized device manifest is `8ffc8a52...`; no post-Cargo
+manifest or checksum edits are made.
+
+Independent terminal custody passes for the corrected retention attempt:
+198 payloads, 200 regular archive members, 16 external records and all 14
+recorded statuses zero. Archive SHA256 is
+`614b207b223980aaf648adf50330e951aa5333225000166b60e5ea3c6640731b`.
+The first retention's byte custody succeeded but its consistency summary was
+false because its checker expected a nonexistent nested process-census key.
+That record is preserved; the separate correction retains all five independent
+process-absence checks and does not rerun or relabel vendor formation.
+
+Fresh gfx950:xnack-/COV6 TP14 emission finishes in 496 seconds with all 13
+phases and terminal statuses zero. All 14 kernel roots/descriptors, exact
+output replay and BF16 MFMA instruction inspection pass. Independent custody
+checks 702 payloads, 704 archive members, 17 external terminal records and
+54 process identities. Archive SHA256 is
+`66d65d0099c1f4515cfeda7faa2e20ccfcc932cdae5f9bea982d8344cefdc167`.
+The actual 111,768-byte HSACO has SHA256
+`fc20155a47e6d723799481ecd60d0486970ed21beba3c88122962a2f8f916e5c`;
+both artifact files transfer to mi350 with identical hashes.
+
+The TP1 runner passes syntax/AST and 50 GPU-free helper cases on mi300x.
+The first native attempt exits 1 with `ContentDirectoryIdentity`, before
+model intake or GPU dispatch: the staging path omitted the required immediate
+parent `fe2o3-engineering-v1`. Its controller/process groups are absent and
+raw failure records remain unchanged. A fresh attempt corrects only the path
+constraint and uses new run/control/admission owners; no executable, kernel
+bytes or resource limits change. R2 stops before launch because the transferred
+intake authorization is mode0644 rather than required0600. Independent byte
+custody passes for both failed attempts, retaining the failures explicitly.
+
+R3 verifies the corrected authorization mode/UID/link count/size/hash, obtains
+fresh GPU admission, and passes artifact admission and canonical model intake.
+The SSH session is temporarily lost; bounded access attempts also time out at
+22:55 UTC. Once access returns, the actual terminal records show completion at
+21:36:20Z with launch, runner and application exits all zero. Qwen3-8B produces
+tokens `[12095,13]`, text ` Paris.`, for `The capital of France is`. The checker
+passes the canonical bundle, exact artifact/live worker identities, all three
+setup/measurement/Closed records and real worker closure. There are 3264 rank
+dispatches and six processed KV positions. The worker/process group is absent;
+GPU0 returns to zero busy and its 297,766,912-byte idle VRAM baseline.
+
+Independent R3 custody and result review passes all 63 payloads, exact
+nanosecond metadata, 19 external records, executable/artifact pins, tokens,
+recorded process absence and restored VRAM. The 62,623-byte retained archive
+has SHA256
+`975e7478602cba164df2cb41ebc34ec0d07cac394c5195ee8d161e7cac066075`.
+R1 and R2 remain separately retained failures, not relabeled successes.
+
+This is a two-token TP1 correctness smoke using the fe406 debug worker and
+token-at-a-time prefill, not the optimized serving route or a matched benchmark.
+Raw observations are 86.766 seconds intake, 180.473 seconds setup, 39.567 seconds
+TTFT and 7.924 seconds for the sole decode interval. They are not comparable to
+the retained vLLM/SGLang workloads. No fresh TP8 or protected gfx942 qualification
+is established. Transport STATE remains unpromoted. All 33 M1 gates remain open.
+
+### mi350 Model Transport And Loader Checks Pass
+
+Canonical source transport from mi300x to the user-selected eight-GPU mi350
+finishes at 2026-09-17T20:09:36Z. Both SSH endpoints, tar operations and the
+coordinator return zero with owned leaders/groups absent. The exact 13-file
+roster totals 17,907,716,208 bytes; destination files are read-only and source
+non-atime metadata is unchanged. Independent custody checks all 33 source,
+35 destination and 36 coordinator records. This is transport evidence, not
+model content authentication. The incomplete admission marker is unchanged;
+Ferric intake must authenticate the model bytes before use.
+
+The actual Ferric59822 controller `a8e7961e...` and fe406 runtime worker
+`47426e4f...` are staged on mi350 with their original producer attribution.
+All six passive readelf/loader verify/list checks pass, as do terminal file,
+control and process-absence checks. Both resolve installed libraries on glibc
+2.39 without changing the host. The retained 97-file record archive is SHA256
+`536d7892001441c0ea6c56109becf9594aab3e81b78d08afe0e6b5ef5af42c77`.
+Neither executable entrypoint is invoked: no GPU, model or inference result
+is implied by loader compatibility.
+
+Full fe406 four-tool build custody is now complete. The 82,422,000-byte archive
+SHA256 `9853c1dc1822b4e57a3245e2a17f75c9cb8c122a1405a1d0c4c2a811190177ef`
+has 155 payloads and 156 regular members; the separate 37 terminal records also
+pass independent review. All six build phases, source/cache preservation and
+four actual tool identities are checked. Two redundant local extractions are
+removed after fresh no-use checks, reclaiming 362,592 KiB; authoritative archives,
+active compiler/cache/model owners and unrelated worktrees remain untouched.
+
+The fresh Ferric59822 source-gate campaign passes all 17 phases and 48 tests.
+TP metadata has 163 packages, including 53 fe406 and two Pliron packages.
+All 1,157 source files, four TCB inventories and coverage remain unchanged.
+The 5,311,957-byte archive SHA256
+`a57181029ad0a9c7ac672311ffb6c07580832094c0bc377ab881598b2191e184`
+passes independent 300-payload/301-member and 20-external-record custody.
+An initial retention deployment failed its directory-permission check; that
+failure is preserved separately, and the fresh corrected retention passes.
+
+The TP14 vendor prerequisite passes without copying packages or running Cargo.
+Its fresh projection fits the 10 GiB stage and ordinary 512 MiB reserve:
+3,754,004 KiB observed stage plus 4,048,408 KiB projected growth. Formation
+and the exact 14-root gfx950 artifact remain separate pending steps. The old
+13-root artifact lacks the MFMA export required by the current controller and
+is not a substitute. No new Qwen tokens, TP8 dispatch, TTFT or TPOT are reported.
+
+A fresh upstream query now observes fe2o3 main `e364682e`. Its six commits after
+fe406 change 11 tutorial/config/documentation files. Independent Git-object and
+build-input review finds production compiler/runtime dependencies and the LLVM
+worker subtree unchanged. Existing producers remain fe406-produced, with an
+explicit production-source-equivalence bridge, not a claimed e364 rebuild or
+Ferric pin transition. Tutorial integration-test inputs did change and need
+their own validation. All builds and CPU tests remain on mi300x; all 33 M1 gates
+remain open.
+
+### Native Validation Redirected To Eight-GPU mi350
+
+The user redirects native execution from mi350-2 to mi350. Fresh SSH reaches
+`smci350-rck-g03-b19-03` as UID 9661 and observes eight MI350X gfx950 GPUs,
+all idle with no visible KFD users. This is an observation, not a reservation.
+All builds and CPU tests remain on mi300x; shared jobs are untouched.
+
+At 2026-09-17T19:34:57Z, the actual mi300x-built fe406 identity executable
+SHA256 `1544d60efa281e3e8c424d805351e40b983050352a5676fb504f8074892d0fd8`
+passes `--all` on all eight physical UIDs. Each reports original MI350 profile
+`6f859b0a67f8ee2497393206930ff35bf1a9ae69d33f172106a790a0c9226667`,
+eight process apertures and contracted-clear currentness. Descriptor counts
+return from five to five. Command, wrapper and cleanup statuses are zero;
+the process leader/group are absent. All eight GPUs remain idle with unchanged
+VRAM usage of 297,766,912 bytes each and no visible fuser users.
+
+This probe opens KFD/render devices and observes identity/reset state. It does
+not acquire explicit VM authority, allocate GPU memory, create queues, dispatch
+kernels or set XNACK. Its 633,615-byte retained archive has SHA256
+`8c5c2d0300801d122ecd6879bdca301d752517ae9dc18b6ab0fb1ee8602bc6cb`;
+all 38 payload hashes and the 40-member archive roster are checked locally
+using shell-only data custody. No application code is executed locally.
+
+The host's kernel 6.8.0-124-generic, amdgpu 6.16.13/srcversion
+703B1127E578BC5D4BD6615 and device roster match the existing MI350 path.
+Its glibc 2.39 removes the known Asrock controller-link mismatch. The historical
+`/tmp/ferric-qwen8.TRNKht` runtime/model bundle is absent, so it cannot be reused
+as a live input. Canonical model staging, fresh current-source 14-root gfx950
+kernel emission and Qwen execution remain pending. No new Qwen timing or TP8
+inference result is claimed; gfx950 does not replace gfx942-specific evidence.
+
+The fresh fe406 four-tool compiler campaign on mi300x finishes all six phases
+with zero status, including terminal source/control/group checks. Actual CLI
+and backend producer receipts are retained separately; full campaign archival
+is still pending. A fresh upstream query confirms fe406 remains main. No new
+fe2o3 changes or push are needed solely for this host redirect. All 33 M1 gates
+remain open.
+
+### TP1 Roster And Portable mi350-2 Controller
+
+Ferric source `59822dd469a95294cc11c6e8bab0c79978f66703`, tree
+`9020cf3c7a1f30437e01873919e6bea4acd623d3`, fixes TP's exact export roster
+to include all 14 roots emitted from its imported source. The previously
+omitted MFMA root is admitted as source metadata; this does not select it for
+dispatch or change kernel arithmetic, default targets or protected routes.
+The compiler/runtime pin remains published fe2o3 main `fe406b0c`, reconfirmed
+by a fresh upstream query after validation.
+
+All builds and tests stay on mi300x: 34 gfx950 and 34 gfx942 device tests pass,
+as do one default and two TP-enabled adapter admission regressions. Both final
+formatting checks and the release controller build pass. These are focused
+tests, not the complete adapter suite or native numerical qualification.
+The 17 build/test phases preserve the initial adapter-format exit 1 and its
+successful correction; the other 16 phases return zero.
+
+The ordinary mi300x link requires GLIBC_2.39, unavailable on mi350-2's
+glibc 2.35. A final-bin-only relink against 20 privately captured installed
+link inputs produces controller SHA256
+`cbcceea01f035515b886754ebedbc7c832450afc22fc9b791876ec182932d264`,
+with maximum required GLIBC version 2.34. No shared library, toolchain,
+dependency or repository source is changed for this relink. Independent
+review checks all 648 actual link inputs, tool/capture hashes and required
+runtime symbols. This is static compatibility, not controller execution.
+
+The retained 97,572,588-byte archive has SHA256
+`13da490f7aef70c7ce1d495d682d239f932b372f9926cade57033e53e1f569b5`.
+Independent custody verifies all 362 payloads and 367 regular members,
+14 actual test ELFs, three distinct controller producers, raw phase outcomes,
+capture/link provenance and both successful external retention phases.
+After that ACK, fresh process/no-use and identity checks precede removal of
+the two owned completed test stages, totaling 3,099,044 KiB. Cleanup returns
+zero; active build/cache owners, models and shared jobs are untouched. The
+two inspected local worktree registries contain no eligible finished tree
+to remove.
+
+Fresh current-compiler gfx950 kernel emission, canonical model staging and
+the Qwen smoke on mi350-2 remain pending. That host has one gfx950 GPU and
+does not replace gfx942-specific or eight-GPU evidence. No new Qwen output,
+TTFT/TPOT, protected proof or M1 gate closure is claimed. All 33 gates remain
+open; builds remain restricted to mi300x.
+
+### Published Asrock Runtime Adopted
+
+Ferric `289288fa29adbc70f5155fb1eb81fdf44a6d38e7`, tree
+`41028757bfb666766a289a15fcfee88b6e5a394e`, adopts published fe2o3 main
+`fe406b0c3275c33b92f81734a4e6e3852b891073`. The exact 80-file update and
+all 1,157 integrated source files match the validated remote census before
+this tracker update. Compiler/runtime work remains in fe2o3; Ferric owns its
+kernel, inference and qualification sources.
+
+All 50 adoption phases pass on mi300x: 32 locked graphs, 35 offline metadata
+queries after one fetch, both owning-edition formatting checks, two fresh
+source-gate producers, 48 source-gate tests, four actual dependency inventory
+derivations and normal coverage generation/validation. Four preflights also
+pass, including six lifecycle and twelve TCB-transition fixtures. The verifier
+DEV and combined inventories gain exactly the two reviewed lowerer dev
+declarations beyond the revision change. Runtime TCB, coverage, Pliron and
+the separately pinned property binder remain unchanged; no lock repair occurs.
+
+The 24,639,559-byte archive has SHA256
+`fc371ab77b306505f30c9008ad77ed534d5439102ce5b978c736b47d4e6f5deb`.
+Independent shell-only custody review verifies all 1,981 payloads and 1,982
+regular members, exact nanosecond metadata, 19 external hashes, both control
+ledgers, fresh producer bytes, raw terminal records and the complete source
+delta. Campaign and retention return zero. All builds and tests stay on
+mi300x within the existing caps; no local or GitHub build runs.
+
+The user-selected mi350-2 is reachable at the 18:10 UTC follow-up, with GPU
+utilization zero, 297,750,528 bytes of VRAM used and no visible GPU users.
+This is an observation, not a reservation. It exposes one gfx950 GPU and
+cannot replace gfx942-specific capture or eight-GPU evidence. At this adoption
+checkpoint, current-source TP1 controller/kernel builds, canonical model
+transfer and Qwen execution were pending. This adoption establishes no native
+arithmetic,
+performance, protected proof or M1 gate closure; all 33 gates remain open.
+
+### Current-Main Asrock Runtime Published
+
+fe2o3 main now contains `fe406b0c3275c33b92f81734a4e6e3852b891073`, the
+six-file strict engineering-only Asrock profile rebased onto latest main
+`8cbd2a94`. A fresh fetch and rebase precede the fast-forward push; the commit
+uses `[skip ci]`, and the subsequent GitHub Actions query returns no runs.
+No kernel or inference code is added to fe2o3. Ferric still pins `99897145`
+until its separate dependency/TCB adoption is validated.
+
+Fresh mi300x checks pass 422 default and 490 engineering KFD unit tests, with
+one existing ignored test each; 64 UAPI integration tests; 27 default and 31
+engineering compile-fail doctests; both strict Clippy selections; formatting;
+and the identity/worker builds. Three fresh C layout probes built from the
+18 captured Asrock headers match all expected KFD/event/DRM output. Actual
+compiler arguments, tool hashes, dependency lists/hashes, saved preprocessed
+sources/assembly/objects, binaries and terminal statuses are retained. This
+checks ABI layouts and request encodings, not live driver semantics or a
+protected C compiler/runtime installation.
+
+The 25,208,962-byte archive has SHA256
+`15a5dca4042f5d29d2347bed68361485140e3c97a69b1eb68b2c62e32d12d387`.
+Independent custody checks all 340 payloads, 341 regular members, 17 external
+records, 18 phases, 11 Rust producers and all 5,192 source files against the
+exact committed tree. The phases preserve an initial pre-child setup failure
+and its successful successor; they are not an all-green first attempt.
+Both rebuilt native tools are byte-identical to the e22 producers. The prior
+mi350-2 identity event retains its original attribution, with this explicit
+executable-byte bridge rather than an invented new native run.
+
+Next adoption must preserve the existing 80-file/32-graph validation and
+account for exactly two new lowerer dev-dependency declarations in the
+verifier-dev and combined TCB inventories. Fresh metadata must confirm that
+expected delta. Rebuilt TP1 controller/kernel emission, canonical model staging
+and Qwen execution on mi350-2 remain pending. No new Qwen timing, gfx942
+capture, protected proof or M1 gate closure is claimed.
+
+### mi350-2 Checked Binding Passes
+
+User-requested mi350-2 access is restored. On 2026-09-17 at 17:32:55 UTC,
+the exact mi300x-built e22d22 identity producer passes on Asrock GPU UID
+1956390207832604050, KFD ID 39229, render minor 128. It reports gfx950:xnack-,
+the selected profile hash
+`cf65a0d24a127c3a7fb12b8aefb1668fe75cb779036562a0dde2d00f52ce2978`,
+one process aperture and contracted-clear currentness. Descriptor counts
+return from five to five; command, wrapper and cleanup statuses are zero.
+The owned process group is absent. Visible GPU users are absent before and
+after, VRAM stays at 297,750,528 bytes, and final GPU utilization is zero.
+The 631,238-byte retained archive has SHA256
+`7ec8ef6ee8a02626f90b926189a8d85358611c97d0278567be6b7f4d67034adb`;
+all 30 payload hashes pass local shell-only streaming checks.
+
+This bounded probe opens KFD/render descriptors and subscribes to reset
+events, but performs no explicit VM acquisition, GPU allocation, queue
+creation, kernel dispatch or XNACK change. It establishes checked engineering
+binding, not Qwen correctness, general driver teardown or protected authority.
+The host exposes one gfx950 GPU, so it cannot replace a gfx942-specific capture
+or an eight-physical-GPU experiment. Builds remain restricted to mi300x.
+
+Fresh independent checks also match all 28 installed-driver manifest source
+hashes, resolving the thirteen missing source checks below. Four primary and
+fourteen transitive x86-64 LP64 UAPI headers are retained for future mi300x
+C-oracle compilation; their ledger hash is
+`048bfa6680d86e383c55aceeee3f5cc4c998eafdfcc2b743396b1326bbe83589`.
+Fresh C-oracle compiler/include provenance, latest-main rebase/validation,
+Ferric adoption and gfx950 Qwen execution remain pending. Existing CPU evidence
+keeps its e22d22 attribution. All 33 M1 roadmap gates remain open.
+
+### Asrock Runtime Port CPU-Validated
+
+Isolated fe2o3 commit `e22d22dee508129379089c50cebb91cc952c6ee2`, tree
+`6c9fe45146af876f1628d1acd275953ddcbb99d5`, ports the exact mi350-2 Asrock
+engineering profile onto main-at-freeze `99897145`. Six files change. It
+retains the selected observation manifest on the bound device and reports
+that manifest from the identity probe. Default/gfx942 admission and strict
+KFD-to-PCI UID equality remain unchanged; no XCP exception or other diverged
+compiler work is imported. Independent source review finds no blocking defect.
+
+All execution stays on mi300x: 422 default-feature and 490 engineering-feature
+unit tests pass, with one existing test ignored in each selection. The UAPI
+integration suite passes 64 tests; compile-fail documentation
+contracts pass 27 default and 31 engineering tests. Both strict Clippy
+selections, formatting, the identity-probe build and engineering-worker build
+pass. All 5,184 final source files match the local committed tree. The first
+default build failed in libc's build script because the pinned Rust compiler
+could not load its LLVM library. That exit 101 is retained; R2 fixes only the
+owned launch environment's library path, without changing shared libraries.
+
+The 25,252,817-byte archive has SHA
+`b7de4fef3c6366ce2d3aaf1edba977d629b6e8ee7c3e3b10001e57fa33534d45`,
+371 payloads, 372 members and 11 executable producers. Its 24 recorded phases
+include the failed R1 and successful successors, not an all-green R1 claim.
+The retainer itself returns zero with its terminal records retained separately.
+Independent shell-only custody checks every payload, the closed archive roster,
+all raw test/phase records, both exact tree patches and the retained producers;
+no material discrepancy is found.
+
+This is not yet pushed to main or adopted into Ferric. Existing remote UAPI
+outputs match the frozen Rust layouts, and 15 installed-source plus 14 oracle
+ledger rows hash-match. Thirteen additional manifest source hashes, a fresh
+mi300x C-oracle producer closure and live checked binding remain unverified.
+During read-only follow-up, mi350-2 starts returning SSH public-key denial
+after its Conductor check; no alternate access or permission bypass is tried.
+There is no new native/Qwen result, performance measurement, protected proof
+or gfx942 qualification. All 33 M1 gates remain open.
+
+A later upstream query finds main `8cbd2a9410308c46e96ab670bccdf94a9d69d479`,
+five commits beyond the frozen base. Its 26-file delta updates exact KIR V12
+simulation and checked Policy3 lowerer consumers. KFD, UAPI and runtime source
+files are unchanged; Cargo.lock adds two dependencies only to the lowerer.
+No build is claimed for this newer source. The private port will require a
+fresh rebase/validation before any main push, and Ferric's integrated compiler
+pin remains 998 pending a separate adoption. Existing results are not relabeled.
+
+### Compiler 998 Dependency Update Integrated
+
+Ferric `c54ac0b08d74cc5fbb5acf911d30715347d4e244`, tree
+`cb43526162d2029e9b620fcbbecf593bc735a370`, adopts fe2o3
+`9989714525028db2e73bacfaa944f97fd3d5eeff`. It was published main when this
+validation was frozen. The exact 80-file update covers 30 manifests, 30 locks
+and 20 policy/declaration/inventory files. All 1,157 integrated source files
+match the validated remote final census before this tracker update.
+
+On mi300x, all 50 campaign phases pass: 32 locked graphs, 35 offline metadata
+queries after one fetch, both owning-edition formatting checks, two freshly
+built source-gate executables, all 48 source-gate tests, four actual dependency
+inventory derivations and normal coverage generation/validation. Three separate
+preflight phases also pass, including six lifecycle fixtures. The three verifier
+inventories change only the compiler revision; runtime inventory, coverage,
+Pliron and the separately pinned property binder remain unchanged.
+
+Archive `5212acb34f16f448d367903a8bb5a963fe32d399b73ccad728168f32ddc57570`
+is 24,607,654 bytes. Independent shell-only review checks all 25 external
+records, 1,964 payloads and 1,965 members, including exact nanosecond metadata,
+both genuine ELF producers, all terminal records and the complete source delta.
+Campaign, retention and cleanup checks return zero. All execution stays on
+mi300x, within the existing caps; no local or GitHub build is run.
+
+This validates dependency pins, graphs and source policy, not new compiler-tool
+emission, engine execution, GPU arithmetic, Verus proofs or performance. The
+latest compiler's production delta is still the checked local-helper/ranked-
+projection work described below; subsequent commits add tests, tutorial tooling
+and docs. Runtime/KFD/platform sources are unchanged from 9b64. Existing native
+and wrapper-proof results keep their original 9b64 attribution. The separate
+logical-sampler candidate is not integrated or claimed verified. All 33 M1
+gates remain open.
+
+### Native Capture R3 Timed Out
+
+A fresh GPU4 admission allowed the 7f1121f1 / 9b64 final-RMS attempt to run
+from 16:00:40 to 16:20:43 UTC on 2026-09-17. Checked KFD binding returned at
+154.883 cumulative seconds; the following complete memory-initialization call
+did not return before the unchanged 1,200-second command limit. Campaign and
+process exits are 124. No capture directory, logits or capture-pass record
+exists. This is a timeout, not the shared-GPU abort from the earlier attempts.
+The owned group is absent, and fresh observations show GPU4 restored to its
+original idle allocation. No foreign job or shared configuration was changed.
+
+The failure archive is
+`e9dba42ec89a7397e63d057ba4fc55f44b40462beca2a3f9871088499cf58db6`,
+4,524,837 bytes, with 52 payloads and 53 members. Root and independent custody
+checks pass; the receipt correctly retains capture-pass=false. No automatic
+retry or independent reference run follows this failed capture.
+
+A source audit narrows the unobserved interval: descriptor preparation hashes
+64 GiB of logical zero-KV input and hashes both weight images, after which KFD
+validation hashes the same 17,884,735,488 weight bytes again. Full weight
+copy/readback, zero-KV writes and later native mapping remain inside the same
+interval. These are source-established costs, not measured time attribution or
+proof of a driver stall. The next generic optimization can reuse fe2o3's
+existing owned immutable initialization witness to remove the duplicate weight
+hash while preserving readback/currentness and Ferric's preflight-before-effect
+ordering. It is not implemented or measured at this checkpoint.
+
+A subsequent producer audit confirms that R3's actual initializer and runtime
+sha2 were built at optimization level 3. The separately recorded opt-level-0
+sha2 is a host/proc-macro artifact, not the runtime dependency. Debug hashing
+is therefore ruled out as the explanation; runtime backend selection and
+operation-level time attribution remain unobserved.
+
+### BF16 Observer Wrapper Integrated
+
+Ferric `a6e0be415fc741d6b1e17f9da66de8c1b4631104`, tree
+`f5b89fcc60f2197cb91088717dd22719e5c447e8`, integrates the exact two Rust
+files proved and tested at `cdc6071237c1cc2402f0abe499a05fa1a5940bbb`, plus
+the separately validated one-body coverage update from `4f2d071e`. All four
+integrated files match the reviewed candidate; newer tracker changes are
+preserved. This is not an integrated-source rerun.
+
+The actual production observer wrapper now proves exact translation of the
+shared BF16 scanner result: lowest-ID finite argmax, malformed-row expected
+and actual extents with the original lane, and first-nonfinite token with the
+original lane. Runtime behavior is unchanged; no second scan is introduced.
+Ordinary pinned Verus with `--no-cheating` verifies one condition with zero
+errors. Seven actual-body mutations fail the unchanged postcondition. Six
+reject at the default solver limit; the wrong-success-token mutation rejects
+in R2 with `--rlimit 50` and a matching positive control. Its original R1
+solver-exhaustion result remains inconclusive, not a passing negative.
+
+On mi300x, all 15 qualification-logits host tests, 10 focused spec tests and
+48 source-gate tests pass, as do formatting and both strict Clippy selections.
+Fresh normal coverage validates 177 modules and 8,691 executable bodies, with
+exactly one wrapper row promoted and only its pending admission removed.
+The complete 1,157-file candidate matches the final validation census; source,
+borrowed Cargo cache and pinned 190-file Verus closure preservation pass.
+
+Archive SHA is
+`2199bd5fa87b87286802282bb86168ece6229878a5893d1eec65c49992a92048`
+(48,258,102 bytes). Root and independent review verify 647 payload hashes,
+sizes and modes, the exact 648 regular-member roster, 38 historical phase
+statuses and successful R2 retention. Four actual executable producers are
+retained. The initial missing-rustup invocation, inconclusive negative,
+supplemental coverage-checker bug and first retainer's producer-size rejection
+remain preserved failures. Successful successors do not overwrite them.
+
+This evidence remains tied to adopted compiler `9b64a2da`. It does not prove
+surrounding allocation/readback, GPU arithmetic, BF16-to-integer sampler
+composition, reference parity or protected qualification. No new native,
+serving, TTFT/TPOT or performance result is claimed; all 33 gates remain open.
+
+After review, clean-source and diagnostic-free local no-use checks, the
+completed 45,232 KiB candidate worktree is removed normally, retaining its
+branch. The redundant 233,704 KiB evidence extraction is also removed after
+archive recheck and no-use checks; the canonical archive and external records
+remain. Remote stage cleanup still requires its own fresh inventory/no-use
+admission and is not claimed here.
+
+### Upstream Compiler Currency
+
+The earlier published-main check finds `7581df51ffa6392cf463160f90cd59a15212c102`,
+one direct descendant of adopted `9b64a2da`. A separate source-only audit finds
+14 changed files, confined to lower-MIR and ranked projection code/tests for
+checked Unit-local helpers and memory-free roots. Manifests, lockfile,
+toolchain, runtime, KFD and gfx950 platform sources are unchanged. The commit
+does not resolve the mi350-2 platform-profile mismatch below. No test was run
+by this audit; adoption and matching compiler tools/emission require separate
+validation. Existing 9b64 evidence is not relabeled as 7581 evidence.
+
+After R25 publication, another published-main observation finds
+`306c2e554efaf303a62aeceafe00b8c53625f54c`, a direct child of 7581. Its
+two-file delta adds a production memory-free extraction test and selects that
+ignored exact test in local ROCm CI. Production compiler, runtime, KFD,
+platform, manifests and toolchain files are unchanged from 7581. No build or
+test was run by this incremental source audit; adoption remains pending.
+The published checkpoint's 7581 observation and all 9b64-bound results retain
+their original attribution.
+The completed 998 dependency update above supersedes the pending-adoption
+status of these historical observations without relabeling their evidence.
+
+### mi350-2 Platform Compatibility
+
+The user-requested 2026-09-17 survey reaches `mi350-2` and observes one
+gfx950 device, unique ID `1956390207832604050`, in SPX/NPS1 mode. At
+13:52:47 UTC it is 0% busy with 297,750,528 bytes of VRAM allocated. The
+only observed KFD process is the host's root-owned `gpuagent`, with zero
+reported GPU allocation and no observed queues. This is a read-only
+availability observation, not admission or a reservation.
+
+There is a concrete runtime incompatibility: the host runs kernel
+`5.15.160+`, while the adopted fe2o3 `9b64a2da` gfx950 platform validator
+requires `6.8.0-124-generic`.
+The observed amdgpu module is `6.16.15`, source version
+`9462451703604FCD7EC2365`, rather than the admitted `6.16.13` /
+`703B1127E578BC5D4BD6615`. Installed driver sources are available under
+`/usr/src/amdgpu-6.16.15-2267428.22.04`; their compatibility is not yet reviewed.
+The engineering worker requires this check too; its machine-code opt-in
+does not bypass it. Supporting this host requires a separately identified
+and validated platform profile in fe2o3, not a relaxed check or host change.
+The surveyed model caches also lack the canonical Qwen3 target/draft pair.
+
+A later read-only DKMS/source/sysfs audit confirms that the existing engineering
+queue geometry and module parameters match this host. It identifies the mixed
+header closure: DKMS KFD/amdgpu UAPI headers precede the kernel's core DRM
+headers. Exact expanded historical compiler arguments are not retained.
+Current ioctl identity, XNACK, apertures, reset-fence and checked binding still
+need validation alongside an additive exact platform profile. Compiler 998
+does not change that requirement; no platform check is relaxed.
+
+A subsequent read-only check at 16:54:07 UTC reconfirms the same idle gfx950
+device. An intervening independent engineering worker held device descriptors
+and exited without intervention, so this is not an exclusive GPU reservation.
+Existing separate work on the host contains clean fe2o3 candidate
+`cb8f51ec0b52894a1fb510bc3f523005dda8bfaf`, adding an exact engineering-only
+Asrock profile and rejection tests. It is not on main 998 or adopted here.
+Its parent `313f917c81ea6bb15d739c67888870497043b603` includes earlier
+profile-selection/XCP infrastructure absent from main; the five-file tip is
+not a standalone current-main patch. Main has 130 commits absent from that
+candidate, so directly adopting its revision would also lose current work.
+Review and narrow integration can reuse the exact profile without importing
+the older host's XCP exception, followed by mi300x-only builds/tests and
+separate native admission.
+The existing host workspace, artifacts and processes are left untouched;
+its prior build records are not claimed as this campaign's validation.
+
+Once those prerequisites are met, Ferric's existing gfx950 TP1 engineering
+path can be built on mi300x and executed here. It is not the pending gfx942
+final-RMS capture and cannot close that hardware-specific M1 gate. No new
+GPU workload, numerical result, performance measurement or host modification
+is claimed. The existing gfx942 capture remains pending.
+
+### Published R25 Wrapper Checkpoint
+
+The public site at <https://harsh-nod.github.io/ferric/> now records the wrapper
+integration, matching compiler9b64 emission, both guarded native aborts and
+the mi350-2 platform blocker. Source `9452fbea86f50ac7124957c10cbed2fa14ead9e8`,
+site tree `2cd3841e3be1d0100d07f4aee3f6a7e7eb2aa084`, passes all five mi300x
+QA phases, every width from 320 to 1440 pixels, eight rendered viewports and
+64 screenshots. Source/runtime/browser preservation checks pass. Root reviews
+desktop/mobile overview and checkpoint screenshots; no overlap is observed.
+
+Root and independent custody verify 133 payloads, the exact 134 regular-member
+roster and 22 external records. Archive SHA is
+`ceef7fcbf74fbfd437e6e8d8c88dca1e5789fb061674cbfa3c452075677f1b99`
+(11,524,267 bytes); the seven static files total 744,662 bytes. Timestamp
+custody is checked at integer-second precision, not exact nanoseconds.
+
+Static commit `1496d5d99deb5ba7d968f6550d5f04772489ba6d` is deployed by
+successful deploy-only run `35242350042`. All seven canonical and seven
+cache-busted live requests match the tested artifact. Workflow changes only
+bind its size, hashes and evidence reference; no GitHub build/test, permission
+or environment-protection change is made. After clean-source and scoped
+no-use checks, the completed 3,532 KiB source worktree is removed normally,
+retaining its branch and evidence. Remote scratch cleanup remains separate.
+No native/numerical/performance result or M1 gate closure follows.
+
+### Earlier R24 Checkpoint
+
+The prior R24 deployment records the full BF16 scanner result below.
+Source `f5905220336c450d2ce41f3e6b18676bce549fdd`
+passes all five mi300x-only phases, every width from 320 to 1440 pixels,
+eight rendered viewports and 64 screenshots. All source/runtime/browser
+preservation checks pass. Independent custody verifies 133 payloads, 134
+members and 22 external records. Archive SHA is
+`c16618f5480f2b45743f50b948aaca01041b30a5ebe7ca3b51168f788985876f`
+(11,526,999 bytes). Desktop/mobile overview and checkpoint images are reviewed.
+
+Static commit `8b821193ef5e004c8e776e81134070929bb51eaa` is deployed by
+successful deploy-only run `35187297686`. All seven canonical and seven
+cache-busted live requests match the 733,849-byte artifact. No GitHub build,
+test or environment-protection change is made. Two earlier QA attempts remain
+failed at stale wording assertions; their 40 raw records each are retained
+and hash-checked. The two successors only correct three validator literals.
+The completed 3,504 KiB source worktree is removed normally after clean-source
+and scoped no-use checks, retaining its branch and evidence. Remote stage
+cleanup remains separate and is not claimed.
+
+### Full BF16 Scanner Integrated
+
+Ferric `aec2fa54264db382459383eed2f9d2b342050ba5` integrates the exact
+three Rust files validated at `039018f08a3258affb56952531f7c5ac4c6c8656`,
+plus one generated verified-coverage row. All 1,157 source identities match
+before that coverage promotion. Integrated tree is
+`6966666705cc9ce91c840ce3af26858a08d8ed37`. This is not a rerun of the host
+campaign at the integration commit.
+
+The allocation-free scanner checks the entire little-endian BF16 vocabulary
+row, rejects incorrect extents and the first nonfinite value, and returns the
+lowest token ID on finite ties, including signed zeros. Exact-source ordinary
+Verus R4 passes all 21 phases: key and scanner bodies verified, with one and
+two verification conditions respectively, and all six unchanged body mutations
+rejected through genuine proof failures. Retained archive SHA is
+`81732091f8ff75be31595c8242d536783db6633a2595a402728a047259c8099e`
+(13,787,772 bytes); 249 payloads, 251 members and 12 external records verify.
+Earlier count-checker and solver-exhaustion attempts remain failed/inconclusive.
+
+Host R1 on mi300x at the same source and adopted compiler f7f passes all 30
+phases: 48 source-gate, 136 spec and 760 engine tests, with nine engine tests
+ignored. Formatting, three strict Clippy selections, metadata, normal coverage
+validation and preservation checks pass. Four fresh executable producers are
+retained. Archive SHA is
+`138fb2084bbf3702f01cc40a89691089c27031b9f91e2360a68b815bbb0dbd70`
+(31,481,979 bytes); 281 payloads, 283 members and 14 external records verify.
+Independent review approved integration. At that checkpoint the engine wrapper
+remained unverified; its subsequent proof is recorded above. This is not
+device-numerical, protected-runtime or M1 qualification. The
+historical GPU logit mismatch remains unresolved.
+
+The completed scanner worktree was removed normally after clean-source and
+no-use checks, reclaiming 45,196 KiB. Its branch and retained evidence remain.
+The exact 12-root scan-proof cleanup below is now complete. Other remote
+duplicate-stage cleanup still requires its own fresh no-use audit; unreadable
+interactive SSH sessions are not granted a new exception.
+
+### Compiler 272 Tools And Adoption Validation
+
+Ferric `999aa65f161d71c98b75475a9f4a518c7064be85` adopts compiler 272.
+Source-only audit of newer `1d0294bf` found
+four lower-MIR files changed from 6ae; a fresh upstream observation then found
+`272af56d6032f25019156e27a0ba50d16f85830c`. The latter adds a work-ledger
+identity and hardens local-frame scope accounting in seven kernel-IR files.
+No Ferric caller migration or runtime/KFD/toolchain/manifest change was found.
+The frozen 272 revision now has matching tools and passes the dependency
+adoption validation below. No compiler/runtime source change or push was made
+at that checkpoint. The separate adoption of the newer compatibility fix is
+recorded below.
+
+A bounded mi300x read-only cache-shape audit passes. A separate fresh 272 build
+passes all six phases, with no old target reuse and the original 10 GiB cap;
+the consumed one-run 384 MiB vendor exception is not reused. Twelve focused
+mi300x tests pass for the revised failed-build evidence parser. They exercise
+the actual helper functions with explicit identity stubs, not full custody.
+The future vendor-manifest contract separately passes 12 unit tests; it is not
+a fresh vendor formation or producer snapshot. Original abd8 formation exit 1
+remains failed.
+
+Fresh-stage preparation passes with an independently copied cache, unchanged
+old cache and 5,153 matching compiler source files. Actual initial allocation
+is 1,765,360 KiB; the empty target and 1,907,900 KiB reserve fit inside the
+10 GiB cap. Fresh Cargo producers establish release cargo-fe2o3/lld-proxy and
+debug backend.so/extractor, with the backend bound to the newly copied CLI.
+All 5,153 compiler source files and the old cache remain unchanged. Archive
+SHA is `611bdd9d478a47a9fce8a3b08a510b270fcf53f491377e88b5f79bfe62770c1a`
+(81,942,120 bytes); independent custody verifies 101 payloads, 102 members
+and 25 external records. This is not full compiler or GPU qualification.
+
+Ferric adoption R3 at exact base `aec2fa54` passes all 50 mi300x phases,
+including 32 locked graphs, 48 fresh source-gate tests, formatting, four
+actual TCB derivations and unchanged coverage. The candidate changes exactly
+80 pin/policy files; runtime TCB, property-binder and Pliron pins are unchanged.
+R1/R2 remain failed at checksum-array line wrapping, each with only preparation
+and formatting launched. R3 uses the pinned formatter to generate the array
+and retains a separate strict formatting check.
+
+Independent review found that the original failed-attempt archiver rounded
+nanosecond timestamps through floating point. All R1/R2 payload bytes, sizes
+and modes match, but their exact timestamp checks fail; those original
+archives and verdicts remain unchanged. A separately reviewed controller now
+uses exact decimal PAX timestamps and checks metadata plus payload readback.
+All three precise retention attempts pass. R3 archive SHA is
+`af9218ba1290e82a13a64fbbcedd726579a641dfcac4b782970e126219f1978b`
+(24,540,425 bytes); independent review passes 1,658 payload identities, the
+exact 1,659-member roster and 14 external records. Both fresh source-gate
+producers, all phase statuses and the complete 80-file patch are reviewed.
+All 1,157 committed Git blobs match the validated final census; adopted tree
+is `1e59d81197dce97c12a9a6aaa7c18d7f12e779c9`. The progress notes are a
+separate documentation change, not part of the remotely validated source.
+
+The precise R1/R2 archives also pass full 1,218-payload/1,219-member custody
+and 14 external records each. Their campaign exit 1 and original rounded
+archives remain unchanged. This is dependency/source-policy adoption, not a
+whole-engine, kernel-emission, native or numerical rerun on compiler 272.
+
+A separate read-only cleanup inventory passes for exactly 12 completed
+scan-proof roots, with 44,477 unchanged entries and 1,667,710,976 allocated
+bytes. Four archived campaigns and all 32 source trees are reconstructible;
+all 60 campaign and four retention groups are absent. All 50 retained raw
+records verify. The unchanged scoped no-use policy passes but still records
+`complete_visibility: false`; it makes no system-wide or future-use claim.
+A separately reviewed exact apply now passes after a fresh census, custody
+and scoped usage check. It removes only those 12 roots: 37,813 files and
+6,664 directories, with all 44,477 entries represented by 88,954 ordered,
+paired journal records. All 56 retained raw files verify independently;
+protected evidence and controllers are unchanged and all 12 roots are absent.
+The removed census allocation is 1,667,710,976 bytes (about 1.55 GiB), not a
+system-wide free-space delta. Receipt SHA is
+`13860eebd85e9debff3f35a58d90f8b4abdb499964b84cb49c1da05548753a54`;
+journal SHA is
+`455b9baeebb97b1f515614afa4ca730d6f8d4f4faed929a5646762e54f7aae84`.
+No foreign session, shared library, model or active cache is removed.
+
+The adopted `999aa65f` source archive and full 1,157-file census now pass a
+separate three-phase mi300x source/metadata check. Fresh locked, offline,
+all-features device metadata contains 163 packages, including exactly 53
+compiler 272 and two Pliron packages. All source and seven protected file
+identities are unchanged; all 48 retained records verify independently.
+Metadata SHA is
+`04a1af6f9638145e6963ad73edbf2456e9047178b1f3100da91f0e81be4f6314`.
+This reuses authenticated read-only source, not old build outputs.
+
+Three mi300x tests pass for lossless compressed vendor census evidence:
+exact roundtrip, corrupted content despite an updated compressed hash, and
+changed raw bytes. The first launcher failed before tests because its nested
+virtual-memory limit tried to exceed the outer limit; that setup failure is
+preserved. A separate R2 lowers the inner limit to the existing 2 GiB ceiling,
+passes all three tests, and retains 16 independently checked files. The codec
+tests alone do not establish vendor formation or capacity admission. The later
+formation result below retains the ordinary 512 MiB reserve and all other limits.
+
+At 2026-09-17T05:39:43Z, GPU4/renderD160 was compute-idle with 298,647,552
+bytes VRAM used. This is only a read-only availability observation, not native
+admission. No new GPU workload or TTFT/TPOT/throughput result is claimed.
+
+### Compiler 272 Host And Vendor Prerequisites
+
+The frozen `999aa65f` source now passes all 24 fresh mi300x host phases with
+compiler 272: seven exact engine, 25 adapter and 38 source-policy tests, 70
+total. This is a selected host campaign, not a full engine-suite rerun. Cargo
+uses an independently copied cache and an empty target. Full source, original
+metadata-owner, toolchain and control preservation checks pass. The release
+build takes 9m22s and produces a fresh 14,219,952-byte binary, SHA-256
+`b108c70b23639ac654a65551a54ad47fd9e2e749efe3b007d9f43de599343330`.
+No RPATH/RUNPATH is present. Root and independent review verify all 246 payloads,
+247 archive members and 14 external records, including exact nanosecond
+timestamps. Archive SHA is
+`45161ae1e4c5f3c4b7510dfdb51082133a71d9d1cd1f31e554d0c2ddc52e793d`
+(26,654,305 bytes). All actual statuses and retained producers agree.
+
+A separate read-only vendor prerequisite passes and retains 35 independently
+checked raw records. It authenticates 198 package identities, including 53
+compiler and two Pliron Git origins, against the pinned Cargo packaging rules.
+The complete old vendor censuses roundtrip losslessly. Current evidence is
+projected at 9,801,728 bytes under the unchanged 12 MiB cap; the projected stage
+growth fits the 10 GiB cap with the ordinary 512 MiB reserve. This is not a
+formation result or a replacement for fresh no-use and capacity admission.
+The consumed reserve exception and historical failed formation remain unchanged.
+No new device artifact, native numerical result, performance claim or M1 closure
+is established by these host and prerequisite results.
+
+The separate current272 vendor formation now passes in one mi300x run,
+07:53:14Z to 07:56:37Z. All 198 packages pass, with 143 registry packages
+unchanged and 53 compiler plus two Pliron Git packages refreshed by pinned
+Cargo. All 55 independent Git origin rosters and all 163 package metadata
+projections pass. Cargo-generated manifests and checksums are not overwritten;
+the immediate producer snapshot equals the final full package inventory.
+Original111, prior1fad, source and Git workspace preservation checks pass.
+
+Terminal stage allocation is 3,995,240 KiB and evidence is 6,920 KiB, within
+the unchanged 10 GiB stage, 512 MiB reserve and 12 MiB evidence limits. Scoped
+no-use checks find no selected matches while explicitly retaining incomplete
+visibility. No foreign session or new visibility exception is involved.
+Receipt SHA is
+`76276e9452709fc732f00656a0e15272c2c7472ca5d5c6aca0f97dd15ad0b4bb`.
+Root and independent terminal custody verify all 105 payloads, 107 members and
+19 external records with exact nanosecond metadata. All actual statuses and
+preservation records agree; archive SHA is
+`51740e6ddd221fbbcc1c222328f118ea79c784320bb60fec95d89cab81437aac`
+(2,995,047 bytes). The subsequent device-emission attempt is recorded below;
+native validation remains pending.
+
+### Compiler 272 Emission Compatibility Failure
+
+The single frozen `999aa65f`/`272af56d` MFMA13 emission attempt runs on mi300x
+from 08:20:24Z to 08:27:22Z. Eleven prerequisite/preservation phases pass;
+the emit phase, controller and campaign exit 1. Inspection does not run,
+no HSACO is produced and no GPU workload is launched. Source, vendor, tool
+and control afterchecks pass. The unchanged 10 GiB stage cap and normal
+512 MiB admission reserve apply; the earlier one-run exception is not reused.
+
+Root and two independent static investigations identify a compiler package
+representation mismatch. `trusted_device_items.rs` hashes exact `Cargo.toml`,
+optional `build.rs`, and every `src/**` file, but accepts only the reviewed
+original-workspace closure. All 26 vendored device source files match the
+canonical compiler census, and neither package has `build.rs`. The canonical
+manifest SHA is `da7bbcd2f3dac75b968f45137c920d94658b5600ff52bf9d843d494bcdd8afb7`;
+the unchanged Cargo-produced manifest SHA is
+`8ffc8a52272ff0866b3f68d78d0365f50af2da1be2e305891175539d5cde65b3`.
+The actual vendored manifest bytes are captured and authenticated separately
+for a future regression fixture. This is not a caller omission or a kernel
+source change, and metadata-semantic equivalence does not satisfy the existing
+byte-exact compiler check.
+
+The failed attempt is retained without retry or manifest rewriting. Archive
+SHA is `ef59520c2e3c19770b0a082228571bcfc629876f14fe115fa9b498d62efff7c0`
+(1,812,581 bytes); root and independent custody verify 231 payloads, 233
+members and all 20 external records with exact nanosecond metadata. All 42
+external identities and the four genuine tool producers match. The original nonzero
+statuses and absent inspection remain explicit. Retention exit 0 means byte
+custody only, not successful emission or a closed M1 gate.
+
+That failure required a compiler-side correction. Its separately validated
+successor is recorded below; the failed emission and original evidence remain
+unchanged.
+The independently reviewed final-RMS capture/reference controller remains
+unready pending a successful matching artifact and fresh GPU4 admission.
+The historical numerical mismatch and all 33 M1 gates remain open; no new
+TTFT, TPOT, throughput or vLLM/SGLang comparison is claimed.
+
+### Published Provider Materialization Fix
+
+fe2o3 main now contains `9b64a2da7f81f7ca2649cb44142dbd2f3e268496`,
+tree `35d12678e3f4ef36dcadf7c673699912d3dd1e84`, rebased on upstream
+`8012017e93a08b0194bd527cd8d2fa5c698ac884` before publication. The four-file
+compiler-only change admits exactly the reviewed canonical and Cargo-vendored
+device source closures at both provider admission and semantic validation.
+It preserves the actual observed closure and distinct durable identities;
+it does not normalize, replace or ignore Cargo's manifest. Runtime, KFD,
+device sources, CLI, workspace manifests, toolchain and LLVM worker are unchanged.
+
+Fresh mi300x R2 at that exact commit passes all five CPU-only phases from
+09:19:15Z to 09:23:55Z, including 29 provider tests and all three new
+regressions. Coverage includes canonical/vendor positives, 18 manifest/source
+mutation cases, incomplete policies, and existing stale-source, path and
+symlink rejection tests. The empty target and independent cache copy use the
+normal 512 MiB reserve and unchanged 10 GiB stage cap. All 5,176 source files,
+the borrowed cache, toolchain and controls pass preservation checks.
+
+Retained R2 archive SHA is
+`4606968d49d99c6463682e17307480a4985705fd3fb46d0a114edc8c53c6ef52`
+(16,123,418 bytes). Independent custody verifies all 100 payloads, 102 members
+and ten external records with exact nanosecond metadata; all 15 actual
+statuses are zero. The earlier successful R1 applies only to `314b9f39` on
+`26326746`, not to the rebased source. The push includes `[skip ci]`; the
+post-push GitHub observation reports zero workflow runs and zero check runs.
+
+The completed compiler worktree is removed normally after clean-source and
+scoped no-use checks, reclaiming 90,012 KiB. Its branch, validated source
+archive and evidence remain. Remote test-stage cleanup is not yet performed.
+
+At publication, Ferric still pinned compiler 272. Source-only review indicated
+the established 80-file dependency/policy adoption with regenerated
+compiler-bearing TCB records, not a caller API migration. Fresh matching tools,
+vendor formation, kernel emission and native numerical validation remain pending.
+These targeted compiler tests do not establish full compiler, GPU, performance or M1
+qualification, and the historical numerical mismatch remains unresolved.
+
+### Compiler 9b64 Adopted
+
+Ferric `7f1121f15d1f85e9323661151ad36df3192e606c` adopts published fe2o3
+`9b64a2da7f81f7ca2649cb44142dbd2f3e268496`; integrated tree is
+`382268e28513accee9b069eafa0ec138d0dc0e36`. All 1,157 committed blobs match
+the remotely validated final source. Exactly 80 pin/policy files change:
+the compiler revision and two derived verifier checksum rows. Pliron,
+property-binder pins, runtime TCB and verification coverage remain unchanged.
+
+The fresh mi300x adoption campaign at base `08bccfcb` passes all 50 phases
+from 09:47:33Z to 09:51:41Z: formatting, 32 locked dependency graphs, 48
+source-gate tests, four actual TCB derivations and normal coverage validation.
+It uses an empty target and the existing owned metadata cache under its lock,
+with unchanged 2 GiB campaign and 10 GiB metadata-owner limits. Stable 1.97.1
+tool identities and control afterchecks pass. Six bounded mi300x helper tests
+precede the run; successor controls preserve the first failure and forward
+cancellation through the active driver and phase wrapper.
+
+Archive SHA is
+`63f55fb73dd852db6aeb201081d0b4c910885b2041877843c190e3268d111d74`
+(24,588,242 bytes). Independent custody verifies all 1,933 payloads, 1,934
+members and 29 external records, including exact nanosecond metadata, both
+fresh source-gate executables and all 105 recorded process identities. The
+generated patch is independently reviewed before integration. This progress
+note is a separate documentation change, not part of that validated source.
+
+This establishes compiler dependency/source-policy adoption, not a new host,
+kernel-emission, protected-proof, native or performance result. Matching tools
+and device artifacts must be rebuilt before the pending numerical comparison;
+old compiler272 products are not relabeled. All 33 M1 gates remain open.
+
+### Compiler 9b64 Tools Built
+
+The fresh mi300x four-tool campaign passes all six phases from
+10:16:59Z to 10:31:05Z on 2026-09-17, with campaign and launcher exit zero.
+Actual Cargo records establish new release `cargo-fe2o3` and linker-proxy
+producers plus debug backend and extractor producers at published compiler
+`9b64a2da7f81f7ca2649cb44142dbd2f3e268496`. The backend build script binds
+the newly produced CLI SHA. Upstream main is independently observed unchanged
+after the build; old compiler272 products are not reused or relabeled.
+
+The empty target and independent, non-reflink Cargo-home copy retain CPU0,
+nice19, one job, the original 10 GiB stage cap and 1,907,900 KiB admission
+reserve. The source, borrowed cache, installed toolchain and controls pass
+preservation checks. Six focused process-check tests and remote syntax checks
+precede execution. No vendor reserve exception, local build or GPU execution
+is used. Cancellation cleanup starts no new preservation phase and retains
+the first failure separately from later checks.
+
+Retained archive SHA is
+`37400450290e05f373a7f9e8388ff20652c53aab485c5339d0d48a9eec8126bc`
+(82,357,803 bytes). Independent verification passes all 160 payloads, 161
+members and 39 external records with exact signed-nanosecond metadata. It
+reconstructs all 5,176 canonical source files, the four raw Cargo producers,
+CLI-to-backend binding and independent cache-copy checks. All 25 recorded
+process entries pass fresh absence checks after terminal retention.
+
+The owned tool stage remains needed for matching artifact production. No new
+worktree is created; the completed compiler worktree remains removed. Next
+are the matching Ferric host, fresh vendor formation and kernel emission,
+then the pending GPU4 numerical capture. The separate LLVM worker retains
+its verified original producer attribution. This is engineering tool evidence,
+not full compiler, protected-proof, GPU, numerical or performance qualification.
+The historical numerical mismatch and all 33 M1 gates remain open.
+
+### Compiler 9b64 Host Validated
+
+The matching `7f1121f1`/`9b64a2da` host campaign passes on mi300x from
+11:04:38Z to 11:30:04Z on 2026-09-17. All 24 primary phases and three
+explicitly tracked preservation phases exit zero, as do the outer launcher
+and terminal retainer. Seven selected engine, 25 adapter and 38 source-policy
+tests pass, 70 total; this is not the full engine suite. Six lifecycle and
+20 resource-error control tests also pass remotely. fe2o3 main is observed
+unchanged before and after execution.
+
+The fresh release build takes 13m15s and produces a 14,211,048-byte opt3,
+debug0 binary with features [], Cargo `fresh:false`, and no RPATH/RUNPATH.
+Its SHA-256 is
+`3ce677527cd2c53f9ed7da495f6241b9002d21976e382cd3913c6c262a88fd57`.
+The empty target and independent Cargo-home copy retain CPU0/nice19/jobs1,
+the original 8 GiB host-stage cap, 512 MiB reserve and all other resource
+bounds. Source, original metadata owner, toolchain and controls pass
+preservation checks. No local build, GPU run or reserve exception is used.
+
+Precise retention includes the earlier successful three-phase source/device
+metadata campaign: all 1,157 adopted source files and ten protected identities,
+the exact 163-package graph with 53 compiler and two Pliron packages, and
+the genuine gate/tool receipts. The gate summary retains its actual
+`08bccfcb` source-base attribution. Its compiler metadata and host evidence
+are not relabeled historical272 products.
+
+Archive SHA is
+`2eca2031751952511cc1ddf97dbad9fbf4c7eabc2af51882ae6cc52849e0f09d`
+(35,120,343 bytes). Independent shell custody verifies all 550 payloads,
+551 members and 20 external records, including exact signed-nanosecond
+timestamps, both control ledgers, raw test outcomes, actual Cargo producers
+and release bytes. Fresh post-retention checks find all 96 recorded process
+entries absent, including the retainer; this is an entry count, not unique PIDs.
+
+Parallel static reviews record the exact new vendor/emission bindings and
+native-controller changes, including its new 24+3 host-phase contract. Next
+are fresh vendor formation and 13-kernel emission, followed by fresh GPU4
+admission and final-RMS capture. The separate worker keeps its actual original
+producer. No new worktree is created. The release/evidence remain needed;
+bulk scratch cleanup needs a narrowly rebound no-use/hardlink-aware controller,
+not reuse of a deletion script bound to historical directories.
+
+This checkpoint establishes selected engineering host validation, not native
+numerical acceptance, protected proof qualification, performance or M1 closure.
+The historical numerical mismatch and all 33 M1 gates remain open.
+
+### Compiler 9b64 Vendor Validated
+
+The matching vendor prerequisite passes on mi300x from 11:44:19Z to
+11:47:04Z on 2026-09-17. Its 63 authenticated raw records establish 198
+package identities, 55 independently derived Git origins, preservation and
+a 9,826,304-byte evidence projection. No Cargo or package mutation occurs
+in that prerequisite. Its proposals remain unready until separately bound.
+
+Fresh vendor formation then passes from 11:59:13Z to 12:02:32Z. Cargo copies
+198 whole packages, preserves 143 registry packages and refreshes 53 compiler
+plus two pinned Pliron packages. All 163 relocated metadata projections and
+the immediate/final producer snapshots match. Cargo-generated manifests and
+checksums are not manually rewritten. Original111/prior1fad, adopted source,
+compiler tools, workspaces and lockfiles pass preservation. Published fe2o3
+main remains `9b64a2da` at the fresh post-run observation.
+
+The normal 512 MiB reserve fits under the unchanged 10 GiB stage cap; the
+historical one-run 384 MiB approval is not reused. The scoped wrapper and
+formation/retention controllers pass 26, 13 and 22 conditional resource
+cases respectively on mi300x. Static review fixes lifecycle relative-key
+mapping and cleanup after a failed child-PID write before retention launch.
+The original authenticated compiler wrapper is not modified.
+
+Archive SHA is
+`c751fd9b4e35b3ff285d3191ff035dbdc5b882115ee4585d1781fccb54ab13ba`
+(2,987,514 bytes). Independent shell custody verifies all 111 payloads,
+113 members and 21 external records with exact signed-nanosecond metadata,
+14 zero statuses, package/metadata semantics and both full preservation
+censuses. All six recorded process entries are freshly absent; this is not
+a unique-PID count. Parallel static review finds no discrepancy.
+
+The unchanged scoped no-use helper records no visible references to the
+new empty vendor, but retains `complete_visibility=false` and its existing
+limited sd-pam/SSH identity allowances. No allowance is widened, no foreign
+session is touched and no cleanup authorization follows from that report.
+
+Next are separately admitted 13-kernel emission and inspection/custody,
+then fresh GPU4 admission and final-RMS capture using the matching 24+3-phase
+host result. The LLVM worker keeps its original producer attribution. No
+GPU or local application build/test is run here, and no new worktree is
+created. This is dependency/engineering validation only: the numerical
+mismatch, protected-runtime limitation and all 33 M1 gates remain open.
+
+### Compiler 9b64 Emission Validated
+
+The matching 7f1121f1/compiler9b64 CPU-only emission passes on mi300x from
+12:49:32Z to 12:58:21Z on 2026-09-17. All 13 phases, command/cleanup exits,
+coordinator checks and launch/campaign statuses are zero. Inspection confirms
+13 gfx942:xnack- kernel entries and descriptors, code-object version 6,
+exact output replay and actual MFMA instruction evidence. The LLVM worker
+keeps its original producer216822/tree613ef attribution. No GPU is launched.
+
+The earlier R1 command produced the same artifact, but a whole-stage `du`
+raced with compiler scratch cleanup. Its controller125/wrapper143/command0
+statuses and absent inspection remain separately retained as a failed run.
+New scoped R2 controls allow one complete resample only for exact-emitter
+scratch ENOENTs, preserve rejected observations and still reject over-cap
+partial totals. Child timeouts, clean-result checks and original resource
+limits remain enforced. All 60 remote control cases pass; R2 itself needs no
+resample. The normal 512 MiB reserve fits the unchanged 10 GiB stage cap, and
+the historical one-run 384 MiB approval is not reused.
+
+Artifact digest is
+`feb0124fb88fc2a97efca6a357f442e05d94b593e1b01c6acdbb35f93282ecde`.
+The 113,192-byte HSACO SHA is
+`b73a25170b87a61710c04f0d0416822112e0525cdc1d6e71b632366ec9a956d7`.
+The retained archive SHA is
+`c82d5f993c49b0143e46ef56484cd036a9616c7207f789798e2a2de199715c00`
+(1,924,709 bytes). Independent shell custody verifies all 503 payloads,
+505 members and 22 external records with exact signed-nanosecond metadata,
+14 zero global statuses, all phases and artifact/inspection linkage. All
+43 recorded process entries are freshly absent; this is not a unique-PID
+count. Retention's 25 conditional resource cases pass on mi300x.
+
+The next native candidate binds these actual host/tool/emission identities.
+Its command and both retainers require the exact 24+3 host phase schema and
+authenticate the emission receipt, summary, manifest and archive instead of
+only syntax-checking hash strings. All 63 remote validator cases and separate
+checks against the actual retained records pass. The candidate remains unready
+for GPU execution until fresh GPU4 admission and frozen launch controls.
+
+Next is final-RMS capture and its separately admitted independent reference.
+No new TTFT/TPOT, numerical acceptance, protected proof qualification or M1
+closure follows from compiler emission. All 33 M1 gates remain open. Builds
+and application tests stay on mi300x; no worktree or foreign job is touched.
+
+### Compiler 9b64 Native Guarded Attempts
+
+On 2026-09-17, the matching final-RMS launch controls pass 63 host/emission
+validator cases and 31 GPU-free helper cases on mi300x. The latter cover
+resource-read failures, interrupted spawn, PID-record failure, strict owned
+group absence and fresh GPU-admission authentication. Existing limits are
+unchanged. Published fe2o3 main is still `9b64a2da`; no compiler change or
+push is made. No build or application test runs locally.
+
+Two freshly admitted GPU4 attempts launch the frozen `7f1121f1` release and
+matching emitted artifact. R1 runs 13:21:06Z to 13:23:22Z; R2 runs 13:26:51Z
+to 13:29:09Z. Both stop during CPU model bootstrap when foreign shared GPU
+tests appear. R1 detects a queue-directory race; its after-scan confirms
+selected-GPU allocations and queues. R2 directly detects a foreign selected
+VRAM allocation. Both campaign exits are 126 and owned command exits are 143.
+Only the owned groups are terminated and strictly confirmed absent. Controls
+remain unchanged, and no foreign job or shared library is modified.
+
+Neither attempt reaches Ferric's KFD-bind phase or produces the five-file
+capture, a capture-pass record or a numerical comparison. No independent
+reference is launched. The historical numerical mismatch is unresolved;
+these guard stops are not kernel-correctness results. Another run needs an
+uninterrupted shared-GPU window, not relaxed guards or another immediate retry.
+
+Both failed attempts have successful terminal custody and independent local
+shell readback of every payload's hash, size, mode and signed-nanosecond time,
+plus archive UID/GID and exact member rosters. R1 has 56 payloads/57 members;
+archive SHA `5fb2e53193575f894a1e44034d289d4bd9b91caa85481d8b9d1d397b02edc5ef`
+(4,522,162 bytes). R2 has 57 payloads/58 members; archive SHA
+`dfd54db3d747fbaef5bfdc2345f25418dec4e39e83522ab3b9b929347c2a7dd4`
+(4,522,435 bytes). Custody success does not change either failed native result.
+
+No new worktree, TTFT/TPOT, serving success, protected qualification or M1
+gate closure is claimed. All 33 M1 gates remain open. The consumed one-run
+vendor reserve exception is not reused. Pages remains at the published R24
+checkpoint; this native status has not yet been deployed there.
+
+### Earlier Published R23 Checkpoint
+
+The public site records the BF16 helper, source-bound host/proof results,
+f7f adoption and separate unadopted 6ae observation below. Private Pages source
+`2de4b98f46ac79bde05752e61bc191a2ced7184e` passes all five mi300x-only QA
+phases, every width from 320 to 1440 pixels, eight rendered viewports and
+64 retained screenshots. Source, Node/npm and browser preservation pass.
+
+Archive SHA is
+`bbe9b81a5dc1f87a20b2bf88877da21cb5bf9db4b43a48f0fd112160d0c006f4`
+(11,462,862 bytes). All 133 payload identities, the exact 134-member roster
+and 22 external records verify independently. Two additional source controls
+are retained externally and match the admitted ledger. A local invocation
+with incorrect expected manifest/receipt hashes failed before extraction;
+that failure remains recorded, and the actual remote-ledger hashes validate
+unchanged evidence. Desktop/mobile overview and checkpoint images are reviewed.
+
+Static commit `b81f3223dc506d5c4ab2d6c1a8cbd9d616483088` deploys through
+the successful deploy-only run `35181761167`. All seven canonical and seven
+cache-busted live requests match the admitted 729,876-byte artifact. No GitHub
+build/test or protection change is made. After exact source, clean commit and
+scoped no-use checks, the completed 3,496 KiB Pages worktree is removed without
+force; source branch and evidence remain. Remote process-visibility gaps still
+withhold cleanup authority; no shared process or library is modified.
+
+### f7f Compiler Adoption
+
+Ferric adopts fe2o3 `f7f5aa32600959a56a80d34fd608bcf935bc09cf` in
+`3836cc1fb3bdb36b18854df10dd368cf47c902f0`. All 50 bounded mi300x phases
+pass, including 32 locked graphs and 48 fresh source-gate tests. The exact
+80-file revision transition preserves runtime TCB, property-binder and Pliron
+pins, and selected-helper coverage. All 1,157 integrated source files match
+the validated final census. Independent actual-evidence review finds no issue.
+
+Archive SHA is
+`c5575dc2ea8a96f72568b4d97259884fe34825f7a65b1d4ea3a5250e72bda4e0`
+(20,968,339 bytes). All 1,651 payload identities, the exact 1,652-member roster
+and 14 external records verify. All 50 recorded phase groups are absent.
+This is dependency/source-policy adoption, not whole-engine or GPU validation.
+The earlier BF16 helper results below remain attributed to bd1/df3a78e0;
+the full scanner checkpoint above is validated at 0390/f7f.
+Newer upstream `6ae096ca717c762ad00d5d1b3ca80d4db5e0628c` is separately
+source-audited and is not validated or adopted by this checkpoint. Its two
+commits change private-array initialization and lowering, without an identified
+Ferric API migration or runtime/KFD/toolchain/manifest/LLVM-worker change.
+
+User-authorized mi350-2 is reachable with one gfx950 device. The checked cache
+lacks the canonical target/draft bundle, and a current-source TP1 run needs
+matching rebuilt tools, worker and gfx950 TP emission. The frozen gfx942
+final-RMS capture cannot run there unchanged. No new native admission, GPU
+execution, numerical result or performance measurement is claimed.
+
+### Earlier BF16 Host Ordering Helper
+
+Reviewed candidate `df3a78e0ac7bfb96106935e0c07a4de6e860de1b` adds a finite
+BF16 integer-key helper and uses it in the allocation-free host argmax observer.
+The mapping merges signed zeros, reverses negative magnitudes and rejects all
+256 nonfinite encodings. Independent CPU tests exhaust all 65,536 encodings;
+host regressions preserve lowest-ID ties and reject late nonfinite values.
+
+Exact-source host R4 passes all 30 mi300x phases: 48 source-gate tests, 132 spec
+tests and 760 engine tests, with nine engine tests still ignored. Formatting,
+all three strict Clippy selections, genuine metadata, normal coverage validation
+and preservation checks pass. A function-local cast allowance has one exact
+reason-bound gate rule; regressions reject plain, changed-reason, broad and
+mixed allowances. Fresh gate CLI/test producers are retained with both library
+test producers. Archive SHA is
+`7123d4e539b44732784d0dd80f2b1e976f67d36e39a44f4ec74ed114fd1aca84`
+(31,374,341 bytes); all 281 payloads, 283 members and 14 external records verify.
+
+Exact-source ordinary Verus R6 passes all 15 expected phases with `--no-cheating`:
+one selected executable body verified, and four body-only mutations each fail
+the unchanged postcondition with genuine solver work. All five source trees
+and the pinned 190-file verifier closure are unchanged. Proof archive SHA is
+`cab7440c72ae0b5617ce9973cfb4885307c4fb90d0cbc00b7f1baa15a8233922`
+(11,077,970 bytes); all 180 payloads, 182 members and 12 external records verify.
+Independent review approves this exact source and generated single-helper
+coverage entry. The complete host scan stays explicitly `pending-verus`.
+
+Earlier type, opaque-conversion, formatting and Clippy failures remain retained.
+Host R3 was explicitly cancelled after review found the obsolete gate would
+reject its unreasoned annotation; its missing phase status remains unknown,
+not synthesized. Prepared proof R4/R5 were never launched. Completed duplicate
+local extractions were removed after no-use checks, reclaiming 206,932 KiB;
+the completed helper worktree was also removed, reclaiming 45,184 KiB.
+Original archives and verification records remain. This is not a full host-scan,
+formal IEEE/device, protected-runtime, numerical parity or M1 qualification
+claim, and it does not establish the cause of the historical logit mismatch.
+
+### Earlier R22 Checkpoint
+
+The earlier R22 site includes the matching abd8 emission, separate vendor
+semantic checks and bd1 adoption below. Private Pages source `bcf3647b` passes
+all five mi300x-only phases: widths 320..1440, eight viewports, 64 screenshots
+and unchanged source/runtime/browser checks. Archive SHA is
+`2eb71e710c2d63d2c06dd97f37770aa29e24d5cc8450cc886c480048e77c76ce`
+(11,440,575 bytes); all 133 payload identities, the exact 134-member roster and
+20 external hashes verify independently. Desktop/mobile layouts were reviewed.
+
+Static commit `792eae3e1f6fdb9ff1178c3b504f3bccdab073c2` is deployed by the
+single successful deploy-only run `35176831270`. All seven canonical and seven
+cache-busted live requests match the admitted artifact. No GitHub build/test or
+protection change is made. The completed 3,480 KiB source worktree is removed
+without force after full census, clean commit and scoped no-use checks. The
+prior failed-extraction duplicate from compiler custody is also removed after
+checking no use, reclaiming 104,652 KiB; original archive and failure logs stay.
+No remote cleanup exception or new qualification is claimed.
+
+### bd1 Compiler Adoption
+
+Ferric adopts fe2o3 `bd1ed7d559b1a372644a78b1ede7e6057e5ccbc7` in
+`819ebcdbbbce6aa795c3bf72997c096ab24f526b`. All 50 bounded mi300x phases
+pass, including 32 locked graphs and 47 source-gate tests. The exact 80-file
+revision transition adds no target or dependency allowance. Runtime TCB,
+property-binder pins and the integrated EOS proof inventory are unchanged.
+All 1,157 integrated source files match the validated final census.
+
+Archive SHA-256 is
+`436bb904672e12d81ef0cdfc64aa53725dd9f7b5c625545e05e45fb131f9bc68`
+(20,958,731 bytes). All 1,652 payload hashes, sizes and modes, the exact
+1,653-member roster and 18 external records pass independent checks; all 50
+recorded phase groups are absent. The initial local extraction masked group
+write permission on syntax records through umask; its failed check is retained,
+and extraction preserving archived permissions passes without changing evidence.
+Receipt SHA is
+`ec4f8bbe3409c4a7d8fcb55b60ef00316d8b96f7e41ce3747472db0282e3932e`.
+This is dependency/source-policy adoption, not whole-engine, GPU, protected-proof
+or performance qualification. Historical native inputs remain frozen at 6e/abd8.
+
+### Matching abd8 Kernel Emission
+
+All 13 bounded mi300x CPU-only emission phases pass using matching abd8 tools
+and frozen Ferric 6e source. Fresh canonical and private empty-home metadata
+agree; all source/vendor/input preservation checks pass. The gfx942:xnack-
+code-object-v6 ELF contains the exact 13 kernel entry/descriptor sets, passes
+exact output replay and includes the expected BF16 MFMA instruction. No GPU
+load/launch or publication grant is issued. The original 512 MiB admission
+reserve is unchanged, and recorded peak stage usage is 10440360 KiB.
+
+HSACO SHA is
+`bae9d461d441bba739c8bede79e5955146dade2b65232c68711a9262c006edaa`
+(112936 bytes); inspection SHA is
+`627f94f80a17287c1707617bfa37095b835d72033f43df461505ddb80fc5bbcc`.
+Terminal retention exits 0 with all recorded groups absent. All 230 payload
+SHA/size/mode checks, the exact 231-member regular-file roster, embedded
+manifest/summary and 12 external hashes verify independently. Archive SHA is
+`e67913703797e8dc87aea8c837dcc7f19ba022ab4994f6f67bb60b918d38fa1c`
+(5941085 bytes). Original vendor formation exit 1 remains explicit; separate
+source/semantic observations support consumption, not relabeling that failure.
+
+The native final-RMS candidate now binds this actual emission, source, release
+and tools but remains UNREADY. At 2026-09-17T02:22:21Z, the selected GPU4 is
+still 97% busy with 105477615616 bytes VRAM used. No GPU work is launched or
+interrupted. This compiler-side engineering result is not a new numerical,
+protected-proof or performance result and closes no M1 gate.
+
+### Vendor Source And Cargo Semantic Checks
+
+The approved reserve384 vendor formation remains a failed status-1 attempt;
+there is no normalization retry or synthesized success receipt. Separate
+mi300x source assessment R2 now verifies all 198 package checksums, 143 unchanged
+registry packages and 55 canonical Git payloads. Full vendor, canonical source,
+workspace and original evidence identities are unchanged. All 19 external
+records pass independent local hash checks. R1's overly strict single-link
+assumption for a borrowed Pliron Git pack is retained as a failure; R2 permits
+shared links only for canonical `.git/objects`, preserving full identities.
+
+One subsequent pinned-nightly Cargo metadata invocation, offline/locked with
+all features and a fresh private Cargo home, matches the retained genuine
+host-1.97.1 canonical producer. The full 163-package resolve graph, feature sets,
+workspace and package IDs match. All 55 entire Git-package objects agree after
+only package-relative manifest and target-source path relocation. All 29 raw
+records verify locally, and a separate jq comparison of the two raw metadata
+files independently reproduces those results. No existing source, vendor or
+shared target changes; the canonical baseline is not rerun or relabeled.
+
+Assessment receipt SHA is
+`001db999ea3e8eb525ac0db9b2333a3f38f7669e34ea2f5d47d0ff74e83ba4df`;
+semantic receipt SHA is
+`9dcb870136a1ec4bc29cd0133772e856366d5ad7794ba853c1f9bbc934db6cd5`.
+These are source and scoped Cargo semantic observations, not independently
+reproduced normalized manifest bytes, compiler qualification or GPU authority.
+The reviewed emission consumer preserves original formation exit 1, binds all
+61 custody/assessment/semantic/baseline records and retains all 13 emission
+phases, including both fresh emission-time metadata executions.
+
+### Exact Tool Retirement
+
+The R2 cleanup inventory stopped before deletion when a process disappeared
+during inspection; all nine failure records remain retained. A separately
+reviewed R3 inventory passes with the identical eight-path scope and unchanged
+file-use policy. Separately acknowledged apply then removes exactly eight
+aliases/four completed tool inodes, reclaiming 208668 KiB (203.8 MiB). Stage
+allocation changes from 10037756 to 9829088 KiB. Private tool copies, source,
+vendor, evidence and all unselected target identities are unchanged.
+
+All 14 inventory and 15 apply external hashes pass; full before censuses agree
+and the fsynced journal contains eight intent/completion pairs. Both recorded
+groups are absent. Visibility remains explicitly incomplete under the existing
+exact sd-pam/structurally checked SSH transport policy; no new exception or
+unknown gap is admitted. Apply receipt SHA is
+`82e797b0f44a5f3a43f6c0e91f16107f662237bfd57b16dff54931f726f150e5`.
+The emission reserve remains 512 MiB; the one-run 384 MiB vendor exception is
+not reused. Cleanup alone does not grant emission or native admission.
+
+### Earlier Upstream And Native Availability
+
+The upstream observation for the adoption above found fe2o3 main at
+`bd1ed7d559b1a372644a78b1ede7e6057e5ccbc7`: 11 commits/12 files since the
+previous 9f8 pin. Production changes include verified helper INDEX-to-U64 ABI
+casts and structured defined-call argument mismatch diagnostics. Runtime/KFD,
+device/host, production manifests, locks, toolchain and LLVM-worker tree stay
+unchanged; one test-fixture manifest does change. The revision-only adoption
+above validates the exact 80-file/32-graph roster without a new TCB target
+allowance.
+
+A subsequent fresh observation finds main at
+`6771738c03879c6a266d186333f4c66c1e693f37`. This is not relabeled as the
+validated bd1 input. Read-only Git-object review finds two commits/18 files:
+guarded-memory analysis and receipt V3 now flow through lowering, verifier and
+codegen lineage. Public minimum-byte-length/alias accessors become optional and
+the multiroot formal-memory accessor returns a new receipt facade, so downstream
+compatibility needs review before adoption. Runtime/KFD/device/host, production
+manifests/locks, toolchain, Pliron and LLVM-worker remain unchanged. Downstream
+review finds no Ferric caller of the changed range/accessor APIs or a concrete
+legacy-receipt parser, so no production compatibility edit is identified.
+
+The latest fresh observation is main
+`f7f5aa32600959a56a80d34fd608bcf935bc09cf`: one additional commit, five files
+and 4,005 additions. It adds local-frame/finite-chain KIR APIs and tests, with
+no caller outside the new module or in Ferric. No runtime, target, dependency
+roster or toolchain change is identified. A separate held bd1-to-f7f adoption
+retains the 80-pin/32-graph scope and now requires all 48 gate tests, including
+the BF16 allowance regression. It is not yet validated or adopted. The dirty
+fe2o3 checkout remains untouched; no compiler/runtime source push is made.
+
+At 2026-09-17T03:48:21Z, frozen gfx942 GPU4 was 97% busy with 105477574656
+bytes used. The other six compute-active GPUs are busy; GPU0 remains
+compute-idle but holds about 91.5 GB of VRAM, not an available admission.
+User-authorized mi350-2 is reachable and exposes one gfx950 GPU, unique ID
+1956390207832604050, with low VRAM use and no observed queue for its listed
+KFD process. This is an availability observation, not native admission.
+Its checked home/shared model cache does not contain the required target/draft
+bundle. Existing Ferric gfx950 TP1 engineering support needs matching rebuilt
+tools, worker and TP emission; it cannot run the frozen gfx942 final-RMS capture
+unchanged or count as M1 gfx942 qualification. No GPU workload is launched or
+interrupted. The diagnostic path remains Ferric 6e/compiler abd8 and current
+integration remains bd1. There is no new native numerical, protected-proof or
+TTFT/TPOT result; all 33 M1 gates remain open.
+
+### Previous R21 Publication
+
+The public site at <https://harsh-nod.github.io/ferric/> now publishes the EOS,
+atomic prepack, compiler 9f8 adoption and failed single vendor attempt recorded
+below. Private source `2dcec621` passes all five mi300x-only Pages phases,
+including every width 320..1440, eight viewports, 64 screenshots and unchanged
+source/runtime/browser checks. All 133 payload identities, the exact 134-member
+archive roster and 20 external hashes pass independent custody checks. Archive
+SHA-256 is `2de2c155db9e9800b544ac4b3e76c3eb73129eea31145396e8b8a1f4c9aec422`.
+
+Static commit `a984022d2f8349768f239b40a23d8d7475faa7f3` is deployed by the
+single successful deploy-only run `35171182331`. All seven canonical and seven
+cache-busted live asset requests match the validated artifact. No GitHub build
+or test runs. The completed 3,460 KiB Pages worktree is removed; its source
+commit and evidence remain. Remote cleanup stops before deletion on incomplete
+lsof visibility, leaving 51,108 KiB of this Pages staging retained. No foreign
+session or user worktree is touched. This publication adds no qualification.
+
+### Healthy Resident Prefill Stop
+
+`eed0ad074af3991f522f93bb495a1c10549fe8fe` handles an authenticated stop
+token in the bounded resident first/next prefill paths. The request retires and
+the queue completes healthy shutdown before any successor is scheduled. The
+move-only terminal result publishes exactly one stop token, retains all owners
+until close, and cannot resume a resident session. Failed or quarantined shutdown
+cannot become successful termination. The existing continuing-success interface
+and allocation-free continuation remain intact. R33 deliberately rejects the
+short terminal result as a fixed-length measurement; benchmark work is not relaxed.
+
+On mi300x with compiler `9f8ffda4`, R2 passes 758 engine tests (9 ignored) and
+the isolated zero-allocation test. After correcting only the relative temporary
+directory in the test harness, R3 passes 112 adapter tests (1 ignored), 38 source
+policy tests, seven selected compile-fail doctests and strict engine Clippy.
+R4 renames a counter in one new test, then passes all ten phases, including fresh
+adapter/policy test producers, the same 112/38 tests, strict adapter Clippy,
+rustfmt and ordinary source inventory/generation/validation. The coverage delta
+is exactly 14 pending-Verus helpers, with no verified promotion or TCB change.
+
+R1's two stale derived-Debug admissions, R2's 22 fixture-path failures and R3's
+two similar-name lint diagnostics remain separately retained. R4 explicitly
+transitions one live test source file and replaces the two affected test
+executables; original R2/R3 archives remain immutable. R4 archive SHA-256 is
+`5d29bd14d0c4a20885df490820df3b2d1aeff600924e9b30065e81cd505750c9`
+(8,623,993 bytes). All 123 payload identities and the exact 124-member roster
+are independently checked. All 1,157 integrated source identities match the
+validated census before installing the identically validated coverage ledger.
+The completed 45,164 KiB EOS worktree is removed after its committed tree matches
+the integration commit. No native GPU, protected proof, numerical, performance
+or gate-closure claim is added.
+
+### Previous 9f8 Compiler Adoption
+
+Ferric adopts observed fe2o3 main
+`9f8ffda4df3647d0ed7c424f16a6ff0111a32a69` in
+`d48ae0d5a67dca0c5357fe23c0b6dcf7af71d7ba`. All 50 bounded mi300x phases
+pass: 32 locked graphs, fresh normal/test source-gate producers, all 47 source
+gate tests, four generated dependency inventories and ordinary source coverage.
+The 80-file transition binds the new compiler and its newly auto-discovered
+`execution_semantic_operations_v3` test target. There is no new dependency edge,
+lock repair, feature change or proof promotion; all 1,157 final identities match.
+
+The 21 upstream commits since abd8 add execution roles/capabilities, semantic
+operations and related compiler validation. Native runtime/KFD, device/host/AQL,
+manifests/locks, pinned Pliron, toolchain and LLVM-worker subtree remain unchanged.
+The subsequent EOS engine/adapter host validation above uses this actual pin.
+Historical native tools, optimized release and diagnostic controls below remain
+frozen at their stated 6e/abd8 or older producers, not relabeled as 9f8.
+
+Adoption archive SHA-256 is
+`616dd43e06b465423a4e2b12be58cca1c288f9969c0903b6d741d51d1d06024e`
+(20,939,860 bytes): all 1,655 payloads, the exact 1,656-member roster and 27
+external checks pass. This is compiler dependency/source-policy adoption, not
+native numerical qualification, protected proof or a performance result.
+
+### Atomic Prepack Snapshot Publication
+
+`fee352ed97e27140eb5e98fc1bd94ab93077a536` fixes a canonical prepack output
+race: ordinary directory rename could replace an empty destination created
+after the initial existence check. Publication now uses the existing rustix
+atomic no-replace pattern. A test-only old-code run reproduces the overwrite;
+the corrected executable passes all 12 prepack unit tests on mi300x, including
+normal publication and preservation of empty/nonempty competing destinations.
+Strict binary Clippy, rustfmt and normal source-coverage inventory/generation/
+validation pass. All 1,157 final source identities match; no dependency, TCB,
+coverage roster or proof status changes. Earlier test-import, socket-path and
+metadata-profile failures remain separately retained, not counted as passes.
+
+Archive SHA is
+`ca5338ae52946e9fd9fc53d69213c6f0a27dfd5d0b6ccfb80987ff4b7bb1e48a`
+(14,635,624 bytes). All 169 payloads, the exact 170-member archive roster and
+19 external records are independently checked. The fix changes only the
+Ferric prepack binary; it adds no native/GPU, protected proof or performance
+result and closes no M1 gate. The 6e/abd8 native diagnostic batch stays frozen.
+
+### Retained abd8 Compiler Adoption
+
+The preceding validation batch freezes observed fe2o3 main
+`abd8be76fadc74b09cc40533e775949471358a74`. Ferric adopts it in
+`f9b86bdb7fe2381498bb354eb1b0d4b68dfc24b9` after all 50 bounded mi300x
+validation phases pass: 32 locked dependency graphs, fresh normal/test source
+gate producers, all 47 source-gate tests, four generated dependency inventories,
+and ordinary source coverage inventory/generation/validation. The 80-file
+transition changes only reviewed compiler identities and dependent policy
+hashes. No dependency edge, version, feature or lock repair is needed. Runtime
+inventory and the integrated final-RMS unverified coverage remain byte-identical.
+
+Compared with the previously integrated `2d3ffbed`, 17 upstream files change.
+The newer bounds-witness and affine-index analysis are production compiler
+changes, not merely tests. Runtime/KFD, device code, manifests/locks, pinned
+Pliron `cc902cc8`, toolchain and LLVM-worker subtree remain unchanged; all 53
+compiler vendor manifests match. Matching tools now pass the separate build
+below; fresh compiler package payloads, emission and native validation are
+still required. Existing native
+results retain their actual `7f90d187` producer, and completed `2d3` tools are
+not relabeled as `abd8` tools.
+
+Adoption archive SHA-256 is
+`d29d49381aaa090589f3f3a5139b8f0d476bf88db4bea057ef1a75207f363798`
+(20,931,829 bytes). All 1,647 members, 1,646 payload hashes/sizes/modes and 16
+external execution records are independently checked. The generated patch SHA is
+`6c67d23e1293a140b6cdd0a78434597701a156b12a36a2da49f177efd943697a`;
+all 1,157 integrated source identities match the final remote census. This is
+dependency/source-policy adoption, not compiler behavior qualification, GPU
+execution, numerical acceptance, performance evidence or an M1 gate closure.
+
+### Matching abd8 Compiler Tools
+
+All six bounded mi300x phases pass for the canonical `abd8be76` CLI, linker
+proxy, backend and extractor. Each has an actual fresh, non-test producer;
+the backend binds the newly built CLI. All 5,123 compiler source files match
+the canonical archive before/after, and all 34 protected inputs remain
+unchanged. Independent local checks cover all 90 archive members (89 payloads
+plus the manifest), including hashes, sizes, modes and recorded tar metadata,
+and 15 external execution/retention records. Archive SHA-256 is
+`16e2e0bc7c89e6bc41d042ef58e602fa7127ed80bf3b9fc9e6275eccf6b0c8f2`
+(61,914,748 bytes). The actual CLI SHA is
+`52b3a002b20db4b45ba431632a45b5cd12fe78ce2572cac921a74fa0d634f8bb`;
+backend SHA is
+`e608e07e68ffb2ce19ad79f699899a7303dc8e811eb37000f0c6e8ffcf8f88a2`.
+
+The preceding exact cache retirement removes 176 paths / 171 inode groups,
+reclaims 937,684 KiB and preserves private tools, sources, models, vendors,
+retained evidence and all unselected target identities. An initial survey
+fails closed on a disappearing process's inspection gap and is retained;
+the separate successful survey/apply uses the unchanged limited owned-stage
+visibility policy, not a system-wide non-use claim. The actual apply SHA is
+`1b25ef7db9534c2678c012dc11903b5316cef27886503c44d0f9fb5643e516dd`.
+
+These matching engineering tools unblock the next emission work; they are
+not new Ferric kernels, GPU execution, numerical acceptance, protected proof
+qualification or performance evidence. All 33 gates remain open, and prior
+native results retain their actual `7f90d187` compiler producer.
+
+A later read-only survey of four newly redundant target binaries stops on
+an unreadable interactive SSH session outside the existing approved visibility
+classes. No deletion or apply is attempted, and no exception or retry is
+introduced. All 16 failure records are retained and independently checked;
+ledger SHA is
+`dac81cbf07f65d9f9e1aad647515feff9bfee39b3930306511b73065f0062e8a`.
+This separate cleanup hold does not invalidate either completed build. It did
+not provide vendor capacity; the subsequent one-run admission below is separate.
+
+### Single Approved abd8 Vendor Attempt
+
+The user approves one formation with a 384 MiB internal reserve instead of
+512 MiB; the 10 GiB stage cap and all other limits stay unchanged. Fresh
+read-only admission passes after the previously uninspectable session is gone,
+without touching that session or changing the visibility policy. The one
+formation then exits 1. Cargo normalization exits 0, the exact 198-package
+roster and checksum checks pass, but an unconditional `Cargo.toml.orig` check
+fails for `dialect-amdgcn`. The canonical Git payload loop and final receipt
+do not complete, so the new vendor view is not accepted.
+
+The prior successful 1fad receipt has 55 Git packages and none contains that
+filename; its actual validator did not require it. This identifies an unsupported
+assertion, not proof that the current product is correct. No retry, synthetic
+file, compiler change, emission or GPU launch occurs. A separate read-only
+assessment of the existing output is the next step. The emitter's own 512 MiB
+reserve is unchanged by this one-run approval.
+
+Original111, prior1fad, canonical sources, Git package bytes and workspace
+inputs pass the final preservation checks. Both owned groups are absent.
+The final stage/cache/evidence sample is 10,037,644 / 10,000,456 / 10,340 KiB,
+within the approved caps. Archive SHA-256 is
+`684ee1f3c7317a13c046d57308dda68d04fc0afc4b104b165f13ef4e34b4e918`
+(1,814,674 bytes); all 62 payload identities and the exact 64-member roster
+are independently checked. This remains the frozen 6e/abd8 diagnostic path,
+not 9f8 tools or native qualification. All 33 M1 gates remain open.
+
+### Optimized Final-RMS Diagnostic Release
+
+The single optimized `ferric-m1-engineering-speculative-smoke` binary now
+passes all six bounded mi300x release phases from frozen Ferric `6e2ad936`
+with compiler `abd8be76` and Pliron `cc902cc8`. Its producer is fresh and
+non-test, with no root features, debug information or RPATH/RUNPATH. Source
+before/after checks pass. The private executable is 14,221,224 bytes, SHA
+`6e3ccf1248e8bba8dfe26714242a3d9205f6c247846bd916a77e016be70e7289`.
+All 302 retained archive members (301 payloads plus manifest) and 12 external
+records pass independent hash, size, mode and tar-metadata checks. Archive SHA:
+`443cc4698de031e653f266b90dd3a3ba8cd02c69a9f0be239b7b60520bfe0616`.
+The historical R6 tests remain at compiler `2d3`, not rerun on `abd8`.
+
+A separate current-source locked/offline all-feature device metadata phase
+also passes, resolving exactly 53 compiler Git packages at `abd8be76` and
+two Pliron packages at `cc902cc8`. Its nine raw records are independently
+checked. Vendor formation and matching MFMA13 device emission are still
+pending. The release adds the executable needed for final-RMS capture, not
+a native/GPU observation, numerical acceptance, protected proof result,
+performance measurement or an M1 gate closure.
+
+### Final-RMS Intermediate Capture Candidate
+
+An explicit `--mfma13 --capture-m5-final-rms DIRECTORY` candidate extends the
+existing engineering M5 readback with target-segment-4 `ResidualHidden` and
+`FinalNormalized` workspaces. The original logits dispatch range remains
+1,519,360 bytes; the opt-in completed copy is 1,601,280 bytes. Only the two
+8,192-byte intermediate rows at active index 3, sequence position 131, are
+exported, alongside the original transcript and five logits rows. The sidecar
+binds generation, input token, allocation offsets, exact capture-transcript
+bytes and payload hashes. The full-copy digest is recorded but cannot be
+independently reproduced from the selected-row export.
+
+Independent review caught and corrected the initially missing finite-rollover
+routing. The candidate now covers that live path as well as ordinary binding,
+preserves existing default/protected-route behavior, and adds seven Rust
+regressions. The rollover regression exercises the production request,
+segment-validation and range-selection helpers through the existing synthetic
+host route; it is not execution of the full KFD binding core. The first native
+host build stopped before tests on an unqualified `Qwen3ModelRole` reference in
+the new rollover code. The failure is retained and the reference is corrected.
+The second host build reaches linking, then stops with SIGXFSZ: its launcher
+incorrectly applies the 64 MiB log budget to all compiler output files. That
+failure is retained separately. The existing tested stream-only limiter fixes
+the scope without changing compiler profiles or disk, memory, CPU and time
+limits. The third build produces the actual test executable; its test launcher
+rejects an underscore in a phase name. The fourth continuation rejects a root
+metadata feature-mode mismatch against the unchanged dependency policy.
+
+The fifth continuation uses the exact third-build source and executable,
+correct phase names, root-default metadata and all-feature verifier metadata.
+Its normal inventory reports exactly 19 new unverified functions and no
+removals. All 169 selected Rust tests pass: 103 across five engine modules,
+three protected/default-route guards, 25 adapter tests and 38 source-policy
+tests. All seven new capture regressions are explicitly observed passing.
+Strict engine Clippy then rejects two remaining constant-size narrowing casts;
+the run remains failed, and adapter Clippy is unlaunched. Checked conversions
+and range-end arithmetic now replace those casts, with corrected-source
+validation completed by the separate sixth run below. All 213 retained fifth-run files match ledger
+`3e5939de509630d6affc4c05a961ffff50b6fb67f44ea0b5efc2bbd76a57de89`.
+No native final-RMS or GPU result exists yet.
+
+The sixth run builds the corrected source afresh and passes all 25 phases:
+formatting, all 169 selected Rust tests, both strict Clippy checks, the normal
+source inventory, generation and validation. Generated coverage adds exactly
+19 explicitly unverified functions, with no deletions, verified promotions,
+module or TCB changes. The exact remote formatting and generated inventory
+are integrated. All 1,494 retained payload hashes pass independent local
+checks; ledger is
+`245234bb0c5dc5388918422338dabcc8363334cd3751f93c43ab02bf7b191eb6`.
+The third-run test executable is preserved separately before shared-target
+reuse; neither its historical producer nor any earlier failed run is relabeled.
+This run uses fe2o3 `2d3ffbed`, not newly observed main `90bef1db`.
+
+The separate reference entrypoint hooks the real final normalization on the
+independent full 133-token forward and requires byte-identical logits and both
+intermediate rows across two runs. The initial 24 CPU-only protocol tests pass
+on mi300x: 12 new cases, four unchanged M5 cases and eight ranking cases.
+Review subsequently finds a nested transcript generation that could accept an
+integer-equivalent float. The additive reader now requires canonical type/value
+equality, and a separate corrected-source run passes all 25 tests, including
+the new hostile regression. Its input ledger is
+`ccb514eeb1b85819af1ae2880d9abdd34452eef61e3f8d2d714ed55641d911ee`;
+all 43 retained payloads match ledger
+`39381a81fbae96cc7b0c307a79aafccf4645e4e8b876412a41c5a0d5d23407d0`.
+The full-model hooked reference has not run. The initial input ledger remains
+`5ce81555ea6401cd97e9ea7997d0d8548fa82789a179c437ad0895a1adcdf180`;
+all 25 retained files match ledger
+`290a89919b010e121a0804924321b0bb8a1d27dcbab4e0e5dc49a7419e7e60be`.
+The initial cleanup stopped on a file-use command error before deletion; that
+failure remains retained. A separately reviewed cleanup logs all 75 explicit
+file/directory operands, obtains exit 1 with empty output from the scoped
+file-use check, and repeats both hash/ownership/roster checks. It then removes
+only the two completed protocol stages, reclaiming 488 KiB. Host build stages
+and caches remain for declared follow-on work; no system-wide non-use is claimed.
+
+These changes add diagnostic visibility, not a kernel arithmetic correction,
+numerical acceptance, causal attribution, performance measurement or gate
+closure. Protected-runtime qualification remains unavailable: no
+administrator-managed isolated installation is known to be available, and
+shared host libraries remain untouched.
+
+### Matching 2d3 Compiler Tools
+
+The completed build matches the then-integrated fe2o3 pin `2d3ffbed`. Exact reviewed
+compiler-cache retirement on mi300x removes
+282 paths / 270 inode groups and reclaims 1,241,568 KiB, reducing the owned
+compiler stage from 9,783,172 to 8,541,604 KiB. No model, private compiler tool,
+source tree, vendor tree or retained result is deleted. Full before/after
+checks preserve all unselected target files and protected inputs.
+
+The retirement uses the original limited, owned-tmpfs visibility policy:
+known sd-pam/SSH inspection gaps and unrelated mount devices remain explicitly
+recorded, not promoted to system-wide non-use. Fresh scoped inode/path scans
+find no matches; separate `fuser` returns 1 with empty output. The retained
+inventory SHA is
+`2346e8cfb3bbf04ca08692bb9863ef016a1701e163f40e2f0d8a35645f08b553`;
+the actual apply record is
+`b710ae1cf984b5e15ecef78c2c35ecae1ede94b9c2bcea97dbb498d088ce8682`.
+All 19 inventory and 15 apply records pass independent local hash checks.
+The pinned Pliron commit is seeded through a bounded, local-file Git fetch
+from the existing metadata cache: five new loose objects, 28 KiB, with no
+network fetch or existing object/ref/config replacement. All 33 retained seed
+records match their custody ledger. Matching compiler tool builds now pass all
+six phases under the original limits. The CLI, linker proxy, backend and
+extractor each have an actual fresh, non-test producer from canonical
+`2d3ffbed` source, with the backend bound to the newly built CLI. All 5,119
+source files and 26 protected inputs remain unchanged. Independent hash checks
+cover all 21 external records and 93 archived payloads; archive SHA-256 is
+`7f7e7f9e35928ddf502c57db7b27036d19272dd259435d88e0660e6e1b8a358a`.
+These are compiler tools, not new Ferric kernels, GPU execution or compiler
+qualification. Old native results retain their actual `7f90d187` identity.
+
+A later read-only upstream check observes main `90bef1db`: 12 commits and 13
+changed files in backend projection logic and tests. Runtime/KFD/device,
+toolchain, Pliron `cc902cc8`, LLVM-worker source and all 53 existing compiler
+vendor manifests are unchanged. At that checkpoint, updated dependency graphs,
+pins, tools and emission were still required before new native work. The subsequent
+`abd8` dependency adoption is recorded above. The completed `2d3`
+tools and tests are not relabeled as `90bef` or as current-main validation.
+
+### Retained M5 Ranking Diagnostic
+
+A new CPU-only diagnostic replays the exact retained `011e0aca` / `7f90d187`
+capture and independent reference, checks their hashes and reproduces all five
+original per-row metrics. It adds top-five logits, maximum tie counts, both
+winners' ranks and signed errors without changing the original comparison.
+All eight focused tests and the actual replay pass on mi300x. No GPU or model
+execution occurs in this checkpoint.
+
+At position 131, the reference has a three-way maximum tie: tokens 16, 220 and
+576 all have BF16 logit 18.75, so lowest-ID tie-breaking selects 16. Ferric has
+576 at 18.75, but 16 and 220 at 18.625, and selects 576. Thus the retained
+mismatch is not a strict winner reversal in both arrays: the reference winner
+ties Ferric's winner in the reference array. The difference between those two
+candidate logits in Ferric is one BF16 step, 0.125. This does not establish
+which earlier operation caused that difference, and does not admit tolerance
+or change the original one-mismatch result.
+
+Diagnostic SHA-256 is
+`fb9a2eba62d965928eed844820a9d427e2d1ed8693c3f62115ed781826ed7820`.
+Its input comparison remains
+`a073987db9a15a351552d22030274d7ae050b44495f1abff230d3f84c593bdb1`.
+All 12 frozen inputs match before and after; the result and nine control/log
+records match independent local hashes. The exact completed remote stage is
+removed after retention and an empty scoped file-use check, reclaiming
+3,216 KiB. This is posthoc numerical diagnosis, not FP32-head evidence,
+isolated RMSNorm causality, new TTFT/TPOT or an M1 gate closure.
+
+### Checkpoint-Row CPU RMSNorm Ablation
+
+A separate additive diagnostic authenticates all nine canonical target files
+(16,392,982,768 bytes), then reads only `model.embed_tokens.weight[13]` and
+`model.layers.0.input_layernorm.weight`. Seven focused tests pass on mi300x,
+followed by the actual checkpoint-row experiment. It compares actual pinned
+HF RMSNorm, sequential FP32 reduction with `rsqrt`, and the same reduction
+with `sqrt` followed by reciprocal. BF16 input/weight and both rounding
+boundaries are held fixed; all tensors are explicitly CPU tensors and both
+thread counts remain one.
+
+All 4,096 final BF16 elements are byte-identical across the three cases.
+The HF mean-square/inverse bits are `0x39e4cdc4` / `0x423f41af`; both serial
+variants produce `0x39e4cde3` / `0x423f41a1`. Therefore the FP32 reduction
+difference does not change final BF16 output for this first-layer input.
+This does not cover later native activations, GPU transcendental behavior,
+or establish the cause of the position-131 mismatch. No kernel change or
+tolerance follows from this one-row observation.
+
+Result SHA-256 is
+`49c9d6927954a1f668b85cd2f8184d44291a29cac1e2202e135e8732559c5c7d`.
+All 33 source/input/result/log files match remote hashes after local retention;
+both input afterchecks and the runner exit pass. Raw stderr retains ROCm
+parser warnings about the requested `-1` visibility values. Those variables
+are not presented as proof of device invisibility; the operation/device
+checks establish only the stated CPU computation scope. The completed exact
+408 KiB remote stage is removed after a scoped empty file-use check. Model
+files, reference venv and shared jobs are untouched.
+
+### Upstream Tracking And Build Policy
+
+At the completed dependency-adoption checkpoint, the observed fe2o3 `main` was
+`2d3ffbedd6dc2dd51d777ede70e26329370bcf77`; later observations and the current
+`abd8be76` adoption are recorded above. The merged history after the
+previous observation includes helper argument/result/call and slice
+correspondence, authenticated context flow, semantic import and debug storage.
+The full `7f90d187`-to-`2d3ffbed` diff changes 155 files; it is not merely a
+diagnostic-only increment. KFD, runtime, device implementation, toolchain and
+LLVM-worker implementation remain unchanged in this source comparison. The
+`2d3` pin is integrated after the bounded adoption checks below, and matching
+compiler-tool builds subsequently pass as recorded above. Matching emission
+and native validation have not run. Existing results retain their original
+compiler pin.
+
+The exact 80-file dependency/policy update changes 30 manifests, 30 locks and
+20 policy/inventory files. Pliron moves to
+`cc902cc8c669b5de2b292ae8638d9e8311bc735b` in 29 of those locks; no package,
+dependency-edge, registry-version or feature repair is required. All 47 mi300x
+adoption phases pass: formatting, 32 locked dependency graphs, fresh normal
+and test source-gate producers, all 47 source-gate tests, and four genuinely
+generated dependency inventories. The runtime inventory and historical
+property-binder pin remain unchanged. This is dependency/source-policy
+adoption, not validation of all changed compiler behavior or GPU execution.
+
+Adoption archive SHA-256 is
+`348fda9f93919ad9ed64cd30a9e85157fe2a7e2fca838270b5b0d7ad59b2ff0f`
+(20,681,093 bytes). All 1,610 members, 1,609 payload hashes/sizes and 12
+external records are checked. The integrated 80 files match the actual final
+source census exactly; the generated patch SHA-256 is
+`3f53c7b61497bb1df3a984a3d6fca4423cd1ac078919a4b76ed0a693733ddc15`.
+No fe2o3 source edit or push, protected-runtime result or M1 gate closure is
+claimed.
+
+The preceding read-only `ls-remote` observation was
+`ec2b88cfb050cb954a426f9968b8a73e1688ad37`, two commits after `d5424f5b`.
+Both commit objects are already locally available. Their source diff adds
+opt-in, bounded numeric diagnostics for pipeline scalar-definition rejection
+and missing ranked-effect correspondence, with refusal-preservation tests.
+Only the MIR-lowering and compiler-backend source files change; manifests,
+locks, runtime, KFD and toolchain do not. This is source review, not adoption or
+a new test result. The candidate and retained results remain on `7f90d187`.
+
+The preceding read-only fetch of fe2o3 `main` is
+`d5424f5bf00b7531e11380a86d5d2cb71603807c`, three commits after the previous
+`e7aff682` observation. Production race analysis now bounds actual SSA value
+names through a newer Pliron API. Pliron changes from
+`161c385576d45d4e634ba179fa93a545b91124e6` to
+`cc902cc8c669b5de2b292ae8638d9e8311bc735b`: both direct declarations and the
+`pliron`, `pliron-derive` and `pliron-llvm` root-lock identities change, while
+their dependency lists are unchanged. KFD, runtime, device code, the toolchain
+and LLVM-worker subtree are unchanged. This newer source is not yet adopted
+or validated; the completed native/reference campaign and current proof
+candidate remain pinned to `7f90d187`. The earlier graph-unchanged assessment
+below applies only through `e7aff682`, not to this newer main. Adoption now
+also requires actual dependency resolution/vendor refresh and focused
+production race-analysis tests before matching tool and artifact rebuilds.
+
+The previous read-only fetch was
+`e7aff682c054e152c2256dae1da63ecfcce12fe3`, four commits beyond the
+`7f90d187` snapshot below. The changes cover tutorial CPU-reference tooling,
+selected binding-host tests and opt-in numeric race-preflight diagnostics;
+the diff contains no KFD or device-kernel changes. The completed release and
+matching emission remain pinned to `7f90d187`; their results must
+not be described as validation of the newer main. Updating and validating the
+new pin remains pending.
+
+Independent object review confirms that every Cargo manifest/lock, declared
+dependency edge, Cargo target and the LLVM-worker subtree is unchanged. The
+next adoption can reuse the existing 80-file pin roster, but still requires
+actual locked metadata and regenerated inventories, focused race-resource and
+CLI-selection regressions, and matching rebuilt tools/release/emission. This
+is a source-impact assessment, not a validation result for `e7aff682`.
+
+All builds and tests remain on `mi300x`. Any authorized fe2o3 push is rebased
+onto current main and uses `[skip ci]`; no GitHub build/test is authorized.
+No new fe2o3 push was needed for this checkpoint.
+
+The user reports no known administrator-managed CPU-only container or isolated
+filesystem on mi300x for fe2o3's pinned protected proof runtime. The required
+root-owned installation and OS-library identity prerequisite remains unresolved.
+Shared host libraries will not be replaced, and rootless ownership or relaxed
+admission will not be presented as satisfying that trust boundary. Ordinary
+Rust tests, user-cache component Verus checks and engineering GPU comparisons
+can continue independently, but cannot close protected functional-refinement
+qualification.
+
+### Published Site
+
+The R20 site is live at <https://harsh-nod.github.io/ferric/> from prebuilt
+commit `d7056632ca93c82398f9251eafc2495cf123f155`, deployed by the single
+deploy-only run `35152509800`. Source `c00dc017c1e22b1cf120d0bdbf9b253c98b6eaac`
+continues the R19 Pages lineage and records the final-RMS host checks, abd8
+adoption/tools, optimized diagnostic release and current device metadata.
+All five QA phases pass on mi300x, with eight viewports, every width 320..1440,
+64 screenshots and representative desktop/mobile visual review. All 14 live
+asset checks match the seven-file, 705,194-byte artifact. No GitHub build/test,
+new GPU observation, performance result or M1 gate closure is claimed.
+
+R20 QA archive SHA is
+`f566b13866fa67d33b67903d6a6bc86ecf6f47de9031eadf738f3ba091bcf699`
+(11,456,082 bytes). All 133 payload hashes/sizes/modes/whole-second mtimes,
+the 134-member roster/embedded manifest and 20 external records pass local
+custody checks. The completed clean source worktree is removed normally,
+reclaiming 3,448 KiB; its branch, source and evidence remain available.
+The exact remote cleanup stops before deletion on incomplete `lsof` mount
+visibility, after ownership, six absent process groups and custody checks pass.
+The three owned R20 roots total 51,116 KiB and remain retained, not reclaimed.
+No retry or visibility-policy exception is introduced.
+
+The preceding R19 publication was from prebuilt
+commit `ee6e41c045ad14aa6915b1b278d4502174537b2a`, deployed by the single
+deploy-only run `35136590156`. All five QA phases pass on mi300x, including
+eight browser viewports and 64 screenshots; representative desktop/mobile
+screenshots were independently inspected. All 14 canonical/cache-busted live
+asset downloads return HTTP 200 and match the seven-file, 691,654-byte
+validated artifact. No GitHub build or test runs.
+
+The R19 archive is
+`618b650aa167802b65f729b942ddb19916595763a1db642d880296e1620be98c`
+(11,380,976 bytes), with all 134 members, 133 payloads and 20 external files
+checked. Source `bda0d76e76e4ec2444f7844ffb04a201fa848efc` records the frozen
+`b8ac0b03` proof/host checkpoint and separately scoped retained-M5 ranking
+diagnostic. The subsequent `1d6078af` dependency adoption and `92d03385`
+checkpoint-row CPU ablation above are newer than that frozen site source;
+they are not retroactively attributed to its artifact. Historical numerical
+and performance records remain unchanged. The completed clean source worktree
+was removed normally, reclaiming 1,632 KiB, while retaining its branch, source
+archive, QA evidence and isolated public checkout.
+
+The exact R19 remote-stage cleanup then stops before deletion: ownership,
+six recorded process-group absence checks and custody/input hashes pass, but
+the first scoped `lsof` check emits inaccessible unrelated mount warnings.
+No file-use match is observed, yet incomplete visibility is not treated as
+an empty check. All three roots remain untouched, totaling 50,896 KiB
+(37,552 KiB QA, 1,600 KiB inputs, 11,744 KiB retention). This allocation is
+not counted as reclaimed; failure logs remain retained and no retry or
+visibility override occurs.
+
+The preceding R18 publication was from prebuilt
+commit `df34029b15f85da1664dca545538796cd6f38b3e`. All five QA phases ran on
+mi300x and passed, including eight browser viewports and 64 screenshots.
+The retained QA archive is
+`84061ffc882ef71921d6bc693aca42045afe508508f4fd6931acb56be2074373`;
+all 133 payload hashes and sizes were independently checked. The single
+deploy-only GitHub run `35109654146` succeeded at the exact admitted commit;
+it performed no build or test. All seven canonical and seven cache-busted
+live assets return HTTP 200 and match the validated artifact.
+
+That site records the mixed matched numerical comparison below, not a numerical
+pass or a performance improvement. Its upstream snapshot remains `e7aff682`;
+the later `d5424f5b`/`ec2b88cf` observations and unavailable protected-runtime prerequisite
+above are not retroactively attributed to that frozen site artifact. The
+completed clean source worktree was removed with ordinary non-force Git
+removal, reclaiming 1,608 KiB. Its source branch and commits, QA evidence and
+public checkout remain retained.
+
+### RMSNorm Boundary Candidate
+
+Private candidate `a0851a28cddfaeaf877147dfc8e5a5408730e328` adds BF16 RNE
+normalization before the weight multiplication in all three device arithmetic
+copies and the separate typed graph. Reduction order, epsilon, residual-input
+semantics, ABI and fixture tolerances are unchanged. Independent integer-RNE
+regressions cover the retained reference witness, signed zero, even ties and
+intermediate narrowing overflow; the typed-graph test follows the actual
+output-store dataflow through both narrowing boundaries. Source-copy and wave
+tail equivalence checks remain intact.
+
+Read-only source review found no blocker. Remote-only Rust 1.97.1 formatting
+passed for all eight changed Rust files, with two mechanical hunks integrated
+and all eight hashes checked. The first mi300x host campaign on exact
+`a0851a28`/`1fad` completed 104 tests with zero failures or ignored tests:
+24 standalone RMSNorm tests and 40 aggregate tests each for gfx942 and gfx950.
+Their receipts retain 14 fresh test ELFs. The campaign then stopped with exit
+125 at its 2 GiB owned-stage limit while compiling batch32, before its tests
+ran. Wave, typed-graph and all scoped strict Clippy selections were unlaunched.
+Control after-checks pass; the final source checker did not run because its
+resource guard rejected the over-limit stage. This is not a complete suite pass.
+
+Terminal retention completed separately without changing that failure status.
+The 68,507,344-byte archive has SHA-256
+`8cd9393e9aa036cef5737b38b37d4f242bfa2c2d7e0e0bede45370611248d201`;
+all 116 members and 115 payload hashes and sizes were checked after transfer.
+No native improvement, numerical qualification or gate closure is claimed.
+Existing formal RMS properties model initialized-byte effects, not the rounding
+formula; their unchanged status is
+not numerical evidence.
+
+The compiler team separately fetched then-current `7f90d187702a3059a40c7cfd21576c6eec6c9684`.
+Private candidate `f77236cb046f0c59b0881352ac41546bac5a358e` stages its adoption
+across exactly 80 active pin files: 30 manifests, 30 locks and 20 policies or
+inventories. Besides the revision, 28 locks add the actual macro-to-frontend
+dependency edge; verifier inventories add that declaration and resolved edge
+plus the upstream kernel-context contract test target. Runtime inventory,
+historical property-binder pin and the RMSNorm implementation are unchanged.
+All 47 mi300x adoption phases pass, including 32 locked graphs, 42 fresh
+source-gate tests and four actual inventory derivations. The final 1,148 source
+hashes and tracked-file roster match exact `f77236cb`. The 20,554,306-byte archive
+has SHA-256
+`8b9f59a09b6d092326a2d9894c8392967437d283e8b14fbb3fd825ebb28e5a17`;
+all 1,608 members and 1,607 payload hashes and sizes pass independent local
+checks. Matching emission is recorded below; subsequent native/reference
+evidence is separately attributed below. Historical `a0cc9929`/`1fad` results
+keep their original scope; dependency adoption does not relabel them.
+
+All six matching `7f90d187` compiler-tool phases subsequently pass on mi300x.
+The CLI, linker proxy, backend and extractor have actual fresh Cargo producers;
+the backend's build-script record binds the new CLI. All 5,060 compiler source
+files and protected historical inputs are unchanged. The 61,196,208-byte archive
+has SHA-256
+`ff18c3e8883c4182d320dfd96ce32a028dc3886a1c6ab0bb9c5f6d989dbe6806`;
+all 91 members and 90 payload hashes and sizes pass independent local checks.
+This establishes matching engineering tools, not full compiler qualification,
+kernel emission or a GPU result.
+
+The second six-selection host campaign on exact `f77236cb`/`7f90d187` stayed
+within its 4 GiB limit but exited 101: 130 tests passed, one failed, and none
+were ignored. Standalone, both aggregate targets, and the first Batch32 tests
+passed. Batch32's full source-equivalence comparison rejected a function-level
+lint allowance present in aggregate but expressed at module level in Batch32.
+Wave, typed-graph and strict Clippy selections remained unlaunched. Source and
+control after-checks pass. The 79,581,966-byte archive has SHA-256
+`ab78c758da71b45e9aa4209982d036726f3ec7e373bf2319d6ec2beb886dfd41`;
+all 128 members and 127 payload hashes are independently checked locally.
+
+Private successor `d70491b25a3a121400a552cf4a5829be1ad20206` aligns that
+allowance in the Batch32 source; arithmetic and the equivalence assertion are
+unchanged. Its canonical archive differs from `f77236cb` in exactly that one
+file; all 80 adoption pin files remain byte-identical. The 47 adoption phases
+retain their original attribution.
+
+The R3 host rerun on exact `d70491b2`/`7f90d187` passes all six test selections:
+167 tests, zero failures or ignores, and 21 fresh Ferric test executables.
+The formerly failing Batch32 equivalence assertion passes unchanged. The
+campaign still exits 101: its first strict Clippy selection rejects an existing
+`print_literal` pattern in the standalone RMSNorm build script, before the
+remaining five Clippy selections launch. Source, frozen controls and R2
+non-target preservation after-checks pass; combined R2/R3 allocation stays
+below 4 GiB. The 94,103,785-byte archive has SHA-256
+`da97cd3db2ee3fa93fb858a63583d7eaaeed3ad3e72d155828272e65bdb77b78`;
+all 191 members and 190 payload hashes pass independent local checks. This is
+a complete scoped test pass, not a complete host campaign or Clippy pass.
+
+Private successor `dfd951cee375684ca46878f367d2498981d9633d` inlines the same
+host-only binding string in that build script. Emitted bytes, managed-build
+guards, kernel mathematics and test assertions are unchanged. Its focused R4
+campaign passes formatting, build-script parity in all four managed-variable
+modes and the standalone 24 tests with four fresh test executables. The
+campaign exits 101 at its first strict Clippy selection: a redundant borrow
+in `tests/source_contract.rs` triggers `needless_borrows_for_generic_args`.
+The other five Clippy selections remain unlaunched. Source, controls and
+predecessor preservation after-checks pass. The 27,083,593-byte retained archive
+has SHA-256
+`928d7d3ae4eeeaf90fecc39317f2ec5633d5461d03c0dbdd70eed5774d75f2fd`;
+all 123 members and 122 payload hashes and sizes pass independent local checks.
+The other 143 tests keep their `d70491b2` attribution; no result is relabeled.
+
+Private successor `011e0acaafb42de5d936fa27d7b5ad5eadc561eb` removes only that
+redundant test-helper borrow. Mathematics, assertions and the build script
+are unchanged. Its focused R5 host campaign passes all 17 phases: the 24
+standalone tests, four fresh executables, all six strict Clippy selections
+and source/control/predecessor preservation checks. No failure continuation
+is used. The other 143 tests remain attributed to `d70491b2`, and build-script
+parity remains at `dfd951ce`. The 25,049,968-byte archive has SHA-256
+`44279c3d8d91934895cba4c88b4bb0d389a119a9b66fb135b4be91210c00a2f1`;
+all 186 members and 185 payload hashes and sizes pass independent local checks.
+The upload's tool-reported exit 1 and written receipt 0 are both retained;
+separate remote exact-byte and syntax admission passes before the single
+campaign launch. No transfer retry or status relabeling occurs. This is scoped
+host validation, not a numerical, native, serving or performance result.
+
+The matching optimized release on exact `011e0aca`/`7f90d187` passes all six
+mi300x phases and source/control after-checks. Its normal no-feature,
+opt3/debug0 Cargo executable is fresh. The retained 14,254,640-byte ELF has
+SHA-256
+`92f8f02850d315c8d15e2a8db6251c809308737a9b1e9c93fb14f473006c2113`;
+the producer receipt is
+`7e1aba39b2f4401f23abc3ba016b969da814b1739465915ebe2d3de8e4eed6d9`.
+All 1,148 source files remain unchanged. Owned-stage allocation stays below
+the unchanged 2 GiB limit, ending at 1,086,236 KiB. The 11,981,936-byte archive
+has SHA-256
+`dfed78d8d1b6fa34bb8755a014710833702141e0585729c23cec6e98f4e072d0`;
+all 210 members and 209 payload hashes and sizes pass independent local
+checks. All remote release/retention sessions are closed. Matching kernel
+emission and native/reference observations are separately recorded below. The
+newer upstream `e7aff682` is not adopted or validated by this release.
+
+The separate `7f90d187` vendor formation also passes on mi300x: 198 packages,
+53 refreshed compiler packages, 143 preserved registry packages and two
+preserved Pliron packages. Both earlier vendor trees remain unchanged. All
+outer, inner, normalizer, campaign and preservation statuses are zero; all
+396 journal records form exact intent/completion pairs. The actual receipt is
+`9dcc48d0f31508e8dc723b8f398dc344a9aabb93f62063a3c6d14c6de3174975`.
+All 62 retained raw/control/owner files, 11,724,862 bytes, pass independent
+hash/size checks, under custody roster
+`e4558c9fb8a606d14e49c2c7bcf0a4d38f9a27d46645969592faff76a2513751`.
+Final compiler-stage allocation is 9,777,816 KiB, cache 9,733,856 KiB and
+formation evidence 11,312 KiB. Existing bounds were not raised. This is a
+dependency-preparation result, not kernel emission or native validation.
+
+The matching MFMA13 emission on exact `011e0aca`/`7f90d187` passes all 13
+mi300x phases, including fresh offline metadata, source/control after-checks,
+inspection and exact compiler replay. The gfx942:xnack- code-object-v6 image
+contains all 13 expected entries and descriptors; disassembly confirms the
+BF16 MFMA instruction. Its 113,192-byte HSACO has SHA-256
+`6b360b04f672e569191b0e381a41b32ba993405281c8926106ea9218eb8440e4`;
+inspection SHA-256 is
+`60d66d619ce95c5fee4238798c1ada410f2bb0e6f43868a9d7fd75eb747f3ef1`.
+All owned phase process groups are absent after completion. Final compiler
+stage allocation is 9,783,040 KiB, with the cache unchanged at 9,733,856 KiB;
+no resource bound was raised. The 2,046,894-byte archive has SHA-256
+`422d9149ccb7d2a7c73a1f59fdbdc081211c0e2dcdd6e9a40e0356e2d3104cd2`;
+all 175 members and 174 payload hashes and sizes pass independent local
+checks. This is engineering image evidence only: no GPU dispatch, numerical
+result, serving qualification or performance improvement is claimed.
+
+One subsequent native capture attempt passes initial GPU4 admission but stops
+with exit 126 when the unchanged shared-GPU guard observes 349,642,752 bytes
+allocated by a process outside the owned group. The retained stable process
+identity reports a different UID and process group. Only Ferric's owned group
+is terminated, and its absence is checked; no foreign signal, reset or retry
+occurs. Last startup diagnostics reach KFD binding at about 84.20 seconds,
+before completed memory initialization. No logits, capture-pass, process-exit
+or GPU-restoration receipt is produced. Post-exit GPU memory is 49,152 bytes
+above the initial baseline, so restoration is not claimed.
+
+Failure retention preserves that outcome: the 4,476,331-byte archive has
+SHA-256
+`f69e81901b8da8900198a1b23e89ac2817dffee2c2d1ac9d28350726f5b76d3e`;
+all 46 members and 45 payload hashes and sizes pass independent local checks.
+The receipt records campaign 126, null process exit, absent owned group and
+`capture_pass_validated:false`. No independent reference was launched for that
+failed attempt; the separate successful attempt below does not replace it.
+
+A second, separately admitted capture on the same `011e0aca`/`7f90d187`
+inputs completes with campaign and process exit 0. The owned process group is
+absent, all source/input/control after-checks pass, and GPU4 returns to its
+exact 298,647,552-byte idle baseline. The five-row BF16 payload is 1,519,360
+bytes, SHA-256
+`75f4ad2cebb75a59a9334c6ec3f343bbe577f78a21a9c69001267f3fa3ef0fda`.
+Capture-pass SHA-256 is
+`4f48691a34c7438485dec6864155ced66bab7f88a2281448e3837095215909f4`.
+The 5,581,621-byte retained archive has SHA-256
+`b6ac8787e2d293bb2663d2411912c0155b00922d0d06e9607d8af694a0d02666`;
+all 50 members, 49 payload hashes and sizes, and 15 external records pass
+independent local checks. Target choices are `[4710, 16, 15, 576, 198]`, not
+the historical reference's `[4710, 16, 15, 16, 198]`. Execution success is not
+numerical acceptance.
+
+The separate CPU-only before-comparison identity gate passes all 20 checks,
+including the complete 133-token sequence, both prepacked model identities,
+plan selections, reference configuration and reference implementation. Its
+retained result SHA-256 is
+`9e505948dd304c27c7cb01e3fbca18569709e3c2fea3133ee5daf3f520120d7b`;
+all 12 raw/control records pass independent local hash checks. This gate alone
+does not permit matched error deltas: reference-byte equality must be checked
+after a separately retained reference run. Compiler and Ferric source both
+changed from the historical baseline, so this is not an isolated RMSNorm
+ablation.
+
+The separately admitted independent reference also completes with campaign and
+process exit 0, absent owned process group and exact idle GPU-baseline
+restoration. Two complete 133-token forwards without Ferric KV produce
+byte-identical reference logits, SHA-256
+`49b19632e0df845c92be23e2fc082f7d72ecac8ff5bffbeea53207352e29ae7a`.
+The actual comparison confirms one greedy-token mismatch at position 131:
+Ferric chooses 576 and the reference chooses 16. All five rows are finite.
+The actual K4 round still accepts zero draft tokens and publishes correction
+token 4710, as before; the mismatching verification row is not published in
+this round. It nevertheless remains part of the full-row numerical comparison.
+
+| Position | Maximum Absolute Error | RMSE | Greedy Token Match |
+| --- | --- | --- | --- |
+| 128 | 0.17578125 | 0.03984952303072752 | Yes |
+| 129 | 0.15625 | 0.042706172179349806 | Yes |
+| 130 | 0.125 | 0.03859434864717138 | Yes |
+| 131 | 0.25 | 0.07951165406101306 | No |
+| 132 | 0.15625 | 0.044612988539791336 | Yes |
+
+Maximum BF16 ULP distance is 31,503. Comparison SHA-256 is
+`a073987db9a15a351552d22030274d7ae050b44495f1abff230d3f84c593bdb1`.
+The 2,347,807-byte retained reference archive has SHA-256
+`ed09ff1c5a3a6ca3f712ea4d22dd3e9c3c13893617414eec7b70b12f3ba4bc84`;
+all 59 members, 58 payload hashes and sizes, and 15 external records pass
+independent local checks. No tolerance is accepted, and the successful process
+receipt does not mean numerical conformance. This is an engineering
+observation, not R29/R30 closure, TTFT/TPOT or performance qualification.
+
+The after-comparison identity gate subsequently passes all 22 input checks
+and confirms byte-identical current and historical reference logits. Its
+retained result SHA-256 is
+`e79f681b2c70a871837d769979faffcddcfe3e4398b45bc21574d91baafa1108`;
+all 12 raw/control records pass independent local hash checks. Matched-input
+error deltas between these two checkpoints are therefore reportable: positions
+128, 129 and 132 improve in maximum absolute error and RMSE; position 130 has
+unchanged maximum error and RMSE increases by 0.0073052612174783; position 131
+has maximum error increase by 0.0625 and RMSE increase by 0.003987153587049083.
+This is a mixed result, with one additional argmax mismatch, not a general
+numerical improvement or an isolated causal test of the RMSNorm change.
+
+Separately, an uncommitted model-bundle proof candidate revalidates canonical
+record commitment and destination layout on the exact retained target and
+draft manifests. It adds six focused Rust tests and two actual-body proof
+mutations without new assumptions or trusted external bodies. Its first
+mi300x preparation records the initial formatting failure, then passes the
+explicitly scoped four-file formatting step and check; only three line-wrap
+hunks change. Both locked offline metadata graphs pass. Actual inventory
+generation stops at a pre-existing unsupported `assert_ne!` statement in the
+legacy GEMM renderer, before producing a new inventory. Source/control
+after-checks pass. The 7,707,209-byte failure archive has SHA-256
+`cc1a9aa1dc929f3fdcb6f17424855a35e097ac443ab145344088106cbdc41239`;
+all 130 payload hashes and sizes are independently checked locally.
+
+The local successor expresses that renderer's same pre-emission rejection as
+`assert!(schedule != MfmaBf16K16Wave64V1, ...)`, retaining the diagnostic and
+existing rejection test without changing the source checker. Remote formatting
+changes are applied exactly. Its second mi300x preparation passes formatting
+and both locked metadata graphs, then actual inventory generation rejects the
+existing `verifier::prophetic` attribute on the KV retirement future-state spec
+method. No inventory is produced. Source/control after-checks pass. The
+7,760,139-byte failure archive has SHA-256
+`d5de2e90e6fe6e0cf9457ee3ac8027d7c1da0f34a014885bb38875194cedfca6`;
+all 115 payload hashes and sizes are independently checked locally.
+
+Pinned Verus source review confirms that `mut_ref_future` requires this
+prophetic spec annotation; removing it or substituting current state would
+change or invalidate the existing contract. A separate source-gate candidate
+therefore admits only the bare outer attribute on checked spec functions in
+reviewed Verus contexts, retaining rejection of external bodies, assumptions,
+axioms and malformed or unreviewed placements. It does not grant runtime
+authority or prove those functions. Its first actual test
+attempt and successor are recorded below. The future-state
+contract itself remains unchanged.
+
+The independent ordinary-host campaign on the exact frozen second-preparation
+source completes with exit 0. Both normal libtest builds and producer checks
+pass; all 17 selected bundle/auth/layout tests and both existing GEMM rejection
+tests pass with zero ignores. Both scoped strict `--lib --tests` Clippy commands
+pass. Source, all 115 predecessor payloads, and both original and copied test
+executables remain unchanged according to the completed remote after-check.
+The locally retained campaign stream records all 29 phase exits and campaign
+exit 0, SHA-256
+`7192f78835218caba9d5293aeadf46deb902cb2d6bc276061894961d684584f1`.
+This campaign excludes the new source-gate candidate and establishes no
+source-policy, Verus or protected-runtime acceptance. These uncommitted changes
+are not part of the `011e0aca` native source and do not close the model-bundle
+gate.
+
+The initial terminal-retention SSH connection exits 255 after the server
+stops responding. One bounded read-only status connection also exits 255 with
+a port-22 timeout. Both transport failures are retained; no retention retry is
+launched. A later bounded read-only connection recovers authoritative status:
+the original retainer completed with exit 0 at `2026-09-16T14:51:04Z`, and its
+process group 1101020 is absent. The existing archive is downloaded without
+rerunning retention. Its 15,754,423 bytes have SHA-256
+`d7b7c8f3b5243dca4581ac51dc06bfaf578fa8806a86ddd032b49a1d6b2503d9`;
+all 263 archive members, 261 payload hashes and sizes, both embedded metadata
+copies, and 14 external records are checked locally. Root independently checks
+the payloads, external hashes, metadata equality and exact 19-test roster.
+This recovers full custody of the successful host campaign, not new tests.
+
+The separate source-gate campaign then passes exact input/syntax admission,
+records the initial formatting failure and its authorized one-hunk correction,
+and builds both fresh normal and test executables. Its full suite reports
+45 passed, one failed and zero ignored; campaign exit is 101. The failing
+`prophetic_spec_bodies_keep_trust_rejections` regression is retained unchanged.
+Strict Clippy, metadata and inventory generation remain unlaunched. Source
+and control after-checks pass; both full source censuses have SHA-256
+`09ea829f20cd7defb11f4278128e9b351073d19d713d2dc0bef74f38c1407ead`.
+
+Pinned parser inspection identifies an existing audit gap exposed by that
+regression: unqualified `assume(false)` is a dedicated `Expr::Assume`, not the
+ordinary function-call node checked by the old guard. The local successor adds
+explicit rejection of that node, keeps child traversal and the failing test,
+and adds non-prophetic free-function, method and assertion-message coverage.
+Trust-call name checks also normalize raw identifiers through the parser's
+structured API, with matching spelling regressions. The existing future-state
+contract and narrow prophetic placement rules are unchanged. The successor's
+single mi300x attempt passes formatting without changes, both fresh builds and
+producer checks, and 46 of 47 tests with no ignores. All assumption/admission
+spelling regressions pass. The remaining hostile-body fixture now reaches a
+parser error: pinned `verus_syn` does not recognize a bare nested `axiom` item
+at statement position. No Clippy, metadata or inventory phase launches; the
+campaign retains exit 101 and source/control after-checks pass. A test-only
+correction will use an explicit recognized item prefix and a bodyless axiom
+declaration, keeping parser preflight and policy rejection assertions. A
+separate genuine three-module bundle Verus check is being prepared without
+claiming source-policy or protected-runtime acceptance.
+
+The failed source-policy campaign is fully retained: its 4,115,275-byte archive
+has SHA-256
+`35ab4ee4342401720ec37ca1486016b0c4d3466cca0a8b86bd7bdfe6be52ae65`.
+Root independently checks all 17 external records, 155 payload hashes and
+sizes, and both embedded metadata copies. Retention succeeds without changing
+the campaign's 45-pass/one-failure result.
+
+The second source-policy failure is also fully retained: its 4,116,954-byte
+archive has SHA-256
+`df0020e04976a3a71f228f97de2866a147445d7821859dd950296bbbdd53befe`.
+Root independently checks all 17 external records, 139 payload hashes and
+sizes, and both embedded metadata copies. Its source remains unchanged; the
+test-only successor adds fixture diagnostics and valid axiom declarations,
+with all 47 tests and rejection assertions retained. Neither failed attempt
+produces a replacement executable inventory.
+
+The third source-policy attempt passes all 47 tests, then stops at strict
+Clippy on unnecessary raw-string delimiter hashes in the new test fixture.
+The authorized remote formatter changes one helper-call line wrap; no
+production policy change is needed. Metadata and inventory generation remain
+unlaunched. Its 4,125,359-byte archive has SHA-256
+`2576b8ab6d865e2ddaa52a792fe2789fa3c8299db97d199038201a5f4c872c8c`;
+all 17 external hashes, 172 payload hashes and sizes, and embedded metadata
+copies pass root's independent checks. The test-only successor removes those
+two delimiter hashes without changing fixture contents or suppressing lints.
+
+The fourth attempt passes formatting, all 47 tests, strict Clippy and both
+locked metadata graphs. Genuine whole-tree inventory generation then rejects
+the existing method-level `#[cfg(test)]` on
+`M1PrepublicationStepCustodyV1::for_step_binding_test`. No inventory is
+produced. Its 4,255,030-byte failure archive has SHA-256
+`011e536dcb236c4cf0751c7583c187fd6b8441e50843fb6fe513b393347da7a5`;
+all 17 external hashes, 180 payload hashes and sizes, and embedded metadata
+copies pass root's independent checks. The local engine correction moves only
+that unchanged test helper into a separate test-only impl, matching the
+neighboring KV workspace helper and the source gate's existing exclusion rule.
+Production method bodies and the source policy's conditional-source rules
+remain unchanged.
+
+Independent read-only review also identifies a pre-existing assertion audit
+gap: expression-position macros did not traverse their argument tokens.
+The local source-gate successor applies the existing statement-argument parser
+to the same five reviewed assertion/printing macros in expression position,
+preserving inclusion rejection and attribute/path traversal. Positive and
+hostile expression-position cases extend the existing 47-test suite. Other
+expression macros retain prior behavior; this is not an all-macro audit claim.
+The fifth attempt passes formatting unchanged, both fresh gate builds, all
+47 tests, strict Clippy and both locked metadata graphs. Inventory generation
+then rejects another existing method-level test attribute, this time on
+`CanonicalCatalogs::build`. The campaign remains exit 1; source and control
+after-checks pass. Engine tests and engine Clippy are not launched.
+Its 4,366,281-byte archive has SHA-256
+`04ebb44633cad450c2ec53a29d9b15638b79db357dd6402478008543497dae3f`;
+all 17 external hashes, 186 payload hashes and sizes, embedded metadata and
+source/predecessor before-after identities pass root's independent checks.
+
+A broader source review identifies exactly one more such helper in the covered
+crates, `CanonicalKernargProfiles::new`. Both local corrections move unchanged
+legacy-strategy test wrappers into whole test-only impls, without changing
+production methods or conditional-source policy. These two relocations and
+the original prepublication relocation required their engine regression
+checks and successful inventory generation; the independent host result below
+subsequently covers the regression checks only.
+
+The sixth attempt reuses the exact fifth-attempt gate executable, with its
+original producer and unchanged source/manifest/lock/toolchain bindings checked;
+the 47 tests are not rerun or relabeled. Formatting of both additional Rust
+relocations and both locked metadata graphs pass. Generation gets past the
+conditional-source and prophetic-attribute checks, then rejects 92 missing
+and 13 stale entries in the explicit `proofs/UNVERIFIED_BODIES` admission list.
+The diagnostic has SHA-256
+`e41a949bcf6c87c9a52b233567f22e8a12e0672e741a775581e2fa41dea002d5`.
+The campaign remains exit 1, source/control after-checks pass, and the fresh
+engine build, 18 selected regressions and engine Clippy remain unlaunched.
+No inventory is generated or applied. These existing engine/kernel additions
+need explicit per-body admission review; no automatic allowlist expansion or
+source-gate relaxation is made. Ordinary engine regression validation can be
+isolated from this broader inventory prerequisite without implying acceptance.
+The 2,232,498-byte terminal archive has SHA-256
+`ae1f4e76fd54c668de23d32512d68c6fcdf5cb865e074dece17cb13cbcd2d75c`;
+all 17 external hashes, 115 payload hashes and sizes, embedded metadata and
+source/predecessor before-after identities pass root's independent checks.
+All campaign and retention sessions are closed; no successor is launched.
+
+Subsequent per-body review accounts for all 92 missing entries: 86 remain
+`pending-verus` and six inert Debug implementations are `excluded-presentation`.
+The reviewed update removes 13 stale entries: eight bodies now appear inside
+`verus!`, two wrappers are test-only, and three old methods no longer exist.
+No executable method is promoted to proved by this accounting correction.
+The updated admission file has SHA-256
+`5c4f81e293fa21e14fe95d8bcecfb533542269420863dbc77d13b4607144af35`.
+Actual generation must still confirm complete coverage, including all eight
+checked-body reclassifications.
+
+The separate ordinary engine-host campaign passes all 29 phases on the unchanged
+retained sixth-attempt source: a fresh engine test build, exactly 18 selected
+regressions, strict engine Clippy and source/control/predecessor after-checks.
+The selections cover nine operation-plan tests, eight kernarg-recipe tests and
+the original draft catch-up reservation-binding test. None failed or was ignored;
+the full engine suite was not run. Its 19,192,852-byte retained archive has SHA-256
+`e5ee86dc3c969875ee5b3f54f8fa33d13467739fc6442281a158952de4acb407`.
+Root independently checks all 17 external and 263 payload hashes, exact archive
+roster/metadata, embedded records and unchanged source/prior evidence. This does
+not waive source inventory generation or establish a Verus or qualification pass.
+After retention and root acknowledgement, a successful exact-stage cleanup
+removes only this campaign's `target` and `tmp`, reclaiming 1,422,360,576 allocated
+bytes. Its 22 retained control/raw records, selected-path journal and protected
+file checks pass. Logs, copied test ELF, archive and all R5/R6 source and cache
+inputs remain intact; all campaign, retention and cleanup sessions are closed.
+
+The seventh source-policy campaign applies only the reviewed admission-list
+overlay to a fresh copy of the sixth-attempt source. All eight phases pass,
+including both fresh locked metadata graphs, genuine inventory generation and
+unchanged source/prior evidence checks. The 2,251,944-byte archive has SHA-256
+`ed4778cbf5a379a1db8be3e878f4d72108f1dbc245be9ca1267d6678c0691932`.
+Root independently checks all 17 external and 96 payload hashes, sizes, archive
+roster/metadata and embedded records. The exact generated inventory is applied
+locally at SHA-256
+`a948b32e0d7d17bcb2813f3494f276b1481d62277f55e86f81cf55b6dc682eb2`.
+Its complete delta is 92 unverified additions, 13 unverified removals and
+20 checked-body additions: the three bundle functions, eight reclassifications
+and nine existing KV-ledger/metadata bodies missing from the old inventory.
+All nine additional bodies are independently reviewed against matching source
+hashes. Runtime dependency records and all other inventory rows are unchanged.
+Checked-body classification is not a new Verus pass. Registered same-source
+theorem and mutation evidence is not established by this result; no
+protected-runtime or roadmap gate is closed by inventory generation.
+
+Private candidate `07b455ce178a1a91c18ac89371724a76a26b108d` commits the bundle,
+source-gate, fixture and reviewed inventory changes. The registered proof
+campaign uses an actual clean detached checkout of that commit from a complete
+Git bundle. Registry policy passes 59 hostile fixtures and 35 exact current
+mutator anchors. The ordinary `ferric-m1-proof` all-target compile passes in
+1 minute 58 seconds. The positive `cargo-verus` command then reaches its
+unchanged 600-second timeout while compiling fresh dependencies, before any
+selected model-bundle theorem result is produced. The dependency transcript's
+2,044 vstd and 484 ferric-spec verified queries are not the selected theorem.
+The three registered mutations and both evidence-policy scripts are unlaunched.
+
+Campaign and positive phase remain exit 1; all source, cache, tool-closure and
+control after-checks pass. There is no retry, timeout increase or substituted
+component-proof result. Its 1,797,738-byte failure archive has SHA-256
+`50d8433375f3801625bc855eedfa07aa124dc2d88b863de54bd2560583ff40bb`.
+All 16 external records and 132 payloads are checked against the exact 134-member
+archive, and root independently checks hashes, roster, embedded metadata and
+source/cache/tool before-after equality. The ordinary compile transcript has
+SHA-256 `dae6efacd6ac17ae253760e2b04fa5c6d4354c5c561e2769b5e4e7935af0670f`;
+the timeout stderr has SHA-256
+`ee975cba9d46a112b78b2f30c0a23be0ce4e6b63daa3eced6ea286d70c78795d`.
+No selected theorem summary, theorem record or result file exists. The runner
+removes its own heavy build scratch; retained evidence is not a qualification
+pass, and no new GPU or performance measurement is made.
+After root acknowledgement, exact-stage cleanup removes the temporary clean
+checkout and empty scratch/template directories; the separate target is already
+absent. Net stage allocation falls by 57,548 KiB. All 148 protected files and the
+authenticated full-history source bundle remain unchanged. Root checks all 15
+cleanup records and the three intent/completion pairs. Every session is closed.
+
+The two new manifest mutations also require a complete three-row model-bundle
+product in the negative-evidence validator's synthetic test fixture. The local
+fixture now creates all three independent mutation records under one shared
+run identity and rejects omission of each row. The production validator's
+completeness rule is unchanged; these evidence-fixture changes await remote execution
+and do not constitute genuine mutation-proof evidence.
+
+The separate genuine component Verus command completes with exit 0 on the
+unchanged first-policy source: 119 verified queries, zero errors, and successful
+function details for all 114 functions in exactly `auth`, `weight_stream` and
+`model_bundle`. The new manifest byte-equality helper, borrowed commitment
+revalidator, manifest-pair gate and auth projection lemma, plus the strengthened
+composition function, all have successful positive-work records. The root
+transcript SHA-256 is
+`e3238716dfb8d6bab658f783740d074ccc830e7577c341b86393c6cad94dcbd4`.
+
+The campaign nevertheless ends with exit 1: its separate result checker expects
+`is-verifying-entire-crate=false`, but the pinned Verus implementation omits
+`verify_only_module` from that flag's calculation and reports true. The actual
+command and structured module roster still select exactly the three modules;
+no whole-crate result is claimed. All source, dependency, tool-closure, artifact
+and control after-checks pass. The failed checker is retained unchanged, and
+any corrected post-hoc assessment must remain separate from this campaign.
+Registered outer-theorem and negative-mutation runs remain pending, and this
+user-cache component result does not close protected-runtime qualification.
+Its 89,819,882-byte archive has SHA-256
+`11f388c80af467b9c6fd79a004889a3a3464fc4a110ab9630764713040add37c`;
+all 14 external hashes, 500 payload hashes and sizes, and both embedded metadata
+copies pass root's independent checks. The three library modules still match
+the integration candidate byte for byte. Retained Rust dep-info files contain
+no Verus import paths after the later compiler pass; any direct import-path
+assessment must be labeled as inference from actual producer arguments and
+the pinned resolver, not observed file-open telemetry.
+
+A separate post-hoc assessment completes with exit 0 without rerunning Verus
+or modifying the original campaign. It confirms the exact 119-query result,
+all 14 required function checks, six source-bound export producers and 12
+direct import edges inferred from actual arguments and the pinned resolver.
+The assessment result has SHA-256
+`d8da42fa11d34443eeea2b22dd846bbd2d3fa5629612c2218d33f6ce67917608`.
+Root independently checks all 33 retained record hashes and sizes, their exact
+roster, and byte-identical before/after identities. The original proof exit 0,
+checker exit 1 and campaign exit 1 remain unchanged. This is neither observed
+import file-open telemetry nor whole-crate, source-policy, registered-theorem,
+negative-mutation or protected-runtime qualification.
+
+The single read-only inventory of 19 completed native scratch roots stops
+with exit 1 before no-use checks or manifest creation: the survey's own
+`remote-files.sha256` is absent from the expected 106-file custody ledger.
+All 14 raw/control records are retained, and the owned process group is absent.
+No file is deleted or reclaimable-byte total established. A reviewed successor
+adds only that exact checksum-file pin and preserves the selected roots,
+exclusions and resource limits. Its custody checks pass for all 107 expected
+files, but the sixth process-usage scan stops on an unapproved permission error
+reading `/proc/2097927/fd`. The command and wrapper both exit 1, and the owned
+process group is absent. All 33 raw/control records are retained. The initial
+disk census observes 382,360 KiB across the 19 candidates, not approved
+reclaimable space. No successful manifest or deletion is produced; no retry,
+permission-check bypass or deletion is authorized.
+
+A separate read-only survey of the user-offered `mi350-2` succeeds. It observes
+one KFD gfx950 GPU, 0% busy with 19,314,954,240 bytes already allocated; this
+is not exclusive availability. No device is opened or workload launched.
+The frozen M5 image and smoke executable both require gfx942, so this host is
+not a drop-in replacement. Any gfx950 adaptation still builds on mi300x.
+
+Read-only source review of this checkpoint also confirms that target and
+draft weights request device-local VRAM allocation once during initialization;
+step arguments reuse retained device subranges. The S1/K4 composition contains
+2,242 physical dispatch packets in one publication: four 424-packet draft
+forwards, a 545-packet target verification and token assembly. Draft M=1 GEMMs
+still use the scalar reference path, while target M=5 uses 16-by-16 MFMA tiles.
+These are source-derived profiling priorities, not measured bottlenecks or
+speedups. Numerical investigation and GPU timing remain the next measurement
+steps.
+
+Separately, exact owned compiler-cache cleanup removes 279 obsolete paths
+covering 273 inodes and reclaims 1,449,496 KiB. All nonselected target entries,
+sources, vendor trees, copied tools and retained evidence pass after-checks.
+The original 2 GiB headroom goal is not met. The successful tool build uses a
+smaller staged allocation plan. A separately inventoried cleanup then retires
+eight aliases of four redundant new target binaries, reclaiming 206,528 KiB.
+All distinct working tool copies, protected inputs, three source trees, two
+historical vendor trees and retained evidence are unchanged. The exact eight
+intent/completion pairs and all 19 raw records pass independent local checks.
+Compiler-stage allocation is 9,533,132 KiB. No vendor admission follows merely
+from this cleanup; its fresh capacity and source checks remain required.
+
+Local cleanup also removes exactly 52 unpacked duplicate test ELFs from the
+three retained RMSNorm campaigns, reclaiming 1,174,810,624 allocated bytes.
+Every file matched its retained manifest and had a fresh empty in-use check;
+all three archives, receipts and manifests were rehashed unchanged afterward.
+Source snapshots, logs and structured test receipts remain available. This
+removes duplicate local storage, not evidence from the retained archives.
+
+Separate remote cleanup retires exactly the 21 archived R3 test executables
+from the reusable R2 target, reclaiming 449,528 KiB. The 2,630 protected records,
+all 21 copied R3 executables and sources are unchanged. All 4,075 nonselected
+target entries, including 633 directories, pass preservation checks with only
+the reviewed parent-directory metadata exception. Fresh visible-process checks
+find no selected use; incomplete system-wide visibility remains explicit.
+Combined R2/R3/R4 allocation is 3,267,472 KiB, below the unchanged 4 GiB limit.
+All 31 raw cleanup records and the exact 21 intent/completion pairs are retained
+and independently checked. This makes room for R4; it is not a test result.
+
+### Published Compiler And Current Adoption
+
+The current published compiler correction is fe2o3
+`1fadb7e0a8ee2a9e8cdbcdf5b8648e20a36161de`. It was rebased onto freshly
+fetched main `958a80a3d`, then pushed normally with `[skip ci]`. Post-push and
+delayed GitHub API checks find zero workflow runs; the post-push check-run
+count is also zero. All builds and tests remain on mi300x. This eight-file
+change adds trusted write-only output ABI recognition and exact Thread-call
+value resolution with focused regressions. Kernels and inference remain in
+Ferric; private gather/slice-read experiments are excluded and remain unfixed.
+
+The clean R5 candidate on parent `4c2983820` passes all 52 selected tests:
+17 reference-effect units, 30 GPU-expression tests and five actual extraction
+integration selections. Strict Clippy exits 101 with 17 diagnostics at unchanged
+upstream source sites; the overall campaign remains 101. No clean-base Clippy
+run or successful proof admission is claimed. The positive reaches the real
+proof-runtime-unavailable boundary. R5 archive SHA-256 is
+`ebe08d207b3eb15aa86c099507724e4377c44a4c302aea27c1187b31c9240a10`.
+The later three-path upstream rebase changes only a dev dependency and related
+lock/tutorial hashes. A separate mi300x metadata check passes with identical
+155-node normal/build dependency graphs and unchanged protected artifacts.
+The 52 tests retain their original R5 attribution; they were not rerun on the
+rebased commit.
+
+Private Ferric integration `a0cc9929389d02a94a46208064f451592dd94d5b` adopts
+that published compiler across exactly 80 active pin files. The first adoption
+attempt stops on its revision-only inventory assumption after 32 locked graphs
+and 42 fresh source-gate tests pass. Its failure is retained as archive
+`0b1ebbcd5b41b56434076a9c0adec81ede14abf29be8f4a89443aa606515b530`.
+A separate fresh R2 campaign passes all 47 phases, including four actual CLI
+inventory derivations. Besides the compiler revision, the reviewed inventories
+add exactly upstream's `native_v12_text_descriptor_replay_v1` test target and
+the `dialect-amdgcn` development declaration for `fe2o3-amd-target`. The runtime
+inventory and historical property-binder pin remain unchanged. All 1,148 local
+source hashes and the full tracked-file roster match the validated remote source.
+The 20,544,105-byte successful archive has SHA-256
+`dacf7b109448bbc90d4d8bd5ea30f1eac7f1b0723630b674bb6f7776e5579fc8`;
+all 1,608 members and 1,607 payload hashes and sizes pass independent local
+verification. This is dependency/source-gate coverage, not engine, Verus, native,
+numerical or serving validation on the new compiler.
+
+All six matching compiler-tool build/copy/source phases subsequently pass on
+mi300x at exact `1fadb7e0`. The CLI, linker proxy, backend and extractor are
+fresh Cargo products; the backend build-script record binds the new CLI.
+The 5,046-file compiler census and protected historical tools remain unchanged.
+CLI SHA-256 is
+`081f3092d37176e10f31664a5c8d5288bfeebd2972087b5daf9f65480e1a3b5a`;
+backend SHA-256 is
+`43741b5938d2c32e307de4655a6ee10d1f9a04ee0508de25d7fd1c839d37606e`.
+The 60,995,341-byte archive has SHA-256
+`9084ba6be03d07b023703bf023887456d081b807f52e3035f7450f525d606d4b`.
+All 85 members and 84 payload hashes and sizes are independently checked after
+transfer. This establishes matching engineering tools, not full compiler
+qualification, kernel emission or a GPU result.
+
+The matching optimized `ferric-m1-engineering-speculative-smoke` binary also
+builds on mi300x from exact `a0cc9929`/`1fad`. All six release phases and source/
+control after-checks pass. The normal no-feature opt3/debug0 Cargo product is
+fresh, and all 1,148 source files remain unchanged. Its 14,254,656-byte ELF has
+SHA-256 `6c46c97b2ad1ab3c880ea69f32b4a295eadcddbc8eb4b666ecf7299395d1edf4`.
+The 11,351,881-byte archive has SHA-256
+`d3886c416fa71a489632b94cba1970e07c74ae1901b135f3e76ee457fec3859a`;
+all 88 members and 87 payload hashes and sizes pass independent local checks.
+This establishes the matching host executable, not numerical or serving
+validation.
+
+Matching MFMA13 emission subsequently passes all 12 mi300x phases, including
+fresh empty-home metadata parity, exact 13-entry/descriptor inspection, actual
+MFMA instructions, `gfx942:xnack-`, code-object version 6 and exact output replay.
+Source, tool, vendor and control after-checks pass. The reused LLVM worker keeps
+its original `21682228` producer attribution. The 112,680-byte HSACO has SHA-256
+`08b8b24eac612c3c65739cc9703b7822088863819d96ce4ae92470b858c60568`.
+The 2,034,624-byte emission archive has SHA-256
+`4bd5880951496586b7134c9ad00f5512f950ca223c5b8354e1ef00baba026666`;
+all 169 members and 168 payload hashes and sizes pass local custody checks.
+Engineering emission grants remain false. This is not production admission.
+
+A separate guarded M5 native capture and independent reference comparison now
+both complete on mi300x GPU 4 at exact `a0cc9929`/`1fad`. Both process and outer
+wrapper exits are zero; source, input and control checks pass, both owned
+process groups are absent, and GPU allocation returns to its original
+298,647,552-byte idle baseline. The capture contains 1,519,360 BF16 bytes for
+all five target positions 128 through 132 from one actual S1/K4 round. This
+uses the historical 128-active-token filled prefix, not normal real-prompt
+serving. The reference evaluates the entire 133-token context without Ferric
+KV twice, with byte-identical results. All logits are finite, and all five
+argmax tokens match: `[4710, 16, 15, 16, 198]`.
+
+| Position | Maximum Absolute Error | RMSE |
+| --- | --- | --- |
+| 128 | 0.2421875 | 0.07160754675058952 |
+| 129 | 0.203125 | 0.06948075238695375 |
+| 130 | 0.125 | 0.03128908742969308 |
+| 131 | 0.1875 | 0.07552450047396397 |
+| 132 | 0.2001953125 | 0.05692751000637275 |
+
+Maximum BF16 ULP distance is 31,640. No tolerance has been accepted, and token
+agreement does not establish logit conformance or close R29/R30. The capture
+archive is 5,580,101 bytes, SHA-256
+`e6b01d2b8ae509eb74c64a132b776877a90cfabe716d93be707bb067aa25c3be`;
+all 50 members and 49 payloads are checked. The reference archive is 2,345,460
+bytes, SHA-256
+`b9d57066228ac02f24b1a597e693253bf3871b04235ce9e6b79277477adbc2f2`;
+all 59 members and 58 payloads are checked. Both have complete local custody,
+including exact roster, payload hashes/sizes and retained raw terminal records.
+Comparison SHA-256 is
+`e4e46d68e521a1391d09cb44f3eac03f12ee2b5d50429225f339d3ad0ac7eec6`.
+There is no new TTFT, TPOT, throughput or serving-qualification claim.
+
+Read-only review of the `a0cc9929` baseline identified the rounding-boundary
+candidate implemented above: its RMSNorm kept normalization and weight
+multiplication in FP32 until the
+final BF16 store, whereas the retained pinned-reference diagnostic narrows
+normalization before multiplication. That baseline source was unchanged from
+the diagnostic. This is not yet established as the cause of the actual five-row
+differences; the later arithmetic candidate has no native comparison yet.
+
+A subsequent upstream fetch observes `86248cd74453f8c6fbf19e08a5b6cbfce3fc42cb`,
+five commits after `1fad`. The 63-file change introduces kernel-context
+entry generation and frontend authentication, including a new
+`fe2o3-macros` dependency on `fe2o3-rustc-front`. No KFD/runtime or toolchain
+change is present in this delta, and Ferric's device sources contain no
+`KernelContext` or reserved issuer use. The collector nevertheless adds checks
+over reachable calls, so source inspection alone does not establish full
+compatibility. That intermediate head was not separately adopted; the later
+`7f90d187` adoption above includes it. These historical build/emission checkpoints
+remain attributed to `a0cc9929`/`1fad`; no result is relabeled as a test of the
+newer compiler.
+
+After separate inventory and no-use checks, exactly 41 superseded single-link
+debug rlibs are removed from the owned compiler cache, reclaiming 528,704 KiB.
+All 960 protected files, 5,046 compiler source files and 6,909 unselected target
+entries remain unchanged. Selected-path checks pass; global process visibility
+is explicitly incomplete. Only regenerable cache is retired, with no claim of
+a complete byte archive for those discarded files. Existing compiler111 tools,
+MFMA13 objects, model inputs and foreign jobs are untouched.
+
+A second separately reviewed cleanup removes exactly 48 unused cache files:
+14 superseded release rlibs and 34 older libtest executables, reclaiming
+440,084 KiB. All 784 protected files, 5,046 source files and 6,878 unselected
+target entries remain unchanged. Fresh compiler-stage allocation is 9,758,752
+KiB. Subsequent bounded vendor formation passes: 198 packages and 11,394 entries,
+with 60 existing package directories moved and 138 missing packages copied.
+All 143 registry rows and original historical inputs remain unchanged; Cargo
+normalizes the 55 exact Git packages offline. Formation and later emission stay
+within their separately reviewed bounds. The scoped
+no-use checks retain their explicit process-visibility limitations. No historical
+test pass or complete byte archive is inferred for the discarded cache.
+The completed clean local compiler worktree is also removed with ordinary
+`git worktree remove`, reclaiming 87,152 KiB after exact HEAD/tree, source-archive
+and scoped no-use checks. Published history, private refs and retained evidence
+remain intact; unrelated worktrees and dirty user repositories are untouched.
+
+The completed M5 capture/reference scratch is subsequently retired across
+exactly eight owned roots: 158 entries and 355,764 KiB reclaimed. The first
+inventory failed safely at its 256 MiB census limit without deleting anything.
+An explicit metadata sizing check measured 363,959,110 logical bytes; a fresh
+R2 changed only that bound to 512 MiB and its namespace, then passed. A separate
+apply repeated the full inventory and required byte-identical manifest and
+parsed JSON before deletion. All 39 apply/fresh-inventory records pass local
+hash checks, and the deletion journal exactly matches the selected roster.
+All eight roots are absent and all 23 protected nonselected inputs and external
+phase records are unchanged. Capture/reference archives and failed R1 evidence
+remain local; 23 regenerable private reference-cache files are not claimed
+archived. Models, snapshot, venv, current compiler/source and shared caches are
+not selected. Scoped no-use visibility limitations remain explicit. Cleanup
+receipt SHA-256 is
+`5e4fa13cb75683139169d4fbcfb78f9de276df2b3765d6a636789f931c99e96e`.
+
+The preceding public Pages checkpoint was static commit `573a3da5`, deployed by
+successful upload-only run `35081715744`. All site QA ran on mi300x: five phases,
+exhaustive widths 320 through 1440 and 64 screenshots pass. The retained archive
+has SHA-256 `e84fa90c07f6f2a1b07a497a6438babf6f21a5787e1088b9e3916b3011f28c3a`;
+all 134 members and 133 payload hashes and sizes are checked. All seven live
+assets match the admitted artifact, both with and without cache-busting queries.
+The site records compiler adoption and prior M5 host/proof evidence, not the
+subsequent tool/release builds or a new performance result. The preceding R15
+UI-label failure remains retained. The completed clean Pages source worktree
+is removed, reclaiming 3,324 KiB while preserving its branch and evidence.
+Five fully retained remote Pages input/build/retention roots are also removed
+after exact fresh inventories and scoped no-use checks: 785 entries and
+78,248 KiB reclaimed. All five roots are confirmed absent; foreign jobs and
+the retained publication checkout are untouched.
+
+The current public Pages checkpoint is static commit
+`2c567f76cb0a02bf8c00d427821eb30bc37f7209`, deployed by successful upload-only
+run `35086353605`. It adds the matching tool/release/emission and actual
+five-position native/reference results above, preserving their frozen source
+identities, filled-prefix limitation and open qualification status. All five
+site QA phases run on mi300x and pass, including widths 320 through 1440 and
+64 screenshots. The 11,445,986-byte retained archive has SHA-256
+`4ac3fb6668b6d4ba0cd5793990d3a016e1acb23edfbef268a33efa7839082aca`;
+all 134 members and 133 payloads are checked. All seven canonical and seven
+cache-busted live asset downloads match the admitted artifact. GitHub only
+authenticates, uploads and deploys the prebuilt static files; no build or test
+runs there. The clean source worktree at `f133db6f` is removed with ordinary
+`git worktree remove`, reclaiming 3,340 KiB while preserving its branch,
+source archive, QA evidence and isolated publication checkout.
+The three completed remote R17 input/build/retention roots are then removed
+after fresh inventory equality and scoped no-use checks, reclaiming 51,304 KiB
+across 445 entries. All 24 cleanup records are locally hash-verified and the
+deletion journal exactly matches the selected roster. The three roots are
+confirmed absent; shared inputs and other stages are untouched. Complete
+system process visibility is not claimed. Cleanup receipt SHA-256 is
+`7dae270e49ccd1cb5af2d73bffbfe9e4d29eda82061ccd808fdefddf615b6ddf`.
+
+### Earlier Checkpoints
+
+All builds, tests and Verus runs remain on mi300x. The fe2o3 main push
+`111722028` contains `[skip ci]`; post-push GitHub API checks find zero workflow
+runs and zero check runs for that commit. It contains only the six-file core
+verifier correction described below, not Ferric kernels or inference code.
+
+Private integration `2bfce38b` now adopts published fe2o3 `111722028` across
+the exact 80 active pin-bearing files. All 47 mi300x validation phases pass:
+32 locked/offline dependency graphs, 42 freshly built source-gate tests, and
+four actual CLI inventory derivations. The three compiler-bearing inventories
+change only their revision; the runtime inventory and historical property-binder
+pin remain unchanged. All 1,145 final local source hashes and the complete
+tracked-file roster match the validated remote snapshot before commit. The
+20,487,388-byte archive has SHA-256
+`ebbfc150c4811e4f314a81f343977d9eac055e353ffc6c6aa17f2dcec59edd67`;
+all 1,604 members pass independent payload, size, mode and numeric ownership
+checks. This is dependency/source-gate coverage, not engine, Verus, native or
+performance qualification. Main still identified `111722028` when this
+checkpoint was adopted.
+
+During the subsequent emission/build work, upstream advances to `349b2cd0`.
+The fetched five-commit delta changes nine files: exact unsigned-literal formal
+address reasoning and policy-3 semantic replay, with tests and documentation.
+It changes no manifest, lockfile, host or KFD API. No direct Ferric caller of
+the new replay API is found. Private integration `803916c4` now adopts that
+revision after a separate successful 47-phase mi300x campaign: 32 locked graphs,
+42 fresh source-gate tests and four inventory derivations. The exact 80-file
+transition again preserves the runtime inventory and historical property-binder
+pin. All 1,145 local source hashes match the validated remote census; 79 changed
+files independently match revision-only substitution, while the remaining
+source-policy file also updates its two manifest/lockfile hash rows. The
+20,500,070-byte retained archive has SHA-256
+`a9c0daa6a5b7203aae6c7f177827bf4c5fa17855e4e2c7c6f3641c07dc3ef3ba`;
+all 1,604 regular members and 1,603 payload hashes and sizes pass independent
+local checks. No engine, Verus or GPU test is attributed to this adoption.
+The `111722028` build/emission/native records below remain explicitly frozen
+at that checkpoint and do not validate the newer compiler.
+An intermediate read-only upstream check subsequently finds `45d0bf2e`: nine commits
+over 349, covering generative tile providers, nominal refusals, descriptor
+signature normalization and associated tests. The active diagnostic campaigns
+remain frozen on 349; this newer head is not adopted by Ferric. The compiler
+fix lane then rebases onto `9af22bb5`, one further optional-GDB-audit test commit.
+Its separately attributed validation below does not upgrade Ferric's adopted
+compiler pin or relabel any compiler111/349 evidence.
+
+The matching engineering CLI, linker proxy, backend and extractor build on
+mi300x from the exact published compiler archive. All six tool-build/copy/source
+phases pass; selected executables are fresh Cargo products, and the backend
+build-script receipt binds the actual CLI hash. Source before/after censuses
+are identical. CLI and backend receipts have SHA-256
+`4495ea34e77578894895b6ea76a892294f9c2f6f2fcc9994f72bfbb7fc37e67f` and
+`527bd4073fdce65e6fd6d013127e3e1c57c244a0952e97f32ad13add88cc306f`.
+These are engineering tools, not full compiler qualification. Fourteen
+obsolete 8af test executables are removed only after rechecking their retained
+archive identities and lack of live use, reclaiming 475,400 KiB. Their bytes
+remain in the earlier R5 archive; shared libraries and foreign jobs are untouched.
+
+Fresh MFMA13 engineering emission on exact `2bfce38b`/`111722028` passes all
+13 phases on mi300x, including unchanged source/vendor after-checks and empty
+Cargo-home dependency equivalence. The gfx942/COV6 object replays exactly and
+inspection finds all 13 expected entry points and 64-byte descriptors, plus
+the actual `v_mfma_f32_16x16x16_bf16` instruction in the selected GEMM. The
+112,936-byte HSACO has SHA-256
+`f4f365f7a79b56d95eb429b0b5bc5a150f09e9a3fb7923363ac43392ac63878b`;
+its inspection receipt is
+`2275b3eb52a31ad94dc76cfe2bd3cdd94eace306be53ba8e9d25ce00eacfd7c8`.
+The unchanged LLVM worker retains its original `21682228` producer attribution.
+This is emission/ELF inspection only, not GPU or numerical qualification.
+The combined tool/emission archive is 108,806,389 bytes at SHA-256
+`e67e7d0fd91bab2285c8b720ef74a39a2d7707e03291bb1a04f1ba311be72003`.
+Its exact 230-member roster and all payload hashes pass independent local
+verification; all selected remote input identities and both source censuses
+remain unchanged. Build targets and vendor/cache payload trees are excluded.
+
+The matching optimized engineering capture and speculative-smoke binaries now
+build successfully on mi300x. All six release phases and control after-checks
+pass at exact `2bfce38b`/`111722028`, with fresh opt3/debug0/no-feature Cargo
+producers and all 1,145 source files unchanged. The smoke binary is 14,187,984
+bytes with SHA-256
+`4a4b50a3903b88acbc93b10d61f90cf0b09cd53c28fed56895bab679ad71d420`;
+the actual producer receipt is
+`52a037ce547ec0e822531a2123461f93f485a63285375e6a4454b56961071417`.
+The compact 7,426,301-byte release archive has SHA-256
+`3cb470990f937b8f1dd2334be6aa948058b1674fb93cb810a356f818b05b1bd1`;
+all 90 payloads and 91 members pass independent local verification. Build
+success does not establish native catch-up, numerical or serving qualification.
+
+The separate bounded native MFMA13 retry now passes on mi300x GPU 4. It
+publishes 32 tokens over 20 speculative rounds and observes one completed
+draft catch-up after continuing full K4 acceptance. Process, report validation
+and outer control each exit 0; the report recomputes the physical epoch,
+generation, token and maintenance counts. The queue is destroyed normally and
+GPU 4 returns to its starting 298,647,552-byte allocation with no selected
+foreign queues or retention-capture issues. This exercises the previously
+failing catch-up path with the rebuilt binary, not merely its host regression.
+The 3,989,932-byte native archive has SHA-256
+`46c5dc43d7e73cd0a91e00baa7f7b82aee84a9b7bcf2fb76aa2e040455d942f4`;
+all 42 payloads and 43 archive members pass independent local checks. The
+actual native report has SHA-256
+`185100350792c1797ca34a13cf76ce34487b6b7c172442b703659d88a86b31a7`.
+Startup allocation/upload completes at 249.178 seconds; prefill through native
+teardown takes another 118.417 seconds. Neither is TTFT or TPOT. The prompt
+contains active suffix-fill tokens and the 32 outputs exclude the prefill
+anchor. This remains an engineering-only observation, without independent
+numerical parity, serving qualification, a matched benchmark or a closed gate.
+After verified retention, exact file/stat/hash checks, absent owned process
+group and diagnostic-free selected-path no-use checks, the completed native
+scratch stage is removed: 33 files, three directories, 14,508,032 allocated
+bytes. Reusable model, compiler and release inputs remain on mi300x.
+
+The first independent current111 prefill comparison is now retained. Exact
+`2bfce38b`/`111722028` captures `prefill-s1-t128.001` on GPU 4; the canonical
+PyTorch reference runs twice with byte-identical outputs. Both native processes
+exit 0 and return GPU 4 to its 298,647,552-byte baseline. The comparison covers
+151,936 finite BF16 logit pairs and one token, with zero token mismatches,
+maximum absolute error 0.125, RMSE 0.03982024072957679 and 2,725 bit-identical
+pairs. Maximum BF16 ULP distance is 31,373: that pair crosses zero, from Ferric
+-0.047607421875 to reference 0.04931640625. No reviewed tolerance or numerical
+pass is claimed. Token agreement alone does not close numerical qualification.
+
+The first comparison wrapper exits 1 because it expects the old V1 report
+schema; the actual Rust comparator exits 0 and produces a valid V2 report.
+The corrected wrapper exits 0 in a separate output directory and its report
+is byte-identical to the first report. Both attempts, raw logs, actual capture
+and comparator executable bytes, generated inputs, reference sources and
+output bundles are preserved in the 6,133,251-byte archive with SHA-256
+`e9d233c8d9287ffae71184e7a07c6c064c866bc56c1e80ba643be22313a17f60`.
+All 260 regular members, the exact ordered roster, and all 259 payload hashes
+and sizes pass independent local verification. Model weights, reference caches
+and build targets are excluded. This is not a TTFT/TPOT or serving measurement,
+and does not validate compiler `349b2cd0`.
+After verified local retention, the four completed prefill capture/reference/
+comparison scratch directories are removed, including their private disposable
+caches: 113 files, 13 directories and 350,568,448 allocated bytes. All 90
+retained payloads in those directories are rechecked, prior process groups are
+absent, and both selected-path `fuser` batches return no users and no diagnostics.
+Reusable model, reference environment, compiler artifacts and input/output
+bundles remain available. The cleanup receipt has SHA-256
+`eb80d158c28cc794f4e88134353565b383f62685c685b6dc5d1e39e50b9bf742`.
+
+A separate bounded CPU-only experiment on mi300x finds concrete per-operation
+rounding witnesses against the installed Transformers 4.51.0 implementation.
+Synthetic RMSNorm has 229/1,024 differing BF16 outputs, SwiGLU 1,033/4,096,
+and rotary embedding 172/1,024 when FP32 intermediates are kept through the
+final operation instead of applying the canonical intermediate BF16 narrowing.
+The explicit SwiGLU intermediate narrowing exactly matches the canonical
+activation outputs in this experiment. This does not execute the device
+kernels or establish the cause of the full-model error: device transcendental
+implementations, reduction order, fused residual inputs and MFMA remain outside
+the experiment. No kernel or tolerance is changed. Raw report SHA-256 is
+`435ed666e165d378d2f2c6eb921249452d5d3c122194f1fdc720f431b7df72a0`;
+the diagnostic source, logs and terminal 0 are retained separately from the
+completed prefill archive.
+
+The separate draft catch-up proof candidate `a9fad31b`, on compiler
+`111722028`, passes its 21 selected host coordinator tests with zero failures
+or ignored tests, plus strict engine all-target Clippy. Verus b677 then verifies
+the actual production `commit_draft_catchup_transition` method: one verified,
+zero errors, with `--no-cheating`, genuine dependency exports and unchanged
+source/dependency after-checks. Its contract covers admission and error
+precedence, exact draft cursor/epoch advancement, and success/failure framing.
+It does not prove the whole engine, sealed owner mapping, queue completion or
+the physical KV join. All nine actual-body negative mutations now fail the
+intended postcondition with one error, no VIR error and nonzero solver work.
+All nine source restorations and final source/dependency/configuration/artifact
+checks pass. The full positive/negative archive is 192,903,662 bytes at SHA-256
+`532089c5c9b70861d89a0b09446002d8862b1639cd2d20d67ed99e7c316f1d91`;
+all 2,925 regular members and 2,924 payload hashes pass independent local
+verification. Combined M5 candidate `568882e2` contains the exact proof file
+and import-corrected M5 changes. Its compiler349 host campaign passes and is
+integrated privately at `6b5322dc`; only this progress document differs from
+the tested source tree. This original focused Verus result and its nine
+negative mutations retain their compiler111 attribution.
+The fully downloaded and independently verified host and proof archives have
+SHA-256 `f125c669bc7113de2e96304ef0a21db31a0bc89fda044588fcf7e5ce81178065`
+and `c263b3acd0a6c58a8da0da8184677df58c82d9071eda7844cebe70a37d505f86`.
+After confirming the fresh349 proof has no dependency on the old111 host
+target, that one reproducible cache is removed. All 1,284 retained source,
+control and evidence payloads are rechecked first, including the actual test
+executable; all old process groups are absent. A 3,283-entry owned-file census
+and 52 diagnostic-free no-use batches pass, with no external hardlinks.
+The cleanup reclaims 1,427,656,704 allocated bytes and leaves all non-target
+evidence unchanged. Receipt SHA-256:
+`7a889c67a7330ca7e440f563377a6433df9d6f33617b9ed180cdeddd55bff6b3`.
+
+The M5 engineering candidate `cf8dd23e` implements one-shot readback of all
+five real S1/K4 target logit rows and a separate canonical full-prefix
+reference. It includes partial-copy/failed-teardown ownership regressions and
+rejects rearming this capture allocation. Its first host campaign on compiler
+`349b2cd0` fails engine-test compilation with five errors caused by four missing
+test-module imports. Source, formatting, both metadata graphs and final source/
+control checks pass, but no Rust/Python tests or Clippy execute. Failed R1 is
+fully retained at archive SHA-256
+`f60a0a4b651569a2d973c2996981b2d8ce5bc9d7db8b08283519593b9033900b`.
+Import-only successor `e16eb929` and R2 controls remain unexecuted. The combined
+`568882e2` source instead passes all 21 R3 host phases on mi300x with compiler
+`349b2cd0`: 750 engine tests pass with nine explicit ignores, all 22 smoke-bin
+tests pass, the three Python suites pass 4, 23 and 15 tests, and strict Clippy
+passes for the engine library and exact smoke binary. Every required M5,
+partial-read/failed-teardown, catch-up and full-accept regression is explicitly
+`ok`, not ignored. Both locked dependency graphs, format, exact test-producer
+receipts and final source/control checks pass. This is not all-adapter or
+all-target Clippy coverage.
+
+R3 evidence retains the actual engine and smoke test executables, source
+archives, controls and raw results in a 57,589,388-byte archive, SHA-256
+`a8c9d39b1baceaf6c4ba8c776dc36c15c46986cc6a859de59a759d5607e9a066`.
+All 344 members and 343 payload hashes, sizes and modes pass independent local
+checks; the embedded manifest and summary match their separate copies.
+Private integration `6b5322dc` contains the exact tested implementation.
+No M5 native capture, five-position numerical comparison, serving
+qualification or new performance result is claimed.
+
+A separate fresh compiler349 Verus campaign now passes on the exact combined
+`568882e2` source. All 14 phases pass, including seven genuinely rebuilt and
+verified dependency exports and the selected production
+`M1SpeculativeGenerationLoopV1::commit_draft_catchup_transition` method:
+one verified, zero errors, executable mode, solver rlimit 116,015, with
+`--no-cheating`. Complete source/dependency/configuration/Verus-closure and
+artifact after-checks pass, as do preservation checks for all 2,924 retained
+compiler111 evidence files. The fresh target is isolated under the existing
+whole-stage 2 GiB cap; no old proof source or artifact is replaced.
+The 169,061,545-byte archive has SHA-256
+`6013e24b89fb72ca30b8c654a737a3405c6e5ff59f529bc8a2040b986fedf03c`.
+All 1,577 regular members and 1,576 payload hashes pass independent local
+verification. The nine negative mutations have not been rerun on349. This
+remains a single-method proof, not whole-engine, queue/owner or physical-KV
+composition, and does not validate later compiler heads.
+
+A bounded independent source review of the M5 allocation, rearm, binding and
+readback changes finds no actionable issue. It confirms capture exclusion from
+catch-up/general rearm, two target-logit bindings in segment four, complete
+five-row generation/extent checks, and 12 allocations within compiler349's
+unchanged fixed limit of 16. This review does not establish native correctness.
+The completed clean M5 worktree is removed after source/archive and no-use
+checks, reclaiming 44,856 KiB locally; its branch and tested commit remain.
+The reusable compiler lane separately reproduces an earlier admission gap:
+the real-style guarded gather reference rejects `WriteOnlyDisjointSlice<u16>`
+as having no reference ABI relation. The observation harness passes while the
+compiler subprocess exits 101; this is not compiler/proof success. A narrow
+output-only relation fix builds and passes its three unit tests, but its
+ordinary-source positive test fails at a later authenticated store-mapping
+boundary. Source/protected-input/control/toolchain after-checks pass. The
+failed positive is preserved; remaining read-rejection and gather diagnostics
+do not turn that failure into a successful compiler pipeline.
+
+The R4 compiler successor on exact main `9af22bb5`, candidate tree
+`6401d5e74a9a072713711825de5caa4b1a519bfe`, adds narrow trusted Thread-call
+store-value mapping using the existing dominance resolver. Fresh producers,
+three output-ABI unit tests, 30 GPU-expression regressions and the unchanged
+ordinary-source positive all pass. The positive now reaches the existing
+`functional-refinement proof runtime unavailable` boundary. Its compiler
+still stops before proof admission or artifact emission; no solver or
+production-admission success is implied.
+
+R4's overall exit remains 101 because scoped strict Clippy reports 17
+diagnostics. All reported sites are unchanged relative to the exact `9af` base;
+this is source attribution, not a separately executed baseline result. No
+warning is suppressed or unrelated code refactored. Final source, producer,
+control and protected-input checks pass. The 88,279,315-byte terminal archive
+has SHA-256
+`717ef333171433e583cc44d4b4e7e1bef80794cd0719ef198fc63940e1552e09`;
+all 183 regular members, 182 payload hashes and four actual producer ELF
+copies pass independent local verification. Before this run, four exact
+obsolete producer names are retired after retention/no-use checks, reclaiming
+273,312 KiB without changing the shared-stage cap or protected inputs.
+
+This candidate is not published. The proposed public patch will preserve the
+reusable ABI/resolver changes and meaningful passing coverage, but exclude
+the privately retained gather/slice-read diagnostic experiments. The latter
+failed assertions are not rewritten as passes; the proposed standalone
+coordinate-read regression has not run. A fresh-main public diff review and
+validation remain required before any `[skip ci]` push. The current shared
+compiler stage has only 194,720 KiB free within its cap, below the existing
+512 MiB initial reserve; no further build is admitted at this checkpoint.
+
+Separately, two redundant remote archive copies are removed after local
+verification, reclaiming 116,240,384 allocated bytes. Their attempted extra
+`fuser -s -- PATH` check rejected the argument separator but returned the same
+status as no users; the shell incorrectly continued. This is recorded as an
+invalid no-use check, not evidence of absence. Only the two owned completed
+archive copies were selected; no runtime inputs were removed. The later native
+scratch cleanup above rejects all diagnostic output and uses the supported
+absolute-path invocation. The original check failure remains recorded under
+`.codex-tmp/ferric-compiler111-tools-v1/REMOTE_ARCHIVE_COPY_REMOVAL.md`.
+
+The newer dated native/numerical/proof checkpoint is public at static Pages
+commit `3e41846e069abe80bbf49a048cd7e731fe2363cc`, built and validated only
+on mi300x from separate site source `4c206bfc`. R14 passes all five QA phases,
+the 320--1440 width sweep, eight viewports and 64 screenshots. Its 11,338,223-byte
+archive has SHA-256
+`56ea79d0d73790347d975378e1c256b034e1fab66879f88ffa5da63d42073bdf`;
+all 134 members and 133 payload hashes/sizes pass independent local checks.
+Static-only deployment run `35072403884` succeeds; all seven canonical and
+seven cache-busted live assets match the exact 633,233-byte artifact. Only
+prebuilt assets and workflow hash/size/comment pins change. GitHub runs no
+build or test. This dated snapshot precedes the combined M5 host integration
+above and does not upgrade numerical, serving or performance qualification.
+After verified publication and local evidence retention, the six completed
+R13/R14 remote QA/input/retention directories are removed, reclaiming
+104,329,216 allocated bytes. Both 445-entry deletion journals match the
+reviewed inventories. The first R14 cleanup stops before deletion on an
+unknown transient SSH process visibility gap; an unchanged-control retry
+passes after that process disappears. Process visibility limitations remain
+explicit. The clean completed site worktree is also removed, reclaiming
+3,296 KiB locally while preserving its branch and source archives.
+
+The preceding dated dependency checkpoint was published at static Pages commit
+`bcc6d1badafd7d6bd1641c3c867cffd6cd7e63d2`, from separate Pages source
+`012d7af8`. All five mi300x QA phases pass, including the 320--1440 width sweep,
+eight viewports and 64 screenshots. The retained 11,313,074-byte archive has
+SHA-256 `4ff3a911384eeca221bcdbf0c09f25dc39f47d1f047286180869c60d7f536caa`;
+all 133 payloads and 134 archive members pass independent checks. Static-only
+deployment run `35063661900` succeeds without GitHub build or test commands.
+All seven canonical and seven cache-busted live assets match the validated
+625,414-byte artifact. The publication covers dependency adoption, not the
+subsequent compiler-tool/emission work or a new native result. Only the approved
+`pages/prebuilt` branch is pushed; private implementation history stays local.
+After archive and no-use rechecks, the three completed Pages directories are
+removed, reclaiming 50,816 KiB. The terminal receipt is
+`a25cad6a58f62612356c554af5c19bc1bdaf8bfa7e0dd52273b8cc2f41724697`;
+its 445-path deletion journal matches the approved inventory exactly. Local
+screenshots and evidence, shared caches and foreign jobs remain untouched.
+
+Private Ferric `f8eed966` adds an explicit leading `--mfma13` option to the
+engineering speculative smoke. The default remains `LegacyScalar12`; one-step
+and resident reports bind their strategy and exact 12/13 program count to the
+admitted artifact. Argument failures precede artifact or device I/O. The
+gfx942-only device boundary and authority/comparison exclusions are unchanged.
+
+On mi300x, smoke R3 checks 110 library, 20 speculative-smoke and 17 target-smoke
+tests successfully, with two existing hardware tests ignored. It then records
+a genuine source-policy failure: the old test expects a single scalar opener
+instead of the explicit strategy match. The test-only successor checks both
+admission routes, their common fallible error boundary, and all six ordered
+startup completions. All 38 source-policy tests pass. Four selected engine
+regressions and three GEMM regressions also pass, including the draft-catchup
+reservation test covering K4/K8/K16; adapter `--all-targets -D warnings` passes.
+These are separately attributed host cohorts, not new emission, native,
+numerical or performance results. R1/R2 parser failures, R3's policy failure,
+and R4's pre-engine wrapper-label rejection remain retained rather than being
+relabeled as whole-campaign passes.
+
+The fe2o3 verifier correction is published `111722028`, rebased onto freshly
+fetched main `d6471109`. It boxes the cold V4 nested error while preserving
+Display/direct error-source downcasts, and makes four Cargo fixture paths
+mandatory at compile time. Earlier e68-based affected tests pass after using
+the fixture's required package-only debuginfo setting. Scoped strict Clippy
+passes; its first result checker incorrectly expects executable debug settings
+on metadata-only artifacts, and a separate raw-evidence inspection records the
+passing lint scope without changing that failed campaign. The exact rebased
+candidate passes all 16 current-tip validation phases: 152 tests pass, ten
+existing tests are ignored, and strict Clippy passes for the library and four
+changed fixture targets. Six fresh test executables and both normal fixtures
+are bound to the candidate source; source/control after-checks pass. A final
+fetch confirms the parent is still current before the normal main push.
+Full-package legacy test lint debt remains outside this six-file correction.
+This is verifier regression coverage, not complete compiler qualification.
+
+The final verifier archive is 52,872,086 bytes at SHA-256
+`8f62d1a78c64306e7bb3b892ad9f267de1bf7de367e4891ae19baa510e402c34`;
+all 166 payloads, 168 members and embedded metadata pass independent local
+checks. The incremental Ferric policy/engine/GEMM/lint archive is 25,507,099
+bytes at SHA-256
+`191e406d7a1c4372395eb981a83bb6ad6377a409479b46ae4f74444dc81353e5`;
+all 111 payloads and 113 members pass independent checks. Both retain their
+earlier archive dependencies and failed attempts without duplicating full
+source trees. Local evidence remains available under
+`.codex-tmp/fe2o3-verifier-error-size-v1` and
+`.codex-tmp/ferric-smoke-mfma13-v1`. After verifying custody and absence of all
+recorded process groups, the two completed owned mi300x build stages are
+removed, reclaiming 3,398,644 KiB. The completed compiler worktree is removed
+with its branch and published commit preserved. Shared caches and foreign
+workloads are untouched. Removing the eight independently verified remote
+retention copies reclaims another 293,744 KiB; their local archives remain.
+
+Private integration `71bd407e` adopts freshly fetched fe2o3 `8af54567` across
+the 80 active pin-bearing files. Its complete mi300x dependency/source-gate
+campaign passes all 47 phases: 32 locked/offline graphs, 42 fresh source-gate
+tests, and four actual CLI inventory derivations. The three compiler-bearing
+inventories change only the revision; the runtime inventory and historical
+property-binder pin remain unchanged. No dependency-edge repair is needed.
+The 20,472,348-byte archive has SHA-256
+`be2ef2071511d2fe92558e8a853065575f52ae35a7b494db84fc5826f772a57e`;
+all 1,603 payload hashes and all 1,145 final local source hashes pass independent
+checks. This is not compiler-tool, engine, Verus, emission or GPU qualification.
+The separate compiler R1 focused campaign stops with a harness failure after
+33 successful phases. Twelve checked test groups pass 661 tests; the backend
+suite itself reports another 610 passes, zero failures and zero ignores, but
+its merged stderr warning interrupts one named-test line. The exact-name checker
+rejects that output, so R1 remains exit 1 and nine later phases are unlaunched.
+All 14 freshly produced test executables and prior tools/source are preserved.
+The 108,475,406-byte failed archive has SHA-256
+`50bca68de861314dcecd7178a6ad8830a956822d9eff6e5e1231e6e77add96e3`;
+all 394 payloads and its exact 396-member roster pass independent local checks.
+The same-source R2 continuation separates stdout/stderr without suppressing
+diagnostics or relaxing named-test checks. Backend, kernel-opt and Pliron pass
+610, 26 and 1,258 tests respectively, including the required optimizer-policy
+regressions. Together with R1's checked prefix, this is 2,555 checked test
+executions across 15 groups, not a completed compiler campaign. Aggregate
+reference then fails because the direct runner's loader path omits the freshly
+built compiler shared library. R2 remains exit 1; six later phases are unlaunched.
+Its 216,091,762-byte archive has SHA-256
+`2edc8a42bf66bb818a3553c7dd8994f183f0f10ff4a4f6747b9cdc376dc7bf5a`;
+all 494 payload hashes and the exact 496-member roster pass independent checks.
+R3 binds the existing normal extractor, exporter and backend producer records,
+but both preflight guards reject the existing nightly library directory's
+0775 mode. No substantive test phase launches, and R3 remains exit 1. The two
+new debug directories are private 0700 paths; the rejected nightly directory
+is already the unchanged wrapper's library path. A narrow successor will bind
+that existing toolchain trust separately without changing its permissions.
+The failed preflight is preserved in 22,078 bytes at SHA-256
+`a34220a9118bbc99b97613a2c86c60e68707e287815289ffce4d4d2ce46d9ea3`;
+all 39 payloads and the exact 40-member roster pass independent checks. Its
+fresh retention-only source checks are not relabeled as original guard passes.
+No source or test executable is changed.
+Earlier results below retain their original source and compiler identities.
+
+R4 passes both preservation guards and the aggregate-reference test. The V4
+test then reaches its scratch debugger build, where `rustc` receives SIGXFSZ:
+the direct checker incorrectly applies its 64 MiB log budget as a process-wide
+file-size limit inherited by compiler artifact writes. R4 remains exit 1, and
+five later phases are unlaunched. Its scratch directory is removed normally.
+The next runner correction will cap the two captured streams directly, leaving
+the original stage/disk, memory, CPU and wall-time limits unchanged. The checked
+compiler prefix now totals 2,556 test executions, not complete qualification.
+The failed R4 archive is 356,412,776 bytes at SHA-256
+`607b359b0fd36b0fbb04b398cbf63740548cc3a7a4f58a1351f8f00a297ad4a4`;
+all 573 payload hashes and the exact 575-member roster pass independent checks,
+including the 14 test executables and three normal child-tool binaries. The
+R5 stream-capture correction passes six bounded helper tests on mi300x:
+separate streams and nonzero exit, exact-cap output, overflow on each stream,
+TERM-ignored overflow requiring KILL, and an 80 MiB sparse artifact write with
+unchanged inherited file-size limits. The temporary artifact is removed and
+all downloaded probe files match remote hashes. Its result SHA-256 is
+`e08aa7580fe7ef0c33aa3da20dd08e4ea49132c8e1b009b94bb174638d83ff21`.
+The R5 continuation passes aggregate V4, aggregate V5 and control-flow V6,
+bringing the checked 8af prefix to 2,559 test executions. Tutorial checks pass;
+strict changed-package Clippy then reports the oversized nested V4 verifier
+error addressed by the later correction above. R5 remains exit 101, and final
+compiler-tool qualification is not established. Its 356,562,561-byte archive
+has SHA-256
+`1852a74f07a110fa2fbed07ccab60bfe9305b0d9fed4f61838e340f3d0a722af`;
+all 714 payload hashes and the exact 716-member roster pass independent checks.
+
+On `71bd407e`, the separate host-kernel campaign passes all 19 phases: 14
+target-neutral GEMM tests once, eight TP tests per gfx942/gfx950 target, and
+strict aggregate Clippy with `--all-targets -D warnings` for both targets.
+All 30 test executions pass with zero failures or ignores, using seven fresh
+test executables. Full source and earlier dependency evidence remain unchanged.
+The retained 83,210,265-byte archive has SHA-256
+`443492f47fbf6f260c7e87a3925764407b573ec077992d05872346f277538591`.
+All 1,834 payload hashes, the exact 1,835-member roster, and the separately
+retained terminal retainer logs pass independent local checks. Removing only
+the redundant host-kernel and compiler-R1/R2 unpacked verification copies
+reclaims 1,418,244 KiB; their verified archives and manifests remain retained.
+This closes those host regressions, not kernel emission, numerical GPU
+qualification, native replay or performance qualification.
+
+Earlier private integration `6c34cbe1` builds on the `5bcf44ed` baseline, which pins
+the tested fe2o3 checkpoint `55d9bfe5` across all 80 active pin-bearing files.
+Upstream adds enum SSA edge transport
+and authenticated-downcast fixes, plus tutorial source-binding corrections;
+the compiler lockfile and device/host/KFD trees are unchanged from e3. The
+combined MFMA source passes all 32 locked/offline graphs and 42 freshly built
+source-gate tests on mi300x. Cargo regenerates exactly the missing normal
+`ferric-engine -> fe2o3-hsaco` edge in four standalone locks. The three scoped
+and combined dependency inventories change only their compiler revision; the
+runtime inventory is byte-identical.
+
+During validation, upstream main advances to `179340e3`; it is freshly fetched
+and reviewed, not yet adopted or validated by Ferric. Its nine commits change
+47 files but no manifests, lockfile, KFD, host or device APIs. The materialized
+compiler owner and ranked-assertion paths change, so actual aggregate emission
+needs fresh checks even though no direct Ferric API break is found. Existing
+55-pinned results are not relabeled as latest-main evidence. New optimizer and
+V12 lowering primitives do not establish production admission or performance.
+The next fetch reaches `f0bce59e`, adding one six-file compiler change for
+aggregate components at exact source uses. It changes no production manifest,
+lockfile, KFD, host or device API. Fallible reaching-definition analysis now
+precedes the no-reference lowering branch, so ordinary Ferric kernels also
+need fresh emission validation. This newer main is reviewed, not yet adopted.
+The subsequent fetch reaches `8af54567`: two further commits add checked
+optimizer policy 3 and harden receipt/lifetime boundaries in kernel-opt and
+Pliron. This increment changes no manifest, lockfile, KFD, host or device API.
+Ferric's dependency adoption is validated above; actual compiler tests, tool
+builds and emission remain distinct requirements. No optimizer performance
+improvement is inferred from source adoption.
+
+The first source-gate run genuinely reports 41 passes and one failure: its
+marker-order fixture anchor now occurs in both rosters. Fixture successor
+`358cf5e7` independently mutates each named roster and requires that roster's
+exact rejection, preserving the one-occurrence guard and production validator.
+The failing executable and raw result remain retained alongside the new pass.
+Full precheck evidence contains 54 terminal phases (53 passes, that one preserved
+failure), source and four actual executable copies. Its 31,509,791-byte archive
+has SHA-256 `e41df61f2fdd34aed60b545d7c0d0f4eab46c278d6c906a758f6098599b4ba99`;
+all 1,670 payload hashes and all 1,145 final local source hashes pass independent
+checks. This is dependency/source-gate validation, not full engine, Verus,
+compiler-tool, kernel-emission or GPU validation.
+
+The combined host R1 campaign on exact source `5bcf44ed` completes 17 substantive
+phases and all 20 before/after source checks successfully. Its six test suites
+report 1,141 passes, zero failures and 14 ignored: Qwen 81, engine 740,
+qualification capture 85, adapter library 110, adapter capture 87, and source
+policy 38. The actual batch-return regressions and new MFMA strategy tests pass.
+The next phase, the gfx942 aggregate library test build, fails with E0433 because
+the new row-coverage test uses `std::vec!` without importing `std` in a `no_std`
+crate. Nineteen later phases remain unlaunched; the campaign remains exit 101,
+not a full host pass. All source, native executable and control after-checks pass.
+Its 105,926,364-byte archive has SHA-256
+`60cbb48043e2647f0b392b77a19984627fb48386d812a8d8339ba56a9d321d44`;
+all 513 payload hashes, the exact 514-member roster and all six actual test
+executable bytes are independently retained and checked locally.
+
+Successor `f9def4c0` adds only a test-module `extern crate std;` plus spacing;
+production kernel bodies are unchanged. Its R2 continuation passes all eight
+aggregate build/run pairs: 54 tests across gfx942 and gfx950, zero failures or
+ignored tests. Together R1/R2 cover 1,195 passes and 14 ignores, attributed to
+their separate source commits. Core strict Clippy then finds one redundant
+catalog closure; the three later Clippy phases remain unlaunched. R2 stays exit
+101. All 528 payload hashes and its eight actual test executables are retained
+locally in the 181,816,253-byte archive at SHA-256
+`29861cd3a7d507f58e1e10bb141e1eb8a304425904beb8ab060b8196c7149800`.
+
+`2f1dded1` fixes that projection and `538aa053` replaces private-field references
+in four crate-visible retired-page accessor contracts with closed spec getters.
+R3 builds a distinct engine test executable and passes eight catalog tests and
+three batch-return regressions. Its explicit engine-only codegen-units=1 setting
+is host regression evidence, not a performance build. Source, prior evidence,
+native executable and control after-checks pass. Strict Clippy reports two
+ignored-unit-pattern errors in the invocation-only test fixture; `873f4958`
+fixes them without lint suppression. R3 remains exit 101 and the later three
+Clippy phases are unlaunched. All 122 payloads and the actual executable are
+locally checked in the 209,362,975-byte archive at SHA-256
+`36c2d719e509f1f2568975a7e23c09512b7d17a43c789205c66c0f038f8501df`.
+
+Strict Clippy R4 on `873f4958` completes all four phases with classified raw
+diagnostics. Core engine/spec/Qwen passes. The adapter reports one test-module
+ordering lint; `2108e736` moves that module without changing its contents or
+production bodies, and remote edition-2024 formatting passes. Its rerun remains
+pending. Each architecture reports 103 aggregate-kernel style diagnostics.
+Several arithmetic and finite-range spellings are pinned by source contracts;
+narrow function-level exceptions are being reviewed instead of silently
+rewriting the compiler-facing bodies. R4 remains exit 101. All 100 payloads and
+the exact 101-member roster are independently checked in the 218,719,868-byte
+archive at SHA-256
+`aa94caa28aab43cdf7c8c42e34809bffc115f7b6d80fa635e2408f969c753095`.
+
+Kernel successor `d034c7c2` adds eight function-scoped lint exceptions across
+six aggregate-owned files, preserving every device body and source contract.
+Remote edition-2024 formatting passes. Host R5 passes adapter strict Clippy;
+both aggregate targets advance past the 103 kernel-body diagnostics and report
+four host-only logits reference-test lints each. `1c71d9f1` fixes those test
+assertions and iteration without suppressions; formatting passes, rerun pending.
+R5 builds a fresh gfx942 source-contract executable, but its producer checker
+rejects legitimate verbose Cargo build-script lines before executing it. This
+is a harness failure, not a compiler failure or a test pass. Overall exit is 1;
+all source, native, prior-evidence and control after-checks pass. Its 103 payloads,
+104-member roster and unexecuted ELF are independently checked locally in the
+233,647,765-byte archive at SHA-256
+`e3081d0b28729ae2868381a25a821f3e2db0c993ec6ab7ae560864a52405c7f8`.
+A separately named same-source continuation accepts only the exact
+source-matched build-script messages. Both aggregate source-contract suites
+pass 11 tests each. Standalone GEMM then reports 10 passes and four failures:
+its source contract still counts three roots and two matrix roots after the
+MFMA addition. The five later suites are unlaunched; exit remains 101, and all
+source/native/prior-evidence/control after-checks pass. The original failed
+producer receipt and both Clippy failures remain unchanged. This continuation
+is host source-contract evidence, not kernel emission or GPU validation.
+Its 253,398,168-byte archive is checked independently locally at SHA-256
+`ce4159f53108afc5b13728299cd68ec798d18b835995a81ca85a7da5c0a2b06b`,
+including all 122 payloads, the exact 123-member roster and both new actual
+test executables. Successor `53eaf54e` updates the exact four-root GEMM roster,
+three matrix ABIs, finite-divisor/grid counts and MFMA generated-adapter type
+coverage. Scalar/A4 recurrence checks and production bodies remain unchanged.
+Remote formatting passes; the test rerun remains pending. Separate TP ABI
+review finds 14 available source roots versus 13 explicitly selected markers.
+Test-only successor `eab370bb` checks all 14 available roots separately from
+the exact 13 selected contract markers, including uniqueness and the sole
+unselected MFMA root. Production TP exports are unchanged. The later
+`71bd407e` host-kernel campaign above passes the TP and GEMM regressions.
+An actual compiler emission check remains pending; host roster checks are not
+evidence that the emitter selects the intended programs.
+
+The actual current-55 batch consumer has now been attempted in Verus. R2 on
+`5bcf44ed` genuinely verifies seven dependency exports but fails engine
+translation on four opaque-datatype field references, before consumer SMT work.
+After the accessor fix, proof R3 on `538aa053` preserves those seven exports and
+reaches the selected consumer's solver obligations. It fails at the final
+prefix postcondition and remaining-ticket frame assertion; nonzero solver work
+is not a proof pass. Before/after source, dependency, tool-closure and artifact
+checks pass. The full 183,762,226-byte failed R3 stage is retained locally at
+SHA-256 `fb16cc8bbe4ce52c62272be106c15b805d782f23320a7244956c2b56d836c9c3`,
+with all 3,734 members and 3,155 file payload hashes checked. `ea529fd8` adds
+17 ghost-only lines connecting entry-state ledgers and explicit per-ticket
+frames. Its R4 retry reaches actual SMT but still fails the final and next-prefix
+obligations and hits the solver rlimit; the former remaining-ticket assertion
+is no longer reported. All seven verified dependency exports and prior raw
+evidence remain unchanged. The full 193,456,937-byte failed stage is retained
+locally at SHA-256
+`e50191a61a5bdf8b09bf25e5a94a2b3988c6f3cf30133377a4aa9383a3de945c`,
+with all 3,885 members and 3,295 file payloads independently checked. Explicit
+entry-vector links and localized pointwise prefix reasoning in `f29108e4` reach
+SMT in R5, but the loop still exceeds the unchanged solver limit. The absence
+of the earlier individual diagnostics is not a proof pass. The full
+203,221,418-byte failed stage is checked locally at SHA-256
+`8f979eca3c6c189ea4e64eb22bc63f1be16edd4e96a30853ff0f26eb7371c500`,
+with all 4,041 members and 3,436 file payloads verified.
+
+R6 on proof-only source `869ac60c` narrows predicate expansion but fails Verus
+translation because the hide headers follow ghost bindings; no SMT work runs.
+All seven verified dependency exports and prior evidence remain unchanged.
+Its 212,873,273-byte archive is independently checked locally at SHA-256
+`b67b866cffb54d7fa0c8bec42c9bd0ba00a34e71a4097ce6a20b3610abd696db`,
+with all 4,190 members and 3,575 file payloads verified. Proof-only successor
+`fb020d0e`, integrated as `08a9e3ae`, moves just those two headers to the start
+of the function body. R7 reaches SMT and fails the freed-prefix assertion
+with nonzero solver work; it is not a proof pass. All after-checks pass, and
+the 222,559,843-byte archive is independently checked locally at SHA-256
+`1eaa158b6c08056c91824c31d3530a843aeb5d641ed5a3126007357f974d868e`,
+including its 4,339 members and 3,714 file payloads. Proof-only `cde4faaa`,
+integrated as `a6aebf1c`, adds explicit consumed-lease and current-slot update
+connections. Remote formatting passes. R8 succeeds with actual nonzero solver
+work for `commit_page_return_batch_ledgers`: verified 2, errors 0, selected
+exec success true, rlimit 6,300,370. Fresh root VIR/rmeta, the sole engine
+producer and all source/dependency/artifact/control/history after-checks pass.
+This is a selected-consumer proof, not verification of its unselected helpers
+or the complete caller/pool/queue composition. The full 236,117,213-byte R8
+archive is independently checked locally at SHA-256
+`a9cb4fbe02832e10ebcba1c94c4391dce7f6ddc970f6579e9bcdc569e7fc27c5`,
+including all 4,510 members and 3,875 file payloads. All three temporary proof
+worktrees are removed with their branches preserved. No trust
+annotations, executable behavior changes, weakened contracts or raised solver
+bounds are introduced.
+
+R9 on the same proof-only `cde4faaa` source succeeds for all 14 selected
+executable functions: the nine return-family bodies, four retired-lease
+accessors and `global_page_index_core`. Every selected exec has successful
+nonzero solver work. The seven dependency exports and all prior raw evidence
+remain unchanged. This expands R8's selected-consumer coverage, not the outer
+pool/queue composition, negative mutations, changed maintenance checker or
+native qualification. The full 250,915,254-byte archive is retained locally at
+SHA-256 `8596f98ac1c83db0f63499386f1daed2a299fcf7f4881816a118e4434e93e1c1`;
+all 4,132 regular-file payload hashes pass independent local checks.
+
+Scoped reproducible-cache cleanup removes 23 obsolete engine/build libraries
+and 11 obsolete engineering-adapter libraries, reclaiming 1,041,180 KiB while
+preserving protected sources, artifacts and evidence. A separate no-use scan
+fails on a transient unreadable process and deletes nothing; the fresh retry
+passes after that process is observed absent. A later exact 19-file kernel/spec
+cache cleanup reclaims another 78,620 KiB with all 986 protected inputs unchanged.
+Its complete inventory and deletion journal match locally. The runtime stage
+after host R4 is 9,420,480 KiB, still below its 10 GiB cap; future launches must
+restore their required initial reserve rather than weaken the resource guards.
+A further exact 56-file obsolete-library cleanup reclaims 265,632 KiB while
+preserving 1,081 retained payloads and all 2,917 unselected dependency entries.
+Its first inventory attempt stops before deletion because a JavaScript JSON
+round-trip rounded nanosecond timestamps. The corrected R6 roster carries exact
+remote Python integers without numeric transformation; inventory, separate
+delete admission and the 56-row journal all pass. Runtime usage after host R5
+is 9,275,436 KiB; the 10 GiB cap and per-phase reserve remain enforced.
+After the same-source continuation, runtime usage is 9,387,684 KiB. It remains
+below the cap but lacks the full-source launch reserve; a new full-source host
+campaign needs scoped cache cleanup before launch.
+Removing only the two completed local unpacked verification copies for R7
+and the host continuation reclaims 973,488 KiB; their independently checked
+archives, manifests, raw results and executable payloads remain archived.
+The earlier survey found all eight mi300x GPUs occupied. mi350-2 had one physical
+gfx950 GPU at zero utilization but a foreign process still holds three queues
+and 17.7 GiB, and its kernel/driver profile is not admitted. A fresh mi300x
+survey at 03:08:54 UTC finds GPUs 1-7 idle with no selected-device queues or
+VRAM users; the foreign GPU0 workload is untouched. Latest-f0b tool refresh,
+current-source emission and GPU numerical validation remain pending.
+All 33 M1 gates stay open.
+
+Runtime metadata inventory R7 stops on an FD race in the owned native child and
+deletes nothing. After the native and proof jobs terminate, namespace-only R8
+passes. Separately admitted cleanup removes exactly 11 obsolete metadata files,
+reclaiming 255,032 KiB. All 1,290 protected file payloads and native bytes are
+checked before/after, and 2,984 unselected dependency entries remain unchanged.
+Measured runtime usage is 9,134,984 KiB, restoring the unchanged full-source
+launch reserve. Compiler-cache inventory R1 instead stops before deletion on
+one empty metadata file; its strict positive-size assumption requires an exact
+file-scoped successor, not a broadened cleanup roster. R2 admits only that
+exact empty historical test metadata file and succeeds for 228 obsolete files
+(86 rlibs, 142 metadata files), totaling 1,635,144 KiB. The actual inventory
+has SHA-256 `a85f2a8adf9ec8a4db704e89fb3118e06726722401614cb136eeefa587f256b8`.
+Retention R3 subsequently archives all 228 payloads in 395,853,185 bytes at
+SHA-256 `5e964011bf01df98b6da4deff2a91c81e2de068711ca3ccc6dea12f774101d34`.
+After independent local archive, payload and metadata checks, separately
+reviewed deletion R4 removes exactly those files and reclaims 1,635,144 KiB.
+All 168 protected current libraries, 1,720 unselected dependency entries,
+source/tool bytes and R2/R3 evidence remain unchanged. Fresh no-use checks pass
+under the existing explicit visibility exceptions; complete system process
+visibility is not claimed. All 228 journal identities match the original
+integer-precise inventory. The deletion receipt has SHA-256
+`6d1a6dd3dbc4a156e141bdead84c7f0ad09154c631bf3cf2f738ba528d029e56`;
+the measured compiler stage falls from 10,483,440 to 8,848,296 KiB.
+The f0b drafts remain unexecuted; the reviewed 8af successor is launched instead.
+Removing only R3's redundant local unpacked copy reclaims 1,637,964 KiB while
+the verified archive and raw evidence remain retained. Removal of the two earlier
+local unpacked proof/native verification copies reclaims 763,552 KiB; checked
+archives, manifests and raw evidence remain retained.
+
+Pages source `0f8516e1` prepares the R9 proof and native-maintenance checkpoint.
+Actual Pages R9 QA passes structural/negative checks but fails a browser
+assertion that still expects the replaced R4 overview. No publication occurs.
+Test-only successor `38e3feb8` corrects that assertion and explicitly retains
+MFMA opt-in/default and historical-boundary checks; public assets are unchanged
+from R9. Its actual mi300x QA retry passes all five phases, including 1,121
+widths, eight viewports and 64 screenshots. All 133 payloads in the 11,320,854-byte
+archive at SHA-256
+`c1a7b01695eb20e501cc9eb5c78793de3a93a481d53b6a6172c45b33be539a75`
+pass local checks, and root reviews desktop/mobile overview and checkpoint
+images. Static-only public commit `60f65896` deploys successfully in GitHub run
+`35054007136`, with no build/test or protection changes. All seven canonical
+and seven cache-busted live files match the 619,456-byte retained artifact.
+This is the dated proof/maintenance checkpoint, not the later 8af pin result.
+Both clean temporary worktrees are removed. The original R9 failure is retained
+separately in 932,021 bytes at SHA-256
+`eeb91c30c10607ebdacd63ec7e784602c4f783d03ec874b8bb29a336232c3be7`;
+all 91 payloads pass independent checks, with QA exit 1 and no artifact or
+screenshots. The failed run is not relabeled as successful by the R10 retry.
+
+Pages-only source `3c7a4023` includes the terminal R4 outcomes and is published
+as static-only commit `58ebfe67`. All five mi300x QA phases pass, including
+1,121 widths, eight viewports and 64 screenshots. Root reviews four desktop and
+mobile screenshots; all seven canonical and seven cache-busted live files
+match the retained 616,600-byte artifact. GitHub run `35048733488` performs only
+artifact admission and deployment, with no build/test or settings changes.
+Private implementation ancestry is not pushed. The dated R4 site checkpoint
+does not claim later R5/R6 results. The temporary Pages worktree is removed.
+Separate reviewed cleanup removes the three completed remote Pages directories,
+reclaiming 50,812 KiB after exact inventory, custody and no-use checks. All 445
+deletion-journal rows and the full receipts remain retained locally; shared
+caches and all runtime/compiler/proof stages remain untouched by that cleanup.
+
+The dated Pages R5-R6 snapshot is deployed at public static-only commit
+`f3cb38aa`; all seven live assets match the mi300x-validated artifact. Fresh QA
+passes 1,121 widths and eight viewports after a scoped paragraph-wrapping fix.
+GitHub performed only artifact admission and deployment, with no build/test or
+protection changes. Private source `2e1fa34a` was not pushed; its completed
+worktree is removed and its branch/evidence remain. Separate verified cleanup
+removes three completed owned remote Pages directories, reclaiming 51,144 KiB;
+the earlier failed QA directories remain preserved. No newer native result is
+implied by that dated snapshot.
+
+Private integration `07d718a6` brings the six existing MFMA feature commits
+onto the current compiler-pinned source: the BF16 K16 device kernel, separate
+thirteen-program roster, distinct numerical profiles, strategy propagation
+through engine recipes and runner binding, and explicit engineering capture
+admission. LegacyScalar12 remains the default and single-row decode retains
+its scalar/vectorized path. No fe2o3 files are changed by this Ferric feature.
+The 24-file replay preserves current e3 pins, newer runtime hardening and both
+page-return proof files. Its temporary worktree is removed; the candidate
+branch remains. Its successor's dependency and source-gate checks are described
+above; the partial host result and test-only successor are described there too.
+Complete architecture checks, current-source emission and GPU execution remain pending.
+The source359e host controls remain a separate, not-yet-launched campaign and
+must not be treated as validation of this larger feature.
+
+Private integration `9e10cc95` coherently updates the 80 active pin-bearing
+files to published fe2o3 `e3c359fb`; formatter-only successor `359e4e12`
+preserves that dependency graph. The dependency overlay on `58833759` passes
+42 remote phases, all 32 locked/offline graph checks and 38 freshly built
+source-gate tests. Package versions and registry checksums are unchanged;
+the expected two compiler analysis edges are included in 29 locks. The three
+TCB documents are regenerated and independently checked. Full source, actual
+source-gate executables and raw results are retained locally at SHA-256
+`53d27228aa90f2bd80efeaa79cc23f28746b7a5b5a6b66180011c1412a6ec22f`.
+These results validate the dependency overlay, not the newer engine body.
+
+Candidate `8af1e52b`, included in these successors, moves the actual page-return
+batch loop into a contracted ledger consumer and adds three host regressions.
+The contracts state per-ticket correspondence, unique role/index returns,
+remaining-ticket preservation, exact generation advancement and frames for
+untouched entries. The existing forward zip truncation is preserved. The combined
+source `5bcf44ed` now passes host compilation and all three new regressions within
+its 740-pass engine suite. Verus verification of the actual batch consumer remains
+pending; outer-caller completeness and native completion custody remain unproved.
+
+The latest runtime executable is source `00ac6a22`, still pinned to fe2o3
+`4f6f65ce`. Its optimized build and six successor host phases pass. The full
+720-pass/9-ignored engine result belongs to its diagnostic predecessor `ba6f8c9c`;
+00ac changes only three lifetime spellings. The source-bound 32-token R5 native
+diagnostic stopped before inference on a process-observation race, not the
+maintenance transition. No new performance result is available.
+
+R6 reruns that exact frozen binary on idle physical mi300x GPU4 and reaches the
+maintenance-publication check. It exits 134 with `step draft catchup custody`,
+before submission of the 425 maintenance packets. The parent speculative
+selection is deliberately retained by both the KV binder and pending owner,
+but the step checker incorrectly expects the outer custody to use Decode.
+Successor `6c34cbe1` compares it to the speculative draft selection instead,
+leaving all completion-plan, request, epoch, width and ownership guards intact.
+Nine new cases use real pending reservations across K4/K8/K16, accept the exact
+selection and reject wrong-speculative and Decode outer selections. Independent
+review finds no blockers. The test-only assembly helper grants no production
+authority; a rebuilt native retry remains pending.
+
+Focused host validation on exact `6c34cbe1`, still compiler55-pinned, passes
+all 17 phases on mi300x. A distinct fresh engine test ELF passes 27 executions
+covering 26 distinct tests: the nine-case regression runs alone and again in
+the seven-test cache cohort, plus 13 readback, four completion and two dispatch
+tests. No failures or ignores occur. Changed-line formatting, locked/offline
+metadata, all 15 source snapshots, the 1,290 protected-file union, native bytes
+and control after-checks pass. This is not full-engine, Clippy, Verus,
+latest-compiler, GPU or performance qualification. The 36,213,090-byte archive
+has SHA-256 `7632e0f0b2031c1c8ec5bf64b81281baf4d84bf82644ef406ec722719a826044`;
+all 174 payload hashes and the actual test executable are checked locally.
+Its temporary unpacked copy is removed, reclaiming 131,684 KiB. Measured runtime
+usage is now 9,308,300 KiB; the next full-source launch must recheck its reserve.
+
+R6 failure evidence is retained locally in the 3,845,968-byte archive at SHA-256
+`c51d8cb5be5cfbe0970b2fee184cd8854bed862f5e2d101cfb152a1b84ef5043`;
+all 22 native-stage file hashes and retained review files match. The owned
+process group and observed child are absent, GPU4 has no queues or VRAM users,
+and fresh device memory is back to its 298,647,552-byte baseline. No reset or
+foreign intervention occurs. The report is absent, the failure is not relabeled
+as fixed, and the active 128-token prompt fill is not a comparable benchmark.
+
+Compiler `e3c359fb` is now published to fe2o3 main, rebased onto freshly fetched
+upstream `2585ce64`. All twelve patches are unchanged by range-diff; the tip's
+message contains `[skip ci]` under the user's explicit instruction to skip
+GitHub CI for this push and keep all builds on mi300x. The normal, non-force
+push completed successfully. At 23:48:06 UTC, GitHub reports the exact main SHA,
+zero workflow runs and zero check runs for this commit. No workflow or branch
+protection was changed. The published tree is
+`1590682689fa240ebd0d10ccf63b488008c794f4`.
+The new upstream adds internal scalar-helper-result LLVM struct lowering,
+integer wrapping and launch-index fixes, a test-only simulator dependency and
+regression module separation. All 19 R12 remote host phases now pass: 1,030 Rust
+tests, zero failures, one existing physical gfx1151 ignore, nine dependency-policy
+tests and the CI dispatch harness. Current-source artifact freshness and exact
+paired V11/V15 BF16 exports pass. Independent review checked the retained raw
+results, source identity, actual Cargo producers and byte-checked artifact reuse.
+The full 13,891,856-byte source/result archive is retained locally at SHA-256
+`e4334c6b7db87c97b494d8c70b0d1d7a8c86c6201b5780f5bbf9e916ac31ba48`.
+This is a host delta, not a new release-tool, emission, strict Clippy or GPU result.
+
+The separate e3-source tool campaign passes all four build/copy phases:
+release CLI and linker proxy, then debug0 backend and extractor. Actual Cargo
+producers are fresh, the backend binds the new CLI digest, source before/after
+checks pass and earlier tool copies remain unchanged. Complete binaries, source
+and raw phase evidence are retained locally in the 54,958,415-byte archive at
+SHA-256 `996fb0367b417e7e6ab99b91e1e74dfce48b07c14210154dd70d54efefc22e0f`.
+This does not establish kernel emission or numerical GPU results, and these
+tools are not relabeled as the newer `55d9bfe5` source.
+
+Scoped cleanup reclaimed 602,424 KiB from ten retained compiler test executables
+and four obsolete tool copies, then 1,737,320 KiB from 349 obsolete runtime
+library artifacts. All selected bytes were archived, downloaded and hash-checked
+before separate deletion. Runtime stage allocation then was 7,766,132 KiB; current
+sources, all 213 dep-info files, proof inputs and the frozen native executable
+are unchanged. Failed retention attempts remain documented. The runtime retry
+accepted only an independently audited exact lock-timestamp transition, not a
+general metadata exemption. The two redundant remote cleanup archives were
+removed after successful deletion and full local retention; receipts remain.
+
+The initial CI harness attempt failed before compiler builds on an environment-
+dependent argv expectation. Its continuation cleared only `LD_LIBRARY_PATH` for
+that harness and preserved the six completed phases. Full prebuild failure
+evidence is retained locally at SHA-256
+`47740391eff1045047f7fbd243ee6159c312b2e243edd6e8a309f1f24ac63993`;
+the earlier source9c2e R11 controls were never launched. The first result retainer
+then rejected paired-test JSON interleaved with the named test line. R3 accepted
+the exact framing while retaining all test checks and the failed attempt; no
+compiler test was rerun for that correction. The published source archive SHA-256 is
+`f0e6c827c1743a292b7c76a1b289f16fe0ca41328d3d8bf56bdc911cc8ea3689`.
+
+Previous compiler `12845295` on `48323569` has all twelve patches unchanged
+from `86ccc2a5` by range-diff. That exact predecessor passes its
+14-phase R10 remote host delta campaign and has not been pushed. Full source,
+raw results and identity checks are retained locally at archive SHA-256
+`b3cfc86c7c0c6d7c858b4751d8d0a9197a77cb663c67a46cd028f6ce3e9cfaaa`.
+Independent archive review found no source, raw-phase, selected-test, artifact
+reuse or paired-export mismatch. Compiled executable hashes and producers are
+retained; this archive does not contain those executable bytes.
+Its source archive SHA-256 is
+`80af541343a5474bbde0588f340c1882ac66df690f902b2026eb1cfa1699d7bc`.
+The preceding `86ccc2a5` on `bd4d5f42` passes its 23-phase R9 remote host
+campaign, including backend, lowerer, Pliron,
+tile mapping, frozen MIR v13/v14, macro closure and paired BF16 export coverage.
+Source-bound artifact freshness checks pass, and the older e0/5602 tools remain
+unchanged. Full source, raw phases and receipts are retained locally with checked
+archive SHA-256
+`b530f254a2a0f26b25be7ee85ad471b73db8cd4cbf9b8fe147f1a59aa0220528`.
+This predecessor is a delta host campaign, not a rerun of all earlier suites or
+a new release-tool/emission result. The successor push described above followed
+a fresh fetch and explicit rebase check. Actual remote API checks report main
+unprotected and no applicable branch rules; no workflow, protection or check-
+status changes have been made. The skip marker affects push/PR triggers, not
+other event types.
+Upstream `48323569` adds immutable-slice helper lowering. R10 passes backend,
+AMDGPU and lowerer phases, their fresh artifact checks and paired BF16 exports
+for semantic wire versions 11 and 15. The actual
+wrapper-PATH assembler is Ubuntu LLVM 18.1.3 at `/usr/bin/llvm-as`, resolved to
+`/usr/lib/llvm-18/bin/llvm-as`; its resolved identity and version match before
+and after execution. The compiler-module suite has 26 passes and one existing
+physical gfx1151 test ignored. Unchanged R9 suites were not repeated; no new
+release-tool, emission, strict Clippy or hardware result is claimed. The frozen
+native executable still uses `4f6f65ce`; no newer compiler result is attributed
+to that runtime. The private source dependency refresh is described above.
+The frozen validated compiler is `e0d108b2`, based on `2179a6f4`, whose upstream
+changes refresh the local macro-tree pin and add simulator binary32 sqrt support.
+Its expanded 42-phase remote host campaign passes, including the
+actual paired BF16 exports, macro closure tests, 169 differential simulator rows,
+and production-source sqrt simulation for gfx942 and gfx950. Full source and raw
+phase evidence are retained locally with checked archive SHA-256
+`0061dda1a6e6347b27ad3a2a25e6dea4fb5a023e95c570d6e8e901c9c4280af9`.
+The prior 27-phase campaign on `2e9ecd23` / `638e1169` remains separately retained
+at `d0ce5dfde70467ffaa3c9fc03655323bd409cdf34627653f7bf6a284d96f39f7`.
+No strict compiler Clippy pass is claimed by this campaign.
+The completed 24-phase host result belongs to predecessor `06e25566` on
+`d2e2ff47`, including artifact freshness, backend, lowerer, Pliron, analysis,
+optimizer, MIR-model and paired BF16 fixture coverage. Neither result relabels
+the preserved older emitter tools.
+Cleanup removed 50 completed predecessor test executables
+before the new campaign. After its evidence retention, another 48 completed e0
+test executables were removed, preserving all 299 protected non-test artifacts.
+The two obsolete owner vendor trees are now fully archived locally and their
+contents removed, reducing the stage to 10,347,740 KiB and admitting the release
+tool campaign under the unchanged 10,485,760 KiB prelaunch threshold. All four
+tool build/copy phases pass: release CLI and linker proxy, dev-debug0 backend and
+extractor. Actual Cargo producers are newly built, and the backend build script
+binds the exact new CLI hash. The full source archive, four tool binaries, raw
+phase logs and source-binding receipts are retained locally at SHA-256
+`a251638717b58a101c1d0d710c867068be72e8e7102fdc35fc5ea315c57c97f9`.
+After this build the stage was 10,688,940 KiB. Subsequent scoped cleanup removed
+24 byte-retained obsolete compiler tool/input files, reducing the measured stage
+by 845,388 KiB while preserving all six empty roots and current tools/source.
+The frozen `e0d108b2` / Ferric `ce2d3c1f` thirteen-root campaign then passed all
+13 preparation, emission, after-check and inspection phases on mi300x. The
+113,192-byte engineering HSACO has SHA-256
+`02c65b859fef7fac778305918a543d215b723f99bf26831210b5df74fa350856`.
+Inspection found exactly 13 entry/descriptor pairs, exact output replay, and an
+actual `v_mfma_f32_16x16x16_bf16` instruction in the MFMA GEMM kernel. This is
+image emission and read-only inspection only: publication/load/launch grants
+remain false, no GPU ran, and no numerical or performance result is claimed.
+The full frozen emission input/result archive is retained locally and checked at
+SHA-256 `f05db35b45eccd4de06653c97b6a277988447f1f66c8cf6218662787d88fb049`.
+The active remote compiler source has transitioned from `12845295` to
+`e3c359fb`; the e0 emission
+inputs and tools remain separately frozen and are not relabeled as current.
+Before R10, 15 completed R9 test executables were fully retained and removed,
+reclaiming 528,736 KiB. Their archive SHA-256 is
+`ee3112d2d3b8a0e86d3a2257f1d1430b89f7004560ce6eed98e6d18813772562`.
+The first cleanup retention attempt failed before archival or deletion on an
+overbroad process-warning classification; its logs remain retained. The second
+attempt used scoped candidate-inode checks and completed both retention and
+separate deletion. No release tools, current sources or dependency libraries
+were deleted.
+Before R12, ten completed R10 test executables were fully retained, then removed
+along with two duplicate source-input archives whose complete bytes were already
+retained locally. Exact identity/no-use checks passed and 425,192 KiB was
+reclaimed. The ten-ELF archive SHA-256 is
+`dd2555b5279b1b8b47f641ad2b20f8ec2b96f8f3d0ff4e8e2f450b9a5a6cbaba`;
+the deletion receipt SHA-256 is
+`31c891c5f36c5d840ef52f54d9ae64703ec6db2a11abcfa4ba4f6fb52501ce31`.
+Current source, dependency libraries, fingerprints, retained evidence and
+compiler tools remain intact.
+
+The retirement proof reached Verus on `339c2561` and failed at its pre-update
+snapshot equality. Trigger-only successor `bd8e22f7` passes the selected commit
+body and loop, then all five current-source preflight/dependency bodies pass.
+The six source-bound results total nine verified queries and zero errors under
+pinned Verus `b677dd5`. This is scoped metadata verification, not whole-crate,
+engine-composition or native-authority proof. All 24 actual-body mutations now
+produce checked semantic verification failures. R16 accepted the fifth retained
+bounds-precondition diagnostic without rerunning it, then completed the remaining
+nineteen cases; the continuation exited zero. The first-five raw archive is
+retained locally and independently reviewed. Full six-positive/24-negative
+retention also exited zero; root downloaded and checked archive SHA-256
+`b3c0760fcc2480913b2fdc72cc2167de68f4049dc06f1482974d38a5d94524e8`.
+The ten single-file proof commits are now integrated at Ferric `78c9c9f0`;
+that checkpoint's spec file matches the verified `bd8e22f7` bytes exactly. Its
+expanded remote host campaign passes all eight phases: format, exact locked metadata, 130 spec
+library tests, four spec doctests, engine library check, 721 engine tests with
+nine ignored, and strict all-target Clippy for both crates. Source-before/after
+checks and the frozen native binary identity also pass. Full evidence, including
+the actual test binaries, is retained locally with checked archive SHA-256
+`4df5ca07179c43a3947e6130814db351ea17014dc6ccce7ec323a875f7f97cf3`.
+Candidate `a7d58129` adds contracts around the actual pool-return helpers and
+two host regressions. Its host run passed formatting and metadata, then failed
+engine compilation on an unparenthesized enum struct literal in a Verus
+comparison. All three source after-checks and the native binary identity passed.
+Successor `457ca0aa` changes only parentheses around the three affected contract
+comparisons. It passes formatting, locked metadata, engine compilation and both
+new regressions. The first run stopped at the unchanged 1 GiB link reserve after
+its first test; R3 resumes the same source and exact test binary without repeating
+the completed builds. The continuation passes 717 engine library tests, nine
+expected ignored cases, and strict all-target engine/spec Clippy. Both test
+phases reuse the original source-bound executable with unchanged SHA-256.
+All source after-checks and frozen native identity checks pass. These host
+results belong to the older helper branch. Its exact engine contracts are now
+integrated and validated separately at `8fa40b3a`, as described below.
+The combined R2/R3 source archives, raw logs and exact test executable are retained
+locally at SHA-256
+`8c16063a5347595b4c7de05d823f92ab485fa1bf062bc2f849f1a8d55a920514`.
+
+The actual selected-page successor lemma at `457ca0aa` passes pinned Verus:
+one proof-mode query, zero errors, exact source and verifier closure checks.
+Its raw output and full source archive are retained locally at SHA-256
+`840a54180641bc211e005b3307ab937f9df1538ad6af99ddbdb8852762b9e27d`.
+This pure proof lemma was integrated at `54cdb41a`; the entire spec file is
+byte-identical to the actual `457ca0aa` proof input. Newer integration engine
+work remains intact; the later helper integration changes only `device_cache.rs`.
+This establishes only its stated metadata implication; whole-roster/native
+composition remains unproved. The first genuine engine helper campaign now
+passes pinned `cargo-verus check` on the actual `457ca0aa` source, with dependency
+verification and a fresh dedicated target under one-CPU affinity. Its selected
+`ferric_engine::device_cache::returned_page_state` exec body has one verified
+query, zero errors and the sole nonzero function solver count. Zero-work rows
+for other helpers are not counted as proof passes. Source, dependency graph,
+Cargo configuration and verifier closure comparisons all match afterward.
+Full source, genuine target artifacts, raw logs and controls are retained at
+SHA-256 `be4fb393ec0f16c36c828f95bb71f4782b260c7aa0718c5c13cfa0660ebe9ac9`.
+The preceding R1 attempt stopped on a snapshot allowlist omission; R2 stopped
+on cargo-verus argument ordering before verification. Both failures are retained
+separately. No stub or ordinary host artifact substitution was used, and this
+is not an entire-engine or caller-composition proof.
+
+R4 now proves the other five actual engine helpers on `457ca0aa`:
+`page_return_device_matches`, `page_return_request_matches`,
+`page_return_role_matches`, `preflight_page_return_identity` and
+`commit_page_return_state`. Each selected exec body reports one verified query,
+zero errors and nonzero solver work. Root artifacts are freshly generated for
+each selection; all 284 dependency artifacts, source and verifier identities
+remain unchanged, and R3 evidence preservation passes. Full R4 evidence is
+retained locally at checked archive SHA-256
+`0f4f391d77a5d35504ed725f914df19bb86d943b047228231a67f9bc984c1d26`.
+All six helper bodies now have actual proof results, but their actual-body
+negative mutations and caller/whole-roster/native composition remain outstanding.
+
+Earlier integration `8fa40b3a` applies the exact verified helper engine bytes
+without merging the older branch. All eight remote host phases pass: formatting,
+locked metadata, engine check, both exact regressions, 723 engine tests with nine
+ignored, and strict all-target engine/spec Clippy. All four source before/after
+checks and frozen native identity checks pass. The full evidence archive includes
+the exact test executable and actual Cargo producers; local SHA-256 is
+`450e70c1efc74fb5648c9ab58a0c0a748718cd08ec8e4af6e38e88f946714c2f`.
+This does not rebuild or relabel the native executable or change the fe2o3 pin.
+Global-index candidate `79f74a3e` extracts the actual production core with bounds
+and error contracts plus host regressions. Its actual R5 run fails parsing an
+unparenthesized cast comparison before SMT: exit 101, zero verified queries.
+The full failure archive is retained locally at SHA-256
+`3785d303da9fc5c1cca0bcabe8cab6a968a56c639140c5a0f7b86006a9b1f2a1`.
+Parentheses-only successor `74c52a73` passes R6 for the actual
+`global_page_index_core` exec body: one verified query, zero errors and nonzero
+solver work (rlimit 154038). Source, dependency and verifier checks pass; all
+284 dependency artifacts and prior R3/R4/R5 evidence remain unchanged. The full
+R6 archive is retained and independently hash-checked locally at
+`311aea52da61ba959640db89afb08a1b00da22f8b91559ef6352e92ca52b8317`.
+This proves the selected core's generation, slot/index bounds, flattening and
+error-precedence contracts, not its native caller or whole-roster composition.
+All seven body-only negative mutations now pass the CPU-only R7 campaign.
+Generation/slot/page bounds, rejection of a valid page, row stride, page offset
+and error precedence each produce an actual selected exec postcondition failure
+with nonzero SMT work. Parser, compiler, translation and resource failures are
+not accepted. Each mutant is restored to source74 bytes/mode/mtime; intentional
+inode/ctime changes are recorded, and failed root exports are quarantined.
+All 284 dependency artifacts, unmodified source, verifier/configuration closure
+and prior R3-R6 evidence remain unchanged. Full retained R7 evidence is
+179,774,359 bytes, locally hash-checked at
+`6aed4783947f5556a67f414b7eb563afe366819dc421063022b3e5c7a3d56b28`.
+This closes these seven selected negative checks, not an M1 roadmap gate.
+
+Exact proof-source engine bytes are integrated at `2aae5839`. Its R1 host run
+stops at rustfmt on two test assertions, before compilation or tests. All five
+source after-checks and frozen native identity checks pass. Full failed evidence
+is retained at SHA-256
+`b556ab277af2f3c134ccf053c56229f9d390fab08aa9e038d6ed0d2e8b42f234`.
+Current integration `21818e2a` applies only the formatter's two assertion wraps;
+its production prefix remains byte-identical to proof source `74c52a73`.
+Its separate R2 host campaign passes all eight phases: formatting, locked
+metadata, engine check, both exact regressions, 724 engine tests (nine ignored),
+and strict all-target engine/spec Clippy. All six source before/after checks
+match, and frozen native/proof identities remain unchanged. The exact newly
+built test executable is reused by both regressions and the full suite.
+Full evidence is retained and independently hash-checked locally at
+`4dc705e003d66605aeb10d823487e90b4735bb8abbcc63409821cf406af70427`.
+The earlier 723-test result is not relabeled, and no new native artifact or
+proof execution is claimed for this host campaign.
+
+Separate candidate `efa069bd` adds actual production ledger preflight/commit
+helpers with exact role/index selection and complete two-ledger frame
+postconditions. Independent review found no production regression and caught a
+test-discrimination gap, fixed before freezing the candidate. It is Contracted
+and not integrated. Its exact-source host run passes formatting, locked metadata,
+engine check, both new regressions and 726 engine tests with nine ignores, then
+fails strict engine Clippy on `manual_map`. Spec Clippy was not reached. All
+seven source before/after checks match, with native and proof inputs preserved.
+The complete failure evidence and actual test executable are retained locally at
+SHA-256 `5713237da7943871551c8c1894e820cd45f4ae0170194e445b5ad0b36f64bf99`.
+Its source archive SHA-256 is
+`43077663e18600541784643dea5c0e7155854f1d59ee82be7117a9ff91b08977`.
+Successor `47d07cee` changes only the optional state read to an explicitly
+bounds-checked slice index, without a lint exception or contract change.
+Independent review found equivalent behavior and error ordering; remote
+formatting matches. Its fresh host R2 run passed all eight source-before checks,
+formatting, locked metadata, compilation and both exact ledger regressions.
+The root SSH session ended with transport exit 255 during the full engine suite,
+and two reconnect attempts initially failed. Connectivity subsequently returned;
+read-only recovery found the original campaign terminal at exit 0 with all owned
+groups absent. No rerun was performed. All eight host phases pass, including
+726 engine tests with nine ignores and strict all-target engine/spec Clippy.
+All sixteen source before/after checks and aggregate equality pass. Full source,
+raw phases and the exact newly built test executable are retained locally at
+checked archive SHA-256
+`4e49bda4a4fd73e09aec4feedafb57a152bbb567f3cf8c2ce477d5d2706276fd`.
+The earlier efa test cohort and failure remain separately labeled. Its source
+archive SHA-256 is
+`6670dd515627fa70c32a6e41aa2d38d51605dace5842a0d15ec3841d631523e3`.
+Prepared R8 proof controls were never launched; their R9 successor targets the
+corrected source and started only after host completion and full local retention.
+R9 has transitioned the dedicated proof source from 74 to 47 with exact six-file
+checks; the other 1,139 source files, dependencies and verifier closure match.
+All nine selected actual-body proofs now pass: each has one verified exec
+query, zero errors and nonzero SMT work. Source, all 284 genuine dependency
+artifacts, verifier closure and predecessor evidence remain exact. Full R9
+evidence is retained locally and independently hash-checked at
+`9edd3b9ecbdb8587a22f2ba26a673b040e624514d9d6c4f56e679baab1aacab8`.
+All six actual-body R10 negative checks pass on mi300x: wrong preflight role
+and index, wrong commit role and index, missing generation increment and an
+extra write each fail the intended selected postconditions with nonzero SMT.
+All restorations and final source/dependency/configuration/closure checks pass.
+Full evidence is retained locally at SHA-256
+`6b7e66b6501ee62d3700835d2585cfcaf3928273e249daf03ae1dd2bec0c8170`.
+Independent review found no acceptance blocker. The two device-cache commits
+are integrated at `66e32993`; its device-cache bytes exactly match source47
+SHA-256 `e9a426580f8e116a5d3bd860046a333ca62c410d7d73df385af01ffa51fc574d`.
+At that checkpoint only the tracker differs from the full tested source47 tree. Host and proof
+receipts remain attributed to source47, not relabeled as a new full-tree run.
+Higher-level composition remains pending.
+Before R2, exact retained-artifact cleanup removed the obsolete R1 test
+executable and thirteen retired source archives, reclaiming 179,180 KiB on
+mi300x. All fourteen have checked local byte retention; current sources,
+required archives, dependency libraries and shared caches were preserved.
+The wrapper's completion custody and cross-call ticket/ledger continuity remain
+outside these helper contracts. That campaign changed no fe2o3 pin or native
+executable; the later source dependency update does not relabel its results.
+All 33 M1 gates remain open.
+
+Routing-test source `45a211e5` passes remote format, exact locked metadata,
+engine library check, the single 425-row enter/restore regression and strict
+all-target Clippy. Both frozen source trees and the native `00ac6a22` executable
+remain unchanged by the run. All 25 actual mock GPU-guard fixtures also pass.
+R6 native controls preserve those tested guard bodies, but no launch occurred:
+the fresh device census found all eight mi300x GPUs at 100 percent busy.
+
+| Team | Current Work | Next Evidence Required |
+| --- | --- | --- |
+| Compiler / Kernels | Published core-only `111722028` has zero GitHub runs/checks. The resolver successor on main `9af22bb5` passes 3 ABI tests, 30 expression regressions and the unchanged real-source positive to the unavailable-proof-runtime boundary. R4 remains exit 101 because strict Clippy reports 17 diagnostics at unchanged upstream sites. Full evidence is retained; no new push or Ferric adoption. | Prepare/review a clean core-only public diff, preserve excluded failed experiments, restore the unchanged build-space reserve, and rebase/revalidate before a CI-skipped push. No proof admission or kernel numerical qualification is established. |
+| Runtime / Integration | Exact `2bfce38b`/`111722028` native32 completes 20 speculative rounds, full-accept catch-up and clean teardown. The current111 prefill comparison matches the next token but has max absolute logit error 0.125. Combined M5/catch-up source `568882e2` passes 21 host349 phases and is integrated privately at `6b5322dc`. | Investigate numerical differences, execute actual five-position comparison, broaden continuation/fault coverage and obtain matched TTFT/TPOT/throughput measurements. |
+| Verification | Exact `a9fad31b`/111 verifies the production catch-up transition and all nine actual-body mutations fail intended postconditions. Fresh combined `568882e2`/349 separately passes all 14 proof phases and verifies that same selected method with genuine dependency exports. Both campaigns are fully retained; old negatives remain111. | Prove outer queue/caller and physical KV composition separately, preserve exact compiler attribution and obtain native validation of the combined capture path. |
+| Integration / Pages | Private integration now includes the host-tested M5/catch-up source on349. Public static `3e41846` reports the dated native/numerical/proof checkpoint; all 14 live asset checks match mi300x QA. Completed prefill scratch and obsolete111 host-cache cleanup reclaim 350,568,448 and 1,427,656,704 bytes after retention. | Keep dated public scopes truthful, deploy only validated prebuilt assets and remove only completed owned stages/worktrees. |
+
+The upstream freshness audit found no service-host, KFD or runtime source changes
+from Ferric's old `4f6f65ce` pin through published `e3c359fb`. The coherent
+dependency refresh now covers all 80 pin-bearing files: 30 manifests, 30 locks
+and 20 policy/source/TCB files. The complete workspace census covers 42 manifests
+and 32 locked graphs; the two new compiler analysis edges are included. The frozen native
+artifact is not relabeled as using the newer upstream revision.
+
+The user also authorized `mi350-2` for native validation. Read-only inventory
+finds one physical MI350X/gfx950 (unique ID `10294934887855545115`), not eight;
+the additional render nodes are XCP auxiliary devices. At 23:06:37 UTC it had
+zero utilization but foreign UID12634/PID862305 held three KFD queues and about
+17.7 GiB VRAM, so it was not admitted as unused. Existing gfx950 admission in
+both latest fe2o3 and Ferric's older pin accepts kernel `6.8.0-124-generic`, but
+this host reports `5.18.2-mi300-build-140423-ubuntu-22.04+`. A separately reviewed
+platform/UAPI admission is needed; changing an accepted string is insufficient.
+Exact model/artifact inputs were not found at the known paths. No artifact has
+been retargeted, copied or launched there. All builds remain on mi300x.
+
+After R7 retention, the completed clean proof74 worktree was removed, reclaiming
+44,496 KiB locally; its branch, source archives and proof evidence remain.
+Two exact byte-retained remote artifacts (218's test ELF and the obsolete Verus
+seed bundle) were removed after no-use checks, reclaiming 118,600 KiB. The
+runtime stage measured 9,399,884 to 9,281,284 KiB, then 9,295,172 KiB after the
+new host inputs were uploaded, below the unchanged extraction/link reserve.
+Source/proof/native inputs were preserved. The cleanup receipt SHA-256 is
+`f3317ce54ad13f910291da5de4ee98d778dde19f36475e3761909899323fd1b6`.
+No shared cache or foreign workload was removed.
+
+Earlier R1 Pages payload SHA-256 is
+`54165bf91f64fc9ef93b4d52d34c6e5d0ebac4bd8c13d745702cfaf81e6f19d9`.
+All 34 source files match the uploaded payload after validation. The admitted
+artifact has exactly seven static files totaling 589,025 bytes. Raw QA evidence
+archive SHA-256 is
+`b1a04f4974e699547f95649d4464bae188ee784c30640949da55a5c3bec97609`.
+The completed private Pages stage and input directory were removed after local
+retention and no-use checks; the shared browser cache was preserved. Existing
+public-main workflows would start GitHub-hosted builds. R1 is superseded and
+must not be published. The user approved the exact `pages/prebuilt` allowance;
+that branch policy (ID 60080763) is added, preserving `main` (ID 58351133) and
+all other environment settings. The verified before/after policy receipt is
+`b7a117cf8adfe6f7dfc3aa96234286bf54e7e00fd6779bc7d53b33b586ca6f60`.
+Refreshed R4 source payload SHA-256 is
+`f74f03efd3a30f6801a977c4bd32228652fbb3e4d267c70bbfb86601024931c4`.
+All five remote QA phases pass, including data/negative checks, every width
+320 through 1440, and eight rendered viewports. The actual artifact has seven
+files totaling 595,623 bytes. Full R4 evidence is retained locally at checked
+archive SHA-256
+`a3a2c8b221822c6a95dfe6db3234d9f3e7294ab79806e821ec7c25564bbcf296`.
+The first retention attempt rejected the harness's exact umask-derived mode
+differences; the successor preserves that failure and checks all 34 source
+files byte-for-byte with only `0644 -> 0600` allowed. No QA rerun was needed.
+Private site source is committed at `4e16c945`. Parentless publication commit
+`b0d05f47` contains only seven admitted static files and one deploy-only workflow.
+Deployment run `35022808474` succeeds on that exact commit, with deployment
+`6468318802` and artifact `10418551245`. All seven live assets match the admitted
+hashes at both canonical and cache-busted HTTPS URLs, including the site root.
+The refreshed site is live at <https://harsh-nod.github.io/ferric/>. Public main
+remains `5d3d93d3`; the environment and both approved branch policies are
+unchanged after deployment. Publication receipt SHA-256 is
+`42530d1cd8a9f36d9a7863c89a5552700c95c8492521e249b89126ba05d261de`.
+No private implementation ancestry, compiler source or build workflow was pushed.
+The clean private Pages worktree was removed after commit and no-use review,
+reclaiming 3,208 KiB; its source branch remains retained. The deployed snapshot
+still marks 218's host campaign pending at its freeze time; the later 724-test
+result above is a separate record and does not retroactively alter that snapshot.
+The completed remote R4 QA, input, controls and both retention directories are
+removed after local archival and a fresh inventory-bound no-use check. Exactly
+417 regular files and three symlinks were removed, reclaiming 51,604 KiB.
+Generated dependencies are explicitly disposable, not claimed archived. Shared
+browser caches and runtime/compiler/proof stages are untouched. The cleanup
+receipt is retained locally at SHA-256
+`9bb812c1d8d8a3ef0252e90c92cd5711286c0dc658f1b867c368b79d8841cc02`.
+
+### Earlier Stopped Checkpoint
+
+The following records predate the completed host campaigns above.
+The earlier scoped shared-host cleanup did not restore workload admission.
+The subsequent user-authorized cache cleanup is recorded below; no workload
+floor is lowered. Exactly 26
+obsolete root-level archives were removed after independent
+local byte retention and scoped no-use checks, reclaiming 823,808 KiB on the
+root filesystem. Root checked receipt SHA-256
+`719924e84f54794601984fee34176d297be4c109de2f038a66360a908398a767`.
+Root free space subsequently fell below 16,295,560 KiB. The separately reviewed
+combined cleanup is now terminal with exit zero: 37,283 byte-retained duplicate
+files and 504 disposable `.rlib`/`.rmeta` files removed, reclaiming 3,098,548 KiB.
+Root checked the inventory, all fifteen local archive inputs, actual terminal
+result, no-use census, exact transport identity rechecks and final receipt.
+All 2,240 noncandidate files remain byte/stat-equal and every directory is
+preserved. Compiled library bytes were discarded, not claimed archived; source
+and producer records remain retained. Scope-specific identified SSH transport
+visibility limitations are recorded, not represented as global process
+visibility. Receipt SHA-256:
+`12862dc7365442b9e04ad6a15be556507ae3857da10a14079fa07502d6f14952`;
+retained archive SHA-256:
+`ce51b417fac05d17d6c7d26a7f17d458588b971aa90092cfccdea533ce76e309`.
+Root free space after cleanup is 19,279,236 KiB, still 3,789,436 KiB below the
+unchanged 23,068,672 KiB floor. No workload resumed. Immediate `/tmp/ferric-*`
+ownership inventory found no other significant completed stage; other observed
+names without matching ownership records were not recursively inspected or
+deleted. The separate completed numerical tmpfs stage remains intact after two
+cleanup attempts stopped on incomplete process visibility.
+
+Test-only source `33a31333` derives the actual K4 speculative and maintenance
+recipes and exercises `2242 -> 425 -> 2242` routing through the production
+source-selection helpers. It checks inert fresh-generation tags, retained
+model/KV identities, catch-up choice routing and rejection cases. Root reviewed
+the source and diff whitespace check; no formatter, compiler, test or Clippy
+has run on this addition. It does not exercise sealed service allocation
+witnesses, publication or native queue execution, and it is not a maintenance
+defect fix. The frozen native executable and source remain `00ac6a22`.
+Its host gate is reviewed and approved only after fresh resource admission:
+remote format check, exact 4f6 metadata, library check, the single regression
+with an exact source manifest and newly compiled test producer, and strict
+all-target Clippy. No gate phase has run. The 29-case synthetic proof-checker
+gate is likewise reviewed but unrun; it is not actual Verus or body-mutation
+evidence. The approved `339c2561` commit-only Verus diagnostic remains the next
+actual proof run after resource recovery. No current-source R13 positive or
+negative proof campaign is yet admitted.
+
+## Resource Recovery
+
+The global-index integration campaign removed two fully retained obsolete
+runtime files, reclaiming 131,228 KiB (stage 9,406,228 to 9,275,000 KiB).
+Receipt SHA-256 is
+`dd9462e123e9bf84d35eaa01bf2efb06491a790467bdfcb3425091d77a8aaae6`.
+This cleanup used its direct timeout/CPU-affinity invocation, not the later
+resource wrapper. Before R2, a separate wrapper-bounded cleanup removed exactly
+eight duplicate archives whose full local byte copies were hash-checked:
+100,983,416 bytes, 98,632 KiB allocated, stage 9,346,720 to 9,248,088 KiB.
+Its downloaded receipt SHA-256 is
+`dd2bf89c369237975bad2ca9beb79cd27d4e9e44dab3013e0957fa849c4e8bea`.
+Both preserve sources, native/proof identities, required libraries and shared
+caches. Same-user inode/lsof inspections retain explicit identified process
+visibility limitations; they do not establish system-wide quiescence.
+
+The latest user-authorized home cleanup removed 4,201,396 KiB (about 4.01 GiB).
+Of this, 4,064,232 KiB was disposable `target/debug/{deps,build,incremental}`
+cache in the already-trashed `fe2o3-runtime-LCD8Sxfn/repo` clone. Its clean Git
+status, HEAD, source, logs and other repository files remain unchanged. The other
+137,164 KiB was the historical Ferric `acquired-native` extraction, whose 108
+paths exactly matched the union of three retained archives; all three complete
+tar comparisons and pre/post archive hash checks passed. Scoped lsof checks
+reported no users or visibility warnings. Filesystem availability afterward was
+86,141,424 KiB (about 82.15 GiB); this shared filesystem figure is not the cleanup
+size. At that cleanup, all five registered Ferric worktrees were preserved: integration/proof
+are active, Pages and scratch are dirty, and the original checkout has conflicts.
+No local build or test ran. Full scope, inventory and terminal log are retained
+in `.codex-tmp/cleanup-unused-home-20260915-r2/`.
+
+Before the earlier helper integration host gate, scoped mi300x cleanup removed two
+fully retained predecessor test executables and one duplicate archive,
+reclaiming exactly 220,296 KiB. The runtime stage decreased from 9,477,696 to
+9,257,400 KiB without changing sources, libraries or the frozen native binary.
+The older executable's separately retained archive is locally checked at SHA-256
+`42dedf2937b178461c4e8dacfa3d54cb1a8aadd09b1fa68f3b5ef9434f29a443`.
+The current integration test has since reused one filename with new bytes;
+the historical cleanup control must not be reused against that path.
+
+The preceding local-home cleanup removed the redundant `artifacts`
+subdirectories from `ferric-layer-c1-runtime-diagnostic-gate-v1/host-r1-failed-retained`
+and `host-r2-retained`: 1,454,364 KiB (about 1.39 GiB). Every surviving entry was
+compared against its canonical archive before removal, allowing only SSH/local
+UID and GID differences. Both local lsof checks found no users or visibility
+warnings. Canonical archives remain hash-checked before and after removal:
+
+- `host-r1-failed.tar.gz`: `43305fcb5c5bba788f8584bc0ced43bf9dfa28181b5288152980c4895a978e46`.
+- `host-r2-complete.tar.gz`: `b8621f4d156961cae72e60184ccf5de2be719e01bdf861e283db6531dda023a8`.
+
+Cleanup records are in `.codex-tmp/cleanup-ferric-diagnostic-extractions-20260915/`.
+All five registered Ferric worktrees were preserved: integration/proof remain
+active, Pages is dirty, and the original and detached scratch checkouts contain
+uncommitted changes. No local builds/tests or unrelated project cleanup ran.
+
+The preceding local-home cleanup removed three redundant historical extractions,
+totaling 3,276,048 KiB (about 3.12 GiB): the layer-C1 host-R3 `artifacts` directory
+and the RMSNorm emission `retained-r3` / `retained-r4` directories. All surviving
+entries were compared against their canonical archives before removal, and
+local lsof checks found no users of the selected paths. The host-R3 comparison
+allows only the expected SSH/local UID and GID differences; the RMSNorm
+comparisons have no differences. No archive, source worktree, model, current
+tool, transport log or unrelated project was removed. Historical extracted-path
+references can be restored from these preserved archives:
+
+- `ferric-layer-c1-wave-gate-v1/host-r3-complete.tar.gz`, SHA-256
+  `4133520637171a25f12c03a9205420293416a12ac0218ccd37684381548a947f`.
+- `ferric-wave-rmsnorm-v15-emission-v1/run-r3/complete.tar.gz`, SHA-256
+  `c4f3be27d412250fe44fe28ff12a26e53e4e486230cab45a7d429f2be059c7a9`.
+- `ferric-wave-rmsnorm-v15-emission-v1/run-r4/complete.tar.gz`, SHA-256
+  `1e21a6ff97f2af54efbdf138abefe08cc12e4a610281b6aea37ffd7785119ec6`.
+
+These paths are relative to `.codex-tmp/`. Full terminal cleanup receipts are in
+`cleanup-ferric-host-r3-extraction-20260915/` and
+`cleanup-ferric-rmsnorm-extractions-20260915/` under the same directory. No local
+build, test, Python or Node invocation was used. Current Ferric
+integration, proof and Pages worktrees remain needed and were preserved.
+
+On mi300x, the obsolete `compiler-column-major-r1/vendor` and
+`vendor-ce2-private-r1` contents were fully archived and checked locally before
+retirement. Their 25,444 files occupied 671,748 KiB; the measured stage reduction
+was 664,292 KiB after retaining cleanup receipts. The complete archive remains
+SHA-256 `07b85bfc2506c431a01f34dcb0066c869711ce649e61c90b4c8e4942c69a04ef`.
+Both empty roots, current source, old copied tools, shared package pool and
+the `compiler-0fe/control/vendor-workspace.toml` policy were preserved.
+
+The completed e0 campaign's 48 test executables were removed after full source
+and raw producer retention, reclaiming 800,228 KiB from the stage. All 299
+protected non-test artifacts, the partial release cache and older copied tools
+remain byte-identical. Executable bytes were discarded, not archived. The new
+producer archive is retained locally at SHA-256
+`efcb213e60879a33352c86a628cc96a22bb046983e35d63c5b6d692d809c92e6`.
+
+The preceding scoped compiler cleanup removed exactly 50 reproducible test ELFs
+(1,045,732 KiB allocated), with source and actual producer/log evidence retained
+locally. Their executable bytes were discarded, not archived. The raw producer
+archive SHA-256 is
+`08860666269e68cb22c92a5084d52596f3d5c75b93c994927829476981452a13`.
+Runtime cleanup removed two byte-retained host-test executables and their
+duplicate remote archive (126,944 KiB), preserving current sources, libraries
+and the frozen native executable. The local archive remains SHA-checked at
+`4df5ca07179c43a3947e6130814db351ea17014dc6ccce7ec323a875f7f97cf3`.
+Both cleanup paths retain same-user inode/lsof checks and explicitly record
+incomplete visibility of identity-checked SSH transports and the known sd-pam
+process. No shared job was signaled; native GPU admission guards are unchanged.
+
+The failed `a7d58129` host evidence is retained locally at SHA-256
+`1bca153171fdece03f2c0acda5517a8cc12be9c2edef2762e54bab8e83f89a36`.
+After retention, its superseded 1,145-file source copy was removed (43,660 KiB),
+then its duplicate remote archive was removed (21,336 KiB) to restore the runtime
+link reserve. The exact `457ca0aa` test executable, current sources, raw logs,
+libraries and frozen native executable were preserved.
+
+Completed remote cleanup retained and checked the two obsolete compiler vendor
+trees locally before removing their contents (458,756 KiB). Their archive
+SHA-256 is `083d3e7fa74fc4c257c2c1480d35aa8dc1e0264928c858395df1fbcdd025adef`.
+Two obsolete runtime routing-source copies were also removed after exact source,
+archive and no-use checks; current sources, frozen native inputs and prior
+failure evidence remain intact. The completed Pages stage and input directory
+were removed after QA retention, preserving the shared browser cache.
+
+The subsequent local-home cleanup removed only generated Cargo `deps`, `build`
+and `.fingerprint` contents from the inactive, clean `fe2o3-runtime-integration-r43`
+checkout, plus clean `fe2o3-derived-bindings-main` and `fe2o3-general-compiler`
+worktrees. Both branch tips remain retained. Inode accounting identified
+9,840,236 KiB of releasable cache files, excluding 593,404 KiB still linked by
+preserved binaries; the two worktrees occupied 132,492 KiB. Local free space
+rose from 77,538,464 to 87,516,748 KiB during cleanup, approximately 9.5 GiB.
+The difference from the selected sizes includes hardlinks, directory metadata
+and concurrent activity. Source remained clean; dirty and active checkouts,
+top-level binaries, logs, model files and evidence were preserved. No local
+build or test ran. The terminal cleanup log is
+`.codex-tmp/local-home-cleanup-20260915.log`, SHA-256
+`68d34772d7b3181ec16406bac148a34c949ae7cf1070b6bee95567b500e59ef6`.
+This local cleanup is separate from the mi300x cleanup described below.
+
+The resumed turn found root free had fallen again to 197,620 KiB. A further
+user-authorized cleanup emptied 87 old Rust incremental-cache directories in
+bounded `/tmp` build targets, skipped 26 recently touched trees, and removed
+43,908,692 KiB of allocated cache data without touching sources or executables.
+Its command exited zero; root free immediately afterward was 42,518,532 KiB.
+Subsequent shared-host space changes provided additional headroom. Compiler,
+runtime and proof host validation then ran under unchanged guards. The new raw
+cleanup log is `.codex-tmp/mi300x-tmp-pr745-cache-cleanup-20260915.log`.
+GPU availability, not root space, currently prevents the native retry.
+
+The following paragraphs retain the earlier resource checkpoints.
+
+An earlier root-owned read-only SSH probe recorded 19,239,820 KiB free on `/`
+and 142,096,292 KiB on `/run/user/1002`. Root free was still 3,828,852 KiB below
+the unchanged 23,068,672 KiB admission floor at that checkpoint, so validation
+remained stopped. The user subsequently authorized home-directory cleanup.
+
+On 2026-09-15, two root-owned SSH cleanup commands completed with exit zero:
+179 Rust incremental-cache directories in `/home/harsh` and nine in explicitly
+selected old `/tmp` build targets were emptied. Their pre-removal allocated
+sizes, excluding retained parent directories, were 278,040,300 KiB and
+11,123,068 KiB respectively. These are disposable rebuild caches, not archived
+artifacts. Each selected tree was user-owned, canonical, on the expected
+filesystem, free of symlinks or special files, and untouched for seven days.
+The user-scoped `lsof` check reported no open file, mapping or working directory
+under the selected roots. It warned about inaccessible Docker/tracefs mounts;
+this is not a claim of complete system-wide process visibility. No process was
+stopped. Sources, Git worktrees, compiled outputs, model files, evidence and
+active Python caches were outside the deletion scope.
+
+Home and root are separate filesystems. Home free space rose from 5,262,160 to
+278,893,300 KiB during its cleanup; root free rose from 17,223,136 to 27,977,876
+KiB during its cleanup. These live filesystem deltas differ from cache sizes
+because of shared-host activity and filesystem accounting. A fresh terminal
+SSH check at `2026-09-15T08:09:22Z` records `/` free at 27,896,212 KiB,
+`/home` at 278,890,388 KiB, `/run/user/1002` at 142,096,292 KiB, and
+MemAvailable at 1,700,723,600 KiB. The observed root-space blocker is cleared,
+with 4,827,540 KiB above the unchanged floor. No workload has resumed and no
+gate or proof label changes. Local builds remain prohibited.
+
+Controls and raw terminal outputs are retained locally in `.codex-tmp/` as
+`mi300x-home-cache-cleanup-20260915.sh`,
+`mi300x-home-cache-cleanup-20260915.log` and
+`mi300x-tmp-cache-cleanup-20260915.log`.
+
+Root reviewed all five prepared `7f5f15de` source/cache transition controls,
+their SHA-256 pins, the exact source archive, and the bundle with already-present
+`bf0f4841` prerequisite. The plan captures every partial d3 release-cache path
+alongside its 173 reported Cargo artifacts, advances git-verified source mtimes,
+and requires newly compiled first-party artifacts before allowing same-campaign
+7f reuse. These controls remain unrun, and no release-tool or native result is
+implied. Fresh resource/capacity admission, remote syntax checks and canonical
+upstream reconciliation remain required before execution.
+
+Recheck all resource and per-stage capacity guards before each launch. The
+prepared commit-only Verus diagnostic is the first proof job; runtime guard
+fixtures, routing-test validation and the current compiler host campaign follow
+under their reviewed scopes. Pages QA and publication remain pending. All 33
+M1 gates remain open; the full objective is unchanged.
+
+## Recorded Runtime Evidence
+
+Runtime successor `cef91e5c202f77f660b9e83780d67783fd3e49d0` passes all
+six authenticated-admission host phases: normal engine check, eight new-window
+tests, one reused-generation snapshot test, 715 engine tests with nine existing
+ignores, strict all-target engine Clippy and 37 adapter source policies. The
+production change in `1ac71866` snapshots every new cache before committing
+page leases, then reserves writes through those retained caches. Its initial
+test compile failed because an error enum has no `PartialEq`; cef changes only
+that assertion to pattern matching. No production error trait or generation
+predicate was relaxed. Root checked the passing raw results, all 62 retained
+payload hashes and equal before/after source content for 1,145 files and 205
+directories. Evidence archive SHA-256:
+`cc97f0c54410b119005ad2dc8ae5152b24e2fce7df0a4ae85c090e633a620bdf`.
+The failed 1ac evidence remains separate at
+`38593dfa6be478d65fff33d4586c9a99e6cae6b31fa4df47533abdf242261588`.
+The optimized cef/4f6 release build also passes in the independent bounded
+release target. The normal non-test executable has SHA-256
+`6b243c6fdbf1f1d906cb8a3a17201c3f7b03e61768cc02d7dac94bb87b428545`
+and is 14,147,584 bytes. Root independently checked all 49 retained payload
+hashes, the actual compiler artifact, source equality and producer association
+in archive `4d62ad0969b1f5e989e4d57f31d0074238a7ac64506dfb82b7f3bbc265010fdc`.
+The prior c5 executable and evidence remain unchanged.
+
+The subsequent cef/4f6 32-token native attempt is terminal with exit 134 at
+`maintenance publication`, while attempting the optional 425-packet draft
+maintenance transition. No completed token/round JSON report was emitted, so
+no completed round count, full-acceptance result or 32-token success is claimed.
+The bounded diagnostic retains custody but does not expose the inner submission
+phase. Diagnostic-only successor `ba6f8c9ca7557214c808c81bb490601d285136e6`
+now preserves copied submission phase, inner transition stage and error class
+through maintenance and restore failures without formatting retained owners.
+It adds five focused custody/diagnostic tests. The host gate passes compilation,
+those five tests and the full engine suite (720 passed, nine existing ignores),
+then fails strict Clippy on one elidable named lifetime. Evidence remains at
+`ff078bb5b238738e144de52322af3f37313057b90a4090d1e4d5131dc8de58d8`.
+Successor `00ac6a22cb65b478b00cc7f1dccdb98c7de6fe67` changes only the three
+lifetime spellings. Its six-phase gate passes normal check, all five focused
+tests, strict all-target engine Clippy and 37 adapter policies. Root verified all
+63 retained payloads and exact source-before/after equality in archive
+`20ae08c1a49e0e0a3600cb607739fd697d599f03ca47ad76ddf435e97d217ff5`.
+The independent normal opt3 release also passes: executable SHA-256
+`03bf2d118e2b5aeecafd75c0e009ca985aa526bef11186bcb652f33f45e6049a`,
+14,195,008 bytes, no optional features and no RPATH/RUNPATH. Root checked all
+49 retained payloads, actual producer and source equality in release archive
+`e297d997f77857a1b9cb07793b7346f9b931b45791991a84c5b53de853ea806a`.
+This is not a maintenance defect fix. The one-shot R5 native diagnostic exits
+126 after approximately eight seconds. Only artifact-admission startup is
+reported and stdout is empty. The guard cannot read the process group of a
+KFD PID that disappears before capture; no positive foreign selected-GPU usage
+or ownership attribution is established. Only the owned group is terminated.
+Root checked all 27 R5 payload hashes and its retained raw failure in archive
+`af4f5d9c0c6b44f302f004a72baf49dd4db37c2eefd839dfbb0052b60359d83a`.
+Fresh selected GPU memory is 298,647,552 bytes, with no selected usage or queues
+and no owned group. It differs from that attempt's 298,721,280-byte prelaunch
+observation, so its exact-baseline cleanup check remains false; scratch was not
+deleted. The actual maintenance inner condition remains unknown. A narrower
+selected-GPU ownership-query order and 25 mock cases are reviewed but untested,
+without removing checks on unreadable or conflicting selected-GPU facts.
+The earlier R4 maintenance failure used the same legacy twelve-kernel image
+and model bundle as c5, not
+the MFMA candidate. Root independently checked the actual stderr, executable
+producer and all 22 native payload hashes in archive
+`916bd86e04abbb382916b7bc841a19d6d11c118a227686e3c3937cb18e111ce9`.
+Both the immediate after-state and the separate fresh state show the exact
+298,647,552-byte selected GPU baseline, no selected queues or VRAM users, and
+no owned process group. No GPU reset or foreign intervention occurred. This
+is a retained hardware failure, not a benchmark or M1 qualification receipt.
+After archive and fresh no-use verification, the exact completed native scratch
+directory was removed, reclaiming 13,920 KiB. Root checked cleanup receipt
+`7e821d50f1a64cb1a90547651b553894fe195f51f7cb6bdbb834bf1f1bf32157`.
+
+Runtime candidate `cdc084206dae4332c8f4dcea0f6b59302ac6db1a` now repairs
+cache-local retired-page generations at the shared completed-step return.
+The existing joined completion, pool-ticket and whole-roster checks run first;
+exclusive borrowed metadata guards preflight both roles of every member before
+any generation changes. Output allocation, including boxing, precedes commit.
+Failure preserves the original completed ownership graph. The stale-generation
+check, native lease custody and completion requirements are unchanged.
+All fourteen host phases pass: 129 spec tests, 713 engine tests with nine
+existing ignores, four spec and 171 engine doctests, strict all-target spec and
+engine Clippy, 109 adapter tests with one existing ignore, 15 speculative CLI
+tests and 37 source-policy tests. Focused tests reproduce page-nine rollback
+and reuse at cursor 142, both roles, stale leases and late-member rejection.
+Root independently checked all 118 retained payload hashes in archive
+`800b7943ab0f76d59a851036992e009a1c74805806be00ea2485d6d10a517330`.
+The cef native attempt above includes this transition, but does not qualify
+it or the overall run. Separate proof candidate `dce398da` contains direct
+contracts for the actual preflight and commit bodies, bounded loops and exact
+state-frame tests. The first gate stopped on source-roster sort order; after
+that control correction, four actual Verus attempts stopped before proof queries
+on reveal-name syntax, sequence-length types, mutable-reference entry-state
+syntax and private-field access in public contracts, respectively. These are
+retained frontend failures, not failed or successful theorem queries. Successor
+`79c81638416fbb7894e793d41ea6d21d83154050` adds defined public closed
+current/future specification views while keeping runtime fields private. The
+future view uses the required prophetic mode annotation, not a trust exemption.
+That revision first encounters another public-contract/private-helper frontend
+error. The visibility-only correction `cf329240` reaches Verus: the actual
+preflight passes two solver queries for one executable body. The original
+checker incorrectly expected one query; a corrected checker accepts the retained
+unchanged raw result after reconciling the pinned Verus loop-query counter.
+Its synthetic checker tests pass all nineteen expected outcomes (one accepted,
+eighteen rejected); these are not actual-body mutation results.
+The actual commit then fails its loop invariant. Ghost-only diagnostic successor
+`19ea4e1a` isolates unselected-slot preservation; `5a689e7d` introduces explicit
+pointwise preservation but still fails the pre-update snapshot assertion.
+The latter raw solver failure is retained in archive
+`f08b13f7c2e32b1282d51fe559477039834abd79b8203e3af0453f3a4be9ad93`.
+No contract or executable behavior was weakened. The remaining current-source
+positive jobs and all 24 actual-body mutations are pending. No proof labels have changed.
+The engine's whole-member and native lease composition remains an independent
+obligation.
+
+Separate diagnostic fix `d74302d6b82315f9d1c6cc973d15b17b4e5a8382` passes
+all six host phases, including three retained-owner tests, three bounded-output
+tests, strict engine/CLI Clippy and 37 source policies. Its errors report copied
+facts without recursively formatting retained owners; CLI failure output is
+bounded to 4,096 bytes. Root checked the raw results and all 62 retained payload
+hashes in archive
+`d2d33376e91d3a179677f1ff90f89f86c9548eecaa7df9ae6f9e2e4882257d42`.
+
+Adjacent lifecycle review confirms structural new-request admission already
+snapshots reused pool generations before leasing. It also finds a separate
+authenticated-path ordering defect: that path committed leases before requesting
+the Free-only generation snapshot. The host-validated cef correction above
+prepares all caches before lease commitment and preserves the Free check.
+
+The earlier 32-token c5/4f6 attempt fails at ordinary speculative target
+reservation with `Physical(PageGenerationMismatch)`. Its retained diagnostic
+shows target cursor 142, physical slot nine still retired at generation one
+after epoch ten, and a newly returned/released pool lease for that index at
+generation two. Source review identifies a shared completed-step return defect:
+the pool ledger advances its generation, but `take_retired_pages` only removes
+the cache's retired lease vector and never advances the request-local physical
+slot. The generation check is correct and must remain. A whole-roster,
+completion-bound transition of both records is required before another run.
+
+The process aborts after formatting a 66,300,297-byte retained-owner diagnostic.
+The outer guard then sees the known native PID disappear during its process
+group check and exits 126; this is not evidence of foreign GPU use. Stdout is
+empty, so no 32-token, completed-round-count or full-acceptance result is claimed.
+The immediate after-state still has 69,029,134,336 bytes of selected GPU memory;
+the separately recorded fresh state returns to the exact 298,647,552-byte
+baseline with no owned group, selected queues or selected per-process VRAM.
+No reset or foreign intervention occurred. Archive SHA-256
+`d901a98e4ca873467027f094dd1d177dabf206e632609d1198368cae38e74493`
+and all 27 native payload hashes are independently checked. The host-validated
+successors above do not relabel that native failure. Its completed owned stage
+is removed after retention and fresh no-use checks, reclaiming 78,664 KiB.
+
+The optimized c5/4f6 native attempt now completes five real speculative K4
+rounds and publishes eight tokens on an idle gfx942 GPU. The observed accepted
+draft-prefix lengths are `[0, 0, 1, 2, 0]`; epochs and dispatch generations
+advance from two through six, and the final target/draft cursors both equal
+136. This exercises zero- and partial-acceptance continuation through the actual
+structural registry, bridge and coordinator. There are no completed draft
+catch-ups, so continuing full acceptance and the 425-packet maintenance/restore
+path remain unobserved on hardware.
+
+The run uses the retained twelve-kernel 8113/4f6 image, not the MFMA candidate.
+Its 128 physical prompt tokens include active EOT suffix fill, not attention-mask
+padding, and its published tokens exclude the prefill anchor. The control and
+report-consistency check exit zero; queue teardown completes, the owned process
+group is absent, and selected GPU memory returns to its exact 298,647,552-byte
+baseline with no selected queues. The retained archive has SHA-256
+`c46c0023872f404ddda8140f9162fa2d36785618916266ad41d0240234908870`;
+all 25 payload hashes are independently checked. This is a source-bound
+engineering execution result, not target-only parity, authenticated M1
+execution, numerical qualification, production serving or a matched benchmark.
+
+The recorded runtime checkpoint is `c5ad1ba47ffb940bfc0b69f1acb89fd259e60e56`,
+still pinned to published fe2o3 `4f6f65ce22222bae9ece5c5f08c66e56e022a9e4`.
+Its committed coverage, source-tool closure, all 32 locked/offline dependency
+graphs and three dependency TCB comparisons pass. The exact standalone
+speculative-smoke debug binary is built, with SHA-256
+`4151c135ff693e1d66a1b8004a3d31488dd227ee0c50ce45b90a025f0e488e2a`.
+The earlier debug eight-token K4 attempt stopped before inference when its
+GPU-use guard detected a PID outside the owned process group. It used the unchanged
+twelve-kernel 8113/4f6 image and retains that image's original producer identity.
+The c5 checkpoint changes only documentation and body ledgers from the executable
+source below; it does not relabel the earlier test or GPU results.
+
+The native control exited 126 after approximately 14 minutes 25 seconds, not
+at either deadline. Debug CPU model preparation took 604.307 seconds; KFD
+binding completed, but no prefill or speculative-round output was produced.
+The detected PID had already exited before attribution could be captured, so
+its ownership remains unresolved. The control stopped only the owned process
+group. Fresh KFD/DRM observations confirm no owned processes or selected queues
+remain and GPU memory returned to the exact 298,647,552-byte baseline. The
+retained archive has SHA-256
+`66575e9bd00b950ed0a592c931de6e7ae672da2ca27e50017d4f853d76af89ae`.
+This is a failed engineering attempt, not a native continuation result or a
+performance measurement. The completed native stage is removed after archive
+acquisition and fresh no-use checks, reclaiming 42,936 KiB while preserving the
+model, artifact and evidence.
+
+The exact c5/4f6 optimized standalone build now passes on mi300x. Its normal,
+non-test executable has no optional features, optimization level three and
+`fresh=false`; it is 14,133,320 bytes with SHA-256
+`d6d6f7af56957d0987d0e2cb01d4d2b75766fcc1f95f43fb19da39c7ff294819`.
+Fresh metadata, all 1,145 source files and 205 directories, before/after source
+equality, actual artifact identities and the no-RPATH/RUNPATH check pass.
+The build used a separate bounded 3 GiB target, with the shared 10 GiB cap
+unchanged and automatic Cargo cache cleanup disabled. Its retained archive has
+SHA-256 `5c5399489e1d208e90fa5e82f2bc0843f9fe956c72e6d5dc72aa5329b4db6a4a`;
+all 51 retained payload hashes are independently checked. This is a build
+result, separate from the subsequent native result above; it is not a measured
+serving improvement. The native retry includes more complete detected-PID
+diagnostics. Initialization and foreign-use checks are not bypassed.
+
+Private runtime integration `dfb4c5140b9c50ad936e27f1850541043135130b`, tree
+`b3da45f59cb9f346078c20daa5ce6bff0735eaf9`, passes 707 engine library tests
+with nine existing ignores, separate binary cohorts of 11, 2, 84 (two existing
+ignores), and 2 tests, plus 171 doctests and strict all-target engine Clippy.
+All 32 locked/offline graphs, three dependency TCB comparisons, the retained
+source-gate tool's complete source/hash checks and raw body inventory pass.
+Before/after source checks cover all 1,145 files and 205 directories. The
+retained evidence archive has SHA-256
+`f6aedb5d76b2fa5f5661834c548d2dc7a780035de6430f1adb8f782059256d2c`.
+The unchanged adapter retains its earlier 9421a6a8 results: 109 library tests
+with one existing ignore, 12 speculative CLI tests, 37 source-policy tests
+and strict all-target Clippy. These are host results, not repeated GPU
+execution or proof of the full-acceptance path.
+
+The earlier combined `32eae300` inventory rejected a new statement-form
+`unreachable!` in `settle_structural_draft_catchup_v1`. The dfb correction
+replaces it and two reservation assumptions with explicit errors retaining
+the actual pending reservation, completion and other owned resources. The
+parser is unchanged; the new test checks source/error-tuple shape, not a
+fabricated native completion. Both the original rejection and successor
+passing evidence are retained.
+
+Ledger-only successor `0a93387cc078619757d3de6488cb137544ed74f0` adds 83
+structural runtime and nine all-case R29 comparator bodies as pending-Verus,
+removes the obsolete `require_selected_case` row, and preserves all 7,741
+surviving full rows verbatim. The ledger now has 7,833 unverified bodies:
+7,645 pending-Verus and 188 excluded-presentation. Exact 0a passes fresh
+metadata/TCB checks, coverage generation and the generated candidate's
+self-check: 177 modules and 8,557 bodies, with all 724 existing verified rows
+unchanged. The generated coverage is integrated in this checkpoint; final
+committed-source equality and the direct committed-coverage check now pass
+at c5, including exact before/after checks of all 1,145 files and 205
+directories. No proof or qualification status is upgraded. The 0a coverage
+evidence archive has SHA-256
+`14280d3c014afd90641e88c7c54c90259dc6f5c0e527757879b2170bd12c6922`.
+The final c5 gate and standalone binary evidence archive has SHA-256
+`11670d90819a8ed3a731ec733e94434805ad9b929e4b2efe55ed8666b2b775f4`.
+
+The kernel/integration lane now has a separate, host-tested MFMA strategy
+candidate. It retains the legacy twelve-program scalar catalog and adds an
+explicit thirteen-program attributed catalog. Strategy and executable-catalog
+identity are checked through runner, operation plan, dispatch and packet
+joins. New tests cover all fifteen complete step intents plus three catch-up
+intents, exact kernarg and native weight-buffer layouts, and rejection of
+mixed strategies/artifacts. Explicit engineering MFMA input/capture commands
+record the selected route; they grant no qualification authority. Remote
+formatting passes. The first exact `7e84909f` compile check, with a complete
+unpublished fe2o3 `b86d7749` dependency overlay and isolated target/cache,
+rejects an opaque expression macro in the MFMA root before compiling the
+engine or adapter. Correction `0e3f77c5` exposes the same 108 admitted shape
+tuples as plain Boolean expressions, with an independent host-oracle
+comparison over literal-boundary partitions. Its retry compiles the aggregate
+device crate, then finds a missing strategy argument in engine operation-plan
+validation. The two-line forwarding correction `ce2d3c1f` passes the engine
+library and actual engineering-R29 capture binary compile checks, all 709
+engine library tests with nine existing ignores, and all eleven aggregate
+source-contract tests. These checks use the same complete b86 overlay, not
+the newer compiler candidate. The first linked-test attempt completed the
+eleven source tests but stopped at its original 2 GiB scratch cap before
+engine tests. After audited cleanup and an explicitly reviewed 3 GiB total
+cap, the unchanged engine cohort passed. Both attempts remain distinct.
+The passing engine evidence archive has SHA-256
+`20045976f0abc71e65e9a86a132cb685c29b67fce8e494de7c78353c308ac92c`.
+The first adapter cohort passed 97 tests and rejected thirteen service tests
+before socket creation because the control's temporary path exceeded the
+unchanged 100-byte limit. A shorter owned temporary-directory control passes
+110 adapter library tests with one existing ignore, 87 engineering capture
+tests with two existing ignores, and 38 source-policy tests on unchanged ce2.
+Source-gate testing exposed both unsuitable overlay lockfiles in its repository
+fixtures and a stale single-roster test anchor. Test-only successor `cbf49f06`
+mutates legacy and MFMA marker ordering separately; all 42 source-gate tests
+pass against its pristine source and original locks. No production admission
+or parser check was weakened. The original failed runs remain retained.
+Scoped Clippy then found one introduced redundant method-call closure.
+The exact method-reference correction `1fc91418`, still using the complete b86
+overlay, passes strict engine-library and selected adapter/capture/source-policy
+Clippy, plus all eight focused physical-program catalog tests. Its source and
+locks remain equal before/after. No lint suppression or semantic change is
+introduced. No Ferric MFMA aggregate image or GPU result exists yet; singleton decode
+still selects scalar GEMV. Source-gate commit `8fc15929` admits the exact
+new normal `fe2o3-hsaco` declaration; a final dependency-inventory regeneration
+is still required.
+
+The compiler candidate's validated upstream base is
+`5c0c53c85e4fa748b1d84751cca91f8ea70f8a1a`, four commits beyond bf30. The
+delta streams semantic-SSA replay one function at a time, boxes private cold
+projection diagnostics, shares the private SSA event-emission grammar and
+shares prepared SSA emission across output sinks.
+Source review finds no KFD/runtime or device change. Root rebased the local
+candidate onto this main as `7074f2b57d97bad12a08c2350de54cdd6baa9e42`;
+all ten candidate patches are unchanged by range-diff. On top of that source,
+`201136d9` preserves exact live induction comparisons in loop-body predicates,
+addressing the unresolved branch that blocked the full MFMA kernel. Its fresh
+host build passes, with all 70 first-party artifact records across 63 packages
+rebuilt. The first focused run passes eight tests but finds one test expecting
+a later rejection where an existing earlier guard correctly rejects the input.
+Test-only successor `18f8710d4ada318e3a3462cf45984c8dd44c1722` corrects that
+expectation without changing production code. Its complete remote host gate
+passes: nine focused tests, 565 backend tests, 140 kernel-analysis tests,
+1,103 Pliron tests, two CFG integration tests and the explicit paired BF16
+storage export test. The nine focused tests are part of the 565-test cohort,
+not additional unique coverage. Reused production artifacts are checked against
+the fresh 201 build; the test executable is rebuilt. Root checked the archive
+SHA-256 `fd167de7230a0968832cbb552f253fce20c44387797f41f872ceb90d7365d0ac`,
+all nine terminal phase statuses and the raw test summaries. The compiler
+worker's separate strict Clippy gate exits 101 with 17 library diagnostics;
+test-target linting did not complete. Root checked the raw failure archive
+`69ba1ac0daf9963f1ef3a7d58bcc0de1b0df4a14df10b4b9f91be6121c8548a3`
+and source classification: no candidate-introduced trigger was identified, but
+this is not a matched pristine Clippy run or baseline-lint equivalence.
+The source-bound emitter rebuild and full
+thirteen-kernel MFMA image are still pending; the host result does not establish
+that the original aggregate emission now succeeds.
+Retained emission tools remain frozen at
+`5602c4889142571d7d82041b8a9bdef369799af1`; they are not relabeled as 18f.
+No candidate commit has been pushed. Canonical upstream was freshly fetched at
+`bf0f4841774de433d5f02a863f684f4675f699ac`, adding projected call destination
+evaluation-order handling. Root reviewed the production delta and clean rebase
+`d3a52cd2f3939fb415b0980ab3fd0a3298e8b36e`; all twelve patches are unchanged
+by range-diff. All seventeen source-bound remote host phases pass: 565 backend,
+159 lowerer library plus 58 lowerer integration, 1,123 Pliron plus two CFG,
+140 analysis and one explicit paired storage-export test. Nine focused tests
+are a subset of the backend cohort. Four artifact-freshness checks pass; reused
+first-party bytes are bound to the current d3 builds, not relabeled older output.
+Root checked archive
+`a353a7939bb87de5c32da3169c555f117b07bbe1cca9c23505e9d5521bb40a8f`
+and its actual phase/test summary. The actual d3 tool rebuild was admitted after
+verified removal of ten locally retained duplicate archives, reclaiming
+481,796 KiB. No source, cache, existing tool or image was deleted.
+The CLI release build then stopped with exit 125 when shared root free space
+fell below the unchanged 22 GiB reserve. The compiler stage remained below its
+12 GiB cap. No CLI copy, backend build or device emission ran; this is a resource
+stop, not a compiler semantic failure. There is no d3 strict-Clippy or
+native-emission pass. A subsequent canonical fetch finds
+`83986180401671aeedf89017d2f52a744c28714b`, adding optional exact source-to-SSA
+occurrence capture and shared replay-driver plumbing. No KFD or device files
+change in that upstream commit. Root preserves d3 at
+`codex/mfma-column-major-b-d3-hostchecked` and rebases all twelve unchanged
+patches onto that main as `7f5f15de5aaa63b79cb35033a983f58fff1cb61f`, tree
+`2a49a5c6d80621539f9b5a80f02ecb3f5601b918`. Range-diff and diff whitespace
+checks pass; no build or test of that source has run. The d3 partial tool
+artifacts require reconciliation before a new source transition. Canonical
+upstream must still be checked again before any push to main.
+Ferric integration still pins 4f6. Prior
+pristine 0fe emission produced an independently inspected twelve-entry COV6
+image, not a validation of this newer upstream or thirteen-entry candidate.
+
+Compiler candidate host cohorts have passed, including 107 device, 87 MIR,
+156 lowering and 545 backend library tests at their recorded candidate sources.
+Strict backend Clippy remains failing. A separate pristine baseline attempt
+encountered cross-source cached metadata before reaching Clippy, so no baseline
+lint equivalence is claimed. Exact first-party fingerprint invalidation was
+completed and archived, followed by a fresh b86 rebuild: all 69 first-party
+artifact records across 63 packages have `fresh=false` and current-source
+manifest identities. The actual paired storage export first rejects a
+redundant lane-varying fixture guard. Fixture-only correction `eec1d434`
+removes that guard while retaining exact launch geometry and checked tail
+writes. Its successor export reaches the real two-phase reduction loop but
+rejects unresolved loop-branch uniformity. Both failures occur in the first
+row-major case, before testing the column-major case. The unknown value was
+traced to direct launch-geometry queries in pre-loop guards, not unsupported
+induction generally. Root-reviewed `998c5a99` preserves authenticated direct
+geometry queries as bounded, unconstrained analysis arguments; it does not
+replace actual geometry with maximum-grid constants or change the runtime ABI.
+The production code compiled, but its driver test used a nonexistent unsigned16
+type shorthand. Test-only successor 5602 uses the actual canonical KIR type.
+All four new geometry tests, the existing geometry-wrapper non-purity negative
+and the actual paired export now pass. Row-major retains semantic MIR V11;
+column-major uses V15 with its authenticated constructor/load and rejects V14.
+Both keep three source/KIR arguments and the exact 48-byte, alignment-eight
+kernarg map. Production KIR identity V9 and canonical KIR V10 remain distinct.
+The exact candidate release CLI/proxy and CLI-bound backend/extractor now
+build successfully. Exact ce2 source preparation, the dependency-only private
+5602 overlay, locked/offline metadata and the union vendor byte checks also
+pass. The first native row-major emission then rejects the union vendor's
+23,310 entries at the unchanged 20,000-entry pinned-tree bound, before Cargo
+extraction; no column-major or Ferric aggregate attempt follows that failure.
+The installed rustc tree has only 6,561 entries. Lock-derived complete per-mode
+vendor views fit separately: 305 packages/19,825 entries for the original
+workspace fixtures and 198 packages/11,215 entries for standalone ce2. A
+storage-neutral whole-package partition now passes, preserving every package
+file and leaving all manifests unchanged. Both original fixtures pass locked,
+offline metadata checks in an empty Cargo home. The next actual row-major
+extraction reaches Cargo/build-std, then exits 125 at the unchanged 12 GiB stage
+cap. Its 802,232 KiB transient growth includes workspace incremental caches;
+the extraction boundary clears the outer environment, so the outer
+`CARGO_INCREMENTAL=0` does not disable those caches. No semantic compiler error,
+HSACO, column-major run or aggregate run is attributed to that stopped attempt.
+Neither the reduction loop nor the convergence rejection policy is bypassed.
+After preserving raw logs, all 145 generated metadata files, tool-copy equality
+and the exact 1,576-file/103-directory roster, only the failed extraction scratch
+is discarded, reclaiming 802,212 KiB. Its compiled caches are explicitly not
+byte-archived; the retained compact evidence has SHA-256
+`e190e665402d5c1e05ab0efdd103aa8d994a1c80a1b8bde4fe5e948971430d5a`.
+Further reviewed cleanup removes 648 obsolete first-party debug cache files,
+reclaiming 1,943,840 KiB while preserving all 1,445 protected current-source and
+executable-closure paths. Compiled cache bytes are explicitly discarded, not
+claimed archived. The retained inventory and attribution archive is
+`a1c5ad474e34e9d27ef2294d0d28ecb0ed1eb110e8c3d676d102066f2d668411`.
+The stage cap remains unchanged.
+
+The unchanged 5602 row-major and column-major fixtures now both emit actual
+gfx942 COV6 HSACOs and pass exact replay and read-only ELF/MFMA inspection.
+The images are 12,208 and 12,048 bytes respectively; each contains actual
+`v_mfma_f32_16x16x16_bf16` instructions. The original row inspection rejected
+an incorrect expected mnemonic spelling; the corrected read-only inspection
+passes on the same image, with both records retained. Evidence archives are
+`519982e9bd41847163bb03a27719e3d503d223fec658292adca24814162ddf3a`
+and `fcc43eb604aea87e7943afd20fef8d29b16cd32764b36cff82f9de7c82b3ea62`.
+These are compiler fixtures, not the Ferric aggregate or GPU execution.
+Two vendor-view transitions stopped before any
+package moves on unreadable short-lived transports; no process identity or
+foreign-use conclusion is inferred after they disappeared. A separately copied,
+byte-checked 198-package input view now passes with 11,215 entries. Every copied
+inode is distinct and all 365 original packages remain unchanged. Exact ce2
+source checking and locked metadata equality in an empty Cargo home pass.
+The actual ce2/5602 aggregate emission then fails `FE2O3-TENSOR-LAYOUT-002`:
+MFMA block 205 is control-dependent on unresolved loop-header block 105.
+Lowering stops before target IR or artifact emission; no thirteen-root image
+exists. The ranked loop body contains an empty-control analysis split, and
+source review identifies missing projection of retained induction values into
+body predicates as a candidate cause. Exact source-span attribution and the
+compiler repair remain in progress; no kernel guard or convergence check is
+removed. The failure archive is independently hash-checked at
+`6a14af1919ec2970d121270ab6e2b784ac162293670c6da16a393e5658916b2f`.
+Completed compiler cleanup removed exactly fifty obsolete test executables,
+reclaiming 541,048 KiB after retaining their complete archive locally. Removing
+the two redundant remote archives reclaimed another 144,272 KiB; the local
+archives, current tools, libraries, source and retained images remain intact.
+The completed MFMA check and formatting stages are also removed after exact
+inventory and fresh no-use checks, reclaiming 2,968,964 KiB. Source, test evidence
+and claimed executables are retained; disposable private build caches were
+discarded, not claimed archived. The separate engineering-only MFMA numerical
+probe is committed privately at `ee44cb2565a9445ce90876209a92f777e5c130b7`.
+It uses strict thirteen-program artifact admission, the existing checked service
+lifecycle, generation-bound guarded C readback and the canonical 108-case
+catalog. Its signed sparse fixture tests layout, tails and residuals; a second
+positive fixture contributes in every K16 phase. Review found and corrected an
+earlier signed-pattern cancellation that could hide an omitted 48-phase block;
+new regressions cover that block across all 108 references and reject an actual
+small-case incomplete output. Single-phase loss can still be hidden by BF16
+rounding, so this is not a traversal proof or general numerical qualification.
+All five source hashes match remote formatting output. Its first host gate
+passes all ten probe tests but finds a stale six-versus-seven dependency-count
+assertion; test-only `c9d86317` corrects it. Strict Clippy then rejects a 64 KiB
+executable-hashing stack buffer. Successor
+`5df6d1e135dd6f52c1a13f578facbd63259341e4` uses the existing 8 KiB streaming
+buffer pattern without changing hash or length checks. With the complete
+private 5602 dependency overlay, it passes compilation, all ten probe tests,
+all 39 source policies, strict selected-probe Clippy and the actual CPU-only
+list command. Independent list checking covers all 108 exact shape/stride/grid
+contracts and 160 distinct source profiles. Source-before/after and full locked
+metadata equality pass. Archive SHA-256 is
+`7a97291a46586d68c886489b2aa5e1ffd08450f537abd693a5153f04fdbd3215`;
+the final normal probe executable is
+`e741e00a19189562cf4320e4b53a31e9ee6989b8da7be129740ee2fa6be428a9`.
+Both failed predecessors remain retained. No GPU numerical execution has run,
+and dependency/coverage regeneration remains pending. A bounded six-case
+campaign covering draft, target partial-M and beta-one shapes with both fixtures
+is prepared but cannot launch without the actual thirteen-root artifact.
+
+Pages-only checkpoint `5d3d93d3e7f08645273d274bc35efbc79133e686` is deployed
+successfully in workflow 34926507415. Root reviewed the complete six-file delta,
+all 34 source hashes, source equality, raw QA/native-report association and
+desktop/mobile screenshots. The remote browser gate passes all 1,121 widths
+from 320 through 1440 pixels plus eight named viewports. All seven live assets
+match the validated 574,624-byte artifact, and historical performance data is
+unchanged. Only public Pages ancestry and site changes were pushed. The owned
+clean worktree (3,164 KiB) and completed remote frontend stage (75,904 KiB) are
+removed after retention and no-use checks. This public checkpoint records the
+successful short R2 run, not success for the newer R3 failure described above.
+The earlier Pages checkpoint `5fe89b3e` and its 82,380 KiB completed remote stage
+retain their distinct deployment/cleanup evidence.
+The completed runtime worktree is removed after integration/evidence checks.
+Further reviewed cleanup reclaims 1,675,048 KiB of obsolete runtime artifacts,
+578,572 KiB of completed review scratch, and 503,972 KiB of completed compiler
+trybuild output. Current source, tools, models, caches and active dependencies
+are retained; compiled trybuild cache bytes were explicitly discarded, not
+claimed archived.
+
+The new GPU result is limited to the zero/partial K4 continuation described
+above. There are no new numerical-acceptance, Verus or matched performance
+results, and all 33 M1 gates remain open. The next priorities are the separate
+authenticated admission-order repair, a current-compiler MFMA aggregate,
+sustained hardware continuation with the tested generation repair, and the remaining numerical
+cases. The failed 32-token attempt is not bypassed to obtain a shorter success.
+
+## Earlier Integration
+
+Production checkpoint `8113e2314b2e030f93bc27d1281b4caee7e66216`, tree
+`b5e3c150a42de4467e8fd9169d16ea4a7bc78ba9`, combines the engineering numerical
+pipeline and executed draft-initialization helper, then advances the same
+80-file pin roster to published fe2o3 `4f6f65ce22222bae9ece5c5f08c66e56e022a9e4`.
+Reverse-byte equality passes before refreshing two derived verifier digests.
+The upstream delta adds an inert transition-receipt codec/admission path; it
+does not change KFD/runtime, activate new optimizer behavior or provide the
+missing theorem checker. Full IR/analysis, 543 backend and 37 aggregate tests,
+release tools, actual emission and independent twelve-entry/descriptor ELF
+inspection pass. The 103,616-byte 4f6 image has SHA-256
+`6f77d6813e6a2c9fd20c8b50eaffe0feb4435f00ac65192e9574a3637b6e5284`;
+its manifest is `39cf7d5a915f759cb289e2f48b63acbd725904bb22aa14439bbda575074b3d3f`.
+It has exact output replay but no GPU validation. The ccfd GPU runs below retain
+their actual source identities.
+
+Test-correction checkpoint `500838ee078dc001f4f26857daf08424b4c908e8`, tree
+`ae110bfc0ea86a7a445efe26a9670021d450aaec`, adds only two test corrections:
+an inclusive range required by strict Clippy, and a checker listener test race.
+The original full checker cohort failed twice; an unchanged isolated retry
+passed. Diagnostic instrumentation retained child stderr and naturally exposed
+ENOENT from inspecting the socket pathname after the listener deliberately
+unlinked it. The test now checks socket/0600 readiness before connecting and
+waits for unlink before Begin, retaining the full credentialed exchange and
+original deadlines. No production listener behavior changed. Exact 5008 passes
+strict engine/checker Clippy, formatting, the focused initialization-custody
+test, 81 checker library and 27 integration tests with three existing ignores,
+six documentation tests, and ten deterministic unlink-before-Begin repeats.
+The earlier failures remain retained rather than relabeled.
+
+Private integration `ef203560abdea979fec74fabbe6d1a47aeb7a521`, tree
+`c380d245fb8cb00ff2c21632cbdc825a14461938`, also admits the exact private
+engineering R29 input sibling in the source gate and refreshes both body
+inventories. Exact 3e74 passes all 32 locked graphs, 38 source-gate tests and
+byte equality for all three dependency TCB inventories. Fresh final ef203
+metadata and actual source-gate checking pass: 175 modules, 8,466 executable
+bodies, 724 verified labels and 7,742 unverified bodies. All 30 new engineering
+capture/comparison bodies are proof-pending; only the separately proved actual
+initialization helper gains a verified label. No prior labels are changed.
+Host/metadata evidence SHA-256 is
+`5d1f8144e4b2528046989aa8c00b7908113556e7aad7707fdf44242db19eac32`;
+final coverage evidence is
+`a6a1b9a78a2568f00d39772a83074598b6acc6592f28c8d9fe52a8529e71d1eb`.
+
+The numerical pipeline is integrated as `6629dfb3`, byte-identical to reviewed
+agent source `4ac12507` in all eleven changed files. Its separate engineering
+input, capture, reference and comparison commands never enter qualification
+acceptance. Exact 4ac/ccfd passes both capture cohorts (83 tests each, two
+existing ignores each), 37 adapter policies, 17 comparator tests, three strict
+Clippy commands and remote formatting. Python passes 23 existing and eleven
+engineering tests. Both capture and comparator release binaries are retained;
+the comparator's initial stage-cap stop and successful unchanged retry are
+recorded separately. CPU-only real input generation/reopening now passes,
+including the exact twenty-file bundle and byte-identical invocation output.
+
+The first real engineering numerical case `prefill-s1-t128.001` completes on
+mi300x physical GPU 1: native capture, pinned independent BF16/SDPA reference
+and selected comparison all exit zero. The reference loads once and executes
+twice with byte-identical outputs. Across all 151,936 finite logits, both
+producers select token 198; token mismatch count is zero. Maximum monotonic
+BF16 ULP distance is 31,121, so the rows are not identical. Independent
+explanatory diagnostics report maximum absolute error 0.0703125, RMSE
+0.01524191977257529, relative L2 error 0.01284705380109194 and cosine similarity
+0.9999202347605426; top-ten ordering matches. No reviewed tolerance is inferred
+from these observations. This is one case, not all seven R29 cases or a gate
+closure. Its binary/reference source remains 4ac12507/ccfd, not 8113/4f6.
+Evidence archive SHA-256 is
+`816f162e5a2d3229239dc305e8658f8c570a269b44a077787d916030ec60335c`.
+Both GPU phases return to their exact idle memory baseline. Completed owned
+run/control/cache stages are removed after retention, reclaiming 350,916 KiB.
+
+The initialization helper is integrated as `3d24f7e5`, with both changed files
+byte-identical to reviewed `abfe390f`. The actual helper plus eight executed
+callee bodies each pass a selected Verus run, 1 verified/0 errors. Ten
+actual-helper mutations fail genuine postconditions, with no VIR errors.
+The pinned 190-file closure matches around all nineteen proof jobs. Success
+establishes the real target/draft initialization cursor relation and one-write
+transition; failure frames the draft at helper entry. A caller's earlier page
+append remains in poisoned custody, not rolled back. Caller routing, leases,
+device writes and completion authority remain unproved. Exact 8113 passes 125
+spec tests and 698 engine library tests with nine existing ignores, including
+the new initialization and failure-custody tests. Adapter 109/one ignored,
+37 policies, engineering capture 83/two ignored, numerical seven and owner
+16 plus three policy tests pass. The final test-correction and executable-body
+inventory checks above now pass at their stated source identities. The old
+completed release target
+is removed only after exact retention/provenance/no-live-use checks, reclaiming
+2,060,340 KiB; independent binaries, current debug artifacts and sources remain.
+
+The structural resident-loop team is implementing genuine repeated speculative
+rounds. Audit found that ordinary structural continuation accepted unequal
+target/draft cursors after full acceptance. The new path must reject that reuse,
+execute the actual 425-packet draft catch-up and restore the original K4 shape
+without promoting engineering artifacts to authenticated authority. This work
+now has an explicit bounded repeated CLI in its separate worktree, but is not
+yet integrated or GPU tested. The reviewed history fix exposes the original
+speculative receipt, separate maintenance receipt and both queue transitions
+without fabricating or retagging receipts. Its regression checks public API
+nameability, not native epoch values. Candidate `dd0ec11e` also corrects a
+missing helper import and duplicate inline attribute found by the latest
+remote compile check. Exact dd0 now passes both the engine-library check and
+the actual speculative-smoke adapter-bin check on mi300x, in 8.04 and 9.51
+seconds respectively. Earlier failed checks remain retained. Linked tests
+await additional reviewed workspace cleanup; no GPU validation is claimed.
+The completed
+single-round K4 rejection
+smoke below does not cover that full-acceptance path. No new matched serving
+TTFT/TPOT/throughput or competitor result is available.
+
+The all-case R29 implementation uses explicit engineering reference V2
+formats, either a selected canonical case or atomic seven-case execution, one
+model load and two byte-identical runs per case. Its Python gate passes 15
+engineering tests, all 23 legacy tests and the reference policy on mi300x; the
+five legacy reference implementation/protocol/dependency files are unchanged.
+The Rust input generator is updated to recognize V2, with a regression using
+the actual protocol bytes. Exact combined candidate `4b7338df` passes all 24
+differential tests and both focused protocol-test cohorts. Its benchmark-policy
+step hits the unchanged storage cap after nested Cargo drops the outer resource
+environment and starts fresh debug-profile artifacts. After reviewed cleanup,
+the control-only retry passes benchmark policy on unchanged `4b7338df`. Strict
+differential Clippy then rejects one implicit String clone. Follow-up
+`940d37e2` changes only `case.kind.to_owned()` to `case.kind.clone()`. Its final
+remote gate passes all eleven phases: formatting, all three strict Clippy
+commands, all 24 differential tests (411.92 seconds, no ignores or filtering),
+both two-test actual-protocol cohorts, 23 legacy and 15 engineering Python
+tests, reference policy and benchmark policy. The original storage stop and
+lint failure are retained. Private integration `10cc6587d198a315678c8e1d939aa8e5163a32f5`,
+tree `047d0fe7a886bb94acbf59b55a6d4ab323cefa54`, includes all seven changed
+files byte-identical to exact 940. Final evidence archive SHA-256 is
+`a05d9b1a63950a01be2334f087b22c7477ccc1f259d75df8d449cbf09bc064dc`.
+The earlier ef203 source-coverage result does not automatically cover these
+new executable bodies; fresh coverage generation remains pending. These are CPU fixture checks,
+not additional GPU numerical results. Python evidence SHA-256 is
+`2912b40195e1d5e2f92da0dc970b55c1fe4bf6eb8f579e79e065ae5c98b0cd70`.
+
+A fresh upstream fetch now finds fe2o3
+`0fe50455b2fb65744048789bfc05f720313a12c5`, three commits beyond the validated
+4f6 pin. The delta adds inert lineage records, explicit V2 entry-reachable
+induction analysis/replay, and an optional immutable canonical analysis scope;
+no KFD/runtime files change. Separate Ferric candidate `f9ff2f3c`, tree
+`5322132be9403e3f56a8ae43589f8e55b556a8c2`, updates the same 80-file dependency
+roster and exactly two derived verifier digests. Independent remote static
+checks pass for 42 manifests, 32 lockfiles, 86 compiler/runtime manifest pins
+and 1,539 lock package entries, plus exact scope/reverse-byte/hash checks.
+The M0 binder's separate e527 proof-contracts identity is explicitly preserved
+as required by the M0/M1 manifests; that crate is byte-unchanged through 0fe.
+The initial overbroad all-pin assertion failure is retained, not hidden by
+rewriting M0 proof identities. Static evidence archive SHA-256 is
+`b1772379d463d444e3272ea7eb4e628d1fb07afa4f0d98a79cf533529a606d30`.
+Actual locked dependency resolution, compiler/consumer tests and emission
+remain pending. Existing artifacts and GPU results keep their older producer
+identities. The completed candidate worktree is removed after archive
+retention, reclaiming 44,108 KiB; the remote static-check stage is also removed.
+
+Completed historical source cleanup removes only twelve fully reconstructed,
+unused snapshots after fresh owner/inode/hash/roster/no-live-use checks,
+reclaiming 515,568 KiB. The initial ordering-only cleanup failure and corrected
+pass are both retained. Current source/build/cache/tool roots are untouched;
+archive SHA-256 is
+`9fc9b5c50e16b647f40a6fe543814a3a2b4eb08561d26d0e9cd59757b54ff5d8`.
+
+A subsequent reviewed cleanup removes four completed gate source snapshots,
+reclaiming 173,076 KiB after full archive/roster/byte/state/no-live-use checks.
+Its retained completion archive SHA-256 is
+`e7261750434de5c16e33c8103334558334150ca211f348d8d140019a8dea4991`.
+The R29 lane separately removes exactly 1,212 unused default-profile artifacts,
+reclaiming 488,812,544 bytes; all 298 protected executables rehash identically
+and 131 unclassified files remain untouched. These cleanups restore space
+under the unchanged shared-stage cap. No foreign work, active cache, current
+tool or independent retained binary is removed.
+
+The completed R29 local worktree is also removed after exact integration and
+archive retention, reclaiming 44,128 KiB. The runtime lane removes its two
+obsolete source snapshots after archive/byte/no-live-use checks, reclaiming
+another 86,884 KiB. Final linked runtime tests still need additional headroom;
+the next cleanup is limited to reviewed completed sources and retained
+duplicates, not active target or shared cache contents.
+
+The kernel follow-on now has a concrete compiler prerequisite. M1's canonical
+weights are physical W[N,K], while the current typed MFMA B loader accepts
+row-major logical B[K,N]. A dedicated fe2o3 worktree is implementing a distinct
+checked column-major B view, authenticated layout propagation and address
+lowering, with explicit new semantic-wire admission. This is reusable compiler
+work only; Ferric owns the subsequent GEMM kernel and schedule. Existing scalar
+GEMM promises ascending separate FP32 operations, so MFMA requires a distinct
+numerical/profile identity rather than relabeling that schedule. Small target
+verification batches M5/M9/M17 must be covered; repeated S1 draft decode stays
+scalar. No new compiler test, emitted MFMA, numerical result or speedup is
+claimed for this in-progress capability.
+
+## Earlier Integration Checkpoints
+
+Tested private integration `d55fd00a44a01dce3f4c8c790b4736e2440a69fa`, tree
+`9c7bf3ffa948acdcb65b766a18b1ada757a20db1`, pins published fe2o3
+`85255498a021ed2b7a1a511f99f577ee4b11d175`. Pliron remains
+`161c385576d45d4e634ba179fa93a545b91124e6`. The 80-file pin migration reverses
+byte-for-byte to its parent before two separately checked derived verifier
+manifest/lock digests. Historical tool and binary producers are not relabeled.
+Intermediate integration `61a9ab324cdd0a6e745aa838d0d0f1ca1ac137f5`, tree
+`daaec77b5a07a7c749c9719d387e7dad8f28ee03`, advances that same 80-file roster
+to upstream `82d95ca81f3f3a55e1e82b88918a41cca8b20c31`, which indexes checked
+control flow and transport pipeline catalogs. The reverse-byte comparison and
+two derived digests are checked; remote formatting passes. Exact 61a9/82 passes
+all 32 locked graphs, 38 source-gate tests, 31 verifier policies, six source-pin
+policies, source coverage and byte equality for the three regenerated TCB
+inventories. The full engine host results below remain bound to 852.
+
+Compiler-tested integration `f17efe83d37105c0da78ea2c8bbbe166a0ee4f43`, tree
+`a3292fb909cbbaddff4d25a323a9f9421b760258`, pins published fe2o3
+`c6b4050dd6c18e1868b24e4580da3eed8a3d19fa`. This is the same 80-file
+reverse-byte-equal migration with separately checked derived digests and remote
+formatting. Fresh c6 consumer and source-policy validation remain separate
+obligations; earlier 82/852 results are not relabeled.
+
+The c6 combined code candidate is `6651f2d1a1739f30c35a4a5c34d2c900be1c5d06`,
+tree `0c98c7de8f5b791ed9fd23cd8fa6f6cdedede556`, still pinned to c6b. It
+integrates the executed catch-up metadata helper and independent-checker IPC
+client, plus two remotely identified formatting corrections. Two focused spec
+tests and the engine initialization/settlement test pass on this exact source.
+The release engineering target-smoke binary builds successfully; its independent
+11,783,960-byte copy has SHA-256
+`18ff100fde890a25bbeb0588c0723e741674f737a6a31af5a37e4e2255a29e43`.
+These are host results, not GPU correctness or serving measurements.
+
+Current integration `bb2b0123f4f96410269a098d7cba8aa7bb950008`, tree
+`b15664e855b5494eb312242dfdd26d266fba432a`, advances the same 80-file roster
+to the latest fetched fe2o3 main `ccfd43d6bc58b27e0efe510b0ee1b8463166dfc2`.
+Reverse-byte comparison, the two derived verifier digests and remote formatting
+pass. The upstream delta is confined to semantic-SSA transparent-borrow
+occurrence handling and tests; KFD/runtime sources are unchanged from c6.
+Fresh ccfd Pliron tests pass: 1,021 library, 58 integration and 13 doctests,
+including all fifteen new focused tests. All 543 backend tests and exact
+release CLI/backend builds also pass. Matching bb2 source, worker-closure,
+37 aggregate host tests and vendoring pass. Initial overlay/emission attempts
+stop at the unchanged 12-GiB owned-stage cap. Those resource stops are retained
+separately from compiler failures. After bounded cleanup of completed owned
+outputs, same-source overlay and actual emission pass with exact replay and
+all twelve expected entry/descriptor pairs. The latest 103,872-byte HSACO has
+SHA-256 `46335b09a921b33ed66392e415ce3d2348dd63042242c0387d5a58362ba3c84c`;
+its manifest SHA-256 is
+`339ea2c2c4528a28d7ca16085a31c57070a304b4a2b5454ef118e4ce0a0d66a2`.
+It differs from c6 and does not inherit c6 native results.
+Exact bb2/ccfd passes 123 spec tests, 697 engine library tests with nine existing
+ignores, binary groups 11/2/75/2 with two existing ignores in the 75-test group,
+171 doctests, strict spec/engine Clippy and formatting. The checker normal-only
+production build passes with actual `fe2o3_host` artifact features `[]`.
+All 71 host phases finish successfully, including checker/adapter/owner tests,
+strict Clippy, policies, 32 locked graphs, 38 source-gate tests and byte equality
+for all three regenerated TCB inventories. Three independent release binaries
+(target, speculative and R29 engineering diagnostics) also build successfully.
+Historical c6/82/852 results are not relabeled. The later docs/inventory-only
+checkpoint `d09430897232759fb9bbb2a3485f60da69bef890` does not change the bb2
+production-code or binary identity.
+
+| Team | Completed Since Prior Checkpoint | Work In Progress |
+| --- | --- | --- |
+| Compiler / Kernels | Published c6b resolves the checked unsigned-subtraction assertion. Latest bb2/ccfd tools, 37 aggregate host tests and actual 12-root gfx942 emission with exact replay pass. Independent ELF inspection confirms the expected entry and descriptor sets. The latest four-token GPU smoke succeeds. | Full numerical comparison and kernel hardware validation. The emitted artifact and engineering smoke grant no protected publication or qualification authority. |
+| Runtime / Integration | The resident loop implements the 425-packet draft-only maintenance step and restores the original speculative shape while retaining queue, KV, checked completion and original target bindings. All 71 bb2/ccfd host phases pass, including 697 engine library tests, service/adapter/owner checks and strict Clippy. Three engineering release binaries build. | Single-round speculative smoke, then repeated native full-accept maintenance/restore, cancellation and faults, physical generation accounting and warmed native allocation checks. Host tests do not establish completed physical catch-up or served-request execution. |
+| Verification | Exact 940a/82 verifies the executed catch-up metadata helper and six selected dependency bodies individually with Verus: each 1 verified, 0 errors. Seven actual-body mutations fail genuine postconditions. The integrated helper is byte-identical. Final d094 coverage regeneration and equality pass. | The next executed initialization helper is implemented separately and undergoing its first proof run. Caller routing, page append, lease and completion authentication, broader M1 proofs and hardware qualification remain open. |
+
+The earlier 446ac5db/829 focused joined-Pending tests cover all 31 acceptance lengths across K4/K8/K16,
+terminal full acceptance, foreign coordinators, substituted choices, zero
+generation and epoch exhaustion. Their observations are diagnostic test fixtures,
+not native queue or completed-read witnesses. The KV tests use real component
+transitions but do not execute GPU kernels. Maintenance emits no served token and
+does not increment the logical speculative round; only its physical epoch advances.
+
+The first 852 emission attempt hit the 12-GiB owned-stage cap and is retained as
+a resource stop. After removing completed owned duplicate inputs, the unchanged
+retry completed within its controls and rejected the arithmetic assertion above.
+The same-source comparison uses byte-identical native MIR but 829 stops first at
+a prefill assertion. A scratch-only isolated paged root also changes its first
+failure (829 line 454 versus 852 line 373); source-line order is not canonical
+semantic-block order. A subsequent full comparison of all 49 isolated paged
+assertions finds zero true-to-false changes. 852 newly proves bb33/line 454;
+bb97/line 373 is the only remaining unproved assertion and was already unproved
+under 829. This is forward proof progress, not an observed regression. The
+missing precision was the successful checked `8192 - committed_tokens` result.
+Published c6b now retains that unsigned bound only after the existing exact
+checked-success authentication. The producer assertion remains an independent
+mandatory obligation; the result cannot prove its own producer. Tests reject
+eleven missing, changed, non-dominating or escaped authority cases, signed and
+out-of-width literals, and preserve the existing evaluator work limit. No
+kernel guards or additional evaluator calls were introduced. Actual aggregate
+emission now succeeds at exact f17/c6b, resolving this observed rejection.
+
+The emitted code-object V6 targets `gfx942:xnack-`, contains 103,872 bytes and
+has SHA-256 `9e04fe0c8c7682146b9e42d21c83d5d77336d08b7d599cbd86a012eb9eef69a1`.
+Its engineering manifest SHA-256 is
+`ff3dfe2c8b75996b52d69c041197ce12ba8f6fde94d31d6f8d8c53be4c6b691d`.
+The compiler-bound inert handoff is 414,259 bytes. Actual output replay is
+byte-identical. Independent structured ELF inspection confirms exactly twelve
+defined global entry functions and twelve matching 64-byte descriptors; this
+set equality does not attest Ferric policy descriptor-table ordering. Authority
+is `none`, and publication/load/launch grants remain false.
+
+The bounded one-token engineering smoke on mi300x physical GPU 1 succeeds,
+using the exact 6651/c6 binary, f17/c6 artifact and bed11d00/829 snapshot.
+The five-token raw prompt `The capital of France is` produces token 12095,
+decoded as ` Paris`, with actual hardware completion and terminal exit zero.
+Artifact admission, model preparation, KFD binding, memory initialization and
+controller execution all complete. Selected-device memory returns to its
+298,647,552-byte baseline and busy status returns to zero; the existing foreign
+queues remain on GPU 0. All run resource guards pass. No reset is performed.
+Initialization/upload completes at 240.793 seconds cumulative; controller
+duration is 14.714 seconds and its first-token offset is 13.608 seconds.
+These are raw engineering diagnostics, not comparable TTFT/TPOT measurements.
+One token is not TPOT-eligible. This establishes prompt-to-token execution for
+this exact path, not numerical parity, speculative catch-up, serving readiness,
+performance competitiveness or protected qualification. All 33 gates stay open.
+
+The separate latest bb2/ccfd four-token run on mi300x physical GPU 1 finishes
+at 2026-09-14T21:30:31Z with exit zero and observed hardware completion. The
+same five-token raw prompt produces IDs `[12095,13,576,6722]`, decoded as
+` Paris. The capital`. This matches the first four tokens of the retained
+independent BF16/SDPA reference frozen before the candidate result was read.
+It is a one-prompt token spot check, not full numerical parity or an R29 logit
+comparison. The immediate after-state records memory still being released;
+a later independent check returns to the exact pre-run 298,647,552-byte VRAM
+baseline and zero busy status. No reset is performed. Initialization/upload
+finishes at 246.103 seconds cumulative, followed by a 23.100-second controller
+duration. These remain diagnostic boundaries, not comparable serving metrics.
+The separate bb2/ccfd single-round K4 GPU smoke also passes. Paired prefill
+uses 128 active tokens, including 123 end-of-text suffix tokens, not masked
+padding. The real speculative graph accepts zero draft tokens and emits target
+correction 4710, with checked completion and terminal queue teardown. This
+exercises rejection and retirement, not full acceptance, draft maintenance,
+repeated rounds, numerical correctness or serving performance. A later sysfs
+check confirms return to baseline VRAM without reset. Both run archives and
+their distinct immediate/delayed cleanup observations are retained.
+
+The final d094 source inventory passes remote regeneration, committed-byte
+equality and validation: 173 modules and 8,435 executable-body identities,
+with 7,712 unverified and 723 verified labels. All earlier 722 verified records
+are unchanged. The added verified label is the executed metadata-commit helper
+covered by the scoped proof described above; the new engine preflight remains
+pending. This does not establish a whole-crate or physical catch-up proof.
+The verification team's next actual initialization helper is implemented in
+a separate candidate, with its selected-body Verus run in progress; it is not
+integrated or claimed proved here.
+
+Canonical target/draft admission, full streaming prepack and separate persisted
+snapshot reopen verification both pass on the exact bed11d00/829 release CLI.
+The new snapshot has all eleven canonical files, including 16,381,470,720 target
+and 1,503,264,768 draft weight bytes. Both processes reproduce bundle identity
+`6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b`.
+The old six-file snapshot is retained as an explicit rejected input, not modified.
+The exact d55/852 release generator separately passes `--check` against committed
+generated sources. This is source equality, not native image or GPU evidence.
+
+Retained local evidence under `.codex-tmp` includes:
+- `ferric-native-ccfd-v1/speculative-k4-evidence-r1/ferric-native-ccfd-speculative-k4-evidence-r1.tar.gz`,
+  SHA-256 `f04e1b431f8d3c8656a76555aaa7cd0d8f55cc8b470811536f8d7f9a3d698b92`.
+- `ferric-catchup-initialize-proof-gate-v1/proof-abfe390f-evidence-r1.tar.gz`,
+  SHA-256 `208ff78e73737cfa01af3cdf6a323ce57419c342b9b8484622488abd2340ee29`.
+- `ferric-engineering-r29-evidence-final.tar.gz`, SHA-256
+  `176ec9eb77a200bdc3aa33900f2e53b4cc06997f05bab9687c2105ce8b4eab88`.
+- `ferric-native-ccfd-v1/target4-evidence-r1/ferric-native-ccfd-target4-evidence-r1.tar.gz`,
+  SHA-256 `2a9b13d81098a878ad1f299a7f4f999c368c16aca1a7f906cd9dc283f1e9dffc`.
+  The separate `TARGET4_RECEIPT.md` records the delayed settled-GPU observation
+  and cleanup of the owned completed run, without rewriting its raw after-state.
+- `ferric-current-c6-host-gate-v1/host-bb2-ccfd-evidence-r1.tar.gz`, SHA-256
+  `4848bf1306627d8c4b932ac75decf83d9efd20252b2183bb8699e89cf7536fe9`.
+- `ferric-current-c6-host-gate-v1/release-bb2-ccfd-evidence-r1.tar.gz`, SHA-256
+  `4a18fe27f2449896169dfc2b9e9426a959695ac9253b37ad0cab40e7866fa0b2`.
+- `ferric-current-c6-host-gate-v1/coverage-d094-ccfd-evidence-r1.tar.gz`, SHA-256
+  `209c1e49d96e91a93010e248a444db0f2b2e92bbba8ee7a801aee899b04d179d`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-ccfd-emission/ccfd-published-evidence.tar.gz`,
+  SHA-256 `3eb1c0834b2ab957efa13b063921a25516713c4bb1a0c89cb0cd5fe1fa828107`.
+- `ferric-draft-catchup-gate-v1/host-evidence-r10.tar.gz`, SHA-256
+  `5bb81795371f3cb9340cfd8dd9208276a5bd5492457b43404e2696d2f1d13036`.
+- `ferric-catchup-inventory-v1/catchup-inventory-evidence-r4.tar.gz`, SHA-256
+  `5001522110d67c40ac177aae320da36f842092e148dce0f752818eac87190ad7`.
+- `ferric-upstream-852-metadata-v1/metadata-852-evidence-r1.tar.gz`, SHA-256
+  `1074fbf60b9643f13044c13ae2cd12a00502644371ab69a98efec38fce327f63`.
+- `ferric-upstream-82-metadata-v1/metadata-82-evidence-r1.tar.gz`, SHA-256
+  `09a16fad2b3d5630287c5882e6c90cf5fdec916461b3d65eb4eb361c44a2c6b5`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-assertion-differential/assertion-differential-evidence.tar.gz`,
+  SHA-256 `6916aeae89906f74bef47c7ad422dbfe34fd4185e77d7b96728ff1750c4231a7`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-literal-subtract/literal-subtract-r3-evidence.tar.gz`,
+  SHA-256 `5db7a2048a60d5790767f0eeb4f8a5860df4349c9db6da0dff3544ba53e0c031`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-literal-emission/literal-published-emission-evidence.tar.gz`,
+  SHA-256 `943179eb018d6d646ea4c5f00609ec5a7b7bc864d9589c7a89e99e2e52dfebea`.
+- `ferric-catchup-metadata-proof-gate-v1/proof-evidence-r1.tar.gz`, SHA-256
+  `2bd13649ff143a15a989c508e2bd30aa9d2777f9485256edc06b0b8daf5f3ea7`.
+- `ferric-checker-ipc-gate-v1/checker-evidence-r8.tar.gz`, SHA-256
+  `b0b2b7d65326607298332a6289448633f5d60f6173ec3484bbae95a06f46fd0b`.
+- `ferric-current-c6-host-gate-v1/smoke-6651-c6-evidence-r1.tar.gz`, SHA-256
+  `864bb8bd823d1a4e44e664383857e58886c007d18ce118d59872b0a735d110eb`.
+  This retains the exact source-byte comparison, focused host logs, release
+  build logs and independent smoke binary; it is not native-run evidence.
+- `ferric-native-target-c6-v1/evidence-r1/native-target-c6-evidence-r1.tar.gz`,
+  SHA-256 `0dc8ca2a724bde837750bae565a4224feae03e6f88fde50913ed35c58199999d`.
+  This separately retains the reviewed control, exact native binary, actual
+  report, startup diagnostics, resources and before/after GPU facts. Its
+  authority remains `none`; it is not a qualification receipt.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-polarity/polarity-evidence.tar.gz`,
+  SHA-256 `6a8ed82ec6eee1d8fda59833745df6847718093b7f9c3eb7e4d4d164a4be40bb`.
+- `ferric-m1-bundle-current-v1/evidence-r1.tar.gz`, SHA-256
+  `54547e1b14bb419f189d35b98c698d4928a4e9adb37ca232c01cba546fd1d60d`.
+  This contains the prepack CLI, controls, logs and non-weight snapshot files;
+  the large weights remain only in the owned remote snapshot for native use.
+- `ferric-m1-bundle-current-v1/generated-source-evidence-r1.tar.gz`, SHA-256
+  `ca256a209e92e4808781cc2f80774132bc30cc653d584d5b804f69a4d639f1ad`.
+  This separately retains the d55/852 generator and actual source-check logs.
+
+Earlier compiler, source-macro, stale-README and Clippy failures remain retained
+with their original source identities. No checker or admission rule was relaxed.
+
+The Pages-only checkpoint `454b7cd8` is pushed to public main with only public
+ancestry. Workflow `34900342080` succeeds and all seven live assets match the
+reviewed 550,455-byte artifact. The source/browser archive SHA-256 is
+`a4f8f4cbf235b030ac7e7f50d65c28bf770e01b71b23d454011ac114fe2f0d97`;
+deployment archive SHA-256 is
+`30d9d747d7d9f62cbcb409165a7b47c84297786c834b9e063af3e8ca848aca62`.
+The site reports the separate ccfd four-token and c6 one-token observations,
+current ccfd host tests and d094 scoped coverage. It does not yet report the
+later K4 run or new 4f6 integration; performance data remains unchanged.
+The completed Pages stage/worktree are removed. No private ancestry is pushed.
+
+Earlier Pages-only checkpoint `524bfb70` was pushed to public main with only public
+ancestry and five site-file changes. Remote browser and scope validation pass;
+workflow `34895549244` succeeds for the exact commit and all seven live assets
+match the reviewed artifact (539,684 bytes). Deployment archive SHA-256 is
+`29cbdf447565b5ba65b519ad37ae911026703c8284c6e3598d525bca2c1f8540`.
+The site reports the c6/f17 emission and resolved assertion comparison while
+keeping current-pin host validation pending. Performance data is unchanged.
+The completed Pages worktree and owned stage are removed; the stage cleanup
+reclaims 74,500 KiB. No private implementation ancestry is published.
+Completed runtime and proof worktrees have been
+removed after exact-source/evidence checks, as has the obsolete owned compiler
+stage in `/tmp` (1,073,320 KiB reclaimed). Active build caches, the new model
+snapshot, original dirty worktrees and other users' state remain untouched.
+The shared host stage additionally reclaims 6,730,804 KiB from exactly 2,542
+obsolete owned build outputs after source provenance, hash and no-live-use
+checks. Obsolete ae441/829/852 compiler tool copies reclaim another 596,056 KiB
+after retained-archive and no-live-use checks; c6 tools and native inputs remain.
+The completed native smoke run and control stages are removed after archive
+acquisition and no-live-use checks, reclaiming another 14,792 KiB.
+All executable validation runs on mi300x. No new TTFT, TPOT, throughput, GPU
+correctness or competitiveness result is claimed.
+
+Engineering R29 capture already emits real BF16 logit rows and argmax tokens,
+but the existing reference/comparator correctly rejects its nonqualifying
+transcript. A separate selected-case engineering comparison path is now under
+implementation, retaining numerical and identity checks without producing
+qualification acceptance. The selected comparator prototype passes 17 Rust
+tests and strict Clippy. The extended engineering reference/input candidate
+passes 23 existing and eleven new Python tests plus policy checks; its new
+Rust input/capture path is not yet tested or integrated. Its schemas explicitly
+remain separate from qualification closure and acceptance policy. The first
+planned case is `prefill-s1-t128.001`; existing decode cases require 8,192
+teacher-forced rounds. An isolated, version-checked reference environment is
+prepared remotely; it has not yet run the numerical comparison on the GPU.
+
+The next native path has an additional explicit boundary: engineering HSACO
+emission does not produce an authenticated Worker V3 selector. The protected
+compiler profile and supervisor socket are not provisioned on mi300x. Ferric's
+concrete independent-checker IPC client is now integrated. Exact agent source
+20175f93/82d passes 81 service library tests (including eleven checker tests),
+27 integration tests with three existing ignores, six compile-fail doctests,
+strict all-target Clippy and a normal-only production check. Actual normal
+compiler-artifact receipts show no fe2o3-host test-support features. Two root-owned
+wrapping-only formatting failures are corrected in 6651; the full latest-pin
+service checks now pass in the bb2/ccfd host suite. Earlier resource-cap stops and the relocated
+test-factory policy failure are retained separately, not counted as successful
+tests.
+It sends every envelope and HSACO byte to the pinned preopened endpoint under
+one absolute deadline and rejects mismatched results or ambiguous channel
+reuse. The supervisor admission is explicitly unsafe and requires a separately
+measured real checker. Neither the client nor its tests supply theorem results.
+Actual checker authority, protected compiler/current records, separate signing
+authority, durable antirollback state and reviewed deployment remain required.
+
+## Prior Initial 829 Checkpoint
+
+Private integration `b039c17d3287c25d3611e3e2be544003bd9c5a30`, tree
+`a6ccddda03b079664bd0a40708a802362d829390`, pins published fe2o3
+`82950a3cfc7b0192159fb7afcd1b89fb48d56053`. Pliron remains
+`161c385576d45d4e634ba179fa93a545b91124e6`. All 79 active pin files reverse
+exactly to their parent before refreshing the two derived verifier manifest
+and lockfile SHA-256 arrays. Historical binary producers remain unchanged.
+
+| Team | Completed Since Prior Checkpoint | Work In Progress |
+| --- | --- | --- |
+| Compiler / Kernels | Actual aggregate extraction at ae441 attributes the divisor rejection to paged GQA coordinates at line 322. Ferric `6da025e` specializes five coordinate expressions with literal divisors; all 35 aggregate host tests pass, including AST equivalence across 14 profiles. Actual extraction then reaches an unproved overflow assertion at line 378. Native and NLL MIR identify the guarded `query_position + 1`. The statement-ordered upper-bound repair is rebased onto newer upstream `5a762019f`, validated and pushed as `82950a3cf`. Exact rebased suites pass: compiler-lineage 38, kernel-analysis 115, focused backend 2, full backend 536. Strict Clippy has no added/removed normalized fingerprint against 5a; it is not an upstream lint-clean result. | Build exact published tools and emit the new aggregate. The host regressions do not prove the actual aggregate now emits. No new image or GPU result. |
+| Runtime / Integration | Published fe2o3 `b750` exposes the generation held by a completed-read request; service-host 43, service qualification 45 and three pure KFD tests pass. Local Ferric adds preallocated catch-up inputs/pages, checked one-token draft settlement with zero logical output, exact readback generation checks, retained original bindings and distinct maintenance/restore queue transitions. Registry `06502842` retains Pending/InFlight/Completed phases, including abort and cancellation custody. | Integrate maintenance execution, checked readback and restoration into the real resident loop. Later runtime `12598683` is under integration and is not part of the green full host snapshot below. Same-owner witness registration and intermediate physical epochs still need actual resident tests. |
+| Verification | Private `fc194dac` with published b750 passes 34 focused registry tests and 693 full engine library tests, with nine existing ignores. This includes seven new metadata-only registry tests and three diagnostic-reset tests covering K4/K8/K16, exact extents, invalid-token sentinels and rejected substitutions. Earlier selected Verus `kv_physical` remains 4 verified, 0 errors at bd2/e6. | Fresh 829 dependency graphs, source policies and structured TCB equality; latest source coverage with new bodies truthfully unverified; real resident witness/failure tests. No warmed catch-up allocation, physical catch-up proof or gate closure is established by these host tests. |
+
+The registry keeps the logical speculative parent while exposing the actual
+425-packet maintenance shape. A sealed pending witness is required before
+maintenance publication; aborting either publication retains the obligation.
+Ordinary completion cannot settle maintenance. A checked maintenance witness
+advances the physical epoch without adding a served token or speculative round;
+the next real speculative publication restores the original K4/K8/K16 shape.
+The tests exercise metadata keys, not fabricated physical completion witnesses.
+
+The diagnostic reset uses the canonical `u32::MAX` unwritten-token sentinel,
+not zero. Exact draft/target extents are 16/20, 32/36 and 64/68 bytes for the
+three singleton widths. Missing device writes must not become valid token zero.
+Independent source review found no further concrete registry or lower restore
+defect, but the real resident association remains a separate integration test.
+
+Evidence acquired locally includes:
+- `ferric-catchup-composition-v1/REGISTRY_RESET_RECEIPT.md` and raw logs. The exact
+  fc194 source archive SHA-256 is
+  `321c3cd04fb2dc990e08d7460de05fbee1c16fbb1036ae5346e35dd85ff3f76a`.
+- `ferric-divisor-diagnostic-gate-v1/acquisition-paged-getter/paged-and-getter-evidence.tar.gz`,
+  SHA-256 `cf6e686834c3f7ce714d3dfc83c8e49e1c7cc734cc5ddcbe4c1e1e3300258b1e`.
+  It retains the host/getter gates, archive mode-control failures and actual
+  overflow rejection. The newer MIR and 829 tests are separate evidence.
+- Pages-only public commit `a7a38b26` deployed successfully in workflow
+  `34883199424`. All seven live assets match reviewed source bytes (530,597 bytes).
+  Performance data is unchanged. Its clean worktree and owned 35 MiB remote stage
+  were removed after evidence acquisition; no private implementation was pushed.
+
+All builds, tests, proof runs and formatters remain on mi300x. No new TTFT, TPOT,
+throughput, GPU correctness result or competitiveness claim follows. The 693-test
+suite is bound to b750, not the later 829 pin or later resident integration.
+
+## Prior Ae441 Checkpoint
+
+Private integration `6d10fb900574dcdd11d84364f54b8d90ced4856a`, tree
+`3fb0f878ae22b5c72697b9f18ebf18c0aa36d69a`, pins published fe2o3
+`ae441734f27ef35c26baf7b3a6281852cd544de9`. Pliron remains
+`161c385576d45d4e634ba179fa93a545b91124e6`. The 79-file pin migration reverses
+exactly to its parent before the two derived verifier manifest/lock digests
+are refreshed. No kernel bytes or historical producer identities change.
+
+| Team | Completed Since Prior Checkpoint | Work In Progress |
+| --- | --- | --- |
+| Compiler | Bounded typed divisor diagnostics retain root, innermost assignment, source and operand context without changing the nonzero acceptance predicate. Root fetched, rebased onto new main `836afb284`, validated and pushed `ae441734f` to main. Exact rebased tests pass: compiler-lineage 30, kernel-analysis 97, kernel-ir 291, focused backend 16 and full backend 534. Strict Clippy has no fingerprint delta against pristine 836; upstream is not lint-clean. | Build exact published release CLI/backend and emit the matching aggregate. The prior divisor failure still lacks actual root attribution until that run. No new image or GPU result. |
+| Runtime / Integration | Local commits `f8c8071`, `385f687` and `68e1f68` add parent-bound K4/K8/K16 catch-up composition, exact workspace/buffer bindings, maintenance output-tag checks and a sealed coordinator transition. | Integrate authenticated reservation, queue/registry phases, readback and resident execution. The new engine changes are remotely formatted but not yet compiled/tested together; full acceptance still fails closed before another ordinary round. |
+| Verification | Actual Verus run on `bd2f246` with e6/Pliron161 verifies four items in selected `kv_physical`, zero errors, with exact pinned 190-file closure before/after. Root integrates the strengthened relation as `e6f5151`. | Implement private maintenance receipt/readback and validate the combined runtime checkpoint. This proof does not establish the physical catch-up path or close a roadmap gate. |
+
+Catch-up composition is 424 canonical draft-decode rows followed by the single
+canonical target compact row. The full source expansion identity is retained
+even though only its last row is projected. Draft argmax writes the exact
+four-byte completion `Choices` range consumed by compact; no target KV row runs.
+The coordinator transition requires matching parent/request/coordinator,
+round, consecutive physical epoch and dispatch generation, active member and
+an exact one-token cursor gap. It changes only draft committed position and
+last physical epoch, leaving target position, output count, bonus anchor and
+logical round count unchanged. Focused positive/rejection tests are added but
+await the combined host run.
+
+The preceding e6 migration passes all 32 locked metadata graphs, 38 source-gate
+tests and 31 verifier-policy tests. At immutable `e6f5151`, fresh root/verifier/
+source-gate metadata and regenerated production/dev/full dependency inventories
+match committed bytes. Inventory deltas are only the two new Pliron test targets
+in each verifier scope. These results remain bound to e6; the newer ae441 pins
+still need their own metadata and consumer validation. New catch-up executable
+bodies also need refreshed source coverage with truthful unverified status.
+
+Retained local evidence includes `ferric-catchup-proof-gate-v1/proof-evidence-r2.tar.gz`
+(SHA-256 `4d58e31661411697cc82bd09eb0ce055374f71f2cea65b911d64a88b0457dc57`)
+and `ferric-divisor-diagnostic-gate-v1/acquisition-ae441-tests/ae441-tests-evidence.tar.gz`
+(SHA-256 `cc74d89c88943c2fe9208e3db4925f827e1d7e12f3097e899c1e947ea770e14e`),
+under the owned `.codex-tmp` evidence root. No new TTFT, TPOT, throughput,
+hardware qualification or performance parity is claimed. Builds, proofs,
+tests and formatting run only on mi300x, in bounded owned scratch storage.
+
+## Prior Eaa Checkpoint
+
+Private integration `0b2d53a` advances the 79 active dependency-pin files to
+published fe2o3 `eaa057ac34f8fc3cfda3dd2c2cb7df058560de06`, tree
+`d356bb5f5f7ffbb1e5d4b46991f246cf3edc176b`. Exact reverse substitution
+reproduces `8d29d70` except for two separately validated derived verifier
+manifest/lock hashes. Historical images and benchmark receipts retain their
+actual producers. The installed ae267 KFD worker's receipt-derived nine-crate
+source closure, workspace manifests and toolchain remain byte-identical through
+dc8 and eaa; it is not relabeled as a new build. All builds, tests and formatting
+run on mi300x, not locally.
+
+A final upstream check finds the newer `e6cfa668f21e5b80d2e70730ed61602c1aaf5804`,
+which advances Pliron to `161c385576d45d4e634ba179fa93a545b91124e6` for rewrite
+observers and dead internal block-argument elimination. The divisor predicate
+and eaa resource fix are unchanged. The KFD crate trees remain unchanged, but
+the workspace manifest/lock do not. This newer revision is tracked, not yet
+validated here: migration requires refreshed dependency inventories, compiler
+builds/tests and aggregate emission. The results below remain bound to eaa.
+
+| Team | Current Work | Acceptance Still Required |
+| --- | --- | --- |
+| Compiler | Resource fix eaa057ac is rebased on c76f844 and pushed to main. All 1,006 Pliron tests and strict Clippy pass; the 13 focused tests are a subset. Exact published CLI/backend builds and 33 aggregate host tests pass. | Actual aggregate emission now rejects an unproven nonzero control divisor. Attribute the kernel/expression, repair the appropriate layer, emit the aggregate and inspect ABI/resources. No image or GPU result exists for this attempt. |
+| Serving | Private 5c74b6f implements S1/K4, K8 and K16 through prefill, registry, queue storage and readback. Private 624d9a2 exposes selection through the sealed owner plan. Private 8d29d70 fixes recipe/preparation workspace identities in the real builder. Legacy canonical bytes and K4 wrappers remain compatible; S8 is not added. | Public-eaa host suite at 9e4d818 passes 659 engine tests (nine ignored), 109 adapter tests (one ignored), 37 adapter policies and 31 verifier policies. The service passes 16 tests and three policies. Authenticated gfx942 execution and serving qualification remain open. |
+| Verification | Review found the existing full-accept draft cursor gap. The resident path now rejects another common-anchor round when target/draft cursors differ. K16 storage distinguishes seventeen logical verification choices from thirty-two physical rows. | A real authenticated draft catch-up dispatch, completion-bound cursor advance and repeated full-accept execution. The engineering catch-up path is not a substitute. |
+
+The earlier dc8 rejection occurred at the existing GEMM vector root with 385
+projected blocks and 77,791,232 invocations. Its deterministic resource accounting
+predates dc8; it was not an OS memory limit or an identified dc8 regression.
+Published eaa distinguishes unreachable exact fallback from reachable bounded
+Presburger enumeration, preserving mandatory checks and hard limits. Compiler
+test archive `de075f4d` retains both the initial fixture failure and corrected
+passing run. Exact eaa emission passes the earlier resource blocker, then rejects
+"a division or remainder used for deterministic control lacks a statically nonzero
+divisor". The diagnostic does not identify the root, so the new failure is not
+attributed to GEMM. Archive `4655edd6` and emission log `8529eed1` retain this
+failure; no image, replay or native execution is claimed. Diagnostic root and
+expression attribution is the next compiler step, before kernel specialization.
+
+The first host attempts retained an upstream feature-environment failure and a
+test-only coordinator API error before the successful engine suite. Subsequent
+adapter compilation found an existing numerical module missing its batch-feature
+gate. Private 6f0621d adds that gate, a source-policy regression check, and an
+assertion consuming the resident test's must-use round outcome. These corrections
+do not enable engineering features in the protected service. The corrected
+deadline policies at `2e073b5` pass, including eighteen bounded-wait mutations and
+five terminal-custody mutations. All 32 locked metadata graphs pass. At
+`8d6813f`, the isolated warmed planning test passes for K4, K8 and K16 with zero
+allocations/reallocations; formatting and strict engine Clippy pass. This checks
+host planning only, not physical GPU rounds or end-to-end performance. The unused
+clean fe2o3 worktree is removed; the user's dirty original checkout is untouched.
+
+The regenerated source inventory contains 173 modules and 8,252 executable
+bodies: 722 existing verified bodies and 7,530 unverified bodies. Its delta is
+eighteen added unverified bodies and one removed K4-specific helper; all new
+bodies are recorded as `pending-verus`. The 7,512 unchanged rationale records
+remain byte-identical. Seven upstream test-target metadata rows are refreshed
+in each verifier dependency scope. There is no proof-status upgrade.
+Final validation at `dd5ade0` passes source coverage, regenerated coverage and
+dependency-inventory equality, fresh locked metadata, and both policy checks.
+The retained final source archive has SHA-256
+`f2d73e96953334cc7d9cf934288a6c15ea8b1d533d2a25a7ba02e82bfa17c5f0`.
+
+The cursor gap is a draft-prefix correctness issue; this review did not
+demonstrate a target-token mismatch. Fully accepted rounds may still terminate
+normally when their output policy is complete. Continuing such a request must
+fail closed until the missing last accepted draft token has been processed by
+a real catch-up step. Host cursor adjustment would not repair its KV contents.
+
+No new TTFT, TPOT or throughput result is claimed by this implementation work.
+S8 authenticated cohorts, mixed-active admission, cooperative gfx942 kernels
+and the remaining M1 proof/hardware/performance obligations remain open.
+
+## Earlier Checkpoints
+
+At the September 13 checkpoint, upstream fe2o3 main resolved to
+`b9ab3553d1e7f87751a24892ba66a591408ee31f`, fetched without changing the
+existing dirty fe2o3 worktree. This adds shared bounded semantic verification
+and canonical V12 admission; it is a substantive compiler change, not a
+revision-only validation. The worker's declared local dependency closure is
+byte-identical from ae267 through b9, including KFD and manifests. That does
+not relabel its actual producer. A separate compiler migration still needs a
+fresh build, verifier/consumer regressions and V15 emission/ABI checks. No
+fe2o3 source edits or push were required for the completed comparison.
+
+The frozen comparison and then-active integration were pinned to
+`c9c7036cf98034b638886f54a745701e70ac3571`, with Pliron
+`9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. The two commits since ae267
+change private SSA operation-order verification/resource accounting, then add
+explicit raw KIR V12 codecs with fail-closed vector/event admission. Inspection
+finds no V15 scalar path or runtime ABI change. Runtime/KFD, device SDK, LLVM
+worker, all dependency manifests and the upstream lock are unchanged.
+Controllers still transitively depend on changed compiler crates.
+Private `3ababa7` updates the same 79 active files to `18946f6`
+by exact revision substitution; reversing it reproduces all prior bytes.
+The separate `319315e` substitution advances those files to `c9c7036` before any
+18946 build began. Verifier test manifest/lock hashes are refreshed separately.
+The c9 compiler CLI/backend build and 57 identity tests now pass. A collector
+expectation for Pliron's empty default feature was corrected separately without
+rerunning those tests; both focused V12 tests then pass. The original collector
+failure remains retained. V15 emission at Ferric `f393390` passes all 15 phases,
+including 23 kernel tests, strict Clippy and 31 verifier source-policy tests.
+Archive `1e21a6ff` retains the complete emission. Existing binaries and images
+retain their actual producer revisions; this does not relabel the ae267 worker.
+
+The preceding ae267 checkpoint used
+`ae26717922b1fb7ad62fdd5ad70814d83eb01177`, with Pliron
+`9de42fc6ca7b8f3500ccf2346d69ebbb36e889cd`. The two upstream commits since
+61e change auxiliary-queue teardown and a runtime benchmark's error reporting,
+not manifests, the upstream lock, compiler code or the worker protocol.
+Private integration `94eb4e1` updates 79 files by exact revision substitution
+only; reversing that substitution reproduces every prior file byte-for-byte.
+Its locked metadata and focused host checks now pass. The actual ae267 KFD
+worker passes 484 library tests, 31 doctests and strict Clippy, with one
+unchanged hardware-fixture test ignored. Its binary SHA is `526cc6bf`.
+Current ae267 CLI/backend tools also build successfully on mi300x. The first
+compiler attempt's missing nightly library is retained; the separately scoped
+second attempt changes only its loader environment and passes all seven phases.
+Existing emitted images retain their actual producer revisions. No fe2o3
+source changes or implementation pushes were made in this continuation.
+
+The combined V14 host snapshot `f3b596f` passed 1,025 tests across 23 targets
+(56 ignored), the focused V14 checks, image admission and source policies,
+then failed strict Clippy on three test-only warnings. Commit `af1b384` fixes
+those warnings without production changes. The ae267 continuation at `7c92836`
+passes 29 steps including focused tests, strict Clippy, release builds, 74 HTTP
+tests and 38 source-policy tests. Its stale verifier manifest/lock hash arrays
+are corrected only in tests at `4f21514`; all 31 verifier tests and final source,
+dependency and seven-binary checks pass. Remote formatting passes at `0793070`.
+The original failures remain retained; the full 1,025-test suite was not rerun
+against ae267. Production controller source remains `7c92836`, binary `5b7fd71c`.
+
+All four real Qwen V14 correctness cases now pass on mi350 GPU0: resident wave
+and query-hoist V14 at both 8 and 128 outputs, using that controller and ae267
+worker. Exact token IDs/UTF8, normal shutdown, retirement/drain and all-eight
+idle checks pass. An independent mi300x CPU replay matches all four complete
+wrapper objects. The first launch's content-directory layout failure remains
+preserved; R2 changes only the artifact path and run-directory tags. These
+finite context256 cases do not add timing metrics, HTTP qualification, a
+same-compiler ablation, default promotion or an M1 gate closure.
+
+Native result `14a0b50e` and archive `8d4fe904` retain the four cases; independent
+replay result `a38f1d6c` and archive `26727569` retain the recomputation. The
+completed host stage and three compiler targets were removed (7,377,032 KiB),
+as were eight mi350 run/wrapper/upload directories (14,680 KiB) and the CPU
+replay stage (3,964 KiB). Models, active compiler inputs and installed binaries
+remain intact. V15's first emission attempt stopped on a missing offline
+dependency. The corrected standalone/build-std cache passes exact 163/198
+package checks, but ae267 rejects the unchanged kernel with
+`UnprovenBarrierConvergence` at bb33/op0. Archive `64c99339` retains that
+failure. The first-pass guarded-read correction at `c119660`, remotely formatted
+at `39be94d`, now passes all twelve R3 phases: 23 focused host tests, strict
+Clippy, unchanged-ae267 emission, capture and independent ABI/resource checks.
+Archive `c4f3be27` retains all 33,585 files and matching 40,774 metadata entries.
+Image `a9da1d79` measures 96 explicit / 96 hidden offset / 352 total bytes,
+Wave64, 70 SGPR / 22 VGPR, with zero spills/private/LDS/AGPR/dynamic stack.
+Independent static review finds no blocker: RNE/preserved-denormal/IEEE mode,
+convergent reductions and refined sqrt/division match the intended policy.
+This is not a complete numerical proof or native result. The correction
+changes no compiler, lock, arithmetic, ABI or second-pass volatile read.
+Separately, exact analytical BF16 fixtures are integrated at `fcbba18`:
+ten CPU tests and an eight-case self-test pass, archive `7b71c9c9`. These
+fixtures do not bind an image or launch a GPU. Their completed 204 KiB stage
+is removed. The completed format-only and failed R2 emission stages are also
+removed (804 and 989,132 KiB), followed by the accepted R3 stage
+(1,905,580 KiB).
+
+The separate c9 emission produces image `68607fc1`, observation `66980589`
+and handoff `0d9ee564`. Its 2,940-byte kernel body and hardware descriptor are
+byte-identical to the ae267 image; differences are confined to nonallocated
+compiler metadata. ABI and resource counts remain unchanged. Thirty CPU methods
+for the unchanged fixtures and new native probe/wrapper pass on mi300x.
+All eight real mi350 GPU0 cases then pass: uniform/signed inputs at rows
+1/16/17/32, with 40 exact complete-buffer comparisons and 80 guards. The first
+install-only tar-option failure is retained; the corrected install changes no
+probe or image bytes. Native result `e6b2919c` and archive `c96ea879` retain the
+run. Independent CPU replay `816d5c29` reconstructs all 357 protocol records and
+expected payload hashes. These finite normal cases do not cover general FP32
+equivalence, invalid/trap behavior, rounding boundaries or model parity.
+
+Private source `9dfedb5` adds a separately admitted opt-in V15 adapter and a thin
+same-image baseline/wave-v15 Qwen canary. Only the three pure width4096 target
+normalization sites change; Q/K, draft, fused and default routes are unchanged.
+Its nine focused tests, 35 source policies, 101 batching regressions, new and
+legacy canary tests (67 each), and actual V15 image admission pass. A scratch
+budget stop and subsequent strict Clippy failures remain retained. The completed
+compiler parent is archived and removed, reclaiming 1,882,992 KiB. Correction
+`ff313b4` borrows the V15 constructor argument then copies the same owned binding,
+avoiding an oversized temporary profile without heap allocation; rustdoc and
+test-only statement corrections end at `87fdcea`. That exact source passes all
+20 host-gate phases: formatting, strict all-target Clippy, nine focused tests,
+35 source policies, 101 batching regressions, new and legacy canary tests
+(67 each), actual V15 image admission and release. Archive `ca6dd019` retains
+the run; controller `21168d30` is bound to that source. Independent code review
+finds no concrete blocker. The final bound model wrapper passes 23 CPU methods;
+the separate prospective ABBA reducer passes 19. All four baseline/V15 Qwen
+cases at eight and 128 outputs now pass exact token IDs/UTF8, retirement and
+normal unforced close. All eight GPUs are idle before and after each case.
+Archive `1e2ff5f1` retains the native run; independent CPU replay `dd2f37f1`
+reproduces all four complete checked traces and wrappers. The first launcher's
+SSH-stdin mistake is preserved: it launched only the first case; a fixed-array
+continuation launched each remaining case once. No numerical retry occurred.
+
+A separate fresh full128 ABBA cohort also passes independent replay `5ee062de`.
+At n=2 per mode, baseline/V15 mean TTFT is 2.829254/2.475442 seconds, TPOT
+166.854/113.231 ms and mean per-run output rate 5.415718/7.854668 tokens/s.
+These descriptive changes are 12.51% lower TTFT, 32.14% lower TPOT and 45.03%
+higher rate. Within-mode TPOT range/mean is 27.96%/40.92%, so stability is not
+established. The boundary is controller host-prefill-start through final token
+commit, excluding setup; it is not HTTP or GPU duration. Correctness timings
+and all historical cohorts are excluded. Native archive `4af4c059` and replay
+archive `1615f275` retain the comparison. No default or competitive win follows.
+
+The separate V15 live entrypoint is integrated at its tested source `5b3e332`.
+All 16 host phases pass: formatting, strict all-target Clippy, 40 live tests,
+36 source policies, 35 legacy C1 tests, 29 old wave-live tests and release.
+Nine unchanged tests are ignored across those live targets. Archive `2f0be996`
+retains the gate; live controller `757d0579` remains a distinct producer from
+the canary. The bound HTTP harness passes all 33 CPU tests; its first stale
+test-fixture failure is preserved. Both context8192 HTTP correctness runs now
+pass: two full128 requests per mode, exact token IDs/UTF8, slot0 generations1/2,
+zero cached prefix, normal drain/close and all-eight-idle checks. Native archives
+`118335a6`/`2300e7c6` retain the baseline/V15 runs, with 25 files and 27 metadata
+entries each. Independent CPU replay `c8fde727` rechecks all four streams,
+512 generated IDs, original numerical diagnostics and lifecycle/resource
+records; archive `02588b51` retains all 97 replay files. No timing is reduced
+from these qualification requests. Matched HTTP measurement remains next.
+
+Completed V15 host scratch is removed after full retention, reclaiming
+5,515,132 KiB including formatter stages. The four model run directories and
+upload (12,964 KiB), four ABBA directories (6,484 KiB), model/ABBA replay
+stages (3,948/7,820 KiB), both HTTP CPU stages (792 KiB) and the HTTP replay
+stage (1,344 KiB) are removed. Both completed HTTP run/plan/authorization sets
+(816 KiB) and their upload (2,648 KiB unshared allocation) are also removed.
+The installed live binary retains its own hardlink and is not counted as freed.
+The redundant live worktree is also removed. Models, required installed
+controllers, workers and images remain intact.
+
+Pages-only `030b9e1` is deployed; workflow `34749428862` succeeds and all seven
+live assets match the tested artifact at 09:26:33 UTC. It adds the model and
+descriptive ABBA results while retaining historical checkpoints and unchanged
+HTTP timing data. Evidence, browser and every integer width from 320 to 1440 pass.
+The first date-validator failure is preserved; the correction explicitly checks
+both old/new dates before comparing all other historical fields unchanged.
+Both archived result sets remain local. The completed remote parent
+(309,656 KiB) and published sparse worktree (1,252 KiB) are removed.
+
+## Current Performance Swarm
+
+Combined integration `9c2e98e` includes the paired K4 canary and standalone
+parallel argmax, with active dependencies pinned to public fe2o3
+`8efd4fd416d1ffae7a718144e4d299fe3c8f7590`. The latest adapter tests,
+release builds, source/verifier policies, inventory comparisons and negative/
+release policy gates pass, with the final aggregate archived. Opt-in target
+argmax route and retirement correction `17dcaa4` are integrated locally from
+tested source `d9a2705`; all host and source-policy gates pass. The first
+`f662d54` native control was rejected for a canary freshness-predicate error,
+with clean teardown and no admitted parity or timing. All six corrected
+fixed-oracle runs now pass independent replay. The full128 diagnostic pair
+observes TPOT 553.420 -> 528.962 ms and output rate +4.67%; the short8 ABBA
+observes +10.16% mean output rate, with two runs per mode. These are native
+host-wall descriptions, not HTTP performance or default-promotion evidence.
+Frozen GPU binaries retain their actual source identities. Ferric implementation
+remains local; separately reviewed Pages content is published independently.
+Instrumentation source `809af245` is integrated and passes all 32 host-gate
+steps. Its unchanged full128 model diagnostic passes: the GQA math group
+accounts for 72.59% of the attention parent host span. This is attribution,
+not a measured speedup from instrumentation.
+The separate attention/v11 composition is integrated as `dcbbd5b` from tested
+source `ed112e0`; all 42 required host-gate steps pass across two reviewed
+harness revisions. Eight native finite attention fixtures also pass exact
+full-buffer and guard comparisons. All four fixed-reference baseline/wave
+8/128-output model checks pass, with clean teardown and all-eight idle checks.
+The separate full128 ABBA comparison and independent byte-authenticated replay
+pass. With wave-v11 argmax fixed, baseline-to-wave attention observes mean
+TTFT 3973.109 -> 3307.672 ms, TPOT 521.458 -> 258.562 ms and mean per-run
+output rate 1.823408 -> 3.598124 tokens/s. These are native host-clock
+descriptions with two runs per mode, not new HTTP results. Wave TPOT ranges
+224.460-292.664 ms; no stable or competitive gain is claimed.
+
+The separate synchronous/ordered composition now passes four exact-reference
+8/128-output correctness cases and all four predeclared full128 ABBA samples.
+Independent byte-authenticated replay admits a descriptive n=2 comparison:
+mean TTFT 3126.512 -> 2848.070 ms, TPOT 230.559 -> 194.927 ms, and mean per-run
+output rate 3.949884 -> 4.643287 tokens/s (+17.56%). Ordered TPOT ranges
+187.289-202.566 ms. This changes only submission with wave attention and v11
+argmax fixed; context256 host timing does not replace context8192 HTTP timing.
+All four correctness timings and prior cohorts remain excluded.
+
+The new live entrypoint now also passes two fresh sequential full128 HTTP
+requests in each submission mode at context8192. Both modes reproduce exact
+reference token IDs and UTF8, reuse slot0 with generations1/2 and no cached
+prefix, and close normally with all eight GPUs idle afterward. Independent raw
+review agrees. These four correctness requests provide no timing samples.
+Both separate matched HTTP cohorts now pass all 42 requests and independent
+raw replay. Thirty measured requests per mode observe mean TTFT 3482.380 /
+2862.079 ms, TPOT 276.255 / 192.127 ms and throughput 3.318800 / 4.694997
+tokens/s for synchronous / ordered submission. Ten warmups and two diagnostics
+per mode are excluded. These are sequential, single-start cohorts, not a
+stable-gain or isolated per-kernel claim.
+
+| Team | Current Progress | Next Gate |
+| --- | --- | --- |
+| Measurement | The new same-binary HTTP pair passes independent replay: MFMA layers TTFT 2873.632 ms / TPOT 199.719 ms / 4.532745 tokens/s; C1-wave layers 2827.804 ms / 154.310 ms / 5.707624 tokens/s. Each has 30 measured requests, ten warmups and two diagnostics. C1 observes 25.92% higher rate and 22.74% lower TPOT. Retained vLLM: 19.243 / 4.414 ms and 220.558111 tokens/s, about 38.64x the C1 rate. SGLang r7 retains its exact-output rejection. | Repeated primary workloads and bottleneck attribution remain pending. These are single-start finite cohorts, not stable gains or sustained-load qualification. No admitted SGLang metrics or competitive win. |
+| Kernels | V13 `256a6e4` passes host/emission checks at then-current `8efd4fd`. V14 passes eight native finite cases and four Qwen 8/128-output checks. V15 at `f393390` passes c9 emission, 23 kernel tests, strict Clippy, 31 verifier tests and static review. Image `68607fc1` passes eight native cases with 40 complete buffers and 80 guards; independent replay matches all 357 protocol records. Its opt-in adapter/canary `87fdcea` passes all 20 host phases and four exact Qwen 8/128-output cases. Separate n=2 ABBA replay observes 32.14% lower mean TPOT and 45.03% higher mean per-run rate, with substantial variability. Its live route now passes both context8192 HTTP correctness modes and independent replay. | A separate matched HTTP cohort; no stable gain, default promotion or competitive win. V13 native parity/runtime ordering, V14 same-compiler isolation, general FP32 refinement and detailed typed payloads remain open. |
+| Runtime Optimization | Diagnostic binary `27c0404e` completed two exact 128-output requests and normal drain. Its original report validator failed on a synchronous-command allowlist omission. A separate corrected CPU replay passes all 17 tests and validates the full raw capture: 166,278 dispatches, 347,568 operational currentness checks and 395,246 completion polls. The original native receipt remains failed; no missing postflight is manufactured. | Currentness consumed 8.772 s of overlapping host time; ordered preparation accounts for 165,240 repeated checks. A bounded preparation optimization needs fault-injection tests and matched measurement. No GPU-duration or speedup inference, no fe2o3 change, and no new performance cohort. |
+| Speculation | All eight repeated paged-draft cases pass. Paired K4 has two fresh native passes at frozen `ae355e5` and two separate passes at latest-build `9c2e98e`: each observes real `[4,4]` acceptance, both catch-ups and exact ten-token target prefix. | Broader native rejection coverage and speculative serving integration. No serving or speed qualification. |
+| Verification | Standalone v13 integer model `ed2ceb5` passes pinned Verus: 18 verified queries, zero errors and all 16 required proof functions. Both the original typing failure and corrected pass are archived. Integrated proof source SHA `1111950b` is unchanged. | Actual kernel refinement, FP32 behavior, ABI, runtime ordering and native numerics are separate unproven obligations. All 33 M1 gates remain open. |
+| Integration and Pages | Pages-only `030b9e1` is deployed with seven matching live assets and the model/ABBA checkpoint. Actual V14 controller `5b7fd71c` and ae267 worker `526cc6bf` retain their producer identities. V15 canary `21168d30` passes its host/model gates at `87fdcea`; separate live source `5b3e332` is integrated after all 16 host phases pass, with binary `757d0579`. Its HTTP harness passes 33 CPU tests, both two-request native qualifications and independent four-request replay. Completed scratch stages and redundant worktrees are removed after retention. No implementation push. | Separate matched HTTP measurement. Upstream b9 compiler migration needs its own validation; c9 comparison artifacts are not relabeled. All 33 M1 gates remain open. |
+
+Latest custody checkpoint: C1 replay archive `e2f30d79` and all 115 files are
+accepted; its completed mi300x stage is removed (7,408 KiB). V13 host archive
+`88fb1446` and all 276 files are accepted; its completed stage is removed
+(912,288 KiB), as is the redundant integrated source worktree (42,520 KiB).
+All required source, raw test output and executable artifacts remain retained.
+These updates supersede the pending-build/replay notes in the history below.
+The C1 live complete host archive `7aec042f` and all 2,354 files are also accepted.
+All 93 own-source artifacts were fresh after a closed 22-package clean; external
+dependencies were explicitly warm. The redundant integrated live worktree is
+removed (42,480 KiB). The complete owned build parent is also removed after
+10,838 content checks, exact metadata and all 80 original/new groups were
+confirmed absent, reclaiming 4,199,364 KiB; independent SSH absence passed.
+The eight completed mi350 C1 case directories and six authenticated archive/ledger
+files are also removed after local custody and a fresh normal-close/process check
+(10,788 KiB); shared models and installed images/controllers remain untouched.
+
+Static inspection of the actual resident v5 image `98b5fdb1` confirms two query
+loads/waits inside the attention token loop. The attention descriptor reports
+97 SGPR / 36 VGPR and zero spills; these are not occupancy or elapsed-time data.
+Complete four-command CPU archive `224b645f` is accepted and its small stage is
+removed (780 KiB). Separate query-hoist source `1843d8f` preserves the existing
+token loop, arithmetic and reduction order; only two invariant query reads move.
+Remote formatting archive `39ac6317` and all 92 files are accepted, including
+the original exclusive-transfer flag failure and its one-token correction.
+Only remote formatter output was applied locally; the completed stage is removed
+(832 KiB). Its thirteen host-model/contract tests now pass; complete host archive
+`9d025c46` and all 276 files are accepted, including five fresh own compiler
+records and six immediately retained outputs. Its completed owned host stage is
+removed after fresh content/process checks (913,836 KiB); independent SSH absence
+passed. The clean integrated source worktree is removed nonforced (42,720 KiB),
+with branch, source bundle and all failed/successful evidence retained.
+Partial GEMV also retains a masked fixed-K tail, but that is a separate future
+candidate. No GPU performance attribution or gain follows from disassembly.
+
+The C1 HTTP synthetic gate archive `51240a2f` and all 29 files are accepted;
+all 29 test methods pass with no retry. Its completed CPU stage is removed
+(376 KiB). The new `8ae69215` controller and reviewed HTTP harness are installed
+in separate owned mi350 paths. Both separate context8192 correctness arms now
+pass two exact full128 HTTP requests, slot0 generations1/2, zero cached prefix,
+normal drain and all-eight idle checks. MFMA archive `b71f038b` and C1-wave
+archive `1af0b1ee` match their independent streams and complete file ledgers.
+Both exact matched plans pass independent review and replay their own qualification
+receipts. The MFMA arm completes all 42 requests and closes normally; archive
+`8e1a8fd6` is accepted. C1 R1 fails at the pre-worker socket probe with zero
+requests, preserved in archive `8b61ba88`. The unchanged C1 workload then passes
+in a separate R2 directory, archive `260d126f`. Both independent raw replays pass,
+stdout hashes `783f0dcc` / `0814bd8f`, with forty HTTP/final associations and
+twenty raw files checked per arm. Each arm excludes ten warmups and two diagnostics
+from its thirty measured requests. The zero-request failure remains explicitly
+bound and excluded, with no dropped timing sample. See the
+[same-binary HTTP result](M1_COMPETITIVENESS_SPRINT_V1.md#layer-c1-matched-http-comparison).
+The three completed matched case directories, two matched plan directories and
+three run-specific authorization files are removed after fresh local/remote
+custody and process-absence checks (8,320 KiB); independent absence passes.
+All local archives, failures and replays remain retained. Shared models,
+installed controllers/images and the two qualification cases are untouched.
+
+V13 emission R2 archive `0601efc2` and all 107 files are accepted. Image
+`72104603` has producer/finalizer SGPR counts 35/30 and VGPR counts 18/13;
+both measure 52 explicit, hidden start 56 and 312 total kernarg bytes. The
+original source-mode extraction failure remains archived, with no compiler
+invocation in that attempt. The immutable restored toolchain is retained for
+V14 reuse. V14's separate ten synthetic control tests pass; archive `f18848ad`
+is accepted and its completed CPU stage is removed (3,596 KiB).
+
+V14 emission R2 archive `cb58d401` and all 126 files are accepted. All nine
+phases pass, including eleven revised synthetic control tests in the same stage.
+Image `8f21681f` has 116 explicit, hidden start 120 and 376 total kernarg bytes,
+95 SGPR / 37 VGPR and zero spills/private/LDS/AGPR/dynamic stack. Separate
+static def/use review confirms query loads and conversions stay outside the
+recurring token loop. This is not a same-compiler comparison with resident v5,
+native numerical parity or a measured gain. The typed handoff is digest-only;
+full typed/progress replay remains unavailable. The completed stage is removed
+after fresh exact custody and nine-group absence checks (24,552 KiB), with
+independent SSH absence. The restored compiler is retained for a control.
+
+The additive C1 runtime diagnostic is formatted at source `6116495`, with
+profiling isolated from the timed entrypoint. All 2,268 format archive files
+and 1,103 formatted source hashes pass; archive `c85fc647` is accepted. Its
+completed remote format stage is removed (134,000 KiB). The source-fresh full
+host gate stops at step 28: the source inventory correctly rejects the standalone
+`sharded_argmax_v13.rs` as unreachable inside the Cargo proof package. The first
+27 steps pass (936 tests / 51 ignored / 22 rows, strict Clippy, eight doctests,
+release parity, 74 HTTP regressions and 38 source-gate tests). The last twelve
+steps do not run, so there is no full host admission. Correction `c4fb35d` moves
+only the Rust proof to `proofs/standalone`, preserving SHA `1111950b`, and explains
+the placement in its existing note. No source-gate exception or proof authority
+is added. This original failure remains in full archive `43305fcb`; it is not
+relabeled as a pass.
+
+Corrected source `c4fb35d` passes the separately recorded R2: two scoped clean
+commands and all 40 unchanged checks. The 936/51/22 all-target results, strict
+Clippy, eight doctests, 74 HTTP regressions, 38 source-gate tests, all five
+inventory comparisons and 31 protected policies pass. External compiled
+dependencies are explicitly warm; all 95 first-run own artifact records are
+freshly built. Binary `27c0404e` matches its early, release and final copies.
+Success archive `b8621f4d` has matching independent streams and all 1,244 files
+pass root hash verification. All 42 new and 28 old owned groups close normally.
+Integration through `0e879d6` preserves tested Rust and dependency bytes;
+only existing documentation and the separate Python fixture differ from the
+tested source. Actual runtime counter capture remains pending. A duplicate
+local failed-build target is removed after full failure-archive custody,
+reclaiming 2,300,296 KiB; its original bytes remain in that archive.
+The completed remote diagnostic parent is then removed after fresh exact
+10,587-file and 12,216-entry metadata checks, all 70 owned-group absences and
+binary/tool parity (4,305,344 KiB). Independent SSH absence passes. The clean
+integrated diagnostic worktree is removed nonforced (42,824 KiB); both source
+bundles, branch and all executable/failure evidence remain retained.
+
+The V14 finite two-image fixture `fec0311` is integrated as `4dcc92a`. The
+mi300x CPU gate passes 15 new methods, ten unchanged fixture methods and the
+exact eight-case self-test. Complete archive `12d83421` has two matching
+streams; all 39 files pass independent root checks. All three groups close
+without signals. This validates the fixture and report checks, not native
+parity: its worker/stage/image bindings remain unset. The resident-v5 and V14
+images use different compilers, so even a future numerical pass would not be
+a same-compiler performance ablation. V13's completed emission R2 stage is
+removed after fresh exact checks (24,404 KiB); the restored toolchain stays.
+The completed parity CPU stage and clean integrated source worktree are also
+removed after fresh source/archive/group checks (300 and 42,836 KiB), with
+independent absence checks. The native launch copy is retained separately.
+
+The separately bound V14 native run now passes all eight TP1/context32 cases,
+with exact integer BF16 output, complete input/inactive-tail equality, 48 buffer
+hashes and 96 guards. Resident and candidate loaded ABIs agree at 17 arguments,
+116 explicit and 376 total kernarg bytes. The worker/probe group close normally;
+all eight GPUs are idle before and after. Archive `bfb4ea39` and all22 files
+pass independent root custody. A separate mi300x replay calls the unchanged
+validator and reconstructs all421 protocol rows and guarded payload hashes;
+archive `7403deac` and all35 files pass root custody, with unchanged41 metadata
+entries. This is finite parity, not Qwen parity, TP2/8, context8192, a general
+numerical proof, same-compiler ablation or performance/default admission.
+The completed replay stage is removed (388 KiB). Native runout/upload cleanup
+first stops before deletion at an apparent-size predicate that included directory
+st_sizes; separately reviewed R2 corrects only that expected byte count and
+passes. Only the runout and upload are removed (252 KiB); the installed candidate
+and all shared inputs/models remain unchanged. Independent SSH absence passes,
+and both original failed cleanup and all successful evidence stay local.
+
+Public Pages workflow `34726232156` succeeds on exact source `8e6643f`; all
+seven deployed assets match the accepted artifact, with historical serving
+metrics unchanged. No Ferric implementation or fe2o3 changes were pushed.
+The completed Pages stage and clean worktree are removed after publication and
+fresh custody checks, reclaiming 316,387,328 bytes in total. The retained LLVM
+worker's actual build remains `216822`; its complete worker source subtree
+`613ef51b10cdb00c192b8c6292c06f051f519a6a` is identical at latest fe2o3 `8efd4fd`.
+The later Pages-only checkpoint `351cb254` passes remote QA: all 13 checks,
+eight named viewports, integer widths 320 through 1440, and 58 screenshots.
+Its original dependency-admission failure remains in archive `00844f87`;
+corrected QA archive `dbf44311` and all 881 files pass root custody checks.
+Workflow `34731342554` succeeds for the exact source; all seven canonical
+HTTPS assets match at 2026-09-13T01:54:13Z. Historical `performance.js` remains
+`05ad1f50`. Fresh custody/process checks and independent absence precede release
+of the new Pages stage (308,792 KiB) and clean worktree (1,120 KiB).
+Root fetched fe2o3 again after this gate; public main remains `8efd4fd`.
+
+The matched serving cell uses TP1 on one MI350X, BF16 decoder weights, explicitly
+selected FP32 output heads, context 8192, concurrency one, ten excluded warmups,
+greedy fixed-length output, and speculation/prefix caching off. It is a
+single-start finite cohort, not sustained-load or stock-default qualification.
+Ferric is substantially slower than vLLM. The wave canary is a separate
+host-timed four-request/eight-output workload, with two runs per mode; it cannot
+replace the matched HTTP numbers. See the
+[competitiveness sprint](M1_COMPETITIVENESS_SPRINT_V1.md) for exact evidence.
+
+The earlier native argmax comparison keeps TP1, the same v5 MFMA projections,
+baseline attention, FP32 v8 head, 128-token prompt, context256, prefix caching
+off and ordered submission off. Its full128 pair is n=1 per mode; short8 uses
+the predeclared serial/wave/wave/serial order, n=2 per mode. Do not combine it
+with the earlier wave-plus-ordered gain or replace the matched serving table.
+The new attention ABBA cohort also uses TP1/context256 and a 128-token prompt
+with 128 generated tokens, but fixes wave-v11 argmax and changes only attention.
+Prefix caching, speculation and ordered submission remain off. Timing starts
+before prefill and ends at final token commit, excluding setup, detokenization,
+retirement and close. Mean output rate averages each run's 128/duration value;
+it is not 128 divided by mean duration. The four prior correctness runs are
+excluded. No older gain is multiplied into this result.
+Completed correction and prior route worktrees are removed. Hash-verified
+closure archives precede removal of 7,259,676 KiB of released mi300x stages;
+active team stages, current GPU artifacts, shared models and caches remain.
+The completed Pages stage, v12 stages and redundant instrumentation worktree
+are also removed after verified archival. The completed combined-route stage
+is now removed too, reclaiming 3,620,618,240 allocated bytes remotely and
+43,171,840 bytes for its local worktree. A separate ordered-driver candidate
+has a separate canary worktree; no deleted stage is silently reused. The
+driver-only worktree is removed after integration, reclaiming 43,245,568
+allocated bytes. Its explicitly leased mi300x target is retained for the next
+source-bound gate and will be reported as warm, not a fresh rebuild.
+The completed ABBA replay stage is removed (7,516,160 allocated bytes), as are
+the published attention Pages stage (325,460 KiB) and worktree (2,748 KiB).
+All required source, failures, receipts and deployment evidence remain archived.
+The submission canary is integrated as `0a9d5df`, with implementation bytes
+matching tested `7cb6522`. Its completed candidate worktree is removed
+(42,260 KiB), and the checker CPU stage is removed (208 KiB). The remote
+target was explicitly warm for the completed live-entrypoint gate. Its entire
+released stage is now removed (5,000,296 KiB), as is the redundant live worktree
+(42,308 KiB). The completed submission replay stage is removed (7,296 KiB), with
+its raw inputs, admitted summary and cleanup receipt retained. The published
+submission Pages stage (338,332 KiB) and worktree (2,788 KiB) are removed too.
+Active kernel stages and source candidates remain tracked; unrelated worktrees,
+shared models, images and caches are untouched.
+The superseded clean append worktree `2716371` is also removed (42,284 KiB);
+its commit, branch, source archives and rejected-emission evidence are retained.
+The latest HTTP Pages stage and clean worktree are also removed after verified
+publication and archival, reclaiming 351,616 KiB remotely and 2,816 KiB locally.
+Both validation attempts, final screenshots and exact public asset bytes remain.
+The stopped visible-attention worktree is removed (42,344 KiB). The completed
+residual host stage and worktree are removed after verified archival, reclaiming
+3,296,632 KiB remotely and 42,364 KiB locally. Their source branches, binaries,
+raw test output and failure evidence remain retained.
+The guarded append worktree is also removed (42,292 KiB), preserving its failed
+emission and source branch. The latest native-correctness Pages stage and clean
+worktree are removed after successful deployment and live-byte checks, reclaiming
+312,136 KiB remotely and 2,832 KiB locally. The separate residual-result Pages
+stage and worktree are now removed too: 303,872 KiB remotely and 1,088 KiB
+locally. Workflow `34720093591` deployed exact Pages-only `45b608e`; complete
+gate archive `a92c1ec8`, closure archive `1650da4a` and cleanup receipt `23548311`
+remain retained. Active C1 work remains separate.
+
+The C1 formatting pass produced `f27f85c`. Its first host compile failed before
+tests because a test referenced the private `batched::GEMM` constant; `8b7cb03`
+substitutes the exact existing kernel-name literal without a production change.
+The full failure archive remains, and its owned stage was removed (1,959,704 KiB).
+The next cold all-target command passes all 856 tests, but the enclosing gate
+stops on an incorrect 845 expectation. Eight unchanged paired-contract tests
+and three unchanged worker-diagnostic tests were omitted from the forecast.
+The separately reviewed count-only continuation authenticated the original
+source, artifacts and successful raw output, then passed 15 more declared
+steps before strict Clippy rejected two test-only missing semicolons. Source
+`c2a235e` adds only those semicolons. All failed attempts remain archived;
+the count-stop/continuation stage was removed after verified custody,
+reclaiming 2,894,220 KiB. No failed attempt is represented as a full gate pass.
+
+The new `c2a235e` stage used an empty target and the unchanged 40-step gate,
+with the audited 856/45/20 expectation. All 40 commands and the outer gate pass,
+including strict Clippy, eight doctests, 74 CPU HTTP fixtures, 38 source-gate
+tests, 31 protected source policies and five unchanged inventory comparisons.
+Actual non-test controller `ae5fad8d` (9,018,536 bytes) matches the explicit
+release artifact. Complete host archive `41335206` is independently verified.
+Separate checker and reducer gates pass 28 and 18 methods, respectively;
+archives `ffbd1a4a` and `2fc04d5f` retain their raw evidence. The completed
+checker stage is removed (220 KiB); the reducer stage (292 KiB) remains for
+later actual replay. The idle host stage is briefly retained for the conditional
+live-entrypoint gate, with no reuse authorized yet. A fresh fe2o3 fetch still
+resolves to `8efd4fd`.
+
+Root installed only the new pinned controller/wrapper under the shared mi350
+lease. Both MFMA and C1-Wave pass the 8-token and 128-token cases with exact
+IDs/UTF8, normal close and all-eight-idle pre/postflight. The short cases have
+9,219 packets, 15 batches and cursor135; the full cases have 83,139 packets,
+135 batches and cursor255. Complete four-case archive `d58812cf` matches two
+remote streams and all 52 raw-file hashes and sizes. These correctness timings
+are excluded from the separately declared full128 ABBA cohort, now running.
+Root integrated the opt-in source through `b7b1eda`; all relevant code bytes
+match tested `c2a235e`. The redundant clean source worktree was removed,
+reclaiming 42,436 KiB. Defaults, head and multirow projection remain unchanged.
+
+Independent work produced two-stage sharded FP32 argmax source `5cd315f` and
+remote-format-only follow-up `1ca7223`. It does not change v11, the unrelated
+v12 down-projection candidate, artifact inventories or the C1 route. Source
+review found no algorithm defect. Added parsed store-operand binding mutations
+and scratch-reuse cases bring the forecast to 15 numerical plus 8 contract
+tests; `256a6e4` applies accepted remote-only formatting to those tests. The
+first host build is still pending. Separate integer proof `7faa90c` stopped
+before verification on E0283; raw JSON reports zero verified queries. Correction
+`ed2ceb5` only types two branch literals as `int`; its separate Verus rerun passes
+18 queries, zero errors and all 16 required functions. Raw JSON `f1ec34e3` and
+complete archive `ce0feb56` retain the standalone integer-model result, not actual
+kernel refinement or FP32/runtime admission. The redundant proof worktree is
+removed after integration (42,404 KiB). Conditional live entrypoint `e1ac86f`,
+formatted as `87f38de`, adds explicit ordered-only layer selection without changing
+the old live/parser path; its host gate is still pending. Typed emission, native
+kernel correctness and performance remain unproven; the extra dispatch may
+offset potential parallelism. No new kernel or M1 qualification is claimed.
+
+A read-only timing audit confirms that the current ordered KFD worker exposes
+host elapsed time, not per-dispatch GPU duration. Ferric currently discards the
+returned ordered-batch elapsed value. Retaining it in a separate diagnostic is
+a possible follow-on without a core runtime change, but would still not provide
+GPU timing. No such instrumentation change or new measurement is claimed here.
+
+## September 11 Performance Swarm
+
+Active integration uses public fe2o3 `5110577a6d8c45390dfb353386cde748efd5d76c`,
+including the concurrent-rank runtime published at public797. Frozen benchmark binaries
+retain their actual build identities. Ferric implementation remains local.
+
+| Team | Current Progress | Next Gate |
+| --- | --- | --- |
+| Core runtime | Concurrent mixed-rank dispatch is published after independent review, remote tests and genuine TP2/TP8 producer-reader probes. Completed owned core worktree/build stage removed after archival. | Further overhead work must preserve lifecycle/currentness and failure-quarantine checks. |
+| Measurement | All six TP2/TP8 host/serial/round profiles pass the fixed reference and full sidecar/identity/close checks. Rounds improve output rate 86.96% at TP2 and 579.69% at TP8 versus serial peers, but remain slower than host. | Completed matrix publication; all current observations are n=1. |
+| Kernel numerics | Actual TP1 captures identify the immediate MFMA token flip as a BF16 final-logit tie. The unchanged reference still rejects MFMA BF16. Separate FP32 head/argmax kernels and driver are integrated locally; latest511 emission/replay and host tests pass. | Native FP32/guard checks and matched full-reference model runs; no candidate fix or gain claimed yet. |
+| Integration and Pages | Public797 combined host integration passes 266 Rust tests, strict Clippy/release, source gates and 31 verifier policies. Active511 resolves 27 locked configurations; regenerated inventories and compiler commit/tree pair are independently reviewed. Latest KFD worker tests/build pass and its bytes equal public797. | Latest combined FP32 gate, reviewed Pages publication and owned-stage cleanup. |
+
+The [sprint record](M1_PERFORMANCE_SPRINT_V2.md) contains exact evidence hashes,
+scope and numerical findings. TP8 rounds currently observe 0.076712 output
+tokens/s versus host-staged 0.380674. Collective spans improve modestly, but
+other host-observed dispatch and resident-setup spans dominate. These spans
+are not GPU timestamps and do not isolate individual system-call costs.
+The previous checkpoint below remains historical, including its cleanup and
+publication claims; new sprint stages are currently active.
+
+## September 10 Performance Checkpoint
+
+The integrated source tracks the observed public fe2o3 `7528e734` cutoff; frozen benchmark
+inputs retain their original source and binary identities. Compiler/KFD
+changes are published to fe2o3 main after review/rebase. Ferric implementation
+remains local; the Pages performance checkpoint is published separately.
+
+| Team | Current Progress | Next Gate |
+| --- | --- | --- |
+| Runtime and measurement | Operational mode has two exact-output TP8 runs at roughly 14-15x frozen workload output rate. Isolated/cumulative ablations, repeated MFMA and TP1 pairs, source-matched peers, allocation cohorts and the 16/32-row policy pair are archived. The integrated four-request/replica checkers pass 59 host tests. All five final current-controller cases have strict accepted/rejected dispositions. | Broader workloads and repetitions; no serving-throughput or stable-tail claim yet. |
+| Kernels | Full16 TP8 MFMA has two passing repetitions per variant: mean workload rate +28.63%, with startup regression. Adding pruning passes but is slower than MFMA alone. Both wave selectors and current TP1 MFMA-only/cumulative profiles fail the exact seed reference. Full32 native 30 fixtures, peer32 native 19 fixtures and actual 32-row model execution pass. Tiled transpose passes 240 full-array comparisons and saves 15.33% setup in one matched model pair. | Numerical diagnosis of rejected wave/TP1 MFMA profiles; no reference relaxation. |
+| Collectives | Public `902fef6e` cached peer sequences pass genuine producer-to-reader TP2/8 probes including rows 17/31/32. Both peer models and source-matched host controls pass; peer workload rates are 82.06%/97.66% lower at TP2/TP8. TP1 residuals pass two runs per variant with +13.85% mean workload rate. Current scalar-projection pruning + residual passes, observing +12.06% workload rate in one cumulative pair. | Profile repeated all-rank fences/serial execution before further peer changes; overlap remains unimplemented. |
+| Integration | The integrated `7528e734` source passes 168 library, 43 CLI/worker, 6 control and 22 source-policy tests (two explicit ignores), strict Clippy and release build, plus 70 Python tests on mi300x. Separate repin gates pass 26 metadata configurations, 38 source-gate and 31 verifier-policy tests. Final current-controller TP1 control, scalar pruning/residual and TP8 wide MFMA/pruning cases pass. Pages checkpoint `f4664dc` is live and byte-verified; completed team stages/worktrees are removed after archival. | Broader numerical/performance qualification and protected M1 gates; retain the active local integration and replay evidence. |
+
+The reviewed public delta from `902fef6e` through `7528e734` is compiler/analysis-side, with no
+KFD, worker, SDK or lockfile changes. A freshly built `1b262ac3` independent
+worker is byte-identical to the frozen `902fef6e` worker; its relevant source
+closure is unchanged at the `7528e734` cutoff. Active-pin integration is
+separate from frozen runtime comparisons. Old emitted images
+retain their actual compiler identities; they are never relabeled as rebuilds.
+
+The allocation cohort observes 1.442/5.734/6.588 output tokens/s for
+1xTP8/4xTP2/8xTP1 respectively, at one sample each and a 16-row per-instance
+budget. All 64 outputs and 96 physical token rows match. Replication increases
+aggregate row capacity and duplicates model storage; this is not an isolated
+kernel comparison. The separate same-image 16/32-row policy pair observes a
+12.56% workload-rate increase, but request-00 TTFT worsens. The tiled transpose
+model pair saves 26.55 s of setup (15.33%); decode variation is not attributed
+to the setup-only helper. The [published Pages checkpoint](https://harsh-nod.github.io/ferric/#performance)
+retains the `196ae50` measurement data: the initial trio, repeated and cumulative measurements,
+all five final current-controller outcomes, and all failed/regressing paths.
+Its deployment `34533071403` succeeded. Caption-only follow-up `f4664dc` fixes
+the legacy ledger-generator hash label without changing any measurements or
+hashes; deployment `34533902613` also succeeded and all seven live assets were
+byte-verified. Canonical replica-expectation labels retain their actual meaning.
+The site passes 72 negative schema cases, eight named browser viewports and
+every width from 320 through 1440 pixels.
+
+The current TP8 wide cumulative case observes 0.444870 output tokens/s and
+reuse TTFT/TPOT 2.565240/1.604293 seconds, without a matched gain claim. Its
+32-row capacity produced actual rows `[17,6,6,4,1]`; it is not the separate
+actual-32-row cohort. Current TP1 MFMA-only and cumulative profiles fail the
+same Germany-versus-Spain seed reference and contribute no accepted timings.
+
+The completed root mi300x build stage was removed after source, logs, scripts
+and exact controller archival, reclaiming 7,314,760 KiB. No local builds were
+run. The completed GPU stage was fully archived, then reduced from 150,492 to
+11,612 KiB by removing obsolete owned experiment files. Current binaries,
+images, wrappers, all five final case receipts, models and fixed workload
+remain. The unpublished integration source is retained. No Ferric GPU jobs
+remain and the final all-eight-device snapshot is idle. The measurement and
+Pages teams removed all their completed private stages and worktrees after
+checksum-verified archival; unrelated user worktrees were untouched.
+
+These are short engineering workloads, not HTTP serving qualification or a
+matched vLLM/SGLang comparison. See [the live performance ledger summary](M1_QWEN3_PERFORMANCE.md).
+
+## TP8 Batching Integration
+
+September 10 follow-on work is integrated and GPU-checked on the engineering path. The existing
+single-sequence results below remain frozen and are not measurements of these
+new features. Public fe2o3 main was rechecked at `3546d54` before this work.
+
+| Team | Owned Slice | Status |
+| --- | --- | --- |
+| Kernels | Additive multi-row projection, RoPE, paged KV append, causal paged GQA, and output kernels | 32 host/source tests per target pass; independent indexing/numerics review passes. Both nine-root target emissions and eleven genuine gfx950 GPU probes pass. The old thirteen-root image remains unchanged. |
+| KV and radix | Bounded physical page pool, immutable complete-page prefix retention, exact radix lookup, cancellation, eviction, and failure quarantine | Integrated. 18 release tests, strict Clippy, eight actual-body mutations, and four external privacy negatives pass. Independently reviewed; completed stage/worktree removed after archival. |
+| Scheduling | Continuous request admission, decode/prefill fairness, bounded prefill chunks, generational request IDs, and completion-gated publication | Integrated. 17 release tests, strict Clippy, and eight actual-body mutations pass. Completion preflight is shared with commit validation. |
+| Integration | One resident weight set, true multi-row GPU dispatch, atomic all-rank completion, workload CLI, and combined numerical checks | 139 library tests (one prior real-image ignore), 17 CLI/worker tests, 22 source policies, all-targets strict Clippy, and release build pass. TP1 cached and TP8 cached/uncached mixed Qwen workloads each match all eight expected output tokens/bytes. TP8 checks physical prefix reuse, chunked prefill, continuous admission, paged causal attention, and cancellation; independent paired receipt review passes. |
+
+The initial envelope is Qwen3-8B BF16, TP1/2/8, up to 16 token rows per GPU
+batch, 16 tokens per physical page, and up to 32 resident requests. The
+engineering profile remains explicitly opted in and does not create protected
+M1 execution authority or an HTTP serving endpoint.
+
+The TP8 cache-on/off pair uses 34/50 physical token rows and 5/6 GPU batches:
+retaining the sixteen-token prefix avoids sixteen rows and one full forward.
+This is a work-reduction result, not a timing speedup: whole-run times are
+466.414/461.166 seconds in these single unrepeated logical-tick workloads.
+All seventeen workers across the three model runs were confirmed absent and
+all eight GPUs idle afterward. The three implementation team worktrees and
+their completed remote build stages were removed after evidence archival;
+the small integration source workspace and runnable model bundles are retained.
+
+The new modules and numerical kernels are explicitly Contracted engineering
+code. Host invariants, negative tests, and independent review are not a new
+Verus proof of the scheduler, paged allocator, GPU math, or end-to-end execution.
+See [the batching runbook](M1_QWEN3_TP_BATCHING.md) for the actual workload
+interface, limits, and remaining validation boundaries.
+
+## MI350 And Eight-Rank Work
+
+The initial September 9 MI350 foundation checkpoint below did not yet run
+eight-GPU Qwen. The follow-on execution results appear later in this section;
+neither checkpoint is M1 qualification. Compiler/runtime changes track
+[fe2o3 #274](https://github.com/harsh-nod/fe2o3/issues/274).
+
+| Team | Current Slice | Status |
+| --- | --- | --- |
+| Core runtime | Explicit gfx950 topology discovery, COV6 loader profile, and a separate checked device-observation token with no execution authority | 420 KFD unit tests, 20 integration tests, and 27 doctests pass, along with scoped strict Clippy. All eight MI350X devices pass repeated no-queue bind/currentness/drop checks without descriptor leaks. All twelve kernels in the genuine gfx950 object pass loader/materialization and both old gfx942 dispatch-path rejection tests. Independent review passes. |
+| Compiler integration | Target-bound engineering artifact production and additive AMDGPU compiler-handoff extraction; measured library function targets checked after import selection and before optimization | 518 backend, 17 CLI, 7 finalizer, 16 extractor, and 2 export-simulator tests pass. Four native-worker suites pass, including selected incompatible helper rejection with optional verification disabled. Both target emissions and exact replay pass. Published on fe2o3 main through `a8b016e14`. |
+| Ferric kernels | Explicit mutually exclusive gfx942/gfx950 aggregate features over the same twelve kernel bodies; both target helper files bound into the build source closure | 33 aggregate tests per target and 21 historical RMSNorm wrapper tests pass. Updated build/release policy tests pass. Both twelve-kernel emissions pass with the same final native worker; gfx942 bytes are unchanged by the worker fix. |
+| Tensor parallelism | Qwen3 1/2/8-rank head/weight partitioning, actual BF16 shard-row copying, and ordered collective readiness epochs | Direct Verus passes 36 obligations with zero errors. All 9 release tests and 8 actual-body mutation checks pass; strict Clippy and independent review pass. Integrated in `4afe852`. |
+
+The combined Ferric host checkpoint at `4afe852` passes 645 engine tests (9
+separately gated tests ignored), 38 source-gate tests, formatting, strict
+Clippy, and source admission. Its inventory has 172 modules and 8,228 executable
+bodies: exactly one new module and 21 directly verified bodies, with no added
+unverified bodies. Protected runtime feature resolution remains gfx942-only.
+
+The preceding Ferric pin checkpoint used public fe2o3
+`a8b016e14ca8c77c9e7abe4591086f7cab11ce61`, integrated locally in `c092df2`.
+All fifteen locked graphs resolve, with no registry-version drift; independently
+reviewed dependency records and the rebuilt source-pin adapter binding match.
+The final-pin remote run passes 645 engine tests (9 ignored), 38 source-gate
+tests, source-gate strict Clippy, formatting, property binding, and full source
+admission. Connectivity has recovered. The interrupted engine Clippy log was
+recovered with exit status zero; the remaining adapter/source-policy checks,
+four isolated allocation tests, and both fresh engineering host release
+builds now pass. No local build/test fallback was used.
+
+The new gfx950 engineering object is 103,616 bytes, SHA-256
+`2679e59626eee9939412aaf7af6a542c8aeccbe4dd13fb7e6ea3bdcf4f3b8222`,
+content ID `431f1e294d5018e0f057d490495921a1983bac0c25e4e900c3f72a05350b3f84`.
+It contains twelve Wave64 kernels with COV6 and exact replay; all authority
+grants are false. Component provenance remains explicit: Ferric kernel source
+`296bb98`, device dependencies `0ea54ed9`, compiler tool images `24e842d70`,
+and final native-worker source `a9ea16247`. The matching gfx942 object has
+content ID `fa6ccd9130001647932502d13092ca44f7ec78c9580984c96ce28f34710ab670`
+and is byte-identical to the pre-worker-fix regression object. Neither object
+is relabeled as a final-pin Ferric rebuild or a GPU execution observation.
+
+Compiler-wide Clippy and aggregate-kernel Clippy are not reported as clean:
+the existing backend has 344 source-attributed diagnostics, and the aggregate
+retains 104 baseline kernel-body diagnostics. The changed compiler CLI/finalizer,
+runtime, engine, source gate, and kernel build helpers pass their scoped strict
+checks; no broad lint suppression or unrelated kernel rewrite was added.
+
+The follow-on engineering execution batch uses published fe2o3 main
+`3546d54d2c4a913f5d079701aed557d0a378bba8`. Its release gfx950 worker passes
+433 library tests, a genuine single-device RMSNorm dispatch with exact BF16
+output and unchanged guards, and eight concurrent isolated memory/queue
+lifecycles with distinct device IDs, live executable hashes, and confirmed
+child teardown. The eight-worker lifecycle fixture does not dispatch kernels
+and is not a Qwen result.
+
+The new thirteen-root TP crate includes six rank-local kernels and seven
+unchanged imported helpers. Its frozen `8cdde149` source passes 31 host/source
+tests per target, genuine gfx950/gfx942 emission and exact replay, and six real
+gfx950 numerical probes with unchanged inputs/guards and clean teardown.
+Eight probe-harness tests pass. The integrated driver, bounded child transport,
+authenticated intake, and release controller pass 95 library/client tests,
+21 source policies, and scoped strict Clippy. Combined source admission passes
+with 173 modules and 8,235 executable bodies, alongside 648 engine tests
+(9 ignored) and strict Clippy. The final annotated sequence cursor has an
+exact same-source replay: eight Verus obligations, zero errors, three tests,
+and an unchanged 754-file frozen closure. Its earlier actual-body mutation
+checks remain separately scoped; none of this proves whole-driver numerics.
+
+Real Qwen3-8B two-token smokes now pass on one, two, and eight MI350X GPUs.
+All generate `[12095, 13]` (` Paris.`), matching both frozen reference prefixes,
+with exact rank dispatch counts, KV position six, confirmed worker teardown,
+and idle GPU observations afterward. The eight-rank smoke measures
+160.644607963 seconds TTFT and one 24.711778123-second decode interval, with
+186.586377561 seconds of setup excluded. These smoke intervals are not
+repeated TPOT measurements or serving qualification.
+
+The extended single unwarmed TP8 run also passes: all 32 generated IDs and
+decoded bytes match both reference passes and argmax arrays. TTFT is
+163.647853495 seconds; the mean of 31 post-first intervals is
+40.25950984674194 seconds, with 193.519502061 seconds of setup excluded.
+All eight workers close/reap, exact dispatch counts and KV position 36 match,
+and GPU observations are idle afterward. This is a single-prompt engineering
+observation, not repeated statistics or a controlled framework comparison.
+See [the engineering runbook](M1_QWEN3_TP_ENGINEERING.md) for identities,
+all four results, reproduction, and performance limitations.
+
+Measurements use release binaries, host-staged FP32 ordered collectives,
+contiguous rank-local KV, and token-at-a-time prompt processing. The initial
+path scales poorly. Substantial system-call pressure was observed; repeated
+full runtime currentness scans are the leading bottleneck hypothesis.
+No gfx942 artifact or device authority is relabeled as
+gfx950. Builds/tests stay on `mi300x`; execution uses `mi350`. Symmetric memory
+and MTP remain deferred.
+
+The core and kernel worktrees and roughly 36 GiB of completed build/proof
+stages have been removed after evidence archival. This includes the final
+core stage `mi300x:/tmp/fe2-mi350-engineering.B01UxK` and integration build
+stage `mi300x:/tmp/ferric-mi350-integration.2WTV7c`. The small local integration
+worktree remains the source workspace for the unpublished implementation.
+The needed `mi350:/tmp/ferric-qwen8.TRNKht` model/runtime bundle is retained
+for reproduction, with no workers left running. No other user's processes,
+directories, or networking settings were modified.
+
+## Historical M1 Checkpoint
+
+| Team | Implemented And Checked | Current Work |
+| --- | --- | --- |
+| Integration and runtime | This checkpoint used published fe2o3 `0ea54ed921cbef5fb2171f4ed7a25b9c1c5e2b71`; all 15 lockfiles, dependency records, and the rebuilt source-pin adapter binding passed independent review without unrelated registry-version drift. Resident storage preparation, explicit production-owner close and recovery, and settlement allocation tests are integrated. All 23 reference unit tests pass. Verified full-block SHA updates and opt-in startup phase diagnostics are integrated. Combined host checks at `a6a3f2e` and the 32-token Qwen comparison pass. | Broaden the numerical workloads and profile remaining token latency. Authenticated serving still requires the protected authority bundle. |
+| Kernels | Native Qwen `[N,K]` weight layout correction; K3 paged-KV writes copy active rows instead of scanning every physical page. Generic dynamic GridExclusive projection and singleton-invocation race handling are reviewed and published in fe2o3 main. The matching `0ea54ed9` 12-kernel aggregate emits successfully with exact replay and passes independent review. | Measure K3 with the existing independent reference; investigate matrix-instruction support for the remaining dense projection work. No controlled K3 speedup has been measured. |
+| Verification | The complete developer qualifier passed on frozen `bb50d0e`: 1,586 selected Verus queries, zero errors, 694 admitted bodies, actual-body negative mutations, and all listed formatting, strict Clippy, debug/release and all-feature test gates. The receipt's 197 files pass hash validation. This checkpoint excludes the later SHA optimization, diagnostics, and `0ea54ed9` repin. The separate planner repair at `eb219f0` passes the positive plan and dependency rejection cases against `0ea54ed9`. Independent review accepts the new 32-token engineering observation. | The protected M1 qualification gates remain outside the developer receipt, the planner's synthetic policy tests, and this single-prompt hardware check. |
+| Documentation | Public Pages site describes architecture, implemented functionality, limitations, and milestone status. | Publish the latest tested integration checkpoint without claiming a new benchmark or closed M1 gate. |
+
+## Historical MI300X Qwen Observations
+
+The historical Qwen3-8B target-only run completed 32 generated tokens from the
+five-token prompt `The capital of France is`. Every generated ID matched both
+frozen Hugging Face reference passes and both reference argmax arrays. The
+decoded output continues through Paris, Rome, Madrid, Berlin, and Amsterdam.
+Observation SHA-256 is
+`d894caf042156abf21436c98fa3de7d40af124ba7374baa0b879bf7df582af44`.
+
+| Measured Boundary | Seconds |
+| --- | ---: |
+| Host setup through KFD binding | 82.938931 |
+| Memory initialization, allocation, and upload phase | 163.126609 |
+| Cumulative setup | 246.065540 |
+| Controller entry to first generated token | 13.442289 |
+| Average post-first interval, 31 intervals | 2.769105 |
+| Controller through completed teardown | 100.370762 |
+| Whole process | 346.46 |
+
+Startup diagnostics use `std::Instant`; controller events use
+`CLOCK_MONOTONIC_RAW`. Arithmetic combining those clocks is approximate.
+This is one shared-host engineering observation, not numerical or serving
+qualification, a controlled K3 speedup, or a vLLM/SGLang comparison. The output's
+`r33_tpot_eligible=true` expresses event-count/timing eligibility only; all
+authority fields remain `none` or false and `benchmark_comparable=false`.
+GPU 3 subsequently returned to its exact pre-run VRAM baseline. The immediate
+post-exit counter was transiently higher; its mechanism was not established.
+
+The earlier target-only Qwen3-8B smoke produced:
+
+```text
+Prompt: The capital of France is
+Output:  Paris. The capital of Italy is Rome
+```
+
+That eight-token engineering observation recorded approximately 13.65 seconds
+to the first token and 2.77 seconds per subsequent token. It is not serving
+qualification or a result comparable to vLLM or SGLang. No K3 speedup has yet
+been measured.
+
+An independent offline Hugging Face Qwen3-8B run using the same canonical model
+produced exactly the same eight token IDs on two passes. A separate 32-token
+reference also repeated identically and preserves that eight-token prefix.
+That historical Ferric run matches the reference across logical KV positions 16
+and 32. These are not physical page boundaries (the KV page size is 256).
+These short reference checks do not establish full-model numerical qualification.
+
+The artifact used for this Qwen observation, compiled with `0ea54ed9`, has content ID
+`d33933adf7f5dfe0a9aa4aba0cc4cb3909b5aa35f9bfb65db7af9af4a5c5bb40`
+and HSACO SHA-256
+`33d754aaa10292fa37e974eb004b6c52067a141dcd5b58ed080023c6bf315c2d`.
+Its 12-kernel roster and compiler replay pass, with authority explicitly
+`none`. Ferric device source is identical between emitted `9392755` and
+integrated `eb219f0`; the matching release host is built from `a6a3f2e`.
+The previous `42882993` artifact, content ID `528fa128`, is retained as
+historical evidence and is not relabeled as the current artifact.
+
+All eight shared GPUs were occupied before the September 8 launch attempt.
+On September 9, GPU 3 was idle with almost all memory free, allowing the new
+32-token attempt. No other user's process was stopped or modified.
+
+An earlier K3 attempt exceeded a 240-second whole-process limit without a
+result. Historical successful release runs took approximately 24-27 minutes
+for the full process, but their source checkpoints (`6239bdb`, `f151965`) pin
+fe2o3 `1ddcd36b`, before the parallel device-initialization change in `d211c9a`.
+That older path copied serially and hashed GPU-mapped memory. Those wall times
+are not a baseline for the current `42882993`/`0ea54ed9` initialization path.
+The historical executable hashes were not archived, so those figures cannot
+support a controlled comparison with the new phase-separated measurement.
+
+A later non-dispatch probe of the `42882993` host and final artifact took
+98.23 seconds through artifact admission, CPU preparation, runner binding, KFD
+admission/topology, and intentionally failing device selection. It stopped
+before `initialize_memory`, so it measured no HBM allocation/upload, dispatch,
+tokens, TTFT, or TPOT. The two independent model-authentication passes run in
+parallel. Setup is excluded from the controller timing above. The earlier
+timeout is not a TTFT measurement or a demonstrated kernel failure.
+
+A separate CPU-only probe of public `0ea54ed9` KFD descriptor constructors
+measured 58.133 seconds of hashing for 97.313 GiB of input, plus 10.370 seconds
+reading weight files. Repeated weight-descriptor calls model the second hash
+payload, not the actual private allocation-time validation. This uses KFD's
+registry `sha2 0.11.0`, not Ferric's verified SHA implementation. The helper
+opened no KFD/render device and measured no HBM initialization or token timing.
+It is a one-run engineering observation, not a startup improvement claim.
+
+Both engineering smoke tools now accept exact opt-in
+`FERRIC_M1_ENGINEERING_STARTUP_PHASE_DIAGNOSTICS_V1=1`. Six fixed cumulative
+completion phases go to stderr only; stdout observations, admission, and
+controller timing remain unchanged. The output explicitly grants no authority
+and is not benchmark-comparable. The diagnostics passed 10 speculative and 17
+target unit tests (one real-GPU test ignored), 20 source-policy tests, formatting,
+strict release Clippy, and independent review before integration.
+
+The verified SHA update preserves the existing streaming specification and
+passes whole-crate Verus verification (296 queries, zero errors), 143 release
+unit tests, strict Clippy, and independent source review. Five alternating CPU
+benchmark matrices per build measured 1.115-1.119x throughput for 1 MiB update
+chunks, with a 0.49-1.53% time regression for 63/65-byte chunks. This is not a
+measured total-startup improvement. All seven regenerated source/dependency
+records remain exact, with 171 modules and 8,207 executable bodies.
+
+The combined `a6a3f2e` host check also passes 10 speculative, 17 target, and 20
+source-policy release tests (one real-GPU test ignored), strict release Clippy,
+formatting, and both release builds. Source-gate tests pass 36/36, and all seven
+fresh records match. The later `eb219f0` changes only the planner and its tests;
+its actual-history policy test accepts the 354-slot plan and rejects missing,
+extra, moved, and incorrectly pinned promotion dependencies.
+
+The reference package now pins Accelerate 1.14.0 and psutil 7.2.2, the actual
+dependencies needed by the pinned Transformers loading path. Its exact-version
+and virtual-environment provenance checks include both dependencies. The
+existing 27 external lock records were preserved.
+
+The new optimized prepack reproduces canonical bundle ID
+`6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b`.
+
+## Remaining Dependencies
+
+- The complete developer receipt binds only `bb50d0e`/tree
+  `7f3f23579b0adfac8ad7357fbf1246ab4b05dc95`, not the current tree. Receipt
+  SHA-256 is `c09f212e82eace9326a6d0a0e47ff7a898a8901e5e531fa01ea52213b064b54b`;
+  its unchanged source closure contains 711 files. The earlier `cb9b5ca` run
+  remains an incomplete historical run that hit its 600-second cold-build
+  bound. Neither receipt establishes GPU machine-code correctness or serving
+  qualification.
+- Authenticated serving qualification still requires the protected current
+  record, verifier, model, and artifact authority bundle.
+- Kernel performance work still includes matrix instructions for dense
+  projections, attention, normalization, and logits reductions. Historical
+  MI300X target-only source analysis found 545 dispatch packets per target
+  decode token; this is not the new TP schedule or a measured attribution of
+  GPU time.
+- Physical radix prefix reuse belongs to M2. Symmetric memory and MTP remain
+  deferred.
+
+Builds remain remote only. The current fresh compiler build/test host is
+`mi300x`; the older `mi300x-2` stage remains separately constrained. Native GPU
+validation uses the user-authorized `mi350`. Completed temporary
+build directories and integrated worktrees are removed after required evidence
+is retained; active and unrelated worktrees are preserved. Compiler/runtime
+changes belong in fe2o3; kernels and inference remain in Ferric.

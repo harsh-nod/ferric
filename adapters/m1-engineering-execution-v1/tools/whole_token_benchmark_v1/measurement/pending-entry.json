@@ -1,0 +1,57 @@
+{
+  "schema": "FerricChangeEvaluationV1",
+  "change_id": "v14-native-whole-token-r1",
+  "status": "pending",
+  "plan_sha256": "8cc5432962628c3f11dc0183da80487cbbd28af4924422021f787693f7964c8b",
+  "plan_path": "tracking-plan.json",
+  "plan_hash_semantics": "raw-file-sha256-for-source-progress-only",
+  "launch_plan_ready": false,
+  "latency_admitted": false,
+  "native_validation_performed": false,
+  "default_promotion": false,
+  "source_sha256": {
+    "abba_ledger.py": "193fea8365e46dbfa4b6a6c3aab4ad1d9c18d213edc18cadbd09dead7e2cfd19",
+    "gpu_activity.py": "9b145da7f5dbf6899d29271999ce741cb301b4d37f2fbcc385f5b66b179a7ce0",
+    "native_token_cell.py": "5165a72817cf50d72948fb1a72957a8b6ceeceee5648fbe233bdb4321d4306b9"
+  },
+  "implemented_measurement_support": [
+    "exact raw HTTP and native request replay",
+    "separate single-request correctness and mechanism cells",
+    "predeclared three-block ABBA promotion validator",
+    "TTFT/TPOT median, mean and p95 with per-change percentage deltas",
+    "fail-closed container-aware device-descriptor attribution",
+    "append-only hash-linked outcomes ledger"
+  ],
+  "current_change_metrics": {
+    "baseline_ttft_ms": null,
+    "candidate_ttft_ms": null,
+    "baseline_tpot_ms": null,
+    "candidate_tpot_ms": null,
+    "ttft_gain_percent": null,
+    "tpot_gain_percent": null,
+    "finite_output_rate_gain_percent": null
+  },
+  "historical_context_only": {
+    "source": "docs/M1_PERFORMANCE_SWARM_V13.md",
+    "date": "2026-10-05",
+    "timing_scope": "separate sequential HTTP cohorts, TP1/C1, 128/128, FP32 head in both engines",
+    "ferric_profile": "packed-down R1 on frozen fe0 worker; not this 652-packet whole-token experiment",
+    "ferric_mean_ttft_ms": 827.433608667,
+    "ferric_mean_tpot_ms": 59.779957043,
+    "ferric_finite_output_tokens_per_second": 15.201281717,
+    "vllm_version": "0.28.0",
+    "vllm_mean_ttft_ms": 19.671370933,
+    "vllm_mean_tpot_ms": 4.245332781,
+    "vllm_finite_output_tokens_per_second": 228.823212123,
+    "comparable_to_current_native_change": false,
+    "vendor_positive_pid_attribution_proven": false,
+    "samples_pooled_into_current_change": 0
+  },
+  "qualification_remaining": [
+    "final source-pinned remote CPU receipt",
+    "fully bound current-runtime launch plans and idle/resource admission",
+    "native exact-output and counter qualification for both backends",
+    "complete uninstrumented repeated ABBA and independent raw evidence audit"
+  ],
+  "note": "No measured improvement or vLLM win is claimed. Preserve failures and unmeasured changes explicitly; do not convert historical profile timings into this change's baseline."
+}

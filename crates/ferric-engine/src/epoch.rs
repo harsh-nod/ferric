@@ -15,6 +15,14 @@ pub struct ExactCompletion {
 }
 
 impl ExactCompletion {
+    pub(crate) fn from_completed_m1_queue_readback(
+        scheduled: crate::M1ScheduledDispatchV1,
+    ) -> Self {
+        Self {
+            epoch: scheduled.epoch(),
+        }
+    }
+
     #[must_use]
     pub const fn epoch(&self) -> (epoch: CompletionEpoch)
         ensures epoch == self.epoch_spec(),

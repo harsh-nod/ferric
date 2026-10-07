@@ -1,0 +1,66 @@
+{
+  "schema": "FerricPrefillK2RepairedCurrentQualificationV1",
+  "status": "cpu-passed-emission-refused",
+  "source_archive_sha256": "6108c9ce56e05d723266210da43b3ea6dcfc3ffc88218340ce53511e5abf5d6e",
+  "source_frozen_sha256": "1e9545b06ce96891e46483169754bdf58833bb9af5c04c80ed8f3796b9386647",
+  "source_files": 27,
+  "sdk_revision": "55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9",
+  "lock_sha256": "d445c85e6aa9c8f1d027581d36c8e8359a22bf86f8eccf4b60f229cd5e15a75b",
+  "cpu_receipt_hashes": {
+    "prepare": [
+      "da4e387d9dda34461af8db2790757791143dcb665e49cca93d674bdf2798f736",
+      "5570e2eed5b3e6a0c5f04e3ca2beb7cf1171b54848866bcae55f581e546b1d04"
+    ],
+    "test-default": [
+      "82d1be4f30fcb66a6cf5f5849ac4f10b5ac642ce65d79f4285ae12c0466482ff",
+      "b9e499e19b5c69aca23a78393b7b59e01f68d786deee25f68180ec4128ba0203"
+    ],
+    "test-enabled": [
+      "2a7e5a4ffca4221bc59bf3f72b3e6177b688e715e01b52c7a2eb4a96655a1a06",
+      "ad4d147e219b445db469765fc4bf5a8da63be76153861848e6e9e87bb8aca791"
+    ],
+    "clippy-default": [
+      "20ba96dc4aab7ddf70cf7d53cec1b7619109533943309be1d3c4c5b4200c563a",
+      "1c375b62ca536af0746c6398f9930dcd60490616c13357d0aef9496c28f8545c"
+    ],
+    "clippy-enabled": [
+      "7004c7cbc9b043ebdd0e7f33fb56155c235112c78607fe30ee4dd9622f578257",
+      "cdb70c967a7344f12f5048f0012c905c1e270408de54baaefd04569f9ce9b3b2"
+    ]
+  },
+  "cpu": {
+    "default_tests": 26,
+    "full_k2_tests": 26,
+    "failed": 0,
+    "ignored": 0,
+    "clippy_all_targets_both_profiles": "passed",
+    "all_five_inner_outer_closures_clean_reaped_unsignaled": true,
+    "source_frozen_through_cpu_checks": true,
+    "preparation_change": "Only new source-contract test formatting; existing lock and kernel bodies unchanged during preparation",
+    "production_change": "Exactly nine array-to-scalar substitutions per default and full-K2 FP32 partial source; arithmetic and ABI preserved"
+  },
+  "emission": {
+    "accepted": false,
+    "outer_sha256": "be0f407ffc410868de7c468aa64d49f65a14bba1798b2dbb80878dac97871f37",
+    "inner_sha256": "525afa40f9d4cd210cd01aaf0071b61c3019dd1fff0859ab180c86496d85a249",
+    "stderr_sha256": "d3889669b245f931c1a1d46f6bde60dc3d36129302c29c200a0402ea411224bd",
+    "compiler_provenance": "79a plus published private-access and witness-rank fixes; not a freshly rebuilt 55c compiler",
+    "status": 1,
+    "clean_reaped_unsignaled": true,
+    "errors": [],
+    "rejected_root": "ferric_qwen3_tp_batch32_mfma_gemm_partial_f32_v5",
+    "error": "production analysis resource limit exceeded [race-freedom]: peak storage upper bound",
+    "ranked_blocks_retained": 251,
+    "stopped_before_target_ir_and_artifact": true,
+    "peak_observed_rss_bytes": 2978082816,
+    "sampled_peak_stage_bytes": 41561948160,
+    "reserve_adjusted_stage_limit_bytes": 42412802048,
+    "source_and_vendor_post_check_completed": false,
+    "limitations": [
+      "Verifier refusal does not establish an actual race or GPU-storage failure",
+      "Early refusal skips helper post-source/vendor checks",
+      "Prior private-array failure remains separately retained",
+      "No image, native parity, performance gain or full-K2 promotion is established"
+    ]
+  }
+}

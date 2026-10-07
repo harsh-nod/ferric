@@ -1,0 +1,68 @@
+{
+  "schema": "FerricNativeDecodeIndependentReviewR1",
+  "accepted": true,
+  "authority": "none",
+  "scope": "Independent stdlib-only inspection of retained bytes and arithmetic; no local tests, project imports, builds or GPU execution.",
+  "performance_qualified": false,
+  "latency_sample_admitted": false,
+  "retained_files": 493,
+  "retained_logical_bytes": 32260311,
+  "content_roster_sha256": "9dd0f8a1df770c115e542aff57c36a9bc66a79543979080407b495889040e04d",
+  "plan_sha256": "c1a3ab5bfb4cd654add3b1fcacecdf66ae7b0800d2ea1ddb77a54aae90dbefd0",
+  "diagnostic_file_bindings_verified": 171,
+  "borrowed_parent_file_bindings_verified": 351,
+  "parent_qualification_scope": "Unchanged worker/images/library provenance only; the new diagnostic ELF has independent fresh qualification.",
+  "private_controller_tests_passed": 167,
+  "private_controller_tests_ignored": 18,
+  "strict_clippy_and_release_passed": true,
+  "harness_tests_passed": 15,
+  "raw_output": {
+    "stdout_records_per_arm": 267,
+    "batches_per_arm": 131,
+    "exact_output_token_ids_per_arm": 128,
+    "utf8_bytes_per_arm": 793,
+    "utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+    "stderr_records_per_arm": 3,
+    "batch_geometry_and_chronology_verified": true,
+    "token_timestamps_and_final_output_verified": true
+  },
+  "mechanism": {
+    "whole_request_dispatches": {"A": 85403, "B": 94547},
+    "decode_dispatches": {"A": 82804, "B": 91948},
+    "executes_publications_final_waits_per_arm": 127,
+    "readbacks_per_arm": 127,
+    "metadata_writes_per_arm": 630,
+    "general_fields": 19,
+    "token_fields": 7,
+    "deltas_frontiers_and_signed_residuals_recomputed": true
+  },
+  "closures": {
+    "outer_statuses": [0, 0],
+    "child_returncodes": [0, 0],
+    "all_reaped_and_owned_descendants_absent": true,
+    "term_or_kill_sent": false,
+    "errors": []
+  },
+  "admission": {
+    "accepted_records": {"A": 46, "B": 47},
+    "scan_attempts": {"A": 47, "B": 48},
+    "retained_incomplete_refusals": 2,
+    "refusal_scope": "One owned-worker fd/6 ENOENT in each arm; each refused incomplete sample is retained and followed by a fresh complete accepted scan under the unchanged bounded retry policy.",
+    "observed_foreign_gpu_user": false,
+    "isolation_is_sampled_not_continuous": true,
+    "minimum_root_free_bytes": {"A": 80720478208, "B": 80825958400},
+    "recorded_resource_floors_passed": true
+  },
+  "host_timing": {
+    "registered_span_total_ns": {"A": 6630911180, "B": 5583528081},
+    "execute_roundtrip_total_ns": {"A": 6544255588, "B": 5485767860},
+    "worker_wait_total_ns": {"A": 6461774339, "B": 5401074617},
+    "wait_percent_of_registered_span": {"A": 97.44926697992658, "B": 96.73229074246326},
+    "scope": "Host-wall attribution, not TPOT or calibrated GPU time. Execute is a subtotal, and general command/currentness/read/write counters overlap the selected buckets."
+  },
+  "result_sha256": {
+    "A": "af8f765561af0eb8edb55850f3b7b161bd0c593703df27581c3b545dfee41f57",
+    "B": "89b2060585153c5bf50abed6abdad0215080e76fea42d3cc39ab024bf18e7685"
+  },
+  "limitations": "One cold instrumented request per arm; no ABBA performance qualification, default promotion, vendor comparison or change to the earlier inconclusive gate/up campaign."
+}

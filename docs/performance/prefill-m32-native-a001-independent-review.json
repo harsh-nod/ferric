@@ -1,0 +1,58 @@
+{
+  "schema": "FerricM32NativeIndependentReviewV1",
+  "audit_accepted": true,
+  "method": "Local stdlib-only archive, JSON, protocol and numerical inspection; no project execution",
+  "archive_sha256": "3fe1c6e3c19dbc4d4d534a6365f1610d8bddb9b1e8e14d5a8d0d5dbcb0e12cde",
+  "archive_bytes": 58477195,
+  "retention_receipt_sha256": "5b97c34c9eb5d38024720c051eb54f0e01250208438c634d931cffe602800dc2",
+  "plan_sha256": "3a7f5a183b1582390b6c2ce0c5ed5a5822178b49a0fcf3d2ab941f84e3c324fa",
+  "review_sha256": "64cb3b04c9bff6cb1d8518913e4039ebec1a0be2f39652cbadaa3e6e87e7c92c",
+  "result_sha256": "f8a3e33282eca8166d533d8c610ee226b5faa8178e4fc0f825af18ea2f2d78fa",
+  "outer_sha256": "05c25d846a3ace9c89b43bb6fb45a26e9bff00f59df9a8eb7cc6abec5ba8dbe6",
+  "protocol_sha256": "b0d15af815320e2eb3d78028552061aa149331d38a1c98451ba6c05a6a659568",
+  "samples_sha256": "c69969184276d302873fd8b5d0f7f60dd160a21d867708f651d808a3dba92770",
+  "custody": {"regular_files":136,"directories":26,"logical_bytes":62605911,"plan_inputs":91,"portable_files":92,"all_member_hashes_sizes_modes_match":true,"portable_bytes_equal_native":true},
+  "cpu": {
+    "harness_source_files":28,"passed":71,"failed":0,"skipped":0,"profile":"FerricCpuFourCore40GiBEmitterV1",
+    "inner_sha256":"ce32681cf130a4edb69fd5a5b4012595ae21da56dc801ea3bb47a4a758b9fddc",
+    "outer_sha256":"a1d568a8161fae3421c99c60dc043fbc1e3de8373e7f55f1d1ed7e38b9c62d23",
+    "source_archive_sha256":"c5dd23992a5440668d5d5083d1955ff5cba3163579841faee51885890f41a353",
+    "exact_named_test_roster_and_pre_post_sources_match":true
+  },
+  "runtime": {
+    "revision":"55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9","source_files_verified":10347,
+    "source_archive_sha256":"a9772e55f9a140d0749a621c07ea2c9cb19c36b2416656278dd8d2a2095321d3",
+    "worker_sha256":"af246e5b872b639b90906336493629eb2bbfa90ff57ffc4ffd859f8b963d9b30",
+    "original_G32_full_passed":743,"original_G32_full_ignored":3,"original_G32_default_passed":463,"original_G32_default_ignored":1,
+    "original_G32_clippy_release_clean":true,"current_G36_aql_passed":39,"aql_ignored":0
+  },
+  "images": {
+    "v5_sha256":"98b5fdb14ac7242e324e1801e1885c98e77473d622b2e9b3f9f12f14c7d75502",
+    "m2_sha256":"bb164d23d55dec43e55b8d8cce936929a3cc749a29486bdcfff8bfe34ac7d5dc",
+    "provenance_files_verified":28,"control_compiler_matches_candidate":false,"authority":"none"
+  },
+  "lifecycle": {
+    "status":0,"returncode":0,"child_reaped":true,"cleanup_ok":true,"owned_group_absent":true,"term_sent":false,"kill_sent":false,
+    "final_admissions_accepted":7,"scan_attempts":8,"retained_refused_startup_scans":1,
+    "startup_refusal":"Exact owned newborn worker appeared after owner snapshot; qualified monitor reconciliation retained refusal and required a fresh complete accepted scan",
+    "refused_scan_sha256":"d4990632977769b144641d12eadd4c44d67425bb5b0b7c934a6fc5a4cbcd1207",
+    "root_floor_bytes":68719476736,"minimum_retained_root_free_bytes":68867497984,"minimum_margin_bytes":148021248
+  },
+  "correctness": {
+    "shape":{"rows":32,"n":12288,"k":4096},"verified_outputs":16,"bf16_values_per_output":393216,"output_bytes":786432,
+    "output_sha256":"a1436f9ea6e507c03df79ed1fcccb8379a81fc53d0378fb3f1bfacefe45814a7",
+    "independent_dyadic_reference_hash_match":true,"guards_and_inputs_unchanged":true,
+    "protocol_rows":275,"command_response_pairs":137,"dispatch_packets":16,"write_hashes_verified":43,"read_hashes_verified":68,"dispatch_payload_hashes_verified":16,
+    "all_protocol_headers_and_payload_hashes_match":true,"raw_gpu_output_payloads_retained":false
+  },
+  "schedule":{"warmups_per_arm":2,"warmup_projection_tags":[5,4],"timed_projection_tag":4,"blocks":3,"order":"ABBA","timed_per_arm":6},
+  "metrics": {
+    "gain_formula":"100 * (V5 - M2) / V5",
+    "host_dispatch_wall_ns":{"v5_median":469880,"m2_median":472145,"gain_percent":-0.48203796714054653,"faster_pairs":1,"AB_median_pair_gain_percent":-0.4892576047649436,"BA_median_pair_gain_percent":-0.3289993381583723},
+    "ordered_worker_elapsed_ns":{"v5_median":360295,"m2_median":360775.5,"gain_percent":-0.13336293870300725,"faster_pairs":1,"AB_median_pair_gain_percent":-0.2273357360687552,"BA_median_pair_gain_percent":-0.053058503250180564},
+    "adjacent_pairs_columns":["block","order","v5_host_ns","m2_host_ns","v5_worker_ns","m2_worker_ns"],
+    "adjacent_pairs":[[1,"AB",466510,473210,359120,359950],[1,"BA",468390,469931,359980,360171],[2,"AB",470100,472400,359430,359960],[2,"BA",534580,473271,425110,363140],[3,"AB",470230,471191,360700,361520],[3,"BA",469660,471890,360610,361380]]
+  },
+  "limitations":["Hot reused-buffer component only; no model inference","Host durations aggregated from retained raw values, not independently reconstructed wall clocks","Worker elapsed includes ordered publication, completion and exit fence; not shader-only time","Parity independently verifies retained payload hashes, not unretained GPU bytes","Resource and isolation review checks retained finite observations, not repeated or continuous probes","Compiler lineages differ; not a pure tiling causal comparison"],
+  "conclusion":"Component correctness accepted; no useful host timing gain; retain default-off with no model-performance or formal-proof promotion"
+}

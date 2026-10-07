@@ -1,0 +1,628 @@
+{
+  "arms": {
+    "A": {
+      "finite_output_tokens_per_second": 16.929360179099927,
+      "requests": 24,
+      "tpot_ms": {
+        "mean": 52.505268,
+        "median": 53.210963,
+        "p95": 55.389391749999994
+      },
+      "ttft_ms": {
+        "mean": 892.3163522916667,
+        "median": 868.1564535,
+        "p95": 1099.9273838999998
+      }
+    },
+    "B": {
+      "finite_output_tokens_per_second": 17.518593825550205,
+      "requests": 24,
+      "tpot_ms": {
+        "mean": 51.52585520833333,
+        "median": 53.1927635,
+        "p95": 53.884683349999996
+      },
+      "ttft_ms": {
+        "mean": 762.3996649583333,
+        "median": 772.931099,
+        "p95": 785.066423
+      }
+    }
+  },
+  "attempt_sha256": "7f35cd116a13a5c56a517939284c5d950b8b936cd8c733fb6505e226694aec0e",
+  "change_id": "v17-native-prefill613",
+  "checks": {
+    "faster_adjacent_pairs": true,
+    "median_ttft_gain": true,
+    "positive_both_orders": true,
+    "regression_limits": true
+  },
+  "cpu_cost_by_cell": {
+    "block1-A1": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.58,
+          "cpu_seconds_per_token": 0.0007552083333333333,
+          "observed_interval_seconds": 46.317483362,
+          "system_seconds": 0.05,
+          "system_ticks": 5,
+          "user_seconds": 0.53,
+          "user_ticks": 53
+        },
+        "worker": {
+          "cpu_seconds": 2.11,
+          "cpu_seconds_per_token": 0.002747395833333333,
+          "observed_interval_seconds": 46.317486052,
+          "system_seconds": 1.26,
+          "system_ticks": 126,
+          "user_seconds": 0.85,
+          "user_ticks": 85
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block1-A2": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.67,
+          "cpu_seconds_per_token": 0.0008723958333333334,
+          "observed_interval_seconds": 47.002212406,
+          "system_seconds": 0.05,
+          "system_ticks": 5,
+          "user_seconds": 0.62,
+          "user_ticks": 62
+        },
+        "worker": {
+          "cpu_seconds": 2.56,
+          "cpu_seconds_per_token": 0.0033333333333333335,
+          "observed_interval_seconds": 47.002210966,
+          "system_seconds": 1.45,
+          "system_ticks": 145,
+          "user_seconds": 1.11,
+          "user_ticks": 111
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block1-B1": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.5,
+          "cpu_seconds_per_token": 0.0006510416666666666,
+          "observed_interval_seconds": 45.837914865,
+          "system_seconds": 0.03,
+          "system_ticks": 3,
+          "user_seconds": 0.47,
+          "user_ticks": 47
+        },
+        "worker": {
+          "cpu_seconds": 1.71,
+          "cpu_seconds_per_token": 0.0022265625,
+          "observed_interval_seconds": 45.837915755,
+          "system_seconds": 1.04,
+          "system_ticks": 104,
+          "user_seconds": 0.67,
+          "user_ticks": 67
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block1-B2": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.53,
+          "cpu_seconds_per_token": 0.0006901041666666667,
+          "observed_interval_seconds": 45.859320067,
+          "system_seconds": 0.02,
+          "system_ticks": 2,
+          "user_seconds": 0.51,
+          "user_ticks": 51
+        },
+        "worker": {
+          "cpu_seconds": 1.73,
+          "cpu_seconds_per_token": 0.0022526041666666666,
+          "observed_interval_seconds": 45.859321797,
+          "system_seconds": 1.06,
+          "system_ticks": 106,
+          "user_seconds": 0.67,
+          "user_ticks": 67
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block2-A1": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.59,
+          "cpu_seconds_per_token": 0.0007682291666666666,
+          "observed_interval_seconds": 46.628400905,
+          "system_seconds": 0.03,
+          "system_ticks": 3,
+          "user_seconds": 0.56,
+          "user_ticks": 56
+        },
+        "worker": {
+          "cpu_seconds": 2.26,
+          "cpu_seconds_per_token": 0.002942708333333333,
+          "observed_interval_seconds": 46.628402755,
+          "system_seconds": 1.4,
+          "system_ticks": 140,
+          "user_seconds": 0.86,
+          "user_ticks": 86
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block2-A2": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.58,
+          "cpu_seconds_per_token": 0.0007552083333333333,
+          "observed_interval_seconds": 42.063685375,
+          "system_seconds": 0.03,
+          "system_ticks": 3,
+          "user_seconds": 0.55,
+          "user_ticks": 55
+        },
+        "worker": {
+          "cpu_seconds": 2.07,
+          "cpu_seconds_per_token": 0.0026953125,
+          "observed_interval_seconds": 42.063685735,
+          "system_seconds": 1.23,
+          "system_ticks": 123,
+          "user_seconds": 0.84,
+          "user_ticks": 84
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block2-B1": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.57,
+          "cpu_seconds_per_token": 0.0007421874999999999,
+          "observed_interval_seconds": 42.244370837,
+          "system_seconds": 0.03,
+          "system_ticks": 3,
+          "user_seconds": 0.54,
+          "user_ticks": 54
+        },
+        "worker": {
+          "cpu_seconds": 1.7,
+          "cpu_seconds_per_token": 0.0022135416666666666,
+          "observed_interval_seconds": 42.244371877,
+          "system_seconds": 1.09,
+          "system_ticks": 109,
+          "user_seconds": 0.61,
+          "user_ticks": 61
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block2-B2": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.6,
+          "cpu_seconds_per_token": 0.0007812499999999999,
+          "observed_interval_seconds": 46.471496017,
+          "system_seconds": 0.04,
+          "system_ticks": 4,
+          "user_seconds": 0.56,
+          "user_ticks": 56
+        },
+        "worker": {
+          "cpu_seconds": 1.94,
+          "cpu_seconds_per_token": 0.0025260416666666665,
+          "observed_interval_seconds": 46.471473837,
+          "system_seconds": 1.17,
+          "system_ticks": 117,
+          "user_seconds": 0.77,
+          "user_ticks": 77
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block3-A1": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.56,
+          "cpu_seconds_per_token": 0.0007291666666666667,
+          "observed_interval_seconds": 46.367812492,
+          "system_seconds": 0.03,
+          "system_ticks": 3,
+          "user_seconds": 0.53,
+          "user_ticks": 53
+        },
+        "worker": {
+          "cpu_seconds": 2.09,
+          "cpu_seconds_per_token": 0.0027213541666666666,
+          "observed_interval_seconds": 46.367815512,
+          "system_seconds": 1.27,
+          "system_ticks": 127,
+          "user_seconds": 0.82,
+          "user_ticks": 82
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block3-A2": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.97,
+          "cpu_seconds_per_token": 0.0012630208333333332,
+          "observed_interval_seconds": 48.719935431,
+          "system_seconds": 0.11,
+          "system_ticks": 11,
+          "user_seconds": 0.86,
+          "user_ticks": 86
+        },
+        "worker": {
+          "cpu_seconds": 3.26,
+          "cpu_seconds_per_token": 0.004244791666666667,
+          "observed_interval_seconds": 48.719937461,
+          "system_seconds": 1.91,
+          "system_ticks": 191,
+          "user_seconds": 1.35,
+          "user_ticks": 135
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block3-B1": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.51,
+          "cpu_seconds_per_token": 0.0006640625,
+          "observed_interval_seconds": 46.056507879,
+          "system_seconds": 0.02,
+          "system_ticks": 2,
+          "user_seconds": 0.49,
+          "user_ticks": 49
+        },
+        "worker": {
+          "cpu_seconds": 1.75,
+          "cpu_seconds_per_token": 0.0022786458333333335,
+          "observed_interval_seconds": 46.056510379,
+          "system_seconds": 1.08,
+          "system_ticks": 108,
+          "user_seconds": 0.67,
+          "user_ticks": 67
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "block3-B2": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 768,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.66,
+          "cpu_seconds_per_token": 0.000859375,
+          "observed_interval_seconds": 42.541777762,
+          "system_seconds": 0.03,
+          "system_ticks": 3,
+          "user_seconds": 0.63,
+          "user_ticks": 63
+        },
+        "worker": {
+          "cpu_seconds": 1.76,
+          "cpu_seconds_per_token": 0.0022916666666666667,
+          "observed_interval_seconds": 42.541779512,
+          "system_seconds": 1.11,
+          "system_ticks": 111,
+          "user_seconds": 0.65,
+          "user_ticks": 65
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "counter-A": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 128,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.09,
+          "cpu_seconds_per_token": 0.000703125,
+          "observed_interval_seconds": 8.304031288,
+          "system_seconds": 0.01,
+          "system_ticks": 1,
+          "user_seconds": 0.08,
+          "user_ticks": 8
+        },
+        "worker": {
+          "cpu_seconds": 0.26,
+          "cpu_seconds_per_token": 0.00203125,
+          "observed_interval_seconds": 8.304032348,
+          "system_seconds": 0.14,
+          "system_ticks": 14,
+          "user_seconds": 0.12,
+          "user_ticks": 12
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    },
+    "counter-B": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 128,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.08,
+          "cpu_seconds_per_token": 0.000625,
+          "observed_interval_seconds": 8.235178275,
+          "system_seconds": 0.0,
+          "system_ticks": 0,
+          "user_seconds": 0.08,
+          "user_ticks": 8
+        },
+        "worker": {
+          "cpu_seconds": 0.2,
+          "cpu_seconds_per_token": 0.0015625,
+          "observed_interval_seconds": 8.235179985,
+          "system_seconds": 0.09,
+          "system_ticks": 9,
+          "user_seconds": 0.11,
+          "user_ticks": 11
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    }
+  },
+  "default_promotion": false,
+  "experiment": "native-prefill613-ttft-only-v1",
+  "finite_output_rate_gain_percent": 3.480542916073781,
+  "gates": {
+    "blocks": 3,
+    "maximum_regression_percent": 5.0,
+    "minimum_faster_pairs": 5,
+    "minimum_median_ttft_gain_percent": 5.0,
+    "order": [
+      "A",
+      "B",
+      "B",
+      "A"
+    ],
+    "percentile_method": "linear-(n-1)*p",
+    "positive_both_orders": true,
+    "samples_per_cell": 4,
+    "warmups_per_cell": 2
+  },
+  "latency_semantics": "native ingress event observations, not HTTP or calibrated GPU time",
+  "mechanism": {
+    "A": {
+      "dispatches": 82804,
+      "executions": 127,
+      "final_waits": 127,
+      "kernarg_initialized_bytes": 27815032,
+      "publications": 127,
+      "retirement_signals": 82804,
+      "staging_ns": 1760063
+    },
+    "B": {
+      "dispatches": 87708,
+      "executions": 135,
+      "final_waits": 135,
+      "kernarg_initialized_bytes": 29467192,
+      "publications": 135,
+      "retirement_signals": 87708,
+      "staging_ns": 1914970
+    }
+  },
+  "mechanism_scope": "A excludes ordinary prefill; B includes eight prefill613 programs plus unchanged 127 decode652 programs; model dispatches remain 87711; no GPU-time inference",
+  "median_tpot_gain_percent": 0.03420253830024311,
+  "median_ttft_gain_percent": 10.96868589942469,
+  "ordered64_comparison_performed": false,
+  "p95_ttft_gain_percent": 28.625613427642914,
+  "pairs": [
+    {
+      "cells": [
+        "block1-A1",
+        "block1-B1"
+      ],
+      "order": "AB",
+      "ttft_gain_percent": 10.924869819926354
+    },
+    {
+      "cells": [
+        "block1-B2",
+        "block1-A2"
+      ],
+      "order": "BA",
+      "ttft_gain_percent": 11.819430353531468
+    },
+    {
+      "cells": [
+        "block2-A1",
+        "block2-B1"
+      ],
+      "order": "AB",
+      "ttft_gain_percent": 15.679814614163035
+    },
+    {
+      "cells": [
+        "block2-B2",
+        "block2-A2"
+      ],
+      "order": "BA",
+      "ttft_gain_percent": 5.366131804192376
+    },
+    {
+      "cells": [
+        "block3-A1",
+        "block3-B1"
+      ],
+      "order": "AB",
+      "ttft_gain_percent": 9.66758432927033
+    },
+    {
+      "cells": [
+        "block3-B2",
+        "block3-A2"
+      ],
+      "order": "BA",
+      "ttft_gain_percent": 20.56455522210324
+    }
+  ],
+  "plan_sha256": "bc0c2f181098a7030ba0149f1c7758f9bd6a7829b1b6ed1729e908a36038a349",
+  "promotion_scope": "prefill-scheduling-within-native-backend-only",
+  "qualification": "engineering-gates-only-not-statistical-proof",
+  "rate_semantics": "sum of measured finite windows; not steady loaded throughput",
+  "raw_custody": [
+    {
+      "cell_id": "counter-A",
+      "raw_sha256": {
+        "stderr.raw": "816de2093012f221c35ff09bc81579242041e1ab41cc407e66ddffe76ba26ab3",
+        "stdin.raw": "005f42186d9f3820fd1485a2475346509962e281f5acb19c06282bb6e073e800",
+        "stdout.raw": "50b841a5867f32672fa1a41a81457d02d0dc85eed4e882de26fd966fe6ff0e0e"
+      },
+      "spec_sha256": "c40eebda08922a9bd17b1f50b40a8af7ccd7a53a3e4b111610344d858a278d85"
+    },
+    {
+      "cell_id": "counter-B",
+      "raw_sha256": {
+        "stderr.raw": "707d6662f72775d084ee4dabc87cd7ba3ea39b0a2806cf7ba81a9a12546d6375",
+        "stdin.raw": "005f42186d9f3820fd1485a2475346509962e281f5acb19c06282bb6e073e800",
+        "stdout.raw": "a1cb214e01bb86e0dea881f8be6184cb35ac5ac4c479073dbaa63007cb136047"
+      },
+      "spec_sha256": "da6eefb51d4f5dd277ece7f9126cb9bb9ceee9101d9aceb48b95dd43fc823659"
+    },
+    {
+      "cell_id": "block1-A1",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "ce0a96846dfb4a1be90c869c558103abe5f46541a5bcb7eccfcd482f4d3f6f8b"
+      },
+      "spec_sha256": "5aa284a31fb55b5b6d6152749775e0ac39689b5c56c289e52226b00fafb99a90"
+    },
+    {
+      "cell_id": "block1-B1",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "5ab8ba90e98fe74a5c5c15b6a288b4cea39664b700686471f9201d7cf834831f"
+      },
+      "spec_sha256": "166603654b770d0c91ceefa62cc31a522fca9c82701e9d5fdd7024c1a0e9145a"
+    },
+    {
+      "cell_id": "block1-B2",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "fcd496f70967007716d7d285168f33801d08fd872d0f05212843f1254f26b766"
+      },
+      "spec_sha256": "166603654b770d0c91ceefa62cc31a522fca9c82701e9d5fdd7024c1a0e9145a"
+    },
+    {
+      "cell_id": "block1-A2",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "5980909ccf08472ce07a1ebb671dbbf7fffb932927fd06945a0a0245be858134"
+      },
+      "spec_sha256": "5aa284a31fb55b5b6d6152749775e0ac39689b5c56c289e52226b00fafb99a90"
+    },
+    {
+      "cell_id": "block2-A1",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "14ac908e5b1325d0834137a8d79343f588379debb34de1a717971074d046083d"
+      },
+      "spec_sha256": "5aa284a31fb55b5b6d6152749775e0ac39689b5c56c289e52226b00fafb99a90"
+    },
+    {
+      "cell_id": "block2-B1",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "e506dae8cef6f971bc40106ec72982e66aa3c5e04be0c8f87095cecd807dbc22"
+      },
+      "spec_sha256": "166603654b770d0c91ceefa62cc31a522fca9c82701e9d5fdd7024c1a0e9145a"
+    },
+    {
+      "cell_id": "block2-B2",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "e693788a1c97a175e3c927846ec2eda7d3a7c4e2f3638ddee3c34939c53ca70f"
+      },
+      "spec_sha256": "166603654b770d0c91ceefa62cc31a522fca9c82701e9d5fdd7024c1a0e9145a"
+    },
+    {
+      "cell_id": "block2-A2",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "dd4badf3d00b4c0844835e3114c99d33d3b1a51de00367feb42eca08dcdcee64"
+      },
+      "spec_sha256": "5aa284a31fb55b5b6d6152749775e0ac39689b5c56c289e52226b00fafb99a90"
+    },
+    {
+      "cell_id": "block3-A1",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "b9b46b25c20dd61866ed5ca5927d234e57ced88caf5ca1bf31f469060c04c449"
+      },
+      "spec_sha256": "5aa284a31fb55b5b6d6152749775e0ac39689b5c56c289e52226b00fafb99a90"
+    },
+    {
+      "cell_id": "block3-B1",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "74d8e6efb5d97d98a64909b30bfddbb8f9598a450fdb8356105495f7fc932dfd"
+      },
+      "spec_sha256": "166603654b770d0c91ceefa62cc31a522fca9c82701e9d5fdd7024c1a0e9145a"
+    },
+    {
+      "cell_id": "block3-B2",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "646e08f8b81f09109ebcc87ff7524b8780715a4f89ff3bd76253ba15d395136f"
+      },
+      "spec_sha256": "166603654b770d0c91ceefa62cc31a522fca9c82701e9d5fdd7024c1a0e9145a"
+    },
+    {
+      "cell_id": "block3-A2",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "6beb3930162958e5668a827b3ac0dac20ae52e5d07fd38be05e80dd3e35e1fba"
+      },
+      "spec_sha256": "5aa284a31fb55b5b6d6152749775e0ac39689b5c56c289e52226b00fafb99a90"
+    }
+  ],
+  "regressions_percent": {
+    "finite_output_rate": -3.480542916073781,
+    "tpot_ms_median": -0.03420253830024311,
+    "tpot_ms_p95": -2.716600331687158,
+    "ttft_ms_p95": -28.625613427642914
+  },
+  "schema": "FerricPrefillChangeEvaluationV1",
+  "status": "promotable",
+  "vendor_comparison_performed": false
+}

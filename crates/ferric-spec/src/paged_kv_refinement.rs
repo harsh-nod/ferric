@@ -1,0 +1,4190 @@
+//! Logical physical-paged-KV refinement for one admitted Qwen3 request.
+//!
+//! The fixed metadata below models exact page-table translation, initialized
+//! prefixes, generations, rollback, cancellation, retirement, and reuse. It is
+//! a source-level sequential contract only. It owns no device allocation,
+//! address, copy, kernel, queue, completion, HSA, or machine refinement.
+
+use crate::completion::CompletionEpoch;
+use crate::{Qwen3ModelRole, Qwen3PlanSelection, RequestId, M1_MAX_CONTEXT_TOKENS};
+use vstd::prelude::*;
+
+verus! {
+
+/// Ferric M0 and the admitted M1 graph use 16-token KV pages.
+pub const M1_KV_PAGE_TOKENS: u32 = 16;
+/// One 8K request needs exactly 512 logical page-table entries.
+pub const M1_KV_PAGE_TABLE_ENTRIES: usize = 512;
+/// This one-request refinement state has one physical slot per table entry.
+pub const M1_KV_PHYSICAL_PAGE_SLOTS: usize = 512;
+
+const M1_KV_PAGE_TABLE_ENTRIES_U32: u32 = 512;
+const M1_KV_PHYSICAL_PAGE_SLOTS_U32: u32 = 512;
+
+/// A physical page identity is scoped to an exact target or draft pool.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PhysicalPageId {
+    role: Qwen3ModelRole,
+    index: u32,
+    generation: u32,
+}
+
+impl PhysicalPageId {
+    pub closed spec fn role_spec(&self) -> Qwen3ModelRole { self.role }
+
+    pub closed spec fn index_spec(&self) -> u32 { self.index }
+
+    pub closed spec fn generation_spec(&self) -> u32 { self.generation }
+
+    #[must_use]
+    pub const fn new(role: Qwen3ModelRole, index: u32, generation: u32) -> Self {
+        Self { role, index, generation }
+    }
+
+    #[must_use]
+    pub const fn role(self) -> (role: Qwen3ModelRole)
+        ensures role == self.role_spec(),
+    { self.role }
+
+    #[must_use]
+    pub const fn index(self) -> (index: u32)
+        ensures index == self.index_spec(),
+    { self.index }
+
+    #[must_use]
+    pub const fn generation(self) -> (generation: u32)
+        ensures generation == self.generation_spec(),
+    { self.generation }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PhysicalPageOwnership {
+    Free,
+    Exclusive { request: RequestId, role: Qwen3ModelRole },
+    Retired {
+        request: RequestId,
+        role: Qwen3ModelRole,
+        after_epoch: CompletionEpoch,
+    },
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct PhysicalPageSlot {
+    generation: u32,
+    ownership: PhysicalPageOwnership,
+    initialized_prefix: u32,
+}
+
+impl PhysicalPageSlot {
+    const FREE: Self = Self {
+        generation: 1,
+        ownership: PhysicalPageOwnership::Free,
+        initialized_prefix: 0,
+    };
+}
+
+/// Logical request visibility around cancellation and retirement.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PhysicalKvLifecycle {
+    Active,
+    Cancelled { after_epoch: CompletionEpoch },
+    RetiredAwaitingQuiescence { after_epoch: CompletionEpoch },
+}
+
+/// The abstract M0-compatible token state refined by physical metadata.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LogicalKvState {
+    pub request: RequestId,
+    pub role: Qwen3ModelRole,
+    pub lifecycle: PhysicalKvLifecycle,
+    pub resident_tokens: u32,
+    pub committed_tokens: u32,
+}
+
+/// Exact translation of one initialized logical token.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PhysicalKvLocation {
+    pub page: PhysicalPageId,
+    pub offset: u32,
+}
+
+/// Fail-closed rejection for the physical metadata contract.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PhysicalKvError {
+    InvalidSelection,
+    ZeroRequestGeneration,
+    WrongLifecycle,
+    RequestMismatch,
+    SelectionMismatch,
+    RoleMismatch,
+    PageOutOfRange,
+    PageGenerationMismatch,
+    PageNotFree,
+    PhysicalAlias,
+    PageNotRequired,
+    PageTableExhausted,
+    ContextExceeded,
+    LogicalPositionMismatch,
+    LogicalPositionOutOfRange,
+    MissingPage,
+    PageOwnershipMismatch,
+    UninitializedRead,
+    CommitExceedsResident,
+    NoTentativeToken,
+    SettlementCursorMismatch,
+    SettlementIntervalMismatch,
+    SettlementTailTooWide,
+    SettlementPageCountMismatch,
+    SettlementPhysicalAlias,
+    ZeroRetirementEpoch,
+    RetirementEpochMismatch,
+    NoPageToRetire,
+    GenerationExhausted,
+    InvalidQuiescenceAuthority,
+}
+
+/// Rejections of the executed one-token maintenance metadata commit.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PhysicalKvCatchupCommitError {
+    CompletionEpochMismatch,
+    AcceptedCountMismatch,
+    Physical(PhysicalKvError),
+}
+
+/// Private, non-clone authority. The crate-local logical composition produces
+/// this value only after observing an exact scheduler completion; no public
+/// source-level constructor exists.
+#[derive(Debug, PartialEq, Eq)]
+pub struct KvQuiescenceAuthority {
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+}
+
+/// Private checked authority for one infallible speculative tail settlement.
+/// The token is non-clone and its fields have no public constructor.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct PhysicalKvSettlementPermit {
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+    pre_committed: u32,
+    tentative_end: u32,
+    commit_end: u32,
+    old_page_count: u32,
+    next_page_count: u32,
+    retired_pages: u32,
+    retired_page: Option<PhysicalPageId>,
+    retained_page: Option<PhysicalPageId>,
+}
+
+/// Checked authority to change only the admitted graph selection of one active
+/// physical KV state. The private snapshot prevents construction outside this
+/// module and makes the subsequent commit an infallible framed transition.
+#[derive(Debug, PartialEq, Eq)]
+pub struct PhysicalKvReselectionPermit {
+    request: RequestId,
+    prior_selection: Qwen3PlanSelection,
+    next_selection: Qwen3PlanSelection,
+    prior_max_context_tokens: u32,
+    next_max_context_tokens: u32,
+    resident_tokens: u32,
+    committed_tokens: u32,
+    page_count: u32,
+}
+
+impl KvQuiescenceAuthority {
+    pub(crate) closed spec fn request_spec(&self) -> RequestId { self.request }
+
+    pub(crate) closed spec fn role_spec(&self) -> Qwen3ModelRole { self.role }
+
+    pub(crate) closed spec fn exact_epoch_spec(&self) -> CompletionEpoch { self.exact_epoch }
+
+    pub(crate) fn from_exact_completion(
+        request: RequestId,
+        role: Qwen3ModelRole,
+        exact_epoch: CompletionEpoch,
+    ) -> (authority: Self)
+        requires exact_epoch.value > 0,
+        ensures
+            authority.request_spec() == request,
+            authority.role_spec() == role,
+            authority.exact_epoch_spec() == exact_epoch,
+    {
+        Self { request, role, exact_epoch }
+    }
+}
+
+/// Fixed-capacity physical metadata for exactly one admitted request and role.
+/// Fields are private and the authority is deliberately not `Clone`.
+#[derive(Debug, PartialEq, Eq)]
+pub struct PhysicalKvState {
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    lifecycle: PhysicalKvLifecycle,
+    max_context_tokens: u32,
+    resident_tokens: u32,
+    committed_tokens: u32,
+    page_count: u32,
+    page_table: [Option<PhysicalPageId>; M1_KV_PAGE_TABLE_ENTRIES],
+    page_slots: [PhysicalPageSlot; M1_KV_PHYSICAL_PAGE_SLOTS],
+}
+
+pub closed spec fn same_request(left: RequestId, right: RequestId) -> bool {
+    left.slot_spec() == right.slot_spec()
+        && left.generation_spec() == right.generation_spec()
+}
+
+pub closed spec fn role_matches(left: Qwen3ModelRole, right: Qwen3ModelRole) -> bool {
+    match (left, right) {
+        (Qwen3ModelRole::Target8B, Qwen3ModelRole::Target8B)
+        | (Qwen3ModelRole::Draft06B, Qwen3ModelRole::Draft06B) => true,
+        _ => false,
+    }
+}
+
+pub closed spec fn lifecycle_matches(
+    left: PhysicalKvLifecycle,
+    right: PhysicalKvLifecycle,
+) -> bool {
+    match (left, right) {
+        (PhysicalKvLifecycle::Active, PhysicalKvLifecycle::Active) => true,
+        (
+            PhysicalKvLifecycle::Cancelled { after_epoch: left_epoch },
+            PhysicalKvLifecycle::Cancelled { after_epoch: right_epoch },
+        ) => left_epoch.value == right_epoch.value,
+        (
+            PhysicalKvLifecycle::RetiredAwaitingQuiescence { after_epoch: left_epoch },
+            PhysicalKvLifecycle::RetiredAwaitingQuiescence { after_epoch: right_epoch },
+        ) => left_epoch.value == right_epoch.value,
+        _ => false,
+    }
+}
+
+pub closed spec fn kv_selection_valid(selection: Qwen3PlanSelection) -> bool {
+    selection
+        .bucket
+        .dimensions_spec(selection.role, selection.mode)
+        .is_some()
+}
+
+impl PhysicalKvState {
+    pub closed spec fn abstraction_spec(&self) -> LogicalKvState {
+        LogicalKvState {
+            request: self.request,
+            role: self.selection.role,
+            lifecycle: self.lifecycle,
+            resident_tokens: self.resident_tokens,
+            committed_tokens: self.committed_tokens,
+        }
+    }
+
+    pub closed spec fn selection_spec(&self) -> Qwen3PlanSelection { self.selection }
+
+    pub closed spec fn table_contains_index_spec(&self, index: u32) -> bool {
+        exists|position: int| 0 <= position < M1_KV_PAGE_TABLE_ENTRIES
+            && self.page_table@[position].is_some()
+            && self.page_table@[position].unwrap().index == index
+    }
+
+    pub closed spec fn immutable_frame(&self, before: &Self) -> bool {
+        self.request == before.request
+            && self.selection == before.selection
+            && self.max_context_tokens == before.max_context_tokens
+    }
+
+    pub closed spec fn initial_refinement(
+        &self,
+        request: RequestId,
+        selection: Qwen3PlanSelection,
+        max_context_tokens: u32,
+    ) -> bool {
+        &&& self.request == request
+        &&& self.selection == selection
+        &&& lifecycle_matches(self.lifecycle, PhysicalKvLifecycle::Active)
+        &&& self.max_context_tokens == max_context_tokens
+        &&& self.resident_tokens == 0
+        &&& self.committed_tokens == 0
+        &&& self.page_count == 0
+        &&& forall|position: int| 0 <= position < M1_KV_PAGE_TABLE_ENTRIES ==>
+            self.page_table@[position].is_none()
+        &&& forall|position: int| 0 <= position < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+            self.page_slots@[position] == PhysicalPageSlot::FREE
+    }
+
+    pub closed spec fn initial_refinement_with_page_generations(
+        &self,
+        request: RequestId,
+        selection: Qwen3PlanSelection,
+        max_context_tokens: u32,
+        page_generations: [u32; M1_KV_PHYSICAL_PAGE_SLOTS],
+    ) -> bool {
+        &&& self.request == request
+        &&& self.selection == selection
+        &&& lifecycle_matches(self.lifecycle, PhysicalKvLifecycle::Active)
+        &&& self.max_context_tokens == max_context_tokens
+        &&& self.resident_tokens == 0
+        &&& self.committed_tokens == 0
+        &&& self.page_count == 0
+        &&& forall|position: int| 0 <= position < M1_KV_PAGE_TABLE_ENTRIES ==>
+            self.page_table@[position].is_none()
+        &&& forall|position: int| 0 <= position < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+            self.page_slots@[position] == PhysicalPageSlot {
+                generation: page_generations@[position],
+                ownership: PhysicalPageOwnership::Free,
+                initialized_prefix: 0,
+            }
+    }
+
+    /// Constructs the only public initial state for an exact admitted graph bucket.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid role/mode/bucket selections and zero request generations.
+    pub fn new(
+        request: RequestId,
+        selection: Qwen3PlanSelection,
+    ) -> (result: Result<Self, PhysicalKvError>)
+        ensures match result {
+            Ok(state) => {
+                &&& request.generation_spec() > 0
+                &&& kv_selection_valid(selection)
+                &&& state.selection_spec() == selection
+                &&& state.abstraction_spec().request.slot_spec() == request.slot_spec()
+                &&& state.abstraction_spec().request.generation_spec()
+                    == request.generation_spec()
+                &&& state.abstraction_spec().role == selection.role
+                &&& state.abstraction_spec().lifecycle == PhysicalKvLifecycle::Active
+                &&& state.abstraction_spec().resident_tokens == 0
+                &&& state.abstraction_spec().committed_tokens == 0
+                &&& state.initial_refinement(
+                    request,
+                    selection,
+                    selection.bucket.dimensions_spec(selection.role, selection.mode).unwrap().context_tokens,
+                )
+            }
+            Err(PhysicalKvError::ZeroRequestGeneration) => request.generation_spec() == 0,
+            Err(PhysicalKvError::InvalidSelection) => {
+                request.generation_spec() > 0 && !kv_selection_valid(selection)
+            }
+            Err(_) => false,
+        },
+    {
+        if request.generation() == 0 {
+            return Err(PhysicalKvError::ZeroRequestGeneration);
+        }
+        let Some(dimensions) = selection.bucket.dimensions(selection.role, selection.mode) else {
+            return Err(PhysicalKvError::InvalidSelection);
+        };
+        let page_table = vstd::array::array_fill_for_copy_types(None);
+        let page_slots = vstd::array::array_fill_for_copy_types(PhysicalPageSlot::FREE);
+        let state = Self {
+            request,
+            selection,
+            lifecycle: PhysicalKvLifecycle::Active,
+            max_context_tokens: dimensions.context_tokens,
+            resident_tokens: 0,
+            committed_tokens: 0,
+            page_count: 0,
+            page_table,
+            page_slots,
+        };
+        proof {
+            reveal(kv_selection_valid);
+            reveal(PhysicalKvState::initial_refinement);
+            reveal(lifecycle_matches);
+        }
+        Ok(state)
+    }
+
+    /// Constructs an empty state from an exact role-local pool generation snapshot.
+    ///
+    /// The snapshot changes only the generations of otherwise-free physical
+    /// slots. It grants no allocation or page-lease authority.
+    ///
+    /// # Errors
+    ///
+    /// Rejects invalid selections, zero request generations, or any zero page
+    /// generation without constructing a partially seeded state.
+    pub fn new_with_page_generations(
+        request: RequestId,
+        selection: Qwen3PlanSelection,
+        page_generations: [u32; M1_KV_PHYSICAL_PAGE_SLOTS],
+    ) -> (result: Result<Self, PhysicalKvError>)
+        ensures match result {
+            Ok(state) => {
+                &&& request.generation_spec() > 0
+                &&& kv_selection_valid(selection)
+                &&& forall|position: int| 0 <= position < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+                    page_generations@[position] > 0
+                &&& state.initial_refinement_with_page_generations(
+                    request,
+                    selection,
+                    selection.bucket.dimensions_spec(selection.role, selection.mode).unwrap().context_tokens,
+                    page_generations,
+                )
+            }
+            Err(PhysicalKvError::ZeroRequestGeneration) => request.generation_spec() == 0,
+            Err(PhysicalKvError::InvalidSelection) => {
+                request.generation_spec() > 0 && !kv_selection_valid(selection)
+            }
+            Err(PhysicalKvError::PageGenerationMismatch) => {
+                &&& request.generation_spec() > 0
+                &&& kv_selection_valid(selection)
+                &&& exists|position: int| 0 <= position < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && page_generations@[position] == 0
+            }
+            Err(_) => false,
+        },
+    {
+        if request.generation() == 0 {
+            return Err(PhysicalKvError::ZeroRequestGeneration);
+        }
+        let Some(dimensions) = selection.bucket.dimensions(selection.role, selection.mode) else {
+            return Err(PhysicalKvError::InvalidSelection);
+        };
+        proof {
+            reveal(kv_selection_valid);
+        }
+        let mut position = 0usize;
+        while position < M1_KV_PHYSICAL_PAGE_SLOTS
+            invariant
+                request.generation_spec() > 0,
+                kv_selection_valid(selection),
+                position <= M1_KV_PHYSICAL_PAGE_SLOTS,
+                forall|prior: int| 0 <= prior < position ==>
+                    page_generations@[prior] > 0,
+            decreases M1_KV_PHYSICAL_PAGE_SLOTS - position,
+        {
+            if page_generations[position] == 0 {
+                assert(exists|invalid: int| 0 <= invalid < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && page_generations@[invalid] == 0) by {
+                    assert(page_generations@[position as int] == 0);
+                }
+                return Err(PhysicalKvError::PageGenerationMismatch);
+            }
+            position += 1;
+        }
+        assert(forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+            page_generations@[index] > 0);
+
+        let page_table = vstd::array::array_fill_for_copy_types(None);
+        let mut page_slots = vstd::array::array_fill_for_copy_types(PhysicalPageSlot::FREE);
+        let mut position = 0usize;
+        while position < M1_KV_PHYSICAL_PAGE_SLOTS
+            invariant
+                position <= M1_KV_PHYSICAL_PAGE_SLOTS,
+                page_slots@.len() == M1_KV_PHYSICAL_PAGE_SLOTS,
+                forall|prior: int| 0 <= prior < position ==> page_slots@[prior]
+                    == (PhysicalPageSlot {
+                        generation: page_generations@[prior],
+                        ownership: PhysicalPageOwnership::Free,
+                        initialized_prefix: 0,
+                    }),
+                forall|later: int| position <= later < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+                    page_slots@[later] == PhysicalPageSlot::FREE,
+            decreases M1_KV_PHYSICAL_PAGE_SLOTS - position,
+        {
+            page_slots[position] = PhysicalPageSlot {
+                generation: page_generations[position],
+                ownership: PhysicalPageOwnership::Free,
+                initialized_prefix: 0,
+            };
+            position += 1;
+        }
+        let state = Self {
+            request,
+            selection,
+            lifecycle: PhysicalKvLifecycle::Active,
+            max_context_tokens: dimensions.context_tokens,
+            resident_tokens: 0,
+            committed_tokens: 0,
+            page_count: 0,
+            page_table,
+            page_slots,
+        };
+        proof {
+            reveal(kv_selection_valid);
+            reveal(PhysicalKvState::initial_refinement_with_page_generations);
+            reveal(lifecycle_matches);
+        }
+        Ok(state)
+    }
+
+    #[must_use]
+    pub const fn logical_state(&self) -> (state: LogicalKvState)
+        ensures state == self.abstraction_spec(),
+    {
+        LogicalKvState {
+            request: self.request,
+            role: self.selection.role,
+            lifecycle: self.lifecycle,
+            resident_tokens: self.resident_tokens,
+            committed_tokens: self.committed_tokens,
+        }
+    }
+
+    #[must_use]
+    pub const fn selection(&self) -> (selection: Qwen3PlanSelection)
+        ensures selection == self.selection_spec(),
+    { self.selection }
+
+    #[must_use]
+    pub const fn max_context_tokens(&self) -> u32 { self.max_context_tokens }
+
+    #[must_use]
+    pub const fn page_count(&self) -> u32 { self.page_count }
+
+    pub closed spec fn page_at_spec(&self, position: u32) -> Option<PhysicalPageId> {
+        if position < M1_KV_PAGE_TABLE_ENTRIES {
+            self.page_table@[position as int]
+        } else {
+            None
+        }
+    }
+
+    /// Returns the exact physical generation retained at one logical page-table position.
+    #[must_use]
+    pub fn page_at(&self, position: u32) -> (page: Option<PhysicalPageId>)
+        ensures page == self.page_at_spec(position),
+    {
+        if position >= M1_KV_PAGE_TABLE_ENTRIES_U32 {
+            None
+        } else {
+            self.page_table[position as usize]
+        }
+    }
+
+    #[must_use]
+    pub fn page_generation(&self, index: u32) -> Option<u32> {
+        if index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+            None
+        } else {
+            Some(self.page_slots[index as usize].generation)
+        }
+    }
+
+    fn table_contains_index(&self, index: u32) -> (contains: bool)
+        ensures contains == self.table_contains_index_spec(index),
+    {
+        let mut position = 0usize;
+        while position < M1_KV_PAGE_TABLE_ENTRIES
+            invariant
+                position <= M1_KV_PAGE_TABLE_ENTRIES,
+                forall|prior: int| 0 <= prior < position ==>
+                    !(self.page_table@[prior].is_some()
+                        && self.page_table@[prior].unwrap().index == index),
+            decreases M1_KV_PAGE_TABLE_ENTRIES - position,
+        {
+            if let Some(page) = self.page_table[position] {
+                if page.index == index {
+                    return true;
+                }
+            }
+            position += 1;
+        }
+        false
+    }
+}
+
+/// An active physical KV state can retain its exact contents under a new
+/// role-stable selection when the new bucket still covers its resident prefix.
+pub closed spec fn physical_kv_reselection_enabled(
+    state: &PhysicalKvState,
+    next_selection: Qwen3PlanSelection,
+) -> bool {
+    &&& lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+    &&& role_matches(state.selection.role, next_selection.role)
+    &&& kv_selection_valid(next_selection)
+    &&& state.resident_tokens
+        <= next_selection
+            .bucket
+            .dimensions_spec(next_selection.role, next_selection.mode)
+            .unwrap()
+            .context_tokens
+}
+
+/// Reselection changes only the exact selection and its derived capacity.
+pub closed spec fn physical_kv_reselection_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    next_selection: Qwen3PlanSelection,
+) -> bool {
+    &&& physical_kv_reselection_enabled(before, next_selection)
+    &&& after.request == before.request
+    &&& after.selection == next_selection
+    &&& after.lifecycle == before.lifecycle
+    &&& after.max_context_tokens
+        == next_selection
+            .bucket
+            .dimensions_spec(next_selection.role, next_selection.mode)
+            .unwrap()
+            .context_tokens
+    &&& after.resident_tokens == before.resident_tokens
+    &&& after.committed_tokens == before.committed_tokens
+    &&& after.page_count == before.page_count
+    &&& after.page_table == before.page_table
+    &&& after.page_slots == before.page_slots
+}
+
+impl PhysicalKvReselectionPermit {
+    pub closed spec fn next_selection_spec(&self) -> Qwen3PlanSelection {
+        self.next_selection
+    }
+
+    pub closed spec fn valid_for(&self, state: &PhysicalKvState) -> bool {
+        &&& self.request == state.request
+        &&& self.prior_selection == state.selection
+        &&& self.prior_max_context_tokens == state.max_context_tokens
+        &&& self.resident_tokens == state.resident_tokens
+        &&& self.committed_tokens == state.committed_tokens
+        &&& self.page_count == state.page_count
+        &&& self.next_max_context_tokens
+            == self
+                .next_selection
+                .bucket
+                .dimensions_spec(self.next_selection.role, self.next_selection.mode)
+                .unwrap()
+                .context_tokens
+        &&& physical_kv_reselection_enabled(state, self.next_selection)
+    }
+}
+
+/// Preflights a role-stable, capacity-safe selection change without mutation.
+///
+/// # Errors
+///
+/// Rejects non-active state, role drift, invalid mode/bucket selections, or a
+/// new context capacity smaller than the resident prefix.
+pub fn preflight_physical_kv_reselection(
+    state: &PhysicalKvState,
+    next_selection: Qwen3PlanSelection,
+) -> (result: Result<PhysicalKvReselectionPermit, PhysicalKvError>)
+    ensures
+        result.is_ok() == physical_kv_reselection_enabled(state, next_selection),
+        result.is_ok() ==> result.unwrap().valid_for(state),
+{
+    proof {
+        reveal(physical_kv_reselection_enabled);
+        reveal(PhysicalKvReselectionPermit::valid_for);
+        reveal(kv_selection_valid);
+        reveal(lifecycle_matches);
+        reveal(role_matches);
+    }
+    if !is_active(state.lifecycle) {
+        return Err(PhysicalKvError::WrongLifecycle);
+    }
+    if !same_role(state.selection.role, next_selection.role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    let Some(dimensions) = next_selection
+        .bucket
+        .dimensions(next_selection.role, next_selection.mode)
+    else {
+        return Err(PhysicalKvError::InvalidSelection);
+    };
+    if state.resident_tokens > dimensions.context_tokens {
+        return Err(PhysicalKvError::ContextExceeded);
+    }
+    Ok(PhysicalKvReselectionPermit {
+        request: state.request,
+        prior_selection: state.selection,
+        next_selection,
+        prior_max_context_tokens: state.max_context_tokens,
+        next_max_context_tokens: dimensions.context_tokens,
+        resident_tokens: state.resident_tokens,
+        committed_tokens: state.committed_tokens,
+        page_count: state.page_count,
+    })
+}
+
+/// Commits a preflighted selection change while retaining the complete logical
+/// state, page table, slot ownership, and physical generations.
+pub fn apply_preflighted_physical_kv_reselection(
+    state: &mut PhysicalKvState,
+    permit: PhysicalKvReselectionPermit,
+)
+    requires permit.valid_for(old(state)),
+    ensures physical_kv_reselection_transition(
+        old(state),
+        final(state),
+        permit.next_selection_spec(),
+    ),
+{
+    proof {
+        reveal(PhysicalKvReselectionPermit::valid_for);
+        reveal(PhysicalKvReselectionPermit::next_selection_spec);
+        reveal(physical_kv_reselection_enabled);
+        reveal(physical_kv_reselection_transition);
+    }
+    state.selection = permit.next_selection;
+    state.max_context_tokens = permit.next_max_context_tokens;
+}
+
+fn same_role(left: Qwen3ModelRole, right: Qwen3ModelRole) -> (same: bool)
+    ensures same == role_matches(left, right),
+{
+    matches!((left, right),
+        (Qwen3ModelRole::Target8B, Qwen3ModelRole::Target8B)
+            | (Qwen3ModelRole::Draft06B, Qwen3ModelRole::Draft06B)
+    )
+}
+
+fn is_active(lifecycle: PhysicalKvLifecycle) -> (active: bool)
+    ensures active == lifecycle_matches(lifecycle, PhysicalKvLifecycle::Active),
+{
+    matches!(lifecycle, PhysicalKvLifecycle::Active)
+}
+
+closed spec fn free_slot_matches(slot: PhysicalPageSlot, page: PhysicalPageId) -> bool {
+    page.generation > 0
+        && slot.generation == page.generation
+        && match slot.ownership {
+            PhysicalPageOwnership::Free => slot.initialized_prefix == 0,
+            _ => false,
+        }
+}
+
+fn is_free_slot(slot: PhysicalPageSlot, page: PhysicalPageId) -> (available: bool)
+    ensures available == free_slot_matches(slot, page),
+{
+    page.generation > 0
+        && slot.generation == page.generation
+        && matches!(slot.ownership, PhysicalPageOwnership::Free)
+        && slot.initialized_prefix == 0
+}
+
+closed spec fn exclusive_owner_matches(
+    ownership: PhysicalPageOwnership,
+    request: RequestId,
+    role: Qwen3ModelRole,
+) -> bool {
+    match ownership {
+        PhysicalPageOwnership::Exclusive {
+            request: owner,
+            role: owner_role,
+        } => same_request(owner, request) && role_matches(owner_role, role),
+        _ => false,
+    }
+}
+
+fn is_exclusive_owner(
+    ownership: PhysicalPageOwnership,
+    request: RequestId,
+    role: Qwen3ModelRole,
+) -> (matches: bool)
+    ensures matches == exclusive_owner_matches(ownership, request, role),
+{
+    match ownership {
+        PhysicalPageOwnership::Exclusive {
+            request: owner,
+            role: owner_role,
+        } => {
+            owner.slot() == request.slot()
+                && owner.generation() == request.generation()
+                && same_role(owner_role, role)
+        }
+        _ => false,
+    }
+}
+
+closed spec fn retired_owner_matches(
+    ownership: PhysicalPageOwnership,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+) -> bool {
+    match ownership {
+        PhysicalPageOwnership::Retired {
+            request: owner,
+            role: owner_role,
+            after_epoch,
+        } => {
+            same_request(owner, request)
+                && role_matches(owner_role, role)
+                && after_epoch.value == exact_epoch.value
+        }
+        _ => false,
+    }
+}
+
+fn is_retired_owner(
+    ownership: PhysicalPageOwnership,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+) -> (matches: bool)
+    ensures matches == retired_owner_matches(ownership, request, role, exact_epoch),
+{
+    match ownership {
+        PhysicalPageOwnership::Retired {
+            request: owner,
+            role: owner_role,
+            after_epoch,
+        } => {
+            owner.slot() == request.slot()
+                && owner.generation() == request.generation()
+                && same_role(owner_role, role)
+                && after_epoch.value == exact_epoch.value
+        }
+        _ => false,
+    }
+}
+
+/// The exact role-scoped generation is a free, zero-initialized source slot.
+pub closed spec fn physical_page_is_free_generation(
+    state: &PhysicalKvState,
+    page: PhysicalPageId,
+) -> bool {
+    &&& role_matches(state.selection.role, page.role)
+    &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& page.generation > 0
+    &&& state.page_slots@[page.index as int].generation == page.generation
+    &&& state.page_slots@[page.index as int].ownership == PhysicalPageOwnership::Free
+    &&& state.page_slots@[page.index as int].initialized_prefix == 0
+}
+
+/// The exact role-scoped generation is retired for one request and epoch.
+pub closed spec fn physical_page_is_retired_at_epoch(
+    state: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    page: PhysicalPageId,
+) -> bool {
+    &&& role_matches(state.selection.role, role)
+    &&& role_matches(page.role, role)
+    &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& page.generation > 0
+    &&& state.page_slots@[page.index as int].generation == page.generation
+    &&& retired_owner_matches(
+        state.page_slots@[page.index as int].ownership,
+        request,
+        role,
+        exact_epoch,
+    )
+    &&& !state.table_contains_index_spec(page.index)
+}
+
+fn validate_active_authority(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+) -> (result: Result<(), PhysicalKvError>)
+    ensures result.is_ok() == (
+        lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+            && same_request(state.request, request)
+            && state.selection == selection
+    ),
+{
+    proof {
+        reveal(lifecycle_matches);
+        reveal(same_request);
+    }
+    if !is_active(state.lifecycle) {
+        return Err(PhysicalKvError::WrongLifecycle);
+    }
+    if state.request.slot() != request.slot()
+        || state.request.generation() != request.generation()
+    {
+        return Err(PhysicalKvError::RequestMismatch);
+    }
+    if !state.selection.matches(selection) {
+        return Err(PhysicalKvError::SelectionMismatch);
+    }
+    Ok(())
+}
+
+pub closed spec fn append_page_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    page: PhysicalPageId,
+) -> bool {
+    &&& lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+    &&& same_request(state.request, request)
+    &&& state.selection == selection
+    &&& role_matches(page.role, state.selection.role)
+    &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& state.resident_tokens < state.max_context_tokens
+    &&& state.resident_tokens % M1_KV_PAGE_TOKENS == 0
+    &&& state.page_count == state.resident_tokens / M1_KV_PAGE_TOKENS
+    &&& state.page_count < M1_KV_PAGE_TABLE_ENTRIES
+    &&& !state.table_contains_index_spec(page.index)
+    &&& free_slot_matches(state.page_slots@[page.index as int], page)
+}
+
+pub closed spec fn append_page_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    page: PhysicalPageId,
+) -> bool {
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == before.resident_tokens
+    &&& after.committed_tokens == before.committed_tokens
+    &&& after.page_count == before.page_count + 1
+    &&& after.page_table@ == before.page_table@.update(before.page_count as int, Some(page))
+    &&& after.page_slots@ == before.page_slots@.update(
+        page.index as int,
+        PhysicalPageSlot {
+            generation: page.generation,
+            ownership: PhysicalPageOwnership::Exclusive {
+                request: before.request,
+                role: before.selection.role,
+            },
+            initialized_prefix: 0,
+        },
+    )
+}
+
+/// Binds the next logical page to an exact free physical generation.
+///
+/// # Errors
+///
+/// Rejects stale identities, cross-role pages, aliases, non-boundary appends,
+/// exhausted tables, and non-free slots without mutation.
+pub fn append_physical_page(
+    state: &mut PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    page: PhysicalPageId,
+) -> (result: Result<(), PhysicalKvError>)
+    ensures
+        result.is_ok() == append_page_enabled(old(state), request, selection, page),
+        result.is_ok() ==> append_page_transition(old(state), final(state), page),
+        result.is_err() ==> *final(state) == *old(state),
+{
+    let ghost entry = *state;
+    assert(entry == *old(state));
+    proof {
+        reveal(append_page_enabled);
+        reveal(append_page_transition);
+        reveal(PhysicalKvState::immutable_frame);
+    }
+    validate_active_authority(state, request, selection)?;
+    if !same_role(page.role, state.selection.role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+        return Err(PhysicalKvError::PageOutOfRange);
+    }
+    if state.resident_tokens >= state.max_context_tokens {
+        return Err(PhysicalKvError::ContextExceeded);
+    }
+    if !state.resident_tokens.is_multiple_of(M1_KV_PAGE_TOKENS)
+        || state.page_count != state.resident_tokens / M1_KV_PAGE_TOKENS
+    {
+        return Err(PhysicalKvError::PageNotRequired);
+    }
+    if state.page_count >= M1_KV_PAGE_TABLE_ENTRIES_U32 {
+        return Err(PhysicalKvError::PageTableExhausted);
+    }
+    if state.table_contains_index(page.index) {
+        return Err(PhysicalKvError::PhysicalAlias);
+    }
+    let slot = state.page_slots[page.index as usize];
+    if !is_free_slot(slot, page) {
+        if page.generation == 0 || slot.generation != page.generation {
+            return Err(PhysicalKvError::PageGenerationMismatch);
+        }
+        return Err(PhysicalKvError::PageNotFree);
+    }
+    assert(append_page_enabled(&entry, request, selection, page));
+    let table_position = state.page_count as usize;
+    state.page_table[table_position] = Some(page);
+    state.page_slots[page.index as usize] = PhysicalPageSlot {
+        generation: page.generation,
+        ownership: PhysicalPageOwnership::Exclusive {
+            request: state.request,
+            role: state.selection.role,
+        },
+        initialized_prefix: 0,
+    };
+    state.page_count += 1;
+    assert(append_page_transition(&entry, state, page));
+    Ok(())
+}
+
+pub closed spec fn map_initialized_decision(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    logical_position: u32,
+) -> Result<PhysicalKvLocation, PhysicalKvError> {
+    if !lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active) {
+        Err(PhysicalKvError::WrongLifecycle)
+    } else if !same_request(state.request, request) {
+        Err(PhysicalKvError::RequestMismatch)
+    } else if state.selection != selection {
+        Err(PhysicalKvError::SelectionMismatch)
+    } else if logical_position >= state.resident_tokens {
+        Err(PhysicalKvError::LogicalPositionOutOfRange)
+    } else {
+        let logical_page = logical_position / M1_KV_PAGE_TOKENS;
+        let offset = logical_position % M1_KV_PAGE_TOKENS;
+        if logical_page >= state.page_count || logical_page >= M1_KV_PAGE_TABLE_ENTRIES {
+            Err(PhysicalKvError::MissingPage)
+        } else if state.page_table@[logical_page as int].is_none() {
+            Err(PhysicalKvError::MissingPage)
+        } else {
+            let page = state.page_table@[logical_page as int].unwrap();
+            if !role_matches(page.role, state.selection.role) {
+                Err(PhysicalKvError::RoleMismatch)
+            } else if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS {
+                Err(PhysicalKvError::PageOutOfRange)
+            } else {
+                let slot = state.page_slots@[page.index as int];
+                if page.generation == 0 || slot.generation != page.generation {
+                    Err(PhysicalKvError::PageGenerationMismatch)
+                } else if !exclusive_owner_matches(
+                    slot.ownership,
+                    state.request,
+                    state.selection.role,
+                ) {
+                    Err(PhysicalKvError::PageOwnershipMismatch)
+                } else if offset >= slot.initialized_prefix {
+                    Err(PhysicalKvError::UninitializedRead)
+                } else {
+                    Ok(PhysicalKvLocation { page, offset })
+                }
+            }
+        }
+    }
+}
+
+/// Resolves an initialized logical token to its exact physical page and offset.
+///
+/// # Errors
+///
+/// Rejects stale authority, missing or stale mappings, cross-role ownership,
+/// out-of-range positions, and reads beyond the initialized prefix.
+pub fn map_initialized_token(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    logical_position: u32,
+) -> (result: Result<PhysicalKvLocation, PhysicalKvError>)
+    ensures
+        result.is_ok()
+            == map_initialized_decision(state, request, selection, logical_position).is_ok(),
+        result.is_ok() ==>
+            result == map_initialized_decision(state, request, selection, logical_position),
+{
+    proof {
+        reveal(map_initialized_decision);
+        reveal(lifecycle_matches);
+        reveal(same_request);
+    }
+    validate_active_authority(state, request, selection)?;
+    if logical_position >= state.resident_tokens {
+        return Err(PhysicalKvError::LogicalPositionOutOfRange);
+    }
+    let logical_page = logical_position / M1_KV_PAGE_TOKENS;
+    let offset = logical_position % M1_KV_PAGE_TOKENS;
+    if logical_page >= state.page_count || logical_page >= M1_KV_PAGE_TABLE_ENTRIES_U32 {
+        return Err(PhysicalKvError::MissingPage);
+    }
+    let Some(page) = state.page_table[logical_page as usize] else {
+        return Err(PhysicalKvError::MissingPage);
+    };
+    if !same_role(page.role, state.selection.role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+        return Err(PhysicalKvError::PageOutOfRange);
+    }
+    let slot = state.page_slots[page.index as usize];
+    if page.generation == 0 || slot.generation != page.generation {
+        return Err(PhysicalKvError::PageGenerationMismatch);
+    }
+    if !is_exclusive_owner(slot.ownership, state.request, state.selection.role) {
+        return Err(PhysicalKvError::PageOwnershipMismatch);
+    }
+    if offset >= slot.initialized_prefix {
+        return Err(PhysicalKvError::UninitializedRead);
+    }
+    Ok(PhysicalKvLocation { page, offset })
+}
+
+pub closed spec fn write_token_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    logical_position: u32,
+) -> bool {
+    &&& lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+    &&& same_request(state.request, request)
+    &&& state.selection == selection
+    &&& logical_position == state.resident_tokens
+    &&& logical_position < state.max_context_tokens
+    &&& logical_position < M1_MAX_CONTEXT_TOKENS
+    &&& logical_position / M1_KV_PAGE_TOKENS < state.page_count
+    &&& state.page_table@[logical_position as int / M1_KV_PAGE_TOKENS as int].is_some()
+    &&& {
+        let page = state.page_table@[logical_position as int / M1_KV_PAGE_TOKENS as int].unwrap();
+        let slot = state.page_slots@[page.index as int];
+        &&& role_matches(page.role, state.selection.role)
+        &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+        &&& page.generation > 0
+        &&& slot.generation == page.generation
+        &&& exclusive_owner_matches(slot.ownership, state.request, state.selection.role)
+        &&& slot.initialized_prefix == logical_position % M1_KV_PAGE_TOKENS
+        &&& slot.initialized_prefix < M1_KV_PAGE_TOKENS
+    }
+}
+
+pub closed spec fn write_token_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    page: PhysicalPageId,
+) -> bool {
+    let old_slot = before.page_slots@[page.index as int];
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == before.resident_tokens + 1
+    &&& after.committed_tokens == before.committed_tokens
+    &&& after.page_count == before.page_count
+    &&& after.page_table == before.page_table
+    &&& after.page_slots@ == before.page_slots@.update(
+        page.index as int,
+        PhysicalPageSlot {
+            generation: old_slot.generation,
+            ownership: old_slot.ownership,
+            initialized_prefix: (old_slot.initialized_prefix as int + 1) as u32,
+        },
+    )
+}
+
+pub closed spec fn write_at_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    logical_position: u32,
+) -> bool {
+    let page = before.page_table@[logical_position as int / M1_KV_PAGE_TOKENS as int].unwrap();
+    write_token_transition(before, after, page)
+}
+
+/// Initializes exactly the next logical token in its already-bound page.
+///
+/// # Errors
+///
+/// Rejects gaps, overwrites, missing pages, stale generations, wrong owners,
+/// wrong roles, and context overflow without mutation.
+pub fn write_physical_token(
+    state: &mut PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    logical_position: u32,
+) -> (result: Result<(), PhysicalKvError>)
+    ensures
+        result.is_ok() == write_token_enabled(old(state), request, selection, logical_position),
+        result.is_ok() ==> write_at_transition(old(state), final(state), logical_position),
+        result.is_err() ==> *final(state) == *old(state),
+{
+    proof {
+        reveal(write_token_enabled);
+        reveal(write_at_transition);
+        reveal(write_token_transition);
+        reveal(PhysicalKvState::immutable_frame);
+    }
+    validate_active_authority(state, request, selection)?;
+    if logical_position != state.resident_tokens {
+        return Err(PhysicalKvError::LogicalPositionMismatch);
+    }
+    if logical_position >= state.max_context_tokens
+        || logical_position >= M1_MAX_CONTEXT_TOKENS
+    {
+        return Err(PhysicalKvError::ContextExceeded);
+    }
+    let logical_page = logical_position / M1_KV_PAGE_TOKENS;
+    let offset = logical_position % M1_KV_PAGE_TOKENS;
+    if logical_page >= state.page_count || logical_page >= M1_KV_PAGE_TABLE_ENTRIES_U32 {
+        return Err(PhysicalKvError::MissingPage);
+    }
+    let Some(page) = state.page_table[logical_page as usize] else {
+        return Err(PhysicalKvError::MissingPage);
+    };
+    if !same_role(page.role, state.selection.role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+        return Err(PhysicalKvError::PageOutOfRange);
+    }
+    let slot = state.page_slots[page.index as usize];
+    if page.generation == 0 || slot.generation != page.generation {
+        return Err(PhysicalKvError::PageGenerationMismatch);
+    }
+    if !is_exclusive_owner(slot.ownership, state.request, state.selection.role) {
+        return Err(PhysicalKvError::PageOwnershipMismatch);
+    }
+    if slot.initialized_prefix != offset || slot.initialized_prefix >= M1_KV_PAGE_TOKENS {
+        return Err(PhysicalKvError::LogicalPositionMismatch);
+    }
+    state.page_slots[page.index as usize].initialized_prefix += 1;
+    state.resident_tokens += 1;
+    Ok(())
+}
+
+pub closed spec fn commit_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    accepted_tokens: u32,
+) -> bool {
+    lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+        && same_request(state.request, request)
+        && state.selection == selection
+        && accepted_tokens <= state.resident_tokens - state.committed_tokens
+}
+
+pub closed spec fn commit_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    accepted_tokens: u32,
+) -> bool {
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == before.resident_tokens
+    &&& after.committed_tokens == before.committed_tokens + accepted_tokens
+    &&& after.page_count == before.page_count
+    &&& after.page_table == before.page_table
+    &&& after.page_slots == before.page_slots
+}
+
+/// Publishes exactly an accepted prefix of currently resident tokens.
+///
+/// # Errors
+///
+/// Rejects stale authority and accepted counts beyond the tentative suffix.
+pub fn commit_physical_kv(
+    state: &mut PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    accepted_tokens: u32,
+) -> (result: Result<(), PhysicalKvError>)
+    ensures
+        result.is_ok() == commit_enabled(old(state), request, selection, accepted_tokens),
+        result.is_ok() ==> commit_transition(old(state), final(state), accepted_tokens),
+        result.is_err() ==> *final(state) == *old(state),
+{
+    proof {
+        reveal(commit_enabled);
+        reveal(commit_transition);
+        reveal(PhysicalKvState::immutable_frame);
+    }
+    validate_active_authority(state, request, selection)?;
+    if state.committed_tokens > state.resident_tokens
+        || accepted_tokens > state.resident_tokens - state.committed_tokens
+    {
+        return Err(PhysicalKvError::CommitExceedsResident);
+    }
+    state.committed_tokens += accepted_tokens;
+    Ok(())
+}
+
+/// Conditional cursor relation, not an authentication or device-write witness.
+pub closed spec fn initialized_draft_catchup_cursor_pair(
+    target: &PhysicalKvState,
+    draft: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+) -> bool {
+    &&& same_request(target.request, request)
+    &&& same_request(draft.request, request)
+    &&& target.selection.role == Qwen3ModelRole::Target8B
+    &&& selection.role == Qwen3ModelRole::Draft06B
+    &&& draft.selection == selection
+    &&& target.resident_tokens == target.committed_tokens
+    &&& draft.resident_tokens as int == draft.committed_tokens as int + 1
+    &&& target.committed_tokens == draft.resident_tokens
+}
+
+pub closed spec fn draft_catchup_initialization_enabled(
+    target: &PhysicalKvState,
+    draft: &PhysicalKvState,
+    request: RequestId,
+    parent: Qwen3PlanSelection,
+    selection: Qwen3PlanSelection,
+    logical_position: u32,
+) -> bool {
+    &&& lifecycle_matches(target.lifecycle, PhysicalKvLifecycle::Active)
+    &&& same_request(target.request, request)
+    &&& target.selection == parent
+    &&& parent.role == Qwen3ModelRole::Target8B
+    &&& selection.role == Qwen3ModelRole::Draft06B
+    &&& target.resident_tokens == target.committed_tokens
+    &&& target.committed_tokens as int == logical_position as int + 1
+    &&& draft.committed_tokens == logical_position
+    &&& write_token_enabled(draft, request, selection, logical_position)
+}
+
+/// Initializes the one draft token at the actual maintenance write point.
+///
+/// The target is the immutable physical owner, not a copied projection. These
+/// checks establish the cursor pair without assuming the engine wrapper's
+/// request or cursor correspondence. They do not authenticate the parent
+/// profile, page lease, queue completion, or device write.
+///
+/// # Errors
+///
+/// Rejects mismatched authority, roles, cursors, or physical write eligibility
+/// without changing the selected state at helper entry. A preceding caller
+/// page append is outside this frame and remains owned by that caller.
+pub fn initialize_draft_catchup_kv(
+    target: &PhysicalKvState,
+    selected: &mut PhysicalKvState,
+    request: RequestId,
+    parent: Qwen3PlanSelection,
+    selection: Qwen3PlanSelection,
+    logical_position: u32,
+) -> (result: Result<(), PhysicalKvError>)
+    ensures
+        result.is_ok() == draft_catchup_initialization_enabled(
+            target, old(selected), request, parent, selection, logical_position,
+        ),
+        result.is_ok() ==> initialized_draft_catchup_cursor_pair(
+            target, final(selected), request, selection,
+        ),
+        result.is_ok() ==> write_at_transition(
+            old(selected), final(selected), logical_position,
+        ),
+        result.is_ok() ==> {
+            &&& old(selected).abstraction_spec().committed_tokens == logical_position
+            &&& final(selected).abstraction_spec().committed_tokens == logical_position
+            &&& final(selected).abstraction_spec().resident_tokens as int
+                == logical_position as int + 1
+        },
+        result.is_err() ==> *final(selected) == *old(selected),
+{
+    proof {
+        reveal(draft_catchup_initialization_enabled);
+        reveal(initialized_draft_catchup_cursor_pair);
+        reveal(write_token_enabled);
+        reveal(write_at_transition);
+        reveal(write_token_transition);
+        reveal(PhysicalKvState::immutable_frame);
+        reveal(PhysicalKvState::abstraction_spec);
+    }
+    validate_active_authority(target, request, parent)?;
+    if !same_role(parent.role, Qwen3ModelRole::Target8B)
+        || !same_role(selection.role, Qwen3ModelRole::Draft06B)
+    {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if logical_position >= M1_MAX_CONTEXT_TOKENS {
+        return Err(PhysicalKvError::ContextExceeded);
+    }
+    if target.resident_tokens != target.committed_tokens
+        || target.committed_tokens != logical_position + 1
+        || selected.committed_tokens != logical_position
+    {
+        return Err(PhysicalKvError::LogicalPositionMismatch);
+    }
+    write_physical_token(selected, request, selection, logical_position)
+}
+
+/// Commits the one initialized token used by the engine's draft catch-up path.
+///
+/// Epoch and accepted-count checks execute here even when the caller has
+/// preflighted them. The target is borrowed immutably. Its relation to the
+/// selected owner is conditional; this function does not authenticate a parent
+/// plan, page lease, completed queue or initialized device write.
+///
+/// # Errors
+///
+/// Preserves epoch-before-count rejection order, then returns the unchanged
+/// physical commit error. Every failure leaves the selected state unchanged.
+pub fn commit_initialized_draft_catchup_kv(
+    _target: &PhysicalKvState,
+    selected: &mut PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    initialized_epoch: CompletionEpoch,
+    after_epoch: CompletionEpoch,
+    accepted_tokens: u32,
+) -> (result: Result<(), PhysicalKvCatchupCommitError>)
+    ensures
+        result.is_ok() == (
+            initialized_epoch.value == after_epoch.value
+                && accepted_tokens == 1
+                && commit_enabled(old(selected), request, selection, 1)
+        ),
+        result.is_ok() ==> commit_transition(old(selected), final(selected), 1),
+        result.is_err() ==> *final(selected) == *old(selected),
+        match result {
+            Err(PhysicalKvCatchupCommitError::CompletionEpochMismatch) =>
+                initialized_epoch.value != after_epoch.value,
+            Err(PhysicalKvCatchupCommitError::AcceptedCountMismatch) =>
+                initialized_epoch.value == after_epoch.value && accepted_tokens != 1,
+            Err(PhysicalKvCatchupCommitError::Physical(_)) =>
+                initialized_epoch.value == after_epoch.value && accepted_tokens == 1,
+            Ok(()) => true,
+        },
+        result.is_ok()
+            && initialized_draft_catchup_cursor_pair(_target, old(selected), request, selection)
+            ==> {
+                &&& final(selected).abstraction_spec().committed_tokens
+                    == _target.abstraction_spec().committed_tokens
+                &&& final(selected).abstraction_spec().resident_tokens
+                    == _target.abstraction_spec().resident_tokens
+            },
+{
+    proof {
+        reveal(initialized_draft_catchup_cursor_pair);
+        reveal(commit_transition);
+        reveal(PhysicalKvState::abstraction_spec);
+    }
+    if initialized_epoch.value != after_epoch.value {
+        return Err(PhysicalKvCatchupCommitError::CompletionEpochMismatch);
+    }
+    if accepted_tokens != 1 {
+        return Err(PhysicalKvCatchupCommitError::AcceptedCountMismatch);
+    }
+    match commit_physical_kv(selected, request, selection, 1) {
+        Ok(()) => Ok(()),
+        Err(error) => Err(PhysicalKvCatchupCommitError::Physical(error)),
+    }
+}
+
+pub closed spec fn rollback_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+) -> bool {
+    &&& lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+    &&& same_request(state.request, request)
+    &&& state.selection == selection
+    &&& after_epoch.value > 0
+    &&& state.resident_tokens > state.committed_tokens
+    &&& 0 < state.page_count <= M1_KV_PAGE_TABLE_ENTRIES
+    &&& state.page_table@[state.page_count as int - 1].is_some()
+    &&& {
+        let page = state.page_table@[state.page_count as int - 1].unwrap();
+        &&& role_matches(page.role, state.selection.role)
+        &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+        &&& page.generation > 0
+        &&& state.page_slots@[page.index as int].generation == page.generation
+        &&& exclusive_owner_matches(
+            state.page_slots@[page.index as int].ownership,
+            state.request,
+            state.selection.role,
+        )
+        &&& state.page_slots@[page.index as int].initialized_prefix as int
+            == (state.resident_tokens as int - 1) % M1_KV_PAGE_TOKENS as int + 1
+    }
+}
+
+pub closed spec fn rollback_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    after_epoch: CompletionEpoch,
+    page: PhysicalPageId,
+) -> bool {
+    let old_slot = before.page_slots@[page.index as int];
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == before.resident_tokens - 1
+    &&& after.committed_tokens == before.committed_tokens
+    &&& if old_slot.initialized_prefix == 1 {
+        &&& after.page_count == before.page_count - 1
+        &&& after.page_table@ == before.page_table@.update(before.page_count as int - 1, None)
+        &&& after.page_slots@ == before.page_slots@.update(
+            page.index as int,
+            PhysicalPageSlot {
+                generation: page.generation,
+                ownership: PhysicalPageOwnership::Retired {
+                    request: before.request,
+                    role: before.selection.role,
+                    after_epoch,
+                },
+                initialized_prefix: 1,
+            },
+        )
+    } else {
+        &&& after.page_count == before.page_count
+        &&& after.page_table == before.page_table
+        &&& after.page_slots@ == before.page_slots@.update(
+            page.index as int,
+            PhysicalPageSlot {
+                generation: old_slot.generation,
+                ownership: old_slot.ownership,
+                initialized_prefix: (old_slot.initialized_prefix as int - 1) as u32,
+            },
+        )
+    }
+}
+
+pub closed spec fn rollback_tail_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    after_epoch: CompletionEpoch,
+) -> bool {
+    let page = before.page_table@[before.page_count as int - 1].unwrap();
+    rollback_transition(before, after, after_epoch, page)
+}
+
+/// Removes exactly one tentative suffix token from logical reachability.
+/// A now-empty physical page becomes retired at the exact supplied epoch.
+///
+/// # Errors
+///
+/// Rejects committed-token rollback, zero retirement epochs, stale metadata,
+/// and non-tail or uninitialized state without mutation.
+pub fn rollback_physical_token(
+    state: &mut PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+) -> (result: Result<(), PhysicalKvError>)
+    ensures
+        result.is_ok() == rollback_enabled(old(state), request, selection, after_epoch),
+        result.is_ok() ==> rollback_tail_transition(old(state), final(state), after_epoch),
+        result.is_err() ==> *final(state) == *old(state),
+{
+    proof {
+        reveal(rollback_enabled);
+        reveal(rollback_tail_transition);
+        reveal(rollback_transition);
+        reveal(PhysicalKvState::immutable_frame);
+    }
+    validate_active_authority(state, request, selection)?;
+    if after_epoch.value == 0 {
+        return Err(PhysicalKvError::ZeroRetirementEpoch);
+    }
+    if state.resident_tokens <= state.committed_tokens {
+        return Err(PhysicalKvError::NoTentativeToken);
+    }
+    if state.page_count == 0 || state.page_count > M1_KV_PAGE_TABLE_ENTRIES_U32 {
+        return Err(PhysicalKvError::MissingPage);
+    }
+    let table_position = state.page_count - 1;
+    let Some(page) = state.page_table[table_position as usize] else {
+        return Err(PhysicalKvError::MissingPage);
+    };
+    if !same_role(page.role, state.selection.role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+        return Err(PhysicalKvError::PageOutOfRange);
+    }
+    let slot = state.page_slots[page.index as usize];
+    if page.generation == 0 || slot.generation != page.generation {
+        return Err(PhysicalKvError::PageGenerationMismatch);
+    }
+    if !is_exclusive_owner(slot.ownership, state.request, state.selection.role) {
+        return Err(PhysicalKvError::PageOwnershipMismatch);
+    }
+    let expected_prefix = (state.resident_tokens - 1) % M1_KV_PAGE_TOKENS + 1;
+    if slot.initialized_prefix != expected_prefix {
+        return Err(PhysicalKvError::UninitializedRead);
+    }
+    state.resident_tokens -= 1;
+    if slot.initialized_prefix == 1 {
+        state.page_table[table_position as usize] = None;
+        state.page_count -= 1;
+        state.page_slots[page.index as usize] = PhysicalPageSlot {
+            generation: page.generation,
+            ownership: PhysicalPageOwnership::Retired {
+                request: state.request,
+                role: state.selection.role,
+                after_epoch,
+            },
+            initialized_prefix: 1,
+        };
+    } else {
+        state.page_slots[page.index as usize].initialized_prefix -= 1;
+    }
+    Ok(())
+}
+
+pub(crate) closed spec fn settlement_page_count(tokens: u32) -> u32 {
+    if tokens == 0 {
+        0
+    } else {
+        ((tokens as int - 1) / M1_KV_PAGE_TOKENS as int + 1) as u32
+    }
+}
+
+fn physical_page_count(tokens: u32) -> (count: u32)
+    ensures count == settlement_page_count(tokens),
+{
+    if tokens == 0 {
+        0
+    } else {
+        (tokens - 1) / M1_KV_PAGE_TOKENS + 1
+    }
+}
+
+closed spec fn affected_settlement_page_valid(
+    state: &PhysicalKvState,
+    position: int,
+) -> bool {
+    &&& 0 <= position < state.page_count
+    &&& state.page_table@[position].is_some()
+    &&& {
+        let page = state.page_table@[position].unwrap();
+        let slot = state.page_slots@[page.index as int];
+        &&& role_matches(page.role, state.selection.role)
+        &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+        &&& page.generation > 0
+        &&& slot.generation == page.generation
+        &&& exclusive_owner_matches(slot.ownership, state.request, state.selection.role)
+        &&& slot.initialized_prefix as int == if position + 1 < state.page_count as int {
+            M1_KV_PAGE_TOKENS as int
+        } else {
+            state.resident_tokens as int - position * M1_KV_PAGE_TOKENS as int
+        }
+        &&& forall|other: int|
+            0 <= other < M1_KV_PAGE_TABLE_ENTRIES && other != position
+                && state.page_table@[other].is_some()
+                ==> state.page_table@[other].unwrap().index != page.index
+    }
+}
+
+pub closed spec fn physical_settlement_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+    pre_committed: u32,
+    tentative_end: u32,
+    commit_end: u32,
+) -> bool {
+    &&& lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+    &&& same_request(state.request, request)
+    &&& state.selection == selection
+    &&& after_epoch.value > 0
+    &&& state.committed_tokens == pre_committed
+    &&& state.resident_tokens == tentative_end
+    &&& pre_committed <= commit_end <= tentative_end
+    &&& tentative_end as int - commit_end as int <= M1_KV_PAGE_TOKENS
+    &&& state.page_count == settlement_page_count(tentative_end)
+    &&& state.page_count <= M1_KV_PAGE_TABLE_ENTRIES
+    &&& settlement_page_count(commit_end) <= state.page_count
+    &&& state.page_count as int - settlement_page_count(commit_end) as int <= 1
+    &&& if pre_committed < tentative_end {
+        forall|position: int|
+            pre_committed as int / M1_KV_PAGE_TOKENS as int <= position
+                && position < state.page_count as int
+                ==> #[trigger] affected_settlement_page_valid(state, position)
+    } else {
+        true
+    }
+}
+
+impl PhysicalKvSettlementPermit {
+    pub(crate) closed spec fn request_spec(&self) -> RequestId { self.request }
+
+    pub(crate) closed spec fn selection_spec(&self) -> Qwen3PlanSelection { self.selection }
+
+    pub(crate) closed spec fn valid_for(&self, state: &PhysicalKvState) -> bool {
+        let shrink_retained_tail = self.commit_end < self.tentative_end
+            && self.commit_end % M1_KV_PAGE_TOKENS != 0;
+        &&& physical_settlement_enabled(
+            state,
+            self.request,
+            self.selection,
+            self.after_epoch,
+            self.pre_committed,
+            self.tentative_end,
+            self.commit_end,
+        )
+        &&& self.old_page_count == state.page_count
+        &&& self.next_page_count == settlement_page_count(self.commit_end)
+        &&& self.retired_pages as int
+            == state.page_count as int - self.next_page_count as int
+        &&& if self.retired_pages == 1 {
+            &&& self.old_page_count > 0
+            &&& self.retired_page.is_some()
+            &&& state.page_table@[self.old_page_count as int - 1]
+                == self.retired_page
+            &&& self.retired_page.unwrap().index < M1_KV_PHYSICAL_PAGE_SLOTS
+        } else {
+            self.retired_page.is_none()
+        }
+        &&& if shrink_retained_tail {
+            &&& self.next_page_count > 0
+            &&& self.retained_page.is_some()
+            &&& state.page_table@[self.next_page_count as int - 1]
+                == self.retained_page
+            &&& self.retained_page.unwrap().index < M1_KV_PHYSICAL_PAGE_SLOTS
+        } else {
+            self.retained_page.is_none()
+        }
+        &&& (self.retired_page.is_some() && self.retained_page.is_some()
+            ==> self.retired_page.unwrap().index != self.retained_page.unwrap().index)
+    }
+
+    pub(crate) closed spec fn retired_pages_spec(&self) -> u32 { self.retired_pages }
+
+    pub(crate) closed spec fn after_epoch_spec(&self) -> CompletionEpoch { self.after_epoch }
+
+    pub(crate) closed spec fn pre_committed_spec(&self) -> u32 { self.pre_committed }
+
+    pub(crate) closed spec fn tentative_end_spec(&self) -> u32 { self.tentative_end }
+
+    pub(crate) closed spec fn commit_end_spec(&self) -> u32 { self.commit_end }
+
+    pub(crate) fn retired_pages(&self) -> (count: u32)
+        ensures count == self.retired_pages_spec(),
+    {
+        self.retired_pages
+    }
+
+    pub(crate) proof fn valid_for_establishes_enabled(&self, state: &PhysicalKvState)
+        requires self.valid_for(state),
+        ensures physical_settlement_enabled(
+            state,
+            self.request_spec(),
+            self.selection_spec(),
+            self.after_epoch_spec(),
+            self.pre_committed_spec(),
+            self.tentative_end_spec(),
+            self.commit_end_spec(),
+        ),
+    {
+        reveal(PhysicalKvSettlementPermit::valid_for);
+    }
+}
+
+pub closed spec fn physical_speculative_settlement_matches(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    after_epoch: CompletionEpoch,
+    tentative_end: u32,
+    commit_end: u32,
+    retired_pages: u32,
+) -> bool {
+    let next_page_count = settlement_page_count(commit_end);
+    let old_page = if retired_pages == 1 {
+        before.page_table@[before.page_count as int - 1].unwrap()
+    } else {
+        PhysicalPageId {
+            role: before.selection.role,
+            index: 0,
+            generation: 0,
+        }
+    };
+    let table_after_retirement = if retired_pages == 1 {
+        before.page_table@.update(before.page_count as int - 1, None)
+    } else {
+        before.page_table@
+    };
+    let slots_after_retirement = if retired_pages == 1 {
+        before.page_slots@.update(
+            old_page.index as int,
+            PhysicalPageSlot {
+                generation: old_page.generation,
+                ownership: PhysicalPageOwnership::Retired {
+                    request: before.request,
+                    role: before.selection.role,
+                    after_epoch,
+                },
+                initialized_prefix: before.page_slots@[old_page.index as int].initialized_prefix,
+            },
+        )
+    } else {
+        before.page_slots@
+    };
+    let shrink_retained_tail = commit_end < tentative_end
+        && commit_end % M1_KV_PAGE_TOKENS != 0;
+    let retained_page = if shrink_retained_tail {
+        before.page_table@[next_page_count as int - 1].unwrap()
+    } else {
+        old_page
+    };
+    let expected_slots = if shrink_retained_tail {
+        let retained_slot = slots_after_retirement[retained_page.index as int];
+        slots_after_retirement.update(
+            retained_page.index as int,
+            PhysicalPageSlot {
+                generation: retained_slot.generation,
+                ownership: retained_slot.ownership,
+                initialized_prefix: commit_end % M1_KV_PAGE_TOKENS,
+            },
+        )
+    } else {
+        slots_after_retirement
+    };
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == commit_end
+    &&& after.committed_tokens == commit_end
+    &&& after.page_count == next_page_count
+    &&& after.page_table@ == table_after_retirement
+    &&& after.page_slots@ == expected_slots
+}
+
+/// Exposes the logical accepted-prefix facts of the sealed physical relation.
+pub proof fn physical_speculative_settlement_properties(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+    pre_committed: u32,
+    tentative_end: u32,
+    commit_end: u32,
+    retired_pages: u32,
+)
+    requires
+        physical_settlement_enabled(
+            before,
+            request,
+            selection,
+            after_epoch,
+            pre_committed,
+            tentative_end,
+            commit_end,
+        ),
+        physical_speculative_settlement_matches(
+            before,
+            after,
+            after_epoch,
+            tentative_end,
+            commit_end,
+            retired_pages,
+        ),
+    ensures
+        same_request(after.abstraction_spec().request, request),
+        after.selection_spec() == selection,
+        after.abstraction_spec().role == selection.role,
+        after.abstraction_spec().resident_tokens == commit_end,
+        after.abstraction_spec().committed_tokens == commit_end,
+        before.abstraction_spec().resident_tokens == tentative_end,
+        before.abstraction_spec().committed_tokens == pre_committed,
+{
+    reveal(physical_settlement_enabled);
+    reveal(physical_speculative_settlement_matches);
+    reveal(PhysicalKvState::immutable_frame);
+    reveal(PhysicalKvState::abstraction_spec);
+    reveal(PhysicalKvState::selection_spec);
+    reveal(same_request);
+}
+
+pub(crate) closed spec fn physical_settlement_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    permit: &PhysicalKvSettlementPermit,
+) -> bool {
+    physical_speculative_settlement_matches(
+        before,
+        after,
+        permit.after_epoch,
+        permit.tentative_end,
+        permit.commit_end,
+        permit.retired_pages,
+    )
+}
+
+/// Checks the complete affected tail without mutating physical authority.
+pub(crate) fn preflight_physical_speculative_settlement(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+    pre_committed: u32,
+    tentative_end: u32,
+    commit_end: u32,
+) -> (result: Result<PhysicalKvSettlementPermit, PhysicalKvError>)
+    ensures match result {
+        Ok(permit) => {
+            &&& permit.valid_for(state)
+            &&& permit.request_spec() == request
+            &&& permit.selection_spec() == selection
+            &&& permit.after_epoch_spec() == after_epoch
+            &&& permit.pre_committed_spec() == pre_committed
+            &&& permit.tentative_end_spec() == tentative_end
+            &&& permit.commit_end_spec() == commit_end
+        },
+        Err(_) => true,
+    },
+{
+    proof {
+        reveal(physical_settlement_enabled);
+        reveal(affected_settlement_page_valid);
+        reveal(PhysicalKvSettlementPermit::valid_for);
+    }
+    validate_active_authority(state, request, selection)?;
+    if after_epoch.value == 0 {
+        return Err(PhysicalKvError::ZeroRetirementEpoch);
+    }
+    if state.committed_tokens != pre_committed {
+        return Err(PhysicalKvError::SettlementCursorMismatch);
+    }
+    if state.resident_tokens != tentative_end {
+        return Err(PhysicalKvError::SettlementIntervalMismatch);
+    }
+    if pre_committed > commit_end || commit_end > tentative_end {
+        return Err(PhysicalKvError::SettlementIntervalMismatch);
+    }
+    if tentative_end - commit_end > M1_KV_PAGE_TOKENS {
+        return Err(PhysicalKvError::SettlementTailTooWide);
+    }
+    let expected_page_count = physical_page_count(tentative_end);
+    let next_page_count = physical_page_count(commit_end);
+    if state.page_count != expected_page_count
+        || state.page_count > M1_KV_PAGE_TABLE_ENTRIES_U32
+        || next_page_count > state.page_count
+        || state.page_count - next_page_count > 1
+    {
+        return Err(PhysicalKvError::SettlementPageCountMismatch);
+    }
+    if pre_committed < tentative_end {
+        let mut position = pre_committed / M1_KV_PAGE_TOKENS;
+        while position < state.page_count
+            invariant
+                pre_committed < tentative_end,
+                state.resident_tokens == tentative_end,
+                position <= state.page_count,
+                state.page_count <= M1_KV_PAGE_TABLE_ENTRIES,
+                state.page_table@.len() == M1_KV_PAGE_TABLE_ENTRIES,
+                state.page_slots@.len() == M1_KV_PHYSICAL_PAGE_SLOTS,
+                forall|prior: int|
+                    pre_committed as int / M1_KV_PAGE_TOKENS as int <= prior
+                        && prior < position as int
+                        ==> #[trigger] affected_settlement_page_valid(state, prior),
+            decreases state.page_count - position,
+        {
+            let Some(page) = state.page_table[position as usize] else {
+                return Err(PhysicalKvError::MissingPage);
+            };
+            if !same_role(page.role, state.selection.role) {
+                return Err(PhysicalKvError::RoleMismatch);
+            }
+            if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+                return Err(PhysicalKvError::PageOutOfRange);
+            }
+            let slot = state.page_slots[page.index as usize];
+            if page.generation == 0 || slot.generation != page.generation {
+                return Err(PhysicalKvError::PageGenerationMismatch);
+            }
+            if !is_exclusive_owner(slot.ownership, state.request, state.selection.role) {
+                return Err(PhysicalKvError::PageOwnershipMismatch);
+            }
+            let Some(page_start) = position.checked_mul(M1_KV_PAGE_TOKENS) else {
+                return Err(PhysicalKvError::SettlementPageCountMismatch);
+            };
+            if page_start >= tentative_end {
+                return Err(PhysicalKvError::SettlementPageCountMismatch);
+            }
+            let expected_prefix = if position + 1 < state.page_count {
+                M1_KV_PAGE_TOKENS
+            } else {
+                tentative_end - page_start
+            };
+            if slot.initialized_prefix != expected_prefix {
+                return Err(PhysicalKvError::UninitializedRead);
+            }
+            let mut other = 0u32;
+            while other < M1_KV_PAGE_TABLE_ENTRIES_U32
+                invariant
+                    other <= M1_KV_PAGE_TABLE_ENTRIES,
+                    position < state.page_count,
+                    state.resident_tokens == tentative_end,
+                    state.page_count <= M1_KV_PAGE_TABLE_ENTRIES,
+                    state.page_table@.len() == M1_KV_PAGE_TABLE_ENTRIES,
+                    state.page_table@[position as int].is_some(),
+                    state.page_table@[position as int].unwrap() == page,
+                    forall|prior: int| 0 <= prior < other as int && prior != position as int
+                        && state.page_table@[prior].is_some()
+                        ==> state.page_table@[prior].unwrap().index != page.index,
+                decreases M1_KV_PAGE_TABLE_ENTRIES - other,
+            {
+                if other != position {
+                    if let Some(alias) = state.page_table[other as usize] {
+                        if alias.index == page.index {
+                            return Err(PhysicalKvError::SettlementPhysicalAlias);
+                        }
+                    }
+                }
+                other += 1;
+            }
+            assert forall|other: int|
+                0 <= other < M1_KV_PAGE_TABLE_ENTRIES && other != position as int
+                    && state.page_table@[other].is_some()
+                    implies state.page_table@[other].unwrap().index != page.index by {
+                assert(state.page_table@[other].unwrap().index != page.index);
+            }
+            assert(affected_settlement_page_valid(state, position as int)) by {
+                reveal(affected_settlement_page_valid);
+                assert(0 <= (position as int)
+                    && (position as int) < (state.page_count as int));
+                assert(state.page_table@[position as int].is_some());
+                assert(state.page_table@[position as int].unwrap() == page);
+                assert(role_matches(page.role, state.selection.role));
+                assert(page.index < M1_KV_PHYSICAL_PAGE_SLOTS);
+                assert(slot.generation == page.generation);
+                assert(exclusive_owner_matches(
+                    slot.ownership,
+                    state.request,
+                    state.selection.role,
+                ));
+                assert(page_start as int
+                    == position as int * M1_KV_PAGE_TOKENS as int);
+                assert((position + 1 < state.page_count)
+                    == (position as int + 1 < state.page_count as int));
+                assert(slot.initialized_prefix == expected_prefix);
+                if position + 1 < state.page_count {
+                    assert(expected_prefix == M1_KV_PAGE_TOKENS);
+                } else {
+                    assert(expected_prefix == tentative_end - page_start);
+                    assert(state.resident_tokens == tentative_end);
+                }
+                assert(slot.initialized_prefix as int == if position as int + 1
+                    < state.page_count as int
+                {
+                    M1_KV_PAGE_TOKENS as int
+                } else {
+                    state.resident_tokens as int
+                        - position as int * M1_KV_PAGE_TOKENS as int
+                });
+            }
+            position += 1;
+        }
+        assert forall|position: int|
+            pre_committed as int / M1_KV_PAGE_TOKENS as int <= position
+                && position < state.page_count as int
+                implies #[trigger] affected_settlement_page_valid(state, position) by {
+            assert(affected_settlement_page_valid(state, position));
+        }
+    }
+    let retired_pages = state.page_count - next_page_count;
+    let retired_page = if retired_pages == 1 {
+        state.page_table[(state.page_count - 1) as usize]
+    } else {
+        None
+    };
+    if retired_pages == 1 && retired_page.is_none() {
+        return Err(PhysicalKvError::MissingPage);
+    }
+    let shrink_retained_tail = commit_end < tentative_end
+        && !commit_end.is_multiple_of(M1_KV_PAGE_TOKENS);
+    let retained_page = if shrink_retained_tail {
+        state.page_table[(next_page_count - 1) as usize]
+    } else {
+        None
+    };
+    if shrink_retained_tail && retained_page.is_none() {
+        return Err(PhysicalKvError::MissingPage);
+    }
+    if let Some(page) = retired_page {
+        if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+            return Err(PhysicalKvError::PageOutOfRange);
+        }
+    }
+    if let Some(page) = retained_page {
+        if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+            return Err(PhysicalKvError::PageOutOfRange);
+        }
+    }
+    if let (Some(retired), Some(retained)) = (retired_page, retained_page) {
+        if retired.index == retained.index {
+            return Err(PhysicalKvError::SettlementPhysicalAlias);
+        }
+    }
+    proof {
+        assert(physical_settlement_enabled(
+            state,
+            request,
+            selection,
+            after_epoch,
+            pre_committed,
+            tentative_end,
+            commit_end,
+        ));
+        assert(retired_pages as int
+            == state.page_count as int - next_page_count as int);
+        if retired_pages == 1 {
+            assert(state.page_count > 0);
+            assert(retired_page.is_some());
+            assert(state.page_table@[state.page_count as int - 1] == retired_page);
+            assert(retired_page.unwrap().index < M1_KV_PHYSICAL_PAGE_SLOTS);
+        } else {
+            assert(retired_pages == 0);
+            assert(retired_page.is_none());
+        }
+        if shrink_retained_tail {
+            assert(next_page_count > 0);
+            assert(retained_page.is_some());
+            assert(state.page_table@[next_page_count as int - 1] == retained_page);
+            assert(retained_page.unwrap().index < M1_KV_PHYSICAL_PAGE_SLOTS);
+        } else {
+            assert(retained_page.is_none());
+        }
+        assert(retired_page.is_some() && retained_page.is_some()
+            ==> retired_page.unwrap().index != retained_page.unwrap().index);
+    }
+    let permit = PhysicalKvSettlementPermit {
+        request,
+        selection,
+        after_epoch,
+        pre_committed,
+        tentative_end,
+        commit_end,
+        old_page_count: state.page_count,
+        next_page_count,
+        retired_pages,
+        retired_page,
+        retained_page,
+    };
+    assert(permit.valid_for(state));
+    Ok(permit)
+}
+
+/// Applies a previously checked settlement with no fallible second stage.
+pub(crate) fn apply_preflighted_physical_speculative_settlement(
+    state: &mut PhysicalKvState,
+    permit: PhysicalKvSettlementPermit,
+)
+    requires permit.valid_for(old(state)),
+    ensures
+        physical_settlement_transition(old(state), final(state), &permit),
+        physical_speculative_settlement_matches(
+            old(state),
+            final(state),
+            permit.after_epoch_spec(),
+            permit.tentative_end_spec(),
+            permit.commit_end_spec(),
+            permit.retired_pages_spec(),
+        ),
+{
+    proof {
+        reveal(PhysicalKvSettlementPermit::valid_for);
+        reveal(physical_settlement_enabled);
+        reveal(physical_settlement_transition);
+        reveal(physical_speculative_settlement_matches);
+        reveal(affected_settlement_page_valid);
+        reveal(PhysicalKvState::immutable_frame);
+    }
+    let next_page_count = permit.next_page_count;
+    if let Some(page) = permit.retired_page {
+        let table_position = permit.old_page_count - 1;
+        let initialized_prefix = state.page_slots[page.index as usize].initialized_prefix;
+        state.page_table[table_position as usize] = None;
+        state.page_slots[page.index as usize] = PhysicalPageSlot {
+            generation: page.generation,
+            ownership: PhysicalPageOwnership::Retired {
+                request: state.request,
+                role: state.selection.role,
+                after_epoch: permit.after_epoch,
+            },
+            initialized_prefix,
+        };
+    }
+    if let Some(retained_page) = permit.retained_page {
+        state.page_slots[retained_page.index as usize].initialized_prefix =
+            permit.commit_end % M1_KV_PAGE_TOKENS;
+    }
+    state.page_count = next_page_count;
+    state.resident_tokens = permit.commit_end;
+    state.committed_tokens = permit.commit_end;
+}
+
+pub closed spec fn cancel_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+) -> bool {
+    lifecycle_matches(state.lifecycle, PhysicalKvLifecycle::Active)
+        && same_request(state.request, request)
+        && state.selection == selection
+        && after_epoch.value > 0
+}
+
+pub(crate) proof fn active_projection_enables_cancel(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+)
+    requires
+        state.abstraction_spec().lifecycle == PhysicalKvLifecycle::Active,
+        state.abstraction_spec().request.slot_spec() == request.slot_spec(),
+        state.abstraction_spec().request.generation_spec() == request.generation_spec(),
+        state.selection_spec() == selection,
+        after_epoch.value > 0,
+    ensures cancel_enabled(state, request, selection, after_epoch),
+{
+    reveal(cancel_enabled);
+    reveal(PhysicalKvState::abstraction_spec);
+}
+
+pub closed spec fn cancel_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    after_epoch: CompletionEpoch,
+) -> bool {
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == if before.page_count == 0 {
+        PhysicalKvLifecycle::RetiredAwaitingQuiescence { after_epoch }
+    } else {
+        PhysicalKvLifecycle::Cancelled { after_epoch }
+    }
+    &&& after.resident_tokens == before.resident_tokens
+    &&& after.committed_tokens == before.committed_tokens
+    &&& after.page_count == before.page_count
+    &&& after.page_table == before.page_table
+    &&& after.page_slots == before.page_slots
+}
+
+/// Makes all request mappings logically unreachable while retaining pages.
+///
+/// # Errors
+///
+/// Rejects stale request/selection authority, repeated cancellation, and a
+/// zero retirement epoch without mutation.
+pub fn cancel_physical_kv(
+    state: &mut PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+) -> (result: Result<(), PhysicalKvError>)
+    ensures
+        result.is_ok() == cancel_enabled(old(state), request, selection, after_epoch),
+        result.is_ok() ==> cancel_transition(old(state), final(state), after_epoch),
+        result.is_err() ==> *final(state) == *old(state),
+{
+    proof {
+        reveal(cancel_enabled);
+        reveal(cancel_transition);
+        reveal(PhysicalKvState::immutable_frame);
+    }
+    validate_active_authority(state, request, selection)?;
+    if after_epoch.value == 0 {
+        return Err(PhysicalKvError::ZeroRetirementEpoch);
+    }
+    state.lifecycle = if state.page_count == 0 {
+        PhysicalKvLifecycle::RetiredAwaitingQuiescence { after_epoch }
+    } else {
+        PhysicalKvLifecycle::Cancelled { after_epoch }
+    };
+    Ok(())
+}
+
+pub closed spec fn retire_tail_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+) -> bool {
+    &&& lifecycle_matches(
+        state.lifecycle,
+        PhysicalKvLifecycle::Cancelled { after_epoch },
+    )
+    &&& same_request(state.request, request)
+    &&& state.selection == selection
+    &&& 0 < state.page_count <= M1_KV_PAGE_TABLE_ENTRIES
+    &&& state.page_table@[state.page_count as int - 1].is_some()
+    &&& {
+        let page = state.page_table@[state.page_count as int - 1].unwrap();
+        &&& role_matches(page.role, state.selection.role)
+        &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+        &&& page.generation > 0
+        &&& state.page_slots@[page.index as int].generation == page.generation
+        &&& exclusive_owner_matches(
+            state.page_slots@[page.index as int].ownership,
+            state.request,
+            state.selection.role,
+        )
+        &&& 0 < state.page_slots@[page.index as int].initialized_prefix
+        &&& state.page_slots@[page.index as int].initialized_prefix <= state.resident_tokens
+    }
+}
+
+pub closed spec fn retire_tail_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    after_epoch: CompletionEpoch,
+    page: PhysicalPageId,
+) -> bool {
+    let removed = before.page_slots@[page.index as int].initialized_prefix;
+    let remaining = (before.resident_tokens as int - removed as int) as u32;
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == if before.page_count == 1 {
+        PhysicalKvLifecycle::RetiredAwaitingQuiescence { after_epoch }
+    } else {
+        before.lifecycle
+    }
+    &&& after.resident_tokens == remaining
+    &&& after.committed_tokens == if before.committed_tokens > remaining {
+        remaining
+    } else {
+        before.committed_tokens
+    }
+    &&& after.page_count == before.page_count - 1
+    &&& after.page_table@ == before.page_table@.update(before.page_count as int - 1, None)
+    &&& after.page_slots@ == before.page_slots@.update(
+        page.index as int,
+        PhysicalPageSlot {
+            generation: page.generation,
+            ownership: PhysicalPageOwnership::Retired {
+                request: before.request,
+                role: before.selection.role,
+                after_epoch,
+            },
+            initialized_prefix: removed,
+        },
+    )
+}
+
+/// Retires exactly one cancelled tail page and removes it from the page table.
+///
+/// # Errors
+///
+/// Rejects a mismatched epoch, request, role, selection, page, or owner.
+pub fn retire_cancelled_tail(
+    state: &mut PhysicalKvState,
+    request: RequestId,
+    selection: Qwen3PlanSelection,
+    after_epoch: CompletionEpoch,
+) -> (result: Result<PhysicalPageId, PhysicalKvError>)
+    ensures
+        result.is_ok() == retire_tail_enabled(old(state), request, selection, after_epoch),
+        result.is_ok() ==> retire_tail_transition(
+            old(state),
+            final(state),
+            after_epoch,
+            result.unwrap(),
+        ),
+        result.is_err() ==> *final(state) == *old(state),
+{
+    proof {
+        reveal(retire_tail_enabled);
+        reveal(retire_tail_transition);
+        reveal(PhysicalKvState::immutable_frame);
+        reveal(lifecycle_matches);
+        reveal(same_request);
+    }
+    let expected_epoch = match state.lifecycle {
+        PhysicalKvLifecycle::Cancelled { after_epoch: expected } => expected,
+        _ => return Err(PhysicalKvError::WrongLifecycle),
+    };
+    if expected_epoch.value != after_epoch.value {
+        return Err(PhysicalKvError::RetirementEpochMismatch);
+    }
+    if state.request.slot() != request.slot()
+        || state.request.generation() != request.generation()
+    {
+        return Err(PhysicalKvError::RequestMismatch);
+    }
+    if !state.selection.matches(selection) {
+        return Err(PhysicalKvError::SelectionMismatch);
+    }
+    if state.page_count == 0 || state.page_count > M1_KV_PAGE_TABLE_ENTRIES_U32 {
+        return Err(PhysicalKvError::NoPageToRetire);
+    }
+    let table_position = state.page_count - 1;
+    let Some(page) = state.page_table[table_position as usize] else {
+        return Err(PhysicalKvError::MissingPage);
+    };
+    if !same_role(page.role, state.selection.role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+        return Err(PhysicalKvError::PageOutOfRange);
+    }
+    let slot = state.page_slots[page.index as usize];
+    if page.generation == 0 || slot.generation != page.generation {
+        return Err(PhysicalKvError::PageGenerationMismatch);
+    }
+    if !is_exclusive_owner(slot.ownership, state.request, state.selection.role) {
+        return Err(PhysicalKvError::PageOwnershipMismatch);
+    }
+    if slot.initialized_prefix == 0 || slot.initialized_prefix > state.resident_tokens {
+        return Err(PhysicalKvError::UninitializedRead);
+    }
+    let remaining = state.resident_tokens - slot.initialized_prefix;
+    state.page_table[table_position as usize] = None;
+    state.page_count -= 1;
+    state.resident_tokens = remaining;
+    if state.committed_tokens > remaining {
+        state.committed_tokens = remaining;
+    }
+    state.page_slots[page.index as usize] = PhysicalPageSlot {
+        generation: page.generation,
+        ownership: PhysicalPageOwnership::Retired {
+            request: state.request,
+            role: state.selection.role,
+            after_epoch,
+        },
+        initialized_prefix: slot.initialized_prefix,
+    };
+    if state.page_count == 0 {
+        state.lifecycle = PhysicalKvLifecycle::RetiredAwaitingQuiescence { after_epoch };
+    }
+    Ok(page)
+}
+
+pub closed spec fn release_retired_enabled(
+    state: &PhysicalKvState,
+    page: PhysicalPageId,
+    authority: &KvQuiescenceAuthority,
+) -> bool {
+    &&& same_request(state.request, authority.request)
+    &&& role_matches(state.selection.role, authority.role)
+    &&& role_matches(page.role, authority.role)
+    &&& page.index < M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& page.generation > 0
+    &&& state.page_slots@[page.index as int].generation == page.generation
+    &&& state.page_slots@[page.index as int].generation < u32::MAX
+    &&& retired_owner_matches(
+        state.page_slots@[page.index as int].ownership,
+        authority.request,
+        authority.role,
+        authority.exact_epoch,
+    )
+    &&& !state.table_contains_index_spec(page.index)
+}
+
+pub closed spec fn release_retired_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    page: PhysicalPageId,
+) -> bool {
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == before.resident_tokens
+    &&& after.committed_tokens == before.committed_tokens
+    &&& after.page_count == before.page_count
+    &&& after.page_table == before.page_table
+    &&& after.page_slots@ == before.page_slots@.update(
+        page.index as int,
+        PhysicalPageSlot {
+            generation: (page.generation as int + 1) as u32,
+            ownership: PhysicalPageOwnership::Free,
+            initialized_prefix: 0,
+        },
+    )
+}
+
+pub closed spec fn released_generation_matches(
+    released: PhysicalPageId,
+    retired: PhysicalPageId,
+) -> bool {
+    role_matches(released.role, retired.role)
+        && released.index == retired.index
+        && released.generation as int == retired.generation as int + 1
+}
+
+/// Exact source-level release under scheduler-provided quiescence.
+///
+/// This relation keeps the otherwise private page-slot ownership state sealed
+/// in its owning module. It states that the retired generation belonged to the
+/// exact request and role at the exact completed epoch, was unreachable from
+/// the page table, and became the free successor generation. It does not state
+/// that device bytes were cleared or that a device allocation was released.
+pub closed spec fn exact_quiescent_release_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+) -> bool {
+    &&& exact_epoch.value > 0
+    &&& same_request(before.request, request)
+    &&& role_matches(before.selection.role, role)
+    &&& role_matches(retired.role, role)
+    &&& physical_page_is_retired_at_epoch(
+        before,
+        request,
+        role,
+        exact_epoch,
+        retired,
+    )
+    &&& before.page_slots@[retired.index as int].generation < u32::MAX
+    &&& released_generation_matches(released, retired)
+    &&& release_retired_transition(before, after, retired)
+    &&& physical_page_is_free_generation(after, released)
+}
+
+proof fn release_transition_makes_successor_free(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+)
+    requires
+        role_matches(before.selection.role, retired.role),
+        retired.index < M1_KV_PHYSICAL_PAGE_SLOTS,
+        retired.generation > 0,
+        retired.generation < u32::MAX,
+        released_generation_matches(released, retired),
+        release_retired_transition(before, after, retired),
+    ensures physical_page_is_free_generation(after, released),
+{
+    reveal(released_generation_matches);
+    reveal(release_retired_transition);
+    reveal(physical_page_is_free_generation);
+    reveal(PhysicalKvState::immutable_frame);
+    reveal(role_matches);
+    assert(released.index == retired.index);
+    assert(released.generation as int == retired.generation as int + 1);
+    assert((retired.generation as int + 1) as u32 == released.generation);
+    assert(after.page_slots@[released.index as int] == PhysicalPageSlot {
+        generation: released.generation,
+        ownership: PhysicalPageOwnership::Free,
+        initialized_prefix: 0,
+    });
+}
+
+pub(crate) proof fn exact_authority_release_establishes_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    authority: &KvQuiescenceAuthority,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+)
+    requires
+        authority.request_spec() == request,
+        authority.role_spec() == role,
+        authority.exact_epoch_spec() == exact_epoch,
+        exact_epoch.value > 0,
+        release_retired_enabled(before, retired, authority),
+        released_generation_matches(released, retired),
+        release_retired_transition(before, after, retired),
+    ensures exact_quiescent_release_transition(
+        before,
+        after,
+        request,
+        role,
+        exact_epoch,
+        retired,
+        released,
+    ),
+{
+    reveal(release_retired_enabled);
+    reveal(role_matches);
+    assert(role_matches(before.selection.role, retired.role));
+    release_transition_makes_successor_free(before, after, retired, released);
+    reveal(exact_quiescent_release_transition);
+    reveal(release_retired_transition);
+    reveal(released_generation_matches);
+    reveal(physical_page_is_retired_at_epoch);
+    reveal(physical_page_is_free_generation);
+    reveal(KvQuiescenceAuthority::request_spec);
+    reveal(KvQuiescenceAuthority::role_spec);
+    reveal(KvQuiescenceAuthority::exact_epoch_spec);
+}
+
+/// Opens the sealed release relation only to expose its stable public facts.
+pub proof fn exact_quiescent_release_properties(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    exact_epoch: CompletionEpoch,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+)
+    requires exact_quiescent_release_transition(
+        before,
+        after,
+        request,
+        role,
+        exact_epoch,
+        retired,
+        released,
+    ),
+    ensures
+        after.abstraction_spec() == before.abstraction_spec(),
+        same_request(before.abstraction_spec().request, request),
+        role_matches(before.abstraction_spec().role, role),
+        physical_page_is_retired_at_epoch(before, request, role, exact_epoch, retired),
+        physical_page_is_free_generation(after, released),
+        released.role_spec() == retired.role_spec(),
+        released.index_spec() == retired.index_spec(),
+        released.generation_spec() as int == retired.generation_spec() as int + 1,
+{
+    reveal(exact_quiescent_release_transition);
+    reveal(release_retired_transition);
+    reveal(released_generation_matches);
+    reveal(physical_page_is_retired_at_epoch);
+    reveal(physical_page_is_free_generation);
+    reveal(PhysicalKvState::immutable_frame);
+    reveal(PhysicalKvState::abstraction_spec);
+    reveal(same_request);
+    reveal(role_matches);
+}
+
+pub proof fn released_generation_has_exact_successor(
+    released: PhysicalPageId,
+    prior: PhysicalPageId,
+)
+    requires released_generation_matches(released, prior),
+    ensures
+        released.index_spec() == prior.index_spec(),
+        released.generation_spec() as int == prior.generation_spec() as int + 1,
+{
+    reveal(released_generation_matches);
+}
+
+/// Releases a retired physical generation only under exact quiescence authority.
+///
+/// The authority has no public constructor. The crate-local logical composition
+/// creates it only after exact scheduler epoch observation.
+///
+/// # Errors
+///
+/// Rejects stale page generations, aliases, wrong request/role/epoch authority,
+/// non-retired pages, and exhausted generations without mutation.
+pub fn release_retired_page(
+    state: &mut PhysicalKvState,
+    page: PhysicalPageId,
+    authority: &KvQuiescenceAuthority,
+) -> (result: Result<PhysicalPageId, PhysicalKvError>)
+    ensures
+        result.is_ok() == release_retired_enabled(old(state), page, authority),
+        result.is_ok() ==> {
+            &&& released_generation_matches(result.unwrap(), page)
+            &&& release_retired_transition(old(state), final(state), page)
+        },
+        result.is_err() ==> *final(state) == *old(state),
+{
+    proof {
+        reveal(release_retired_enabled);
+        reveal(release_retired_transition);
+        reveal(released_generation_matches);
+        reveal(PhysicalKvState::immutable_frame);
+        reveal(same_request);
+    }
+    if state.request.slot() != authority.request.slot()
+        || state.request.generation() != authority.request.generation()
+        || !same_role(state.selection.role, authority.role)
+    {
+        return Err(PhysicalKvError::InvalidQuiescenceAuthority);
+    }
+    if !same_role(page.role, authority.role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+        return Err(PhysicalKvError::PageOutOfRange);
+    }
+    let slot = state.page_slots[page.index as usize];
+    if page.generation == 0 || slot.generation != page.generation {
+        return Err(PhysicalKvError::PageGenerationMismatch);
+    }
+    if slot.generation == u32::MAX {
+        return Err(PhysicalKvError::GenerationExhausted);
+    }
+    if !is_retired_owner(
+        slot.ownership,
+        authority.request,
+        authority.role,
+        authority.exact_epoch,
+    ) {
+        return Err(PhysicalKvError::InvalidQuiescenceAuthority);
+    }
+    if state.table_contains_index(page.index) {
+        return Err(PhysicalKvError::PhysicalAlias);
+    }
+    let next = PhysicalPageId {
+        role: page.role,
+        index: page.index,
+        generation: page.generation + 1,
+    };
+    state.page_slots[page.index as usize] = PhysicalPageSlot {
+        generation: next.generation,
+        ownership: PhysicalPageOwnership::Free,
+        initialized_prefix: 0,
+    };
+    Ok(next)
+}
+
+/// Inert description of a retired metadata slot. This is not quiescence or
+/// completion authority and cannot release a native allocation or page lease.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PhysicalKvRetiredPageMetadataV1 {
+    pub page: PhysicalPageId,
+    pub after_epoch: CompletionEpoch,
+}
+
+closed spec fn retirement_metadata_roster_prefix_valid(
+    state: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    pages: Seq<PhysicalKvRetiredPageMetadataV1>,
+    processed: int,
+) -> bool {
+    &&& same_request(state.request, request)
+    &&& role_matches(state.selection.role, role)
+    &&& 0 <= processed <= pages.len() <= M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& forall|position: int| 0 <= position < processed ==> {
+        &&& pages[position].after_epoch.value > 0
+        &&& pages[position].page.generation < u32::MAX
+        &&& physical_page_is_retired_at_epoch(
+            state, request, role, pages[position].after_epoch, pages[position].page,
+        )
+    }
+    &&& forall|left: int, right: int| 0 <= left < right < processed ==>
+        pages[left].page.index != pages[right].page.index
+}
+
+/// Exact checked metadata eligibility, without any native completion authority.
+pub closed spec fn retirement_metadata_batch_enabled(
+    state: &PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    pages: Seq<PhysicalKvRetiredPageMetadataV1>,
+) -> bool {
+    retirement_metadata_roster_prefix_valid(state, request, role, pages, pages.len() as int)
+}
+
+pub closed spec fn retirement_metadata_mask_matches_prefix(
+    selected: Seq<bool>,
+    pages: Seq<PhysicalKvRetiredPageMetadataV1>,
+    processed: int,
+) -> bool {
+    &&& selected.len() == M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& 0 <= processed <= pages.len()
+    &&& forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+        selected[index] == (exists|position: int| 0 <= position < processed
+            && pages[position].page.index == index)
+}
+
+closed spec fn retirement_metadata_mask_prepared(
+    state: &PhysicalKvState,
+    selected: Seq<bool>,
+) -> bool {
+    &&& selected.len() == M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS
+        && selected[index] ==> {
+        &&& 0 < state.page_slots@[index].generation < u32::MAX
+        &&& match state.page_slots@[index].ownership {
+            PhysicalPageOwnership::Retired { request, role, after_epoch } => {
+                &&& same_request(request, state.request)
+                &&& role_matches(role, state.selection.role)
+                &&& after_epoch.value > 0
+            }
+            _ => false,
+        }
+        &&& !state.table_contains_index_spec(index as u32)
+    }
+}
+
+closed spec fn retirement_metadata_prefix_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    selected: Seq<bool>,
+    processed: int,
+) -> bool {
+    &&& selected.len() == M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& 0 <= processed <= M1_KV_PHYSICAL_PAGE_SLOTS
+    &&& after.immutable_frame(before)
+    &&& after.lifecycle == before.lifecycle
+    &&& after.resident_tokens == before.resident_tokens
+    &&& after.committed_tokens == before.committed_tokens
+    &&& after.page_count == before.page_count
+    &&& after.page_table == before.page_table
+    &&& forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS ==>
+        #[trigger] after.page_slots@[index] == if index < processed && selected[index] {
+            PhysicalPageSlot {
+                generation: (before.page_slots@[index].generation as int + 1) as u32,
+                ownership: PhysicalPageOwnership::Free,
+                initialized_prefix: 0,
+            }
+        } else {
+            before.page_slots@[index]
+        }
+}
+
+/// Advances exactly the selected generations and preserves the full remaining state.
+pub closed spec fn retirement_metadata_batch_transition(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    selected: Seq<bool>,
+) -> bool {
+    retirement_metadata_mask_prepared(before, selected)
+        && retirement_metadata_prefix_transition(
+            before, after, selected, M1_KV_PHYSICAL_PAGE_SLOTS as int,
+        )
+}
+
+/// Exposes the selected page's successor without granting native reuse authority.
+pub proof fn retirement_metadata_batch_selected_page_successor(
+    before: &PhysicalKvState,
+    after: &PhysicalKvState,
+    selected: Seq<bool>,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    retired_at: CompletionEpoch,
+    retired: PhysicalPageId,
+    released: PhysicalPageId,
+)
+    requires
+        retirement_metadata_batch_transition(before, after, selected),
+        physical_page_is_retired_at_epoch(before, request, role, retired_at, retired),
+        retired.index_spec() < selected.len(),
+        selected[retired.index_spec() as int],
+        released_generation_matches(released, retired),
+    ensures
+        physical_page_is_free_generation(after, released),
+        after.abstraction_spec() == before.abstraction_spec(),
+{
+    reveal(retirement_metadata_batch_transition);
+    reveal(retirement_metadata_mask_prepared);
+    reveal(retirement_metadata_prefix_transition);
+    reveal(physical_page_is_retired_at_epoch);
+    reveal(physical_page_is_free_generation);
+    reveal(released_generation_matches);
+    reveal(PhysicalKvState::immutable_frame);
+    reveal(PhysicalKvState::abstraction_spec);
+    reveal(role_matches);
+    assert(before.page_slots@[retired.index as int].generation < u32::MAX);
+    assert(after.page_slots@[retired.index as int] == PhysicalPageSlot {
+        generation: (retired.generation as int + 1) as u32,
+        ownership: PhysicalPageOwnership::Free,
+        initialized_prefix: 0,
+    });
+    assert(released.index == retired.index);
+    assert(released.generation == (retired.generation as int + 1) as u32);
+}
+
+/// An exclusively borrowed, checked metadata-only retirement batch.
+///
+/// Dropping the batch does not mutate its state. Committing updates only that
+/// borrowed state's selected slots. The caller must separately retain genuine
+/// completion and allocation custody before returning any native page leases.
+/// Its source contracts cover only the checked metadata transition. They do
+/// not establish the engine's whole-roster or native lease-return composition.
+///
+/// ```compile_fail
+/// use ferric_spec::paged_kv_refinement::PhysicalKvRetirementMetadataBatchV1;
+/// fn commit_twice(batch: PhysicalKvRetirementMetadataBatchV1<'_>) {
+///     batch.commit();
+///     batch.commit();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_spec::{PhysicalKvState, Qwen3ModelRole, RequestId};
+/// use ferric_spec::paged_kv_refinement::preflight_retired_page_metadata_batch_v1;
+/// fn replace_borrowed_state(state: &mut PhysicalKvState, replacement: PhysicalKvState,
+///                           request: RequestId, role: Qwen3ModelRole) {
+///     let batch = preflight_retired_page_metadata_batch_v1(state, request, role, &[]).unwrap();
+///     *state = replacement;
+///     batch.commit();
+/// }
+/// ```
+#[derive(Debug)]
+#[must_use = "dropping the batch preserves all metadata unchanged"]
+pub struct PhysicalKvRetirementMetadataBatchV1<'a> {
+    state: &'a mut PhysicalKvState,
+    selected: [bool; M1_KV_PHYSICAL_PAGE_SLOTS],
+}
+
+impl PhysicalKvRetirementMetadataBatchV1<'_> {
+    pub closed spec fn current_state_spec(&self) -> PhysicalKvState {
+        mut_ref_current(self.state)
+    }
+
+    #[verifier::prophetic]
+    pub closed spec fn future_state_spec(&self) -> PhysicalKvState {
+        mut_ref_future(self.state)
+    }
+
+    pub closed spec fn prepared_spec(&self) -> bool {
+        retirement_metadata_mask_prepared(&*self.state, self.selected@)
+    }
+
+    pub closed spec fn selected_spec(&self) -> Seq<bool> { self.selected@ }
+
+    /// Advances only the exclusively borrowed, preflighted metadata slots.
+    /// This does not return a lease, free device memory, or mint reuse authority.
+    pub fn commit(self)
+        requires self.prepared_spec(),
+        ensures retirement_metadata_batch_transition(
+            &self.current_state_spec(), &self.future_state_spec(), self.selected_spec(),
+        ),
+    {
+        proof {
+            reveal(PhysicalKvRetirementMetadataBatchV1::current_state_spec);
+            reveal(PhysicalKvRetirementMetadataBatchV1::future_state_spec);
+            reveal(PhysicalKvRetirementMetadataBatchV1::prepared_spec);
+            reveal(PhysicalKvRetirementMetadataBatchV1::selected_spec);
+            reveal(retirement_metadata_mask_prepared);
+            reveal(retirement_metadata_batch_transition);
+            reveal(retirement_metadata_prefix_transition);
+            reveal(PhysicalKvState::immutable_frame);
+        }
+        let ghost before = *self.state;
+        let selected = self.selected;
+        let state = self.state;
+        let mut index = 0usize;
+        while index < M1_KV_PHYSICAL_PAGE_SLOTS
+            invariant
+                index <= M1_KV_PHYSICAL_PAGE_SLOTS,
+                retirement_metadata_mask_prepared(&before, selected@),
+                retirement_metadata_prefix_transition(&before, state, selected@, index as int),
+            decreases M1_KV_PHYSICAL_PAGE_SLOTS - index,
+        {
+            let ghost prior_slots = state.page_slots@;
+            let ghost prior_index = index;
+            proof {
+                assert forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && !(slot_index < prior_index && selected@[slot_index])
+                    implies prior_slots[slot_index] == before.page_slots@[slot_index] by {
+                    reveal(retirement_metadata_prefix_transition);
+                    assert(retirement_metadata_prefix_transition(
+                        &before, state, selected@, prior_index as int,
+                    ));
+                    assert(prior_slots[slot_index] == if slot_index < prior_index
+                        && selected@[slot_index] {
+                        PhysicalPageSlot {
+                            generation: (before.page_slots@[slot_index].generation as int + 1) as u32,
+                            ownership: PhysicalPageOwnership::Free,
+                            initialized_prefix: 0,
+                        }
+                    } else {
+                        before.page_slots@[slot_index]
+                    });
+                }
+            }
+            if selected[index] {
+                let slot = state.page_slots[index];
+                state.page_slots[index] = PhysicalPageSlot {
+                    generation: slot.generation + 1,
+                    ownership: PhysicalPageOwnership::Free,
+                    initialized_prefix: 0,
+                };
+            }
+            index += 1;
+            proof {
+                assert(selected@.len() == M1_KV_PHYSICAL_PAGE_SLOTS);
+                assert(0 <= index <= M1_KV_PHYSICAL_PAGE_SLOTS);
+                assert(state.immutable_frame(&before));
+                assert(state.lifecycle == before.lifecycle);
+                assert(state.resident_tokens == before.resident_tokens);
+                assert(state.committed_tokens == before.committed_tokens);
+                assert(state.page_count == before.page_count);
+                assert(state.page_table == before.page_table);
+                assert(forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && slot_index < index && selected@[slot_index] ==>
+                    state.page_slots@[slot_index] == (PhysicalPageSlot {
+                        generation: (before.page_slots@[slot_index].generation as int + 1) as u32,
+                        ownership: PhysicalPageOwnership::Free,
+                        initialized_prefix: 0,
+                    }));
+                assert forall|slot_index: int| 0 <= slot_index < M1_KV_PHYSICAL_PAGE_SLOTS
+                    && !(slot_index < index && selected@[slot_index])
+                    implies state.page_slots@[slot_index] == before.page_slots@[slot_index] by {
+                    assert(index == prior_index + 1);
+                    assert(!(slot_index < prior_index && selected@[slot_index]));
+                    assert(prior_slots[slot_index] == before.page_slots@[slot_index]);
+                    if slot_index == prior_index {
+                        assert(!selected@[prior_index as int]);
+                        assert(state.page_slots@[slot_index] == prior_slots[slot_index]);
+                    } else {
+                        assert(state.page_slots@[slot_index] == prior_slots[slot_index]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Checks a complete metadata roster without mutation and borrows its state
+/// until commit or abandonment. Numeric request/epoch inputs are checked
+/// metadata, never evidence of a native completion or quiescence event.
+///
+/// # Errors
+/// Rejects wrong request/role/retirement epoch, stale or exhausted generations,
+/// out-of-range or duplicate slots, non-retired ownership and table aliases.
+pub fn preflight_retired_page_metadata_batch_v1<'a>(
+    state: &'a mut PhysicalKvState,
+    request: RequestId,
+    role: Qwen3ModelRole,
+    pages: &[PhysicalKvRetiredPageMetadataV1],
+) -> (result: Result<PhysicalKvRetirementMetadataBatchV1<'a>, PhysicalKvError>)
+    ensures
+        result.is_ok() == retirement_metadata_batch_enabled(old(state), request, role, pages@),
+        match result {
+            Ok(batch) => {
+                &&& batch.current_state_spec() == *old(state)
+                &&& *final(state) == batch.future_state_spec()
+                &&& batch.prepared_spec()
+                &&& retirement_metadata_mask_matches_prefix(
+                    batch.selected_spec(), pages@, pages@.len() as int,
+                )
+            }
+            Err(_) => *final(state) == *old(state),
+        },
+{
+    proof {
+        reveal(retirement_metadata_batch_enabled);
+        reveal(PhysicalKvRetirementMetadataBatchV1::current_state_spec);
+        reveal(PhysicalKvRetirementMetadataBatchV1::future_state_spec);
+        reveal(retirement_metadata_roster_prefix_valid);
+        reveal(retirement_metadata_mask_matches_prefix);
+        reveal(retirement_metadata_mask_prepared);
+        reveal(PhysicalKvRetirementMetadataBatchV1::prepared_spec);
+        reveal(PhysicalKvRetirementMetadataBatchV1::selected_spec);
+        reveal(physical_page_is_retired_at_epoch);
+        reveal(retired_owner_matches);
+        reveal(same_request);
+        reveal(role_matches);
+    }
+    if state.request.slot() != request.slot()
+        || state.request.generation() != request.generation()
+    {
+        return Err(PhysicalKvError::RequestMismatch);
+    }
+    if !same_role(state.selection.role, role) {
+        return Err(PhysicalKvError::RoleMismatch);
+    }
+    if pages.len() > M1_KV_PHYSICAL_PAGE_SLOTS {
+        return Err(PhysicalKvError::PageOutOfRange);
+    }
+    let mut selected = vstd::array::array_fill_for_copy_types(false);
+    let mut position = 0usize;
+    while position < pages.len()
+        invariant
+            *state == *old(state),
+            retirement_metadata_roster_prefix_valid(state, request, role, pages@, position as int),
+            retirement_metadata_mask_matches_prefix(selected@, pages@, position as int),
+        decreases pages.len() - position,
+    {
+        let retired = pages[position];
+        let page = retired.page;
+        if !same_role(page.role, role) {
+            return Err(PhysicalKvError::RoleMismatch);
+        }
+        if page.index >= M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+            return Err(PhysicalKvError::PageOutOfRange);
+        }
+        let index = page.index as usize;
+        if selected[index] {
+            return Err(PhysicalKvError::PhysicalAlias);
+        }
+        let slot = state.page_slots[index];
+        if page.generation == 0 || slot.generation != page.generation {
+            return Err(PhysicalKvError::PageGenerationMismatch);
+        }
+        if slot.generation == u32::MAX {
+            return Err(PhysicalKvError::GenerationExhausted);
+        }
+        if retired.after_epoch.value == 0 {
+            return Err(PhysicalKvError::ZeroRetirementEpoch);
+        }
+        match slot.ownership {
+            PhysicalPageOwnership::Retired {
+                request: owner_request,
+                role: owner_role,
+                after_epoch,
+            } => {
+                if owner_request.slot() != request.slot()
+                    || owner_request.generation() != request.generation()
+                    || !same_role(owner_role, role)
+                {
+                    return Err(PhysicalKvError::PageOwnershipMismatch);
+                }
+                if after_epoch.value != retired.after_epoch.value {
+                    return Err(PhysicalKvError::RetirementEpochMismatch);
+                }
+            }
+            _ => return Err(PhysicalKvError::PageOwnershipMismatch),
+        }
+        if state.table_contains_index(page.index) {
+            return Err(PhysicalKvError::PhysicalAlias);
+        }
+        selected[index] = true;
+        position += 1;
+    }
+    assert forall|index: int| 0 <= index < M1_KV_PHYSICAL_PAGE_SLOTS && selected@[index]
+        implies {
+            &&& 0 < state.page_slots@[index].generation < u32::MAX
+            &&& match state.page_slots@[index].ownership {
+                PhysicalPageOwnership::Retired { request: owner, role: owner_role, after_epoch } => {
+                    &&& same_request(owner, state.request)
+                    &&& role_matches(owner_role, state.selection.role)
+                    &&& after_epoch.value > 0
+                }
+                _ => false,
+            }
+            &&& !state.table_contains_index_spec(index as u32)
+        } by {
+        let retired_position = choose|prior: int| 0 <= prior < pages@.len()
+            && pages@[prior].page.index == index;
+        assert(physical_page_is_retired_at_epoch(
+            state, request, role, pages@[retired_position].after_epoch,
+            pages@[retired_position].page,
+        ));
+    }
+    Ok(PhysicalKvRetirementMetadataBatchV1 { state, selected })
+}
+
+} // verus!
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Qwen3ExecutionMode, Qwen3PlanBucket};
+
+    fn retired_metadata_state(
+        role: Qwen3ModelRole,
+    ) -> (PhysicalKvState, PhysicalKvRetiredPageMetadataV1) {
+        let selection = Qwen3PlanSelection {
+            role,
+            ..target_decode()
+        };
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let page = append_and_write(&mut state, selection, 0, 1);
+        let epoch = CompletionEpoch::new(10);
+        rollback_physical_token(&mut state, request(), selection, epoch).unwrap();
+        (
+            state,
+            PhysicalKvRetiredPageMetadataV1 {
+                page,
+                after_epoch: epoch,
+            },
+        )
+    }
+
+    #[test]
+    fn retirement_metadata_batches_drop_unchanged_and_reuse_both_roles() {
+        for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
+            let (mut state, mut retired) = retired_metadata_state(role);
+            for generation in 1..=3 {
+                let before = format!("{state:?}");
+                let batch = preflight_retired_page_metadata_batch_v1(
+                    &mut state,
+                    request(),
+                    role,
+                    &[retired],
+                )
+                .unwrap();
+                drop(batch);
+                assert_eq!(format!("{state:?}"), before);
+                preflight_retired_page_metadata_batch_v1(&mut state, request(), role, &[retired])
+                    .unwrap()
+                    .commit();
+                assert_eq!(state.page_generation(0), Some(generation + 1));
+                assert_eq!(state.page_slots[0].initialized_prefix, 0);
+                assert_eq!(state.page_slots[0].ownership, PhysicalPageOwnership::Free);
+                let selection = state.selection;
+                assert_eq!(
+                    append_physical_page(&mut state, request(), selection, retired.page),
+                    Err(PhysicalKvError::PageGenerationMismatch)
+                );
+                let next = append_and_write(&mut state, selection, 0, 1);
+                rollback_physical_token(&mut state, request(), selection, retired.after_epoch)
+                    .unwrap();
+                retired.page = next;
+            }
+        }
+    }
+
+    #[test]
+    fn retirement_metadata_batches_reject_hostile_rosters_without_mutation() {
+        for case in 0..14 {
+            let (mut state, retired) = retired_metadata_state(Qwen3ModelRole::Target8B);
+            let mut pages = vec![retired];
+            let mut expected_request = request();
+            let mut expected_role = Qwen3ModelRole::Target8B;
+            match case {
+                0 => {
+                    expected_request = RequestId::new(request().slot(), request().generation() + 1)
+                }
+                1 => expected_role = Qwen3ModelRole::Draft06B,
+                2 => pages[0].page.role = Qwen3ModelRole::Draft06B,
+                3 => pages[0].page.generation = 0,
+                4 => pages[0].page.generation += 1,
+                5 => pages[0].page.index = M1_KV_PHYSICAL_PAGE_SLOTS_U32,
+                6 => pages[0].after_epoch = CompletionEpoch::new(0),
+                7 => pages[0].after_epoch = CompletionEpoch::new(11),
+                8 => pages.push(retired),
+                9 => state.page_slots[0].ownership = PhysicalPageOwnership::Free,
+                10 => state.page_table[17] = Some(retired.page),
+                11 => {
+                    state.page_slots[0].generation = u32::MAX;
+                    pages[0].page.generation = u32::MAX;
+                }
+                12 => {
+                    state.page_slots[0].ownership = PhysicalPageOwnership::Retired {
+                        request: RequestId::new(request().slot(), request().generation() + 1),
+                        role: Qwen3ModelRole::Target8B,
+                        after_epoch: retired.after_epoch,
+                    }
+                }
+                13 => {
+                    state.page_slots[0].ownership = PhysicalPageOwnership::Retired {
+                        request: request(),
+                        role: Qwen3ModelRole::Draft06B,
+                        after_epoch: retired.after_epoch,
+                    }
+                }
+                _ => unreachable!(),
+            }
+            let before = format!("{state:?}");
+            let expected = match case {
+                0 => PhysicalKvError::RequestMismatch,
+                1 | 2 => PhysicalKvError::RoleMismatch,
+                3 | 4 => PhysicalKvError::PageGenerationMismatch,
+                5 => PhysicalKvError::PageOutOfRange,
+                6 => PhysicalKvError::ZeroRetirementEpoch,
+                7 => PhysicalKvError::RetirementEpochMismatch,
+                8 | 10 => PhysicalKvError::PhysicalAlias,
+                9 | 12 | 13 => PhysicalKvError::PageOwnershipMismatch,
+                11 => PhysicalKvError::GenerationExhausted,
+                _ => unreachable!(),
+            };
+            assert_eq!(
+                preflight_retired_page_metadata_batch_v1(
+                    &mut state,
+                    expected_request,
+                    expected_role,
+                    &pages
+                )
+                .unwrap_err(),
+                expected,
+                "case {case}"
+            );
+            assert_eq!(format!("{state:?}"), before, "case {case}");
+        }
+        let (mut state, retired) = retired_metadata_state(Qwen3ModelRole::Target8B);
+        let before = format!("{state:?}");
+        let pages = vec![retired; M1_KV_PHYSICAL_PAGE_SLOTS + 1];
+        assert!(preflight_retired_page_metadata_batch_v1(
+            &mut state,
+            request(),
+            Qwen3ModelRole::Target8B,
+            &pages
+        )
+        .is_err());
+        assert_eq!(format!("{state:?}"), before);
+    }
+
+    #[test]
+    fn retirement_metadata_storage_is_fixed_and_bounded() {
+        assert!(core::mem::size_of::<PhysicalKvRetirementMetadataBatchV1<'_>>() <= 1024);
+        assert!(
+            core::mem::size_of::<[PhysicalKvRetiredPageMetadataV1; M1_KV_PHYSICAL_PAGE_SLOTS]>()
+                <= 16 * 1024
+        );
+    }
+
+    #[test]
+    fn retirement_metadata_empty_and_sparse_batches_preserve_exact_frame() {
+        for selection in [target_decode(), draft_decode()] {
+            let role = selection.role;
+            let mut state = PhysicalKvState::new(request(), selection).unwrap();
+            let epoch = CompletionEpoch::new(17);
+            for (index, generation) in [(17, 2), (511, u32::MAX - 1)] {
+                state.page_slots[index] = PhysicalPageSlot {
+                    generation,
+                    ownership: PhysicalPageOwnership::Retired {
+                        request: request(),
+                        role,
+                        after_epoch: epoch,
+                    },
+                    initialized_prefix: 9,
+                };
+            }
+            // This independently owned table entry must remain outside the selected mask.
+            state.page_slots[4] = PhysicalPageSlot {
+                generation: 6,
+                ownership: PhysicalPageOwnership::Exclusive {
+                    request: request(),
+                    role,
+                },
+                initialized_prefix: 3,
+            };
+            state.page_table[0] = Some(PhysicalPageId::new(role, 4, 6));
+            state.page_count = 1;
+            state.resident_tokens = 3;
+            state.committed_tokens = 2;
+            let before_slots = state.page_slots;
+            let before_table = state.page_table;
+            let before_logical = state.logical_state();
+            let before_capacity = state.max_context_tokens();
+
+            preflight_retired_page_metadata_batch_v1(&mut state, request(), role, &[])
+                .unwrap()
+                .commit();
+            assert_eq!(state.page_slots, before_slots);
+
+            let pages = [
+                PhysicalKvRetiredPageMetadataV1 {
+                    page: PhysicalPageId::new(role, 511, u32::MAX - 1),
+                    after_epoch: epoch,
+                },
+                PhysicalKvRetiredPageMetadataV1 {
+                    page: PhysicalPageId::new(role, 17, 2),
+                    after_epoch: epoch,
+                },
+            ];
+            preflight_retired_page_metadata_batch_v1(&mut state, request(), role, &pages)
+                .unwrap()
+                .commit();
+            for (index, before) in before_slots.into_iter().enumerate() {
+                let expected = if index == 17 || index == 511 {
+                    PhysicalPageSlot {
+                        generation: before.generation + 1,
+                        ownership: PhysicalPageOwnership::Free,
+                        initialized_prefix: 0,
+                    }
+                } else {
+                    before
+                };
+                assert_eq!(state.page_slots[index], expected);
+            }
+            assert_eq!(state.page_table, before_table);
+            assert_eq!(state.logical_state(), before_logical);
+            assert_eq!(state.selection(), selection);
+            assert_eq!(state.max_context_tokens(), before_capacity);
+            assert_eq!(state.page_count(), 1);
+        }
+    }
+
+    #[test]
+    fn retirement_metadata_exact_full_roster_advances_every_selected_slot_once() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let epoch = CompletionEpoch::new(12);
+        let pages = (0..M1_KV_PHYSICAL_PAGE_SLOTS_U32)
+            .map(|index| {
+                let page = append_and_write(&mut state, selection, index, M1_KV_PAGE_TOKENS);
+                PhysicalKvRetiredPageMetadataV1 {
+                    page,
+                    after_epoch: epoch,
+                }
+            })
+            .collect::<Vec<_>>();
+        for _ in 0..M1_MAX_CONTEXT_TOKENS {
+            rollback_physical_token(&mut state, request(), selection, epoch).unwrap();
+        }
+        preflight_retired_page_metadata_batch_v1(&mut state, request(), selection.role, &pages)
+            .unwrap()
+            .commit();
+        for index in 0..M1_KV_PHYSICAL_PAGE_SLOTS_U32 {
+            assert_eq!(state.page_generation(index), Some(2));
+        }
+        assert_eq!(state.page_count(), 0);
+    }
+
+    fn request() -> RequestId {
+        RequestId::new(3, 7)
+    }
+
+    fn target_decode() -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        }
+    }
+
+    fn draft_decode() -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        }
+    }
+
+    fn append_and_write(
+        state: &mut PhysicalKvState,
+        selection: Qwen3PlanSelection,
+        page_index: u32,
+        token_count: u32,
+    ) -> PhysicalPageId {
+        let generation = state.page_generation(page_index).unwrap();
+        let page = PhysicalPageId::new(selection.role, page_index, generation);
+        append_physical_page(state, request(), selection, page).unwrap();
+        let start = state.logical_state().resident_tokens;
+        for position in start..start + token_count {
+            write_physical_token(state, request(), selection, position).unwrap();
+        }
+        page
+    }
+
+    fn initialized_catchup_pair(
+        bucket: Qwen3PlanBucket,
+        committed: u32,
+    ) -> (PhysicalKvState, PhysicalKvState, Qwen3PlanSelection) {
+        let target_selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket,
+        };
+        let draft_selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            ..target_selection
+        };
+        let mut target = PhysicalKvState::new(request(), target_selection).unwrap();
+        let mut draft = PhysicalKvState::new(request(), draft_selection).unwrap();
+        for (state, selection) in [
+            (&mut target, target_selection),
+            (&mut draft, draft_selection),
+        ] {
+            for page in 0..(committed + 1).div_ceil(M1_KV_PAGE_TOKENS) {
+                let count = (committed + 1 - page * M1_KV_PAGE_TOKENS).min(M1_KV_PAGE_TOKENS);
+                append_and_write(state, selection, page, count);
+            }
+        }
+        commit_physical_kv(&mut target, request(), target_selection, committed + 1).unwrap();
+        commit_physical_kv(&mut draft, request(), draft_selection, committed).unwrap();
+        (target, draft, draft_selection)
+    }
+
+    fn prepared_catchup_pair(
+        bucket: Qwen3PlanBucket,
+        committed: u32,
+    ) -> (PhysicalKvState, PhysicalKvState, Qwen3PlanSelection) {
+        let parent = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket,
+        };
+        let selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            ..parent
+        };
+        let mut target = PhysicalKvState::new(request(), parent).unwrap();
+        let mut draft = PhysicalKvState::new(request(), selection).unwrap();
+        for (state, role_selection, resident) in [
+            (&mut target, parent, committed + 1),
+            (&mut draft, selection, committed),
+        ] {
+            for page in 0..(committed + 1).div_ceil(M1_KV_PAGE_TOKENS) {
+                let count = (resident - page * M1_KV_PAGE_TOKENS).min(M1_KV_PAGE_TOKENS);
+                append_and_write(state, role_selection, page, count);
+            }
+            commit_physical_kv(state, request(), role_selection, resident).unwrap();
+        }
+        (target, draft, selection)
+    }
+
+    #[test]
+    fn catchup_initialization_establishes_cursor_pair_before_one_token_commit() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            for committed in [0, 15, 16, 127, 128, 143, 144, 8191] {
+                let (target, mut draft, selection) = prepared_catchup_pair(bucket, committed);
+                let parent = target.selection;
+                let target_logical = target.logical_state();
+                let target_table = target.page_table;
+                let target_slots = target.page_slots;
+                let draft_table = draft.page_table;
+                let draft_pages = draft.page_count;
+                initialize_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    parent,
+                    selection,
+                    committed,
+                )
+                .unwrap();
+                assert_eq!(draft.request, request());
+                assert_eq!(draft.selection, selection);
+                assert_eq!(draft.resident_tokens, committed + 1);
+                assert_eq!(draft.committed_tokens, committed);
+                assert_eq!(draft.page_table, draft_table);
+                assert_eq!(draft.page_count, draft_pages);
+                assert_eq!(target.logical_state(), target_logical);
+                assert_eq!(target.page_table, target_table);
+                assert_eq!(target.page_slots, target_slots);
+
+                let initialized_logical = draft.logical_state();
+                let initialized_slots = draft.page_slots;
+                assert!(initialize_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    parent,
+                    selection,
+                    committed,
+                )
+                .is_err());
+                assert_eq!(draft.logical_state(), initialized_logical);
+                assert_eq!(draft.page_table, draft_table);
+                assert_eq!(draft.page_slots, initialized_slots);
+                commit_initialized_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    selection,
+                    CompletionEpoch::new(32),
+                    CompletionEpoch::new(32),
+                    1,
+                )
+                .unwrap();
+                assert_eq!(draft.committed_tokens, target.committed_tokens);
+                assert_eq!(draft.resident_tokens, target.resident_tokens);
+            }
+        }
+    }
+
+    #[test]
+    fn catchup_initialization_rejects_authority_cursor_and_page_drift_without_mutation() {
+        for case in 0..13 {
+            let (mut target, mut draft, mut selection) =
+                prepared_catchup_pair(Qwen3PlanBucket::SpeculativeS1K16C8192, 15);
+            let mut parent = target.selection;
+            let mut supplied_request = request();
+            let mut position = 15;
+            let other_request = RequestId::new(request().slot(), request().generation() + 1);
+            match case {
+                0 => target.request = other_request,
+                1 => draft.request = other_request,
+                2 => supplied_request = other_request,
+                3 => parent = selection,
+                4 => selection = parent,
+                5 => target.resident_tokens -= 1,
+                6 => target.committed_tokens -= 1,
+                7 => draft.committed_tokens -= 1,
+                8 => draft.resident_tokens -= 1,
+                9 => position += 1,
+                10 => draft.page_slots[0].generation += 1,
+                11 => draft.page_slots[0].initialized_prefix = 0,
+                12 => position = M1_MAX_CONTEXT_TOKENS,
+                _ => unreachable!(),
+            }
+            let before_logical = draft.logical_state();
+            let before_request = draft.request;
+            let before_selection = draft.selection;
+            let before_capacity = draft.max_context_tokens;
+            let before_page_count = draft.page_count;
+            let before_table = draft.page_table;
+            let before_slots = draft.page_slots;
+            assert!(
+                initialize_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    supplied_request,
+                    parent,
+                    selection,
+                    position,
+                )
+                .is_err(),
+                "hostile case {case}"
+            );
+            assert_eq!(draft.logical_state(), before_logical);
+            assert_eq!(draft.request, before_request);
+            assert_eq!(draft.selection, before_selection);
+            assert_eq!(draft.max_context_tokens, before_capacity);
+            assert_eq!(draft.page_count, before_page_count);
+            assert_eq!(draft.page_table, before_table);
+            assert_eq!(draft.page_slots, before_slots);
+        }
+    }
+
+    #[test]
+    fn catchup_commit_advances_one_metadata_cursor_and_frames_physical_storage() {
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            for committed in [0, 15, 16, 8191] {
+                let (target, mut draft, selection) = initialized_catchup_pair(bucket, committed);
+                let request_before = draft.request;
+                let lifecycle_before = draft.lifecycle;
+                let capacity_before = draft.max_context_tokens;
+                let page_count_before = draft.page_count;
+                let table_before = draft.page_table;
+                let slots_before = draft.page_slots;
+                commit_initialized_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    selection,
+                    CompletionEpoch::new(32),
+                    CompletionEpoch::new(32),
+                    1,
+                )
+                .unwrap();
+                assert_eq!(draft.request, request_before);
+                assert_eq!(draft.selection, selection);
+                assert_eq!(draft.lifecycle, lifecycle_before);
+                assert_eq!(draft.max_context_tokens, capacity_before);
+                assert_eq!(draft.committed_tokens, committed + 1);
+                assert_eq!(draft.resident_tokens, committed + 1);
+                assert_eq!(target.committed_tokens, committed + 1);
+                assert_eq!(target.resident_tokens, committed + 1);
+                assert_eq!(draft.page_count, page_count_before);
+                assert_eq!(draft.page_table, table_before);
+                assert_eq!(draft.page_slots, slots_before);
+            }
+        }
+    }
+
+    #[test]
+    fn catchup_commit_rejections_preserve_state_and_epoch_precedes_count() {
+        let (target, mut draft, selection) =
+            initialized_catchup_pair(Qwen3PlanBucket::SpeculativeS1K16C8192, 15);
+        let logical_before = draft.logical_state();
+        let table_before = draft.page_table;
+        let slots_before = draft.page_slots;
+        for (after_epoch, accepted, expected) in [
+            (31, 0, PhysicalKvCatchupCommitError::CompletionEpochMismatch),
+            (31, 1, PhysicalKvCatchupCommitError::CompletionEpochMismatch),
+            (32, 0, PhysicalKvCatchupCommitError::AcceptedCountMismatch),
+            (32, 2, PhysicalKvCatchupCommitError::AcceptedCountMismatch),
+        ] {
+            assert_eq!(
+                commit_initialized_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    request(),
+                    selection,
+                    CompletionEpoch::new(32),
+                    CompletionEpoch::new(after_epoch),
+                    accepted,
+                ),
+                Err(expected)
+            );
+            assert_eq!(draft.logical_state(), logical_before);
+            assert_eq!(draft.page_table, table_before);
+            assert_eq!(draft.page_slots, slots_before);
+        }
+        for (supplied_request, supplied_selection) in [
+            (
+                RequestId::new(request().slot(), request().generation() + 1),
+                selection,
+            ),
+            (request(), target.selection()),
+        ] {
+            assert!(matches!(
+                commit_initialized_draft_catchup_kv(
+                    &target,
+                    &mut draft,
+                    supplied_request,
+                    supplied_selection,
+                    CompletionEpoch::new(32),
+                    CompletionEpoch::new(32),
+                    1,
+                ),
+                Err(PhysicalKvCatchupCommitError::Physical(_))
+            ));
+            assert_eq!(draft.logical_state(), logical_before);
+            assert_eq!(draft.page_table, table_before);
+            assert_eq!(draft.page_slots, slots_before);
+        }
+        commit_initialized_draft_catchup_kv(
+            &target,
+            &mut draft,
+            request(),
+            selection,
+            CompletionEpoch::new(32),
+            CompletionEpoch::new(32),
+            1,
+        )
+        .unwrap();
+        let committed_before = draft.logical_state();
+        assert!(matches!(
+            commit_initialized_draft_catchup_kv(
+                &target,
+                &mut draft,
+                request(),
+                selection,
+                CompletionEpoch::new(32),
+                CompletionEpoch::new(32),
+                1,
+            ),
+            Err(PhysicalKvCatchupCommitError::Physical(_))
+        ));
+        assert_eq!(draft.logical_state(), committed_before);
+        assert_eq!(draft.page_table, table_before);
+        assert_eq!(draft.page_slots, slots_before);
+    }
+
+    #[test]
+    fn preflighted_reselection_frames_logical_pages_generations_and_retirement() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        append_and_write(&mut state, selection, 9, M1_KV_PAGE_TOKENS);
+        append_and_write(&mut state, selection, 2, 1);
+        commit_physical_kv(&mut state, request(), selection, M1_KV_PAGE_TOKENS).unwrap();
+        rollback_physical_token(&mut state, request(), selection, CompletionEpoch::new(40))
+            .unwrap();
+
+        let next = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+        };
+        let request_before = state.request;
+        let lifecycle_before = state.lifecycle;
+        let resident_before = state.resident_tokens;
+        let committed_before = state.committed_tokens;
+        let page_count_before = state.page_count;
+        let page_table_before = state.page_table;
+        let page_slots_before = state.page_slots;
+
+        let permit = preflight_physical_kv_reselection(&state, next).unwrap();
+        apply_preflighted_physical_kv_reselection(&mut state, permit);
+
+        assert_eq!(state.request, request_before);
+        assert_eq!(state.selection, next);
+        assert_eq!(state.lifecycle, lifecycle_before);
+        assert_eq!(state.max_context_tokens, 8_192);
+        assert_eq!(state.resident_tokens, resident_before);
+        assert_eq!(state.committed_tokens, committed_before);
+        assert_eq!(state.page_count, page_count_before);
+        assert_eq!(state.page_table, page_table_before);
+        assert_eq!(state.page_slots, page_slots_before);
+    }
+
+    #[test]
+    fn reselection_preflight_rejects_hostile_state_and_capacity_without_mutation() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        for page_index in 0..9 {
+            let count = if page_index == 8 {
+                1
+            } else {
+                M1_KV_PAGE_TOKENS
+            };
+            append_and_write(&mut state, selection, page_index, count);
+        }
+        let logical_before = state.logical_state();
+        let pages_before = state.page_table;
+        let generations_before = state.page_slots;
+
+        let role_drift = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        assert_eq!(
+            preflight_physical_kv_reselection(&state, role_drift).unwrap_err(),
+            PhysicalKvError::RoleMismatch
+        );
+        let invalid = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        assert_eq!(
+            preflight_physical_kv_reselection(&state, invalid).unwrap_err(),
+            PhysicalKvError::InvalidSelection
+        );
+        let too_small = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
+        };
+        assert_eq!(
+            preflight_physical_kv_reselection(&state, too_small).unwrap_err(),
+            PhysicalKvError::ContextExceeded
+        );
+        assert_eq!(state.selection(), selection);
+        assert_eq!(state.logical_state(), logical_before);
+        assert_eq!(state.page_table, pages_before);
+        assert_eq!(state.page_slots, generations_before);
+
+        let mut nonactive = PhysicalKvState::new(request(), selection).unwrap();
+        cancel_physical_kv(
+            &mut nonactive,
+            request(),
+            selection,
+            CompletionEpoch::new(41),
+        )
+        .unwrap();
+        let nonactive_before = nonactive.logical_state();
+        assert_eq!(
+            preflight_physical_kv_reselection(&nonactive, selection).unwrap_err(),
+            PhysicalKvError::WrongLifecycle
+        );
+        assert_eq!(nonactive.logical_state(), nonactive_before);
+        assert_eq!(nonactive.selection(), selection);
+    }
+
+    #[test]
+    fn exact_mapping_crosses_the_fixed_page_boundary() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let first = append_and_write(&mut state, selection, 9, M1_KV_PAGE_TOKENS);
+        let second = append_and_write(&mut state, selection, 2, 1);
+
+        assert_eq!(
+            map_initialized_token(&state, request(), selection, 15),
+            Ok(PhysicalKvLocation {
+                page: first,
+                offset: 15
+            })
+        );
+        assert_eq!(
+            map_initialized_token(&state, request(), selection, 16),
+            Ok(PhysicalKvLocation {
+                page: second,
+                offset: 0
+            })
+        );
+    }
+
+    fn target_with_seventeen_tokens() -> (PhysicalKvState, PhysicalPageId, PhysicalPageId) {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let first = append_and_write(&mut state, selection, 9, M1_KV_PAGE_TOKENS);
+        let second = append_and_write(&mut state, selection, 2, 1);
+        (state, first, second)
+    }
+
+    #[test]
+    fn whole_tail_preflight_rejects_stale_alias_owner_and_prefix_metadata() {
+        let selection = target_decode();
+        let epoch = CompletionEpoch::new(41);
+
+        let (mut stale, _, stale_page) = target_with_seventeen_tokens();
+        stale.page_slots[stale_page.index as usize].generation += 1;
+        let before = stale.logical_state();
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &stale,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                1,
+            ),
+            Err(PhysicalKvError::PageGenerationMismatch)
+        );
+        assert_eq!(stale.logical_state(), before);
+
+        let (mut wrong_owner, _, owner_page) = target_with_seventeen_tokens();
+        wrong_owner.page_slots[owner_page.index as usize].ownership = PhysicalPageOwnership::Free;
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &wrong_owner,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                1,
+            ),
+            Err(PhysicalKvError::PageOwnershipMismatch)
+        );
+
+        let (mut wrong_prefix, _, prefix_page) = target_with_seventeen_tokens();
+        wrong_prefix.page_slots[prefix_page.index as usize].initialized_prefix = 2;
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &wrong_prefix,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                1,
+            ),
+            Err(PhysicalKvError::UninitializedRead)
+        );
+
+        let (mut alias, first_page, _) = target_with_seventeen_tokens();
+        alias.page_table[1] = Some(first_page);
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &alias,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                1,
+            ),
+            Err(PhysicalKvError::SettlementPhysicalAlias)
+        );
+
+        let (mut full_acceptance_stale, first_page, _) = target_with_seventeen_tokens();
+        full_acceptance_stale.page_slots[first_page.index as usize].generation += 1;
+        assert_eq!(
+            preflight_physical_speculative_settlement(
+                &full_acceptance_stale,
+                request(),
+                selection,
+                epoch,
+                0,
+                17,
+                17,
+            ),
+            Err(PhysicalKvError::PageGenerationMismatch)
+        );
+    }
+
+    #[test]
+    fn stale_request_selection_role_and_generation_are_rejected() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let target_page = PhysicalPageId::new(Qwen3ModelRole::Target8B, 0, 1);
+        assert_eq!(
+            append_physical_page(&mut state, RequestId::new(3, 8), selection, target_page),
+            Err(PhysicalKvError::RequestMismatch)
+        );
+        assert_eq!(
+            append_physical_page(&mut state, request(), draft_decode(), target_page),
+            Err(PhysicalKvError::SelectionMismatch)
+        );
+        assert_eq!(
+            append_physical_page(
+                &mut state,
+                request(),
+                selection,
+                PhysicalPageId::new(Qwen3ModelRole::Draft06B, 0, 1),
+            ),
+            Err(PhysicalKvError::RoleMismatch)
+        );
+        assert_eq!(
+            append_physical_page(
+                &mut state,
+                request(),
+                selection,
+                PhysicalPageId::new(Qwen3ModelRole::Target8B, 0, 2),
+            ),
+            Err(PhysicalKvError::PageGenerationMismatch)
+        );
+        assert_eq!(
+            append_physical_page(
+                &mut state,
+                request(),
+                selection,
+                PhysicalPageId::new(Qwen3ModelRole::Target8B, M1_KV_PHYSICAL_PAGE_SLOTS_U32, 1,),
+            ),
+            Err(PhysicalKvError::PageOutOfRange)
+        );
+    }
+
+    #[test]
+    fn uninitialized_gap_overwrite_and_out_of_range_are_rejected() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let page = PhysicalPageId::new(selection.role, 0, 1);
+        append_physical_page(&mut state, request(), selection, page).unwrap();
+        assert_eq!(
+            map_initialized_token(&state, request(), selection, 0),
+            Err(PhysicalKvError::LogicalPositionOutOfRange)
+        );
+        assert_eq!(
+            write_physical_token(&mut state, request(), selection, 1),
+            Err(PhysicalKvError::LogicalPositionMismatch)
+        );
+        write_physical_token(&mut state, request(), selection, 0).unwrap();
+        assert_eq!(
+            write_physical_token(&mut state, request(), selection, 0),
+            Err(PhysicalKvError::LogicalPositionMismatch)
+        );
+        assert_eq!(
+            map_initialized_token(&state, request(), selection, 1),
+            Err(PhysicalKvError::LogicalPositionOutOfRange)
+        );
+        assert_eq!(state.page_generation(M1_KV_PHYSICAL_PAGE_SLOTS_U32), None);
+    }
+
+    #[test]
+    fn page_alias_and_non_boundary_append_are_rejected() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let page = append_and_write(&mut state, selection, 4, 1);
+        assert_eq!(
+            append_physical_page(&mut state, request(), selection, page),
+            Err(PhysicalKvError::PageNotRequired)
+        );
+        for position in 1..M1_KV_PAGE_TOKENS {
+            write_physical_token(&mut state, request(), selection, position).unwrap();
+        }
+        assert_eq!(
+            append_physical_page(&mut state, request(), selection, page),
+            Err(PhysicalKvError::PhysicalAlias)
+        );
+    }
+
+    #[test]
+    fn commit_and_rollback_preserve_only_the_accepted_prefix() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let page = append_and_write(&mut state, selection, 1, 3);
+        commit_physical_kv(&mut state, request(), selection, 1).unwrap();
+        assert_eq!(
+            commit_physical_kv(&mut state, request(), selection, 3),
+            Err(PhysicalKvError::CommitExceedsResident)
+        );
+        rollback_physical_token(&mut state, request(), selection, CompletionEpoch::new(12))
+            .unwrap();
+        assert_eq!(state.logical_state().resident_tokens, 2);
+        assert_eq!(state.logical_state().committed_tokens, 1);
+        assert_eq!(
+            map_initialized_token(&state, request(), selection, 2),
+            Err(PhysicalKvError::LogicalPositionOutOfRange)
+        );
+        assert_eq!(
+            map_initialized_token(&state, request(), selection, 1),
+            Ok(PhysicalKvLocation { page, offset: 1 })
+        );
+    }
+
+    #[test]
+    fn rolled_back_page_cannot_reuse_before_exact_quiescence() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let page = append_and_write(&mut state, selection, 0, 1);
+        let epoch = CompletionEpoch::new(44);
+        rollback_physical_token(&mut state, request(), selection, epoch).unwrap();
+
+        assert_eq!(
+            append_physical_page(&mut state, request(), selection, page),
+            Err(PhysicalKvError::PageNotFree)
+        );
+        let wrong = KvQuiescenceAuthority {
+            request: request(),
+            role: selection.role,
+            exact_epoch: CompletionEpoch::new(45),
+        };
+        assert_eq!(
+            release_retired_page(&mut state, page, &wrong),
+            Err(PhysicalKvError::InvalidQuiescenceAuthority)
+        );
+        let exact = KvQuiescenceAuthority {
+            request: request(),
+            role: selection.role,
+            exact_epoch: epoch,
+        };
+        let wrong_role =
+            PhysicalPageId::new(Qwen3ModelRole::Draft06B, page.index(), page.generation());
+        assert_eq!(
+            release_retired_page(&mut state, wrong_role, &exact),
+            Err(PhysicalKvError::RoleMismatch)
+        );
+        let next = release_retired_page(&mut state, page, &exact).unwrap();
+        assert_eq!(next.generation(), page.generation() + 1);
+        assert_eq!(
+            append_physical_page(&mut state, request(), selection, page),
+            Err(PhysicalKvError::PageGenerationMismatch)
+        );
+        append_physical_page(&mut state, request(), selection, next).unwrap();
+    }
+
+    #[test]
+    fn cancellation_is_unreachable_then_retires_tail_at_exact_epoch() {
+        let selection = draft_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let first = append_and_write(&mut state, selection, 0, M1_KV_PAGE_TOKENS);
+        let second = append_and_write(&mut state, selection, 1, 2);
+        commit_physical_kv(&mut state, request(), selection, 5).unwrap();
+        let epoch = CompletionEpoch::new(101);
+        cancel_physical_kv(&mut state, request(), selection, epoch).unwrap();
+        assert_eq!(
+            map_initialized_token(&state, request(), selection, 0),
+            Err(PhysicalKvError::WrongLifecycle)
+        );
+        assert_eq!(
+            cancel_physical_kv(&mut state, request(), selection, epoch),
+            Err(PhysicalKvError::WrongLifecycle)
+        );
+        assert_eq!(
+            retire_cancelled_tail(&mut state, request(), selection, CompletionEpoch::new(102),),
+            Err(PhysicalKvError::RetirementEpochMismatch)
+        );
+        assert_eq!(
+            retire_cancelled_tail(&mut state, request(), selection, epoch),
+            Ok(second)
+        );
+        assert_eq!(
+            retire_cancelled_tail(&mut state, request(), selection, epoch),
+            Ok(first)
+        );
+        assert_eq!(state.logical_state().resident_tokens, 0);
+        assert_eq!(state.logical_state().committed_tokens, 0);
+        assert_eq!(
+            state.logical_state().lifecycle,
+            PhysicalKvLifecycle::RetiredAwaitingQuiescence { after_epoch: epoch }
+        );
+    }
+
+    #[test]
+    fn invalid_bucket_and_zero_generation_fail_closed() {
+        let invalid = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        assert_eq!(
+            PhysicalKvState::new(request(), invalid),
+            Err(PhysicalKvError::InvalidSelection)
+        );
+        assert_eq!(
+            PhysicalKvState::new(RequestId::new(3, 0), target_decode()),
+            Err(PhysicalKvError::ZeroRequestGeneration)
+        );
+    }
+
+    #[test]
+    fn exact_page_generation_snapshot_seeds_only_empty_free_slots() {
+        let mut generations = [1; M1_KV_PHYSICAL_PAGE_SLOTS];
+        generations[0] = 2;
+        generations[511] = 19;
+        let state =
+            PhysicalKvState::new_with_page_generations(request(), target_decode(), generations)
+                .unwrap();
+        assert_eq!(state.page_generation(0), Some(2));
+        assert_eq!(state.page_generation(1), Some(1));
+        assert_eq!(state.page_generation(511), Some(19));
+        assert_eq!(state.page_count(), 0);
+        assert_eq!(state.logical_state().resident_tokens, 0);
+        assert_eq!(state.logical_state().committed_tokens, 0);
+
+        generations[37] = 0;
+        assert_eq!(
+            PhysicalKvState::new_with_page_generations(request(), target_decode(), generations,),
+            Err(PhysicalKvError::PageGenerationMismatch)
+        );
+    }
+
+    #[test]
+    fn finite_bucket_context_and_zero_epoch_fail_closed() {
+        let selection = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Prefill,
+            bucket: Qwen3PlanBucket::PrefillS1T128,
+        };
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        assert_eq!(state.max_context_tokens(), 128);
+        for page_index in 0..8 {
+            append_and_write(&mut state, selection, page_index, M1_KV_PAGE_TOKENS);
+        }
+        assert_eq!(state.logical_state().resident_tokens, 128);
+        assert_eq!(
+            append_physical_page(
+                &mut state,
+                request(),
+                selection,
+                PhysicalPageId::new(selection.role, 8, 1),
+            ),
+            Err(PhysicalKvError::ContextExceeded)
+        );
+        assert_eq!(
+            cancel_physical_kv(&mut state, request(), selection, CompletionEpoch::new(0),),
+            Err(PhysicalKvError::ZeroRetirementEpoch)
+        );
+    }
+
+    #[test]
+    fn empty_cancellation_reaches_retired_state_without_a_page() {
+        let selection = target_decode();
+        let mut state = PhysicalKvState::new(request(), selection).unwrap();
+        let epoch = CompletionEpoch::new(5);
+        cancel_physical_kv(&mut state, request(), selection, epoch).unwrap();
+        assert_eq!(
+            state.logical_state().lifecycle,
+            PhysicalKvLifecycle::RetiredAwaitingQuiescence { after_epoch: epoch }
+        );
+        assert_eq!(
+            retire_cancelled_tail(&mut state, request(), selection, epoch),
+            Err(PhysicalKvError::WrongLifecycle)
+        );
+    }
+}

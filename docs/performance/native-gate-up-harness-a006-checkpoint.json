@@ -1,0 +1,50 @@
+{
+  "schema": "FerricNativeGateUpHarnessCheckpointA006",
+  "date": "2026-10-06",
+  "status": "cpu-qualified-native-control-rejected-artifact-directory-before-setup",
+  "successor_checkpoint": "native-gate-up-harness-a008-checkpoint.json",
+  "native_attempt": "counter-A controller launched and rejected ContentDirectoryIdentity before Setup; zero requests or usable timings",
+  "model_checkpoint": "native-gate-up-cpu-a009-checkpoint.json",
+  "catalog_sha256": "4af074ac6a1867aeb73d4f64e965514d8b5e11798ccb86cf51adf5ceea39d3a2",
+  "catalog_phases": 24,
+  "catalog_raw_streams": 192,
+  "catalog_custody_files": 42,
+  "source_manifest_sha256": "4e7407f2d1e3cc9ffbf0aef3286e34081e53bfd8ecbccfa74e6d7ff5a8bffdd0",
+  "source_files": 21,
+  "qualifier_sha256": "68f335820844f88bdba3aee5ca760733ba63d5e97cf94274535791b36e270c9e",
+  "cpu_host": "mi300x-2",
+  "cpu_profile": "FerricCpuFourCore42GiBEmitterV1",
+  "fresh_qualification": {
+    "contract_tests_passed": 111,
+    "contract_includes": {"checkpoint_binding": 26, "gate_up_contract": 47, "native_launcher": 38},
+    "separate_binding_tests_passed": 26,
+    "measurement_tests_passed": 227,
+    "actual_checkpoint_validation": "passed: 24 phases and 42 custody files",
+    "all_four_outer_phases": "status 0, reaped, cleanup clean, no signals or errors",
+    "note": "The separate 26-test binding run overlaps the 111-test contract suite."
+  },
+  "retained_failures": {
+    "a003": "25 of 26 binding tests passed; directory input raised IsADirectoryError before validation; fixed with descriptor cleanup in finally",
+    "a004": "corrected binding validator and actual checkpoint pass; not integrated launcher qualification",
+    "a005": "disabled integrated source passes all four roles; not reused as a006 source qualification"
+  },
+  "portable_export": {
+    "archive_sha256": "ac7ebd505e1bf5df8935eb53b32ea2c2578afb63cdb070ede3b91de7ad733d01",
+    "archive_bytes": 53189245,
+    "roster_sha256": "f5e399f9ca46625331d6d20e2114eea86814d2b7336f6791fb31fdf600aa86cf",
+    "build_sha256": "ff8e94874f5d78bb1ae869093d427349a6629bc494000aa4ae75b2693c91530f",
+    "files": 193,
+    "logical_bytes": 185729403,
+    "all_members_verified": true,
+    "retained_locally": true,
+    "stage_growth_bytes": 239505408,
+    "planning_increment_bytes": 402653184
+  },
+  "native_stage_namespace": "ferric-native-gate-up-*",
+  "native_limits_unchanged": {"root_free_bytes": 68719476736, "stage_bytes": 2147483648},
+  "native_executed": false,
+  "model_parity_verified": false,
+  "ttft_tpot_measured": false,
+  "performance_qualified": false,
+  "default_promoted": false
+}

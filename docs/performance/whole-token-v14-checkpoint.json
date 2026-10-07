@@ -1,0 +1,76 @@
+{
+  "schema": "FerricChangeEvaluationV1",
+  "change_id": "v14-native-whole-token-r1",
+  "status": "pending",
+  "checkpoint_utc": "2026-10-05T18:28:48.554034+00:00",
+  "plan_sha256": "8cc5432962628c3f11dc0183da80487cbbd28af4924422021f787693f7964c8b",
+  "plan_path": "../../adapters/m1-engineering-execution-v1/tools/whole_token_benchmark_v1/measurement/tracking-plan.json",
+  "plan_hash_semantics": "raw-file-sha256-for-source-progress-only",
+  "launch_plan_ready": false,
+  "latency_admitted": false,
+  "native_validation_performed": false,
+  "default_promotion": false,
+  "implementation": {
+    "core_base": "40695ecf5ffd7f3ec2bca8fd138a89cb675b57c6",
+    "core_published_main": "eded9474bff22aeb8a942061f3e956c234a0ce7f",
+    "github_ci_skipped": true,
+    "core_temporary_worktree_removed": true,
+    "ferric_current_wire_pin": "eded9474bff22aeb8a942061f3e956c234a0ce7f",
+    "ferric_changes_pushed": false,
+    "runtime_source_archive_sha256": "5087f055a8368123bd62a947e27b86a0e28c3ad961e4905335193b609af84eb9",
+    "controller_source_archive_sha256": "147ea2e672ef939a7bdd1715fe80f5391b7ede508eb94f5ce530f608d35a8427",
+    "mechanism": "Same 652-dispatch/180-update graph, compact staging and one publication/final wait; all signals retired.",
+    "kernel_math_changed": false,
+    "next_prefill_candidate": "isolated; not integrated or measured"
+  },
+  "binaries_sha256": {
+    "worker": "1b99c4de7aaad458774b18b62b5175543e880a08e64b15efc72b43dd96aca108",
+    "A": "1e781de6c381666b85d53ff73e16b7f3c23593f858a1f78c7eeaf76691cb9555",
+    "B": "83b18fe5753aa25fa764ff9e1dcbefc911a5ee6cc2462dee330389cf8112d223",
+    "counters": "10f3ff6d132aa3c40055c3c62f1ed7fc32a4d799743c4221a79634d6ae3857aa"
+  },
+  "cpu_validation": {
+    "host": "mi300x",
+    "profile": "FerricCpuFourCore28GiBBuildV1",
+    "core_engineering_library_passed": 705,
+    "core_worker_passed": 7,
+    "aql_passed": 36,
+    "core_default_feature_tests": "passed",
+    "ferric_counter_entry_passed": 126,
+    "ferric_source_policy_passed": 56,
+    "ferric_incompatible_feature_union_passed": 109,
+    "measurement_and_replay_passed": 104,
+    "native_launcher_passed": 18,
+    "core_strict_clippy": "passed",
+    "ferric_all_binary_strict_clippy": "passed",
+    "release_worker_and_three_controllers": "passed",
+    "ignored_native_tests_are_not_qualification": true,
+    "raw_receipts": "/home/harsh/.codex-tmp/ferric-perf-swarm-v6/products/perf-v14-20261005/cpu-results"
+  },
+  "native_blocker": {
+    "host": "smci350-rck-g03-b19-03",
+    "uid": 9661,
+    "root_free_bytes": 64619393024,
+    "required_root_free_bytes": 68719476736,
+    "resource_floor_met": false,
+    "gpu_launched": false,
+    "retired_ferric_temporary_bytes_observed": 347734016,
+    "unrelated_campaign_files_and_models": "untouched"
+  },
+  "current_change_metrics": {
+    "baseline_ttft_ms": null,
+    "candidate_ttft_ms": null,
+    "baseline_tpot_ms": null,
+    "candidate_tpot_ms": null,
+    "ttft_gain_percent": null,
+    "tpot_gain_percent": null,
+    "finite_output_rate_gain_percent": null
+  },
+  "next_steps": [
+    "Bind retained source archives, binaries and clean CPU receipts into the immutable native launch plan.",
+    "When unchanged resource and ownership checks pass, run counter A/B and all three uninstrumented ABBA blocks.",
+    "Retain raw token parity, timing and lifecycle records, then replay and append the resulting TTFT/TPOT deltas.",
+    "Measure the isolated prefill selector separately before composing optimizations."
+  ],
+  "note": "No measured improvement, vLLM win, serving qualification or authenticated proof is claimed. Failed and interrupted CPU attempts remain retained separately."
+}

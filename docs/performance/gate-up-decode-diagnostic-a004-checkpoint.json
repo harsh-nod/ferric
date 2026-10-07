@@ -1,0 +1,129 @@
+{
+  "schema": "FerricGateUpDecodeDiagnosticCheckpointR1",
+  "updated_utc": "2026-10-06T20:20:00Z",
+  "authority": "none",
+  "performance_qualified": false,
+  "serving_qualified": false,
+  "default_changed": false,
+  "purpose": "Attribute registered native decode host-wall time before choosing the next optimization; this is not a latency comparison.",
+  "runtime": {
+    "qualified_commit": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+    "observed_upstream_main": "3f95ec52afbc90cc36dff111b3afdc00fc68a104",
+    "earlier_upstream_check": "12bf5e7ae3ec1bbf66dddce96db04f37f4c63ab5",
+    "runtime_blob_mode_path_records_identical": 775,
+    "runtime_lock_records_identical": 43,
+    "runtime_crates": 9,
+    "root_manifest_identical": true,
+    "whole_compiler_equivalent": false,
+    "note": "Current compiler/extractor code changed; historical image and compiler identities remain unchanged. No dirty fe2o3 worktree edits."
+  },
+  "controller": {
+    "binary": "ferric-qwen3-gate-up-decode-diagnostic",
+    "sha256": "634da1c53d46753ffed133be814938a6ebe5075deed72d597fe5ad142de0ed56",
+    "bytes": 10670064,
+    "source_archive_sha256": "aacc2bcb90fc279c354d2a9924f71768f1ed141b60c38c504c14fd21d3fd680d",
+    "source_files": 103,
+    "private_binary_only_crate": true,
+    "original_adapter_source_and_elfs_unchanged": true,
+    "lock_delta": "Only the new private package and relocation of the adapter root's dev-only toml edge; versions, sources, checksums and all other edges unchanged."
+  },
+  "cpu": {
+    "host": "mi300x-2",
+    "profile": "FerricCpuFourCore42GiBEmitterV1",
+    "roles_passed": ["prepare", "format", "metadata", "test", "clippy", "release"],
+    "tests_passed": 167,
+    "tests_failed": 0,
+    "tests_ignored": 18,
+    "ignored_scope": "Existing actual-artifact tests; not qualification passes.",
+    "strict_lint_passed": true,
+    "all_outer_closures_clean_unsignaled": true,
+    "phase_growth_independently_checked": true,
+    "phase_growth_bytes": {
+      "prepare": 2015232,
+      "format": 12288,
+      "metadata": 2048000,
+      "test": 323584,
+      "clippy": 16384,
+      "release": 60723200
+    },
+    "retention_archive_sha256": "b95c39aebf61b9bdeb4cf5cc7c904a0599012f63f6270723268276b26313dfdc",
+    "retention_archive_bytes": 3745764,
+    "retention_receipt_sha256": "95524bc8882908e8b601bce7c34c5ebc97b70e8c5c2c5b143a7d1ee63dc3af46",
+    "retained_members_verified": 158,
+    "earlier_failures_preserved": [
+      "a001 rejected the historical Cargo ELF's two hard links before staging",
+      "a002 rejected the explicit dev-only toml edge relocation after metadata; subsequent test admission refused",
+      "a003 passed tests but strict lint rejected one needless borrow; no release"
+    ]
+  },
+  "capture_harness": {
+    "remote_tests_passed": 15,
+    "remote_tests_skipped": 0,
+    "inner_sha256": "ccaf7567c7dfbf503bda32ba21ed78f8b5cdf0b32ab77c90aa1af9b9218d5d9a",
+    "outer_sha256": "08a0b22d6d42654ebfddc2e532cfd2122e7cb2a8d21a1120dd366b7f15d4bf3c",
+    "test_log_sha256": "f9274114f9708067d87618d911750d1de85856c24bae8c92bbcf94490ed0350a",
+    "exact_source_before_after": true,
+    "native_plan_sha256": "c1a3ab5bfb4cd654add3b1fcacecdf66ae7b0800d2ea1ddb77a54aae90dbefd0",
+    "native_stage": "/dev/shm/ferric-native-gate-up-decode-a001",
+    "state": "both diagnostic captures completed with exact parity and clean unsignaled outer shutdown; independent raw audit passed",
+    "requests": "One cold 128-input/128-output request per fresh A then B process; stop on A failure.",
+    "checks": "Exact token IDs and UTF8, raw replay, three stderr records, 19+7 counter deltas, endpoint identities, counts, frontiers, byte geometry, chronology, duration bounds, clean child and outer teardown."
+  },
+  "measurement_scope": {
+    "decode_executes": 127,
+    "readbacks": 127,
+    "metadata_writes": 630,
+    "metadata_bytes": 323568,
+    "transport_plans": 127,
+    "warm_transport_plans_in_span": 126,
+    "start_frontier": 2599,
+    "end_frontier_control": 85403,
+    "end_frontier_candidate": 94547,
+    "time_domain": "Host wall time only; not calibrated GPU/shader time.",
+    "exclusions": "Setup, prefill, endpoint snapshots, first decode metadata/cold transport plan/registration, and teardown.",
+    "not_tpot": "Registered span divided by 127 is not TPOT; engine residual is not pure IPC; general worker counters overlap."
+  },
+  "native_capture": {
+    "retained_files": 493,
+    "retained_logical_bytes": 32260311,
+    "local_matches_remote_content_roster": true,
+    "independent_raw_audit": "native-decode-a001-independent-review.json",
+    "independent_raw_audit_passed": true,
+    "content_roster_sha256": "9dd0f8a1df770c115e542aff57c36a9bc66a79543979080407b495889040e04d",
+    "exact_output_token_ids": 256,
+    "outer_statuses": [0, 0],
+    "result_sha256": {
+      "A": "af8f765561af0eb8edb55850f3b7b161bd0c593703df27581c3b545dfee41f57",
+      "B": "89b2060585153c5bf50abed6abdad0215080e76fea42d3cc39ab024bf18e7685"
+    },
+    "outer_sha256": {
+      "A": "28b9365e94b6c39ae9ad1328e9a84b403fbbbe7c8af8a618de1ef8c7e82da849",
+      "B": "e50c43b324fd6c6e4eb141415688dbdf12b8497de6419561621482dffd05a4a8"
+    },
+    "host_ms_per_127th_step_not_tpot": {
+      "A": {
+        "registered_span": 52.21189905511811,
+        "worker_wait": 50.88011290551181,
+        "execute_roundtrip": 51.52957155905512,
+        "warm_transport_planner": 0.3400889448818898,
+        "metadata_writes": 0.175110968503937,
+        "readback": 0.06035025984251968
+      },
+      "B": {
+        "registered_span": 43.96478803937008,
+        "worker_wait": 42.52814659055118,
+        "execute_roundtrip": 43.19502251968504,
+        "warm_transport_planner": 0.39528388188976377,
+        "metadata_writes": 0.20172369291338582,
+        "readback": 0.06275066141732283
+      }
+    },
+    "wait_fraction_of_span_percent": {"A": 97.44926697992658, "B": 96.73229074246326},
+    "scope": "One cold instrumented request per arm. Wait is host-wall polling/sleep/currentness/retirement while device work proceeds, not calibrated GPU time. No latency admission or repeatable A/B speedup claim."
+  },
+  "next_target": "Integrate the existing component-qualified unpaired split-K8 down kernel into a separate native688 route; preserve prefill32 and measure against native652 before combining experiments.",
+  "vendor_comparison_changed": false,
+  "gate_up_a004_campaign_still_inconclusive": true,
+  "http_admission": "closed",
+  "publication": "Not pushed; no GitHub CI or local builds."
+}

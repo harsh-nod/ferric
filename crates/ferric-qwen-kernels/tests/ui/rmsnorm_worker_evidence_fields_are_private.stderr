@@ -1,0 +1,5 @@
+error[E0616]: field `worker` of struct `InertQwen3RmsNormWorkerEvidenceV1` is private
+ --> tests/ui/rmsnorm_worker_evidence_fields_are_private.rs:4:22
+  |
+4 |     let _ = evidence.worker;
+  |                      ^^^^^^ private field

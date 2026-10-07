@@ -1,0 +1,300 @@
+[package]
+name = "ferric-m1-engineering-execution-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+autobins = false
+
+[[bin]]
+name = "ferric-m1-engineering-target-smoke"
+path = "src/bin/ferric-m1-engineering-target-smoke.rs"
+
+[[bin]]
+name = "ferric-m1-engineering-speculative-smoke"
+path = "src/bin/ferric-m1-engineering-speculative-smoke.rs"
+
+[[bin]]
+name = "ferric-m1-engineering-r29-capture"
+path = "src/bin/ferric-m1-engineering-r29-capture.rs"
+
+[[bin]]
+name = "ferric-m1-r33-adapter"
+path = "src/bin/ferric-m1-r33-adapter.rs"
+
+[[bin]]
+name = "ferric-r33-custody-vault-abort-probe"
+path = "src/bin/ferric-r33-custody-vault-abort-probe.rs"
+
+[[bin]]
+name = "ferric-qwen3-tp-engineering"
+path = "src/bin/ferric-qwen3-tp-engineering.rs"
+required-features = ["tp-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-tp-batch-engineering"
+path = "src/bin/ferric-qwen3-tp-batch-engineering.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-draft-canary"
+path = "src/bin/ferric-qwen3-draft-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-draft-paged-canary"
+path = "src/bin/ferric-qwen3-draft-paged-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-paired-paged-canary"
+path = "src/bin/ferric-qwen3-paired-paged-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-argmax-canary"
+path = "src/bin/ferric-qwen3-argmax-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-attention-argmax-canary"
+path = "src/bin/ferric-qwen3-attention-argmax-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-wave-argmax-submission-canary"
+path = "src/bin/ferric-qwen3-wave-argmax-submission-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-layer-c1-wave-canary"
+path = "src/bin/ferric-qwen3-layer-c1-wave-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-query-hoist-v14-canary"
+path = "src/bin/ferric-qwen3-query-hoist-v14-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-wave-rmsnorm-v15-canary"
+path = "src/bin/ferric-qwen3-wave-rmsnorm-v15-canary.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-wave-argmax-live"
+path = "src/bin/ferric-qwen3-wave-argmax-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-layer-c1-wave-live"
+path = "src/bin/ferric-qwen3-layer-c1-wave-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-wave-rmsnorm-v15-live"
+path = "src/bin/ferric-qwen3-wave-rmsnorm-v15-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-wave-target-v17-live"
+path = "src/bin/ferric-qwen3-wave-target-v17-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-c1-kv-copy-v19-live"
+path = "src/bin/ferric-qwen3-c1-kv-copy-v19-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-c1-packed-v22-live"
+path = "src/bin/ferric-qwen3-c1-packed-v22-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-c1-split-attention-v25-live"
+path = "src/bin/ferric-qwen3-c1-split-attention-v25-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-prefill16-kv-copy-v28-live"
+path = "src/bin/ferric-qwen3-prefill16-kv-copy-v28-live.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-wave-target-v17-runtime-diagnostic"
+path = "src/bin/ferric-qwen3-wave-target-v17-runtime-diagnostic.rs"
+required-features = ["tp-batch-engineering"]
+
+[[bin]]
+name = "ferric-qwen3-layer-c1-wave-runtime-diagnostic"
+path = "src/bin/ferric-qwen3-layer-c1-wave-runtime-diagnostic.rs"
+required-features = ["tp-batch-engineering"]
+
+# This non-authoritative engineering tool is intentionally outside Ferric's
+# verified production workspace and runtime dependency closure.
+[workspace]
+
+[[bin]]
+name = "ferric-qwen3-prefill16-v28-model-timestamps"
+path = "src/bin/ferric-qwen3-prefill16-v28-model-timestamps.rs"
+required-features = ["model-timestamps"]
+
+[[bin]]
+name = "ferric-qwen3-ordered64-host-diagnostic"
+path = "src/bin/ferric-qwen3-ordered64-host-diagnostic.rs"
+required-features = ["c1-ordered64"]
+
+[[bin]]
+name = "ferric-qwen3-ordered64-kv-copy-live"
+path = "src/bin/ferric-qwen3-ordered64-kv-copy-live.rs"
+required-features = ["c1-ordered64"]
+
+[[bin]]
+name = "ferric-qwen3-packed-gate-up-kv-r2-live"
+path = "src/bin/ferric-qwen3-packed-gate-up-kv-r2-live.rs"
+required-features = ["c1-ordered64"]
+
+[[bin]]
+name = "ferric-qwen3-packed-down-r1-live"
+path = "src/bin/ferric-qwen3-packed-down-r1-live.rs"
+required-features = ["c1-ordered64"]
+
+[[bin]]
+name = "ferric-qwen3-prefill32-pages-live"
+path = "src/bin/ferric-qwen3-prefill32-pages-live.rs"
+required-features = ["c1-ordered64"]
+
+[[bin]]
+name = "ferric-qwen3-ordered64-packet-ticks"
+path = "src/bin/ferric-qwen3-ordered64-packet-ticks.rs"
+required-features = ["c1-ordered64", "model-timestamps"]
+
+[[bin]]
+name = "ferric-qwen3-ordered64-baseline-packet-ticks"
+path = "src/bin/ferric-qwen3-ordered64-baseline-packet-ticks.rs"
+required-features = ["c1-ordered64", "model-timestamps"]
+
+[[bin]]
+name = "ferric-qwen3-token-program-v1-live"
+path = "src/bin/ferric-qwen3-token-program-v1-live.rs"
+required-features = ["c1-token-program"]
+
+[[bin]]
+name = "ferric-qwen3-token-program-native-v1-live"
+path = "src/bin/ferric-qwen3-token-program-native-v1-live.rs"
+required-features = ["c1-token-program"]
+
+[[bin]]
+name = "ferric-qwen3-token-program-v1-counters"
+path = "src/bin/ferric-qwen3-token-program-v1-counters.rs"
+required-features = ["c1-token-program"]
+
+[[bin]]
+name = "ferric-qwen3-prefill-program-native-v1-live"
+path = "src/bin/ferric-qwen3-prefill-program-native-v1-live.rs"
+required-features = ["c1-token-program"]
+
+[[bin]]
+name = "ferric-qwen3-prefill-program-native-v1-counters"
+path = "src/bin/ferric-qwen3-prefill-program-native-v1-counters.rs"
+required-features = ["c1-token-program"]
+
+[[bin]]
+name = "ferric-qwen3-prefill-width-native-live"
+path = "src/bin/ferric-qwen3-prefill-width-native-live.rs"
+required-features = ["c1-token-program"]
+
+[[bin]]
+name = "ferric-qwen3-prefill-width-native-counters"
+path = "src/bin/ferric-qwen3-prefill-width-native-counters.rs"
+required-features = ["c1-token-program"]
+
+[features]
+c1-token-program = ["c1-ordered64"]
+c1-ordered64 = ["tp-batch-engineering", "dep:fe2o3-kfd-current-wire"]
+model-timestamps = ["tp-batch-engineering", "dep:fe2o3-kfd-current-wire"]
+tp-engineering = [
+    "fe2o3-kfd/engineering-gfx950",
+    "dep:fe2o3-hsaco",
+    "dep:ferric-qwen3-tp-kernels-device-v1",
+]
+tp-batch-engineering = [
+    "tp-engineering",
+    "dep:ferric-qwen3-tp-batch-kernels-device-v2",
+    "dep:ferric-qwen3-tp-perf-kernels-device-v3",
+    "dep:ferric-qwen3-tp-peer-kernels-device-v4",
+    "dep:ferric-qwen3-tp-batch32-roster-bridge-v5",
+    "dep:ferric-qwen3-tp-peer32-kernels-device-v6",
+    "dep:ferric-qwen3-tp-fp32-head-kernels-device-v7",
+    "dep:ferric-qwen3-tp-fp32-head32-kernels-device-v8",
+    "dep:ferric-qwen3-tp-large-kv-kernels-device-v9",
+    "dep:ferric-qwen3-draft-batch32-kernels-device-v10",
+    "dep:ferric-qwen3-tp-fp32-argmax-kernels-device-v11",
+    "dep:ferric-qwen3-tp-wave-query-hoist-kernels-device-v14",
+    "dep:ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15",
+    "dep:ferric-qwen3-tp-c1-kv-copy-kernels-device-v19",
+    "dep:ferric-qwen3-tp-c1-split8-attention-kernels-device-v21",
+    "dep:ferric-qwen3-tp-gemv-prefetch-kernels-device-v20",
+    "dep:ferric-qwen3-tp-prefill-kv-roster-bridge-v27",
+]
+qualification-fault-injection = [
+    "ferric-engine/qualification-fault-injection",
+    "dep:fe2o3-service-host",
+]
+
+[dependencies]
+# Only the optional ordered64/timestamp/token wire cohort migrates here.
+# Legacy GFX942, ordinary TP, peer, and observation-schema pins remain unmigrated.
+fe2o3-kfd-current-wire = { package = "fe2o3-kfd", git = "https://github.com/harsh-nod/fe2o3.git", rev = "da6b561c5a3f12acc5b0e6da74c808273e728710", version = "=0.1.0", optional = true, default-features = false, features = ["engineering-gfx950"] }
+fe2o3-amdhsa-loader = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-hsaco = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0", optional = true }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-kfd = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-service-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0", optional = true }
+ferric-build = { path = "../../crates/ferric-build", version = "=0.1.0" }
+ferric-engine = { path = "../../crates/ferric-engine", version = "=0.1.0" }
+ferric-non-authoritative-program-source-v1 = { path = "../../crates/ferric-non-authoritative-program-source-v1", version = "=0.1.0" }
+ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1", version = "=0.1.0" }
+ferric-qwen3-tp-kernels-device-v1 = { path = "../../device/qwen3-tp-kernels-v1", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-batch-kernels-device-v2 = { path = "../../device/qwen3-tp-batch-kernels-v2", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-perf-kernels-device-v3 = { path = "../../device/qwen3-tp-perf-kernels-v3", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950", "mfma"] }
+ferric-qwen3-tp-peer-kernels-device-v4 = { path = "../../device/qwen3-tp-peer-kernels-v4", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-batch32-roster-bridge-v5 = { path = "../qwen3-tp-batch32-roster-bridge-v5", version = "=0.1.0", optional = true, default-features = false }
+ferric-qwen3-tp-peer32-kernels-device-v6 = { path = "../../device/qwen3-tp-peer32-kernels-v6", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-fp32-head-kernels-device-v7 = { path = "../../device/qwen3-tp-fp32-head-kernels-v7", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-fp32-head32-kernels-device-v8 = { path = "../../device/qwen3-tp-fp32-head32-kernels-v8", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-large-kv-kernels-device-v9 = { path = "../../device/qwen3-tp-large-kv-kernels-v9", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-draft-batch32-kernels-device-v10 = { path = "../../device/qwen3-draft-batch32-kernels-v10", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-fp32-argmax-kernels-device-v11 = { path = "../../device/qwen3-tp-fp32-argmax-kernels-v11", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-wave-query-hoist-kernels-device-v14 = { path = "../../device/qwen3-tp-wave-query-hoist-kernels-v14", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15 = { path = "../../device/qwen3-tp-wave-rmsnorm-kernels-v15", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-c1-kv-copy-kernels-device-v19 = { path = "../../device/qwen3-tp-c1-kv-copy-kernels-v19", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-all-kernels-worker-v3-verifier-v1 = { path = "../qwen3-all-kernels-worker-v3-verifier-v1", version = "=0.1.0" }
+ferric-spec = { path = "../../crates/ferric-spec", version = "=0.1.0" }
+rustix = { version = "=1.1.4", features = ["event", "fs", "net", "process", "rand", "time"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+sha2 = "=0.11.0"
+
+[dev-dependencies]
+toml = "=1.1.5"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+too_many_lines = "allow"
+
+[profile.release]
+# Applies to every standalone R33 release target, including the supervised
+# daemon when its concrete entry point is wired to this reviewed shell.
+panic = "abort"
+
+[build-dependencies]
+ferric-qwen3-tp-gemv-prefetch-kernels-device-v20 = { path = "../../device/qwen3-tp-gemv-prefetch-kernels-v20", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }
+ferric-qwen3-tp-prefill-kv-roster-bridge-v27 = { path = "../qwen3-tp-prefill-kv-roster-bridge-v27", version = "=0.1.0", optional = true, default-features = false }
+ferric-qwen3-tp-c1-split8-attention-kernels-device-v21 = { path = "../../device/qwen3-tp-c1-split8-attention-kernels-v21", version = "=0.1.0", optional = true, default-features = false, features = ["gfx950"] }

@@ -1,0 +1,18 @@
+[package]
+name = "ferric-kernels"
+description = "Finite proof-bound kernel catalog foundations for Ferric"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+ferric-generated-runner = { path = "../ferric-generated-runner" }
+ferric-spec = { path = "../ferric-spec" }
+vstd.workspace = true
+
+[package.metadata.verus]
+verify = true
+
+[lints]
+workspace = true

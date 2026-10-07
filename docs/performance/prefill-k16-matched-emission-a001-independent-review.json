@@ -1,0 +1,145 @@
+{
+  "schema": "FerricMatchedK16PrefillIndependentEmissionReviewV1",
+  "status": "engineering-emission-and-harness-qualified-native-unmeasured",
+  "sdk_revision": "55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9",
+  "compiler_provenance": "79a plus published private-access and witness-rank fixes; not a fresh current-main compiler rebuild",
+  "source": {
+    "device/qwen3-tp-prefill-k2-kernels-v1/Cargo.lock": "242427e9c45a14221556e249776f70653c8c475b0ec1d9c98ab04e0510a7b3e8",
+    "device/qwen3-tp-prefill-k2-kernels-v1/Cargo.toml": "dc1809d3b2de9454ffe206a1716381b0e256b96322eb2b032728b56dceb68d1f",
+    "device/qwen3-tp-prefill-k2-kernels-v1/README.md": "0bc64174f1cebae9f453712c6d8f68e12319526f67e05682eba42494d6fe393a",
+    "device/qwen3-tp-prefill-k2-kernels-v1/build.rs": "877738a864edbf849c7e4ba6c092ca9fcc4451a93e0569b8cff8eb1075cbf11e",
+    "device/qwen3-tp-prefill-k2-kernels-v1/build/target_contract.rs": "d48a07c5e96b4908aedcd332fb470e00812fbeb51ca299fd655d6629a0e0b3ad",
+    "device/qwen3-tp-prefill-k2-kernels-v1/src/lib.rs": "739dc903843557a220643802b8219bd0ace4b33bc78f561452e8c0fd0a92ac58",
+    "device/qwen3-tp-prefill-k2-kernels-v1/src/projection.rs": "621b536a073a4860eb6ce8f33499c5669cce0527afad5a744494ef2c747f0928",
+    "device/qwen3-tp-prefill-k2-kernels-v1/tests/fixtures/control.rs.txt": "7ff47dfa14a2dc1916b71081382d65b2e4b91d119071f4db304a4a751cecd5a6",
+    "device/qwen3-tp-prefill-k2-kernels-v1/tests/fixtures/paired.rs.txt": "06bbdb5ba89e6b2e01ffbc04ad4b9726a96ba2df72ea3f439efef331c4ce54ff",
+    "device/qwen3-tp-prefill-k2-kernels-v1/tests/source_contract.rs": "e12bb94a91bbe2ea6457b1bfaba0b1eb23891b1fbaf0a1723240be81d770d0fc"
+  },
+  "evidence_sha256": {
+    "observation.json": "ce03702de1223650f225b1f08e0f134b5228b493f4554319535c800c11d1f71d",
+    "capture.json": "8dac8f5b2bb92809e59b243d5ff45d4263ef16c14c56f3fa149250c08dd837e3",
+    "isa/receipt.json": "9fc4badc701db66e429fe7a8e1956a79615aa43837d16f1429ce137c0637dbae",
+    "isa/disassembly.txt": "db6cda662baad7447ebc2ce17359298c5d95c5591c6feca183485d6306238fb1",
+    "isa/metadata.txt": "df2965193fc114b91b4b8012911dcb1996b87c9e960a62398d136ee6799dfbee",
+    "isa/rodata.txt": "31d6574580a91d50bec8b2bdd1b9adc783b2f912adefdb8221c2c187f5703146",
+    "emit/inner.json": "3bfc31a8fbb5db418ab56be90b86d709a0c1f2f3a4417baec7734142dfa10118",
+    "emit/outer.json": "79c0b7e11563019cc3e012a099cc92f6dfa51e0f0bf2bc7e5b6cbc8cb18df8bb",
+    "vendor/inner.json": "113110d93344f0898fcd657abac5f2aae0913c8b5048e31189d1497d66691335",
+    "vendor/outer.json": "1e0df12c7191c4214cdcdf82e10fda16695bff2c64c2e93cd22ef5f0b9166588",
+    "inspect/outer.json": "9cf2ec05c0d1a7a1a8ca0a6ae993b6b8704546dbba22c15bce4b11d7910854ea",
+    "source-frozen.json": "e015e034bafdcc7f268c3b1e81f5936dd5f33ab2534299f3f366f1bf115953a5",
+    "prepare/inner.json": "9a44de6794866a8ed9474da2d138900e029daf3e45e471d07c2e9364e75acae7",
+    "prepare/outer.json": "08c5557a5456cd34aeb40db650a79b1f18b777fe6b104903a5c88f8a6e4a3634",
+    "test-default/inner.json": "b64040f5921aeca865ea0da613f37d14bdf4a5d65e18e7b9cd6f5436b28fb820",
+    "test-default/outer.json": "9bc86aae98357702621d349c307768b9b6950e067e2205d51469deef8982afdb",
+    "test-default/stdout": "b1c95504c4f83b294cf7e78988a678675d9290a0269f3456baaa88c1ae6961ae",
+    "test-enabled/inner.json": "0703186fb7cdd4b36f5244f64edab27741ee1ff6f3191443d2335b8c850140c1",
+    "test-enabled/outer.json": "b7b1a74e2b65d517299c030f14cffd8f7968aa0d05f1229199de7a63259e9f2b",
+    "test-enabled/stdout": "7d393db58ae83cfa11784900d93400e1863bf52a36c766cceb18b84fa7bc1153",
+    "clippy-default/inner.json": "d980aadca4bfc934bf055cd2b36934935f4d3a88166a22343cc2cf74221a250a",
+    "clippy-default/outer.json": "446df25f9b06f1dc7bfdfe914416fdd432634131871e49be474b950951a2f0f1",
+    "clippy-enabled/inner.json": "2fbccbbef23b68df00f5a0ffa454549415fb53fab4619052241ae4eb9cc276b3",
+    "clippy-enabled/outer.json": "1307ae2b2ecbaa8ba4fad56cb54dbe1c79e2de43644d65fe424fc7565db98458",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/Cargo.lock": "242427e9c45a14221556e249776f70653c8c475b0ec1d9c98ab04e0510a7b3e8",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/Cargo.toml": "dc1809d3b2de9454ffe206a1716381b0e256b96322eb2b032728b56dceb68d1f",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/README.md": "0bc64174f1cebae9f453712c6d8f68e12319526f67e05682eba42494d6fe393a",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/build.rs": "877738a864edbf849c7e4ba6c092ca9fcc4451a93e0569b8cff8eb1075cbf11e",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/build/target_contract.rs": "d48a07c5e96b4908aedcd332fb470e00812fbeb51ca299fd655d6629a0e0b3ad",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/src/lib.rs": "739dc903843557a220643802b8219bd0ace4b33bc78f561452e8c0fd0a92ac58",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/src/projection.rs": "621b536a073a4860eb6ce8f33499c5669cce0527afad5a744494ef2c747f0928",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/tests/fixtures/control.rs.txt": "7ff47dfa14a2dc1916b71081382d65b2e4b91d119071f4db304a4a751cecd5a6",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/tests/fixtures/paired.rs.txt": "06bbdb5ba89e6b2e01ffbc04ad4b9726a96ba2df72ea3f439efef331c4ce54ff",
+    "source/device/qwen3-tp-prefill-k2-kernels-v1/tests/source_contract.rs": "e12bb94a91bbe2ea6457b1bfaba0b1eb23891b1fbaf0a1723240be81d770d0fc"
+  },
+  "image": {
+    "sha256": "fdbf5f1999e709b695b2ef4399bfc44920df1a0b85a61c5fe1bbc41e719e5357",
+    "bytes": 23272
+  },
+  "roots": [
+    {
+      "symbol": "ferric_qwen3_prefill_k16_control_bf16_r1",
+      "sgpr": 50,
+      "vgpr": 48,
+      "agpr": 4,
+      "code_bytes": 5536,
+      "inner_k_step": 16,
+      "ushort_loads_per_step": 8,
+      "mfmas_per_step": 1
+    },
+    {
+      "symbol": "ferric_qwen3_prefill_k16_paired_bf16_r1",
+      "sgpr": 52,
+      "vgpr": 68,
+      "agpr": 4,
+      "code_bytes": 6144,
+      "inner_k_step": 32,
+      "ushort_loads_per_step": 16,
+      "mfmas_per_step": 2
+    }
+  ],
+  "abi": {
+    "kernarg_bytes": 328,
+    "kernarg_alignment": 8,
+    "slice_pointer_offsets": [
+      0,
+      16,
+      32
+    ],
+    "slice_length_offsets": [
+      8,
+      24,
+      40
+    ],
+    "scalar_offsets": [
+      48,
+      52,
+      56,
+      60,
+      64
+    ],
+    "implicit_offset": 72,
+    "implicit_bytes": 256,
+    "workgroup": [
+      64,
+      1,
+      1
+    ],
+    "wavefront_size": 64,
+    "group_segment_bytes": 0,
+    "private_segment_bytes": 0,
+    "spills": 0,
+    "dynamic_stack": false
+  },
+  "isa": {
+    "loads_hoisted_before_two_dependent_mfmas": true,
+    "total_ushort_loads_per_lane": 2048,
+    "total_mfmas": 256,
+    "final_bf16_stores": 4,
+    "rounding": "round-to-nearest-even, unchanged ascending accumulation order",
+    "widened_loads": false,
+    "b_register_sharing": false,
+    "cross_iteration_pipeline": false,
+    "less_memory_traffic": false
+  },
+  "host_qualification": {
+    "default_tests": 7,
+    "enabled_tests": 8,
+    "strict_all_target_clippy_default": true,
+    "strict_all_target_clippy_enabled": true
+  },
+  "harness_qualification": {
+    "tests": 76,
+    "source_archive_sha256": "9ca2e1a2751d3fb8b1df714b877b2af41601b93624bed1f967c03d4027929c76",
+    "helper_sha256": "fc59d4a8a053267628c696e8ffe84fdad7cbfb553c9093f50cbc12b7f7ba98fa",
+    "inner_sha256": "fcc20c9adf6a92e54655a1bfcb5b8a49d980757f5b2d3569391b278321776cf2",
+    "outer_sha256": "64af4b32e116902dd4e80ddd5f42dca198f89005f63fbe3c9fa7ad7b7de218f0",
+    "clean_unsignaled": true,
+    "source_before_equals_after": true,
+    "first_attempt": "75 of76 pass; stale negative expected compiler-match True refusal; corrected to False in fresh a002 namespace"
+  },
+  "native_executed": false,
+  "model_performance_qualified": false,
+  "ttft_improvement_pct": null,
+  "tpot_improvement_pct": null,
+  "scope": "Separate default-off two-root Ferric experiment. Does not qualify full15-root V5 K2, publish/load/launch proof authority, or establish performance."
+}

@@ -1,0 +1,257 @@
+{
+  "schema": "FerricV16NativeObservationV1",
+  "change_id": "v16-native-boundary-fences",
+  "status": "inconclusive",
+  "default_promotion": false,
+  "ordered64_promotion": false,
+  "matched_vendor_comparison": false,
+  "model": "Qwen3-8B",
+  "host": "mi350",
+  "tensor_parallel": 1,
+  "concurrency": 1,
+  "input_tokens": 128,
+  "output_tokens": 128,
+  "context": 8192,
+  "precision": "BF16 decoder with explicit FP32 output head",
+  "prefix_caching": false,
+  "speculation": false,
+  "primary_scope": "Fence placement within native backend only; ordinary prefill and unchanged images; native ingress, not HTTP or sustained throughput",
+  "plan_sha256": "c7c06fa0478ea64c3c37508f2983b9ffef3276621ab19bb657503da2a68971b3",
+  "report": {
+    "path": "fence-v16-native-a001-report.json",
+    "sha256": "9b9993cd7b54880590a560f31d4a1e64079e041627d535574d39ca3de3432424"
+  },
+  "archive": {
+    "sha256": "e4dc8fcac13b00316b77ebf488d46dad328856fe5c393cae92f00e65302cdaaa",
+    "bytes": 70072638,
+    "entries": 2808,
+    "local_custody": "verified"
+  },
+  "worker_revision": "dcf345452a3368399ae65d4b3bcbedb6a2a1b0b0",
+  "cells": 14,
+  "measured_per_arm": 24,
+  "warmups_per_latency_cell": 2,
+  "exact_output_tokens": 9472,
+  "all_outer_receipts_clean_reaped_unsignaled": true,
+  "guarded_native_raw_replay_status": 0,
+  "independent_review": {
+    "schema": "FerricV16IndependentReportReviewV1",
+    "status": "independently-raw-recomputed",
+    "report": {
+      "path": "/home/harsh/.codex-tmp/ferric-perf-swarm-v6/products/perf-v14-20261005/fence-v16-campaign-report-a001.json",
+      "sha256": "9b9993cd7b54880590a560f31d4a1e64079e041627d535574d39ca3de3432424"
+    },
+    "arms": {
+      "A": {
+        "finite_output_tokens_per_second": 16.510235078055786,
+        "requests": 24,
+        "tpot_ms": {
+          "mean": 53.91254870833333,
+          "median": 53.734052000000005,
+          "p95": 55.4347285
+        },
+        "ttft_ms": {
+          "mean": 905.580110125,
+          "median": 877.4979934999999,
+          "p95": 1117.1362555999995
+        }
+      },
+      "B": {
+        "finite_output_tokens_per_second": 16.715454744765182,
+        "requests": 24,
+        "tpot_ms": {
+          "mean": 53.272406125,
+          "median": 53.159462500000004,
+          "p95": 55.25990169999999
+        },
+        "ttft_ms": {
+          "mean": 891.67236975,
+          "median": 871.94903,
+          "p95": 983.2379880999998
+        }
+      }
+    },
+    "checks": {
+      "faster_adjacent_pairs": true,
+      "median_tpot_gain": false,
+      "positive_both_orders": true,
+      "regression_limits": true
+    },
+    "median_tpot_gain_percent": 1.069320995930112,
+    "median_ttft_gain_percent": 0.6323619587854767,
+    "positive_adjacent_pairs": 5,
+    "orders": {
+      "AB": 1.6671976306130598,
+      "BA": 0.3660671752257816
+    },
+    "cpu_latency_cells_only": {
+      "A": {
+        "controller_seconds": 4.33,
+        "worker_seconds": 15.47,
+        "output_tokens": 4608,
+        "total_cpu_ms_per_output_token": 4.296875
+      },
+      "B": {
+        "controller_seconds": 3.6599999999999997,
+        "worker_seconds": 13.86,
+        "output_tokens": 4608,
+        "total_cpu_ms_per_output_token": 3.8020833333333335
+      }
+    },
+    "cpu_ms_per_output_token_reduction_percent": 11.515151515151512,
+    "cpu_scope": "All 36 latency-cell requests per arm, including excluded warmups and prefill; excludes two diagnostic counter cells and setup/teardown; not GPU time",
+    "gate_status": "inconclusive; fails preregistered minimum 5 percent median TPOT gain",
+    "default_promotion": false,
+    "matched_vendor_comparison": false,
+    "raw_independent_replay_performed": false,
+    "archive_custody": "complete; SHA-256 independently matched",
+    "local_tests_executed": false,
+    "archive": {
+      "path": "/home/harsh/.codex-tmp/ferric-perf-swarm-v6/products/perf-v14-20261005/fence-v16-native-complete-a001.tar.gz",
+      "sha256": "e4dc8fcac13b00316b77ebf488d46dad328856fe5c393cae92f00e65302cdaaa",
+      "bytes": 70072638
+    },
+    "raw_independent_arithmetic_and_token_parity": true,
+    "raw_scope": "Streamed exact named archive JSONL/JSON members; recomputed ingress token timestamps, exact streamed/final token IDs and UTF8, per-cell totals/close/cleanup and all report mean/median/p95/rate/adjacent-pair arithmetic. Not a rerun of host/path-dependent campaign admission.",
+    "exact_output_tokens_checked": 9472,
+    "recomputed_arms": {
+      "A": {
+        "requests": 24,
+        "finite_output_tokens_per_second": 16.510235078055786,
+        "ttft_ms": {
+          "mean": 905.5801101249999,
+          "median": 877.4979934999999,
+          "p95": 1117.1362555999995
+        },
+        "tpot_ms": {
+          "mean": 53.912548708333325,
+          "median": 53.734052000000005,
+          "p95": 55.4347285
+        }
+      },
+      "B": {
+        "requests": 24,
+        "finite_output_tokens_per_second": 16.715454744765182,
+        "ttft_ms": {
+          "mean": 891.6723697499998,
+          "median": 871.94903,
+          "p95": 983.2379880999998
+        },
+        "tpot_ms": {
+          "mean": 53.272406125,
+          "median": 53.159462500000004,
+          "p95": 55.25990169999999
+        }
+      }
+    },
+    "recomputed_pairs": [
+      {
+        "cells": [
+          "block1-A1",
+          "block1-B1"
+        ],
+        "order": "AB",
+        "tpot_gain_percent": 0.31265787771549425
+      },
+      {
+        "cells": [
+          "block1-B2",
+          "block1-A2"
+        ],
+        "order": "BA",
+        "tpot_gain_percent": -0.9117054038088934
+      },
+      {
+        "cells": [
+          "block2-A1",
+          "block2-B1"
+        ],
+        "order": "AB",
+        "tpot_gain_percent": 1.6671976306130598
+      },
+      {
+        "cells": [
+          "block2-B2",
+          "block2-A2"
+        ],
+        "order": "BA",
+        "tpot_gain_percent": 0.3660671752257816
+      },
+      {
+        "cells": [
+          "block3-A1",
+          "block3-B1"
+        ],
+        "order": "AB",
+        "tpot_gain_percent": 3.786188973612814
+      },
+      {
+        "cells": [
+          "block3-B2",
+          "block3-A2"
+        ],
+        "order": "BA",
+        "tpot_gain_percent": 1.6800964529032236
+      }
+    ],
+    "outer_receipts_clean": true,
+    "counter_snapshots": [
+      {
+        "schema": "FerricTokenProgramCountersV1",
+        "phase": "worker_start",
+        "backend": "native-boundary-fences-v1",
+        "counters": {
+          "dispatches": 0,
+          "executions": 0,
+          "final_waits": 0,
+          "kernarg_initialized_bytes": 0,
+          "publications": 0,
+          "retirement_signals": 0,
+          "staging_ns": 0
+        }
+      },
+      {
+        "schema": "FerricTokenProgramCountersV1",
+        "phase": "before_close",
+        "backend": "native-boundary-fences-v1",
+        "counters": {
+          "dispatches": 82804,
+          "executions": 127,
+          "final_waits": 127,
+          "kernarg_initialized_bytes": 27815032,
+          "publications": 127,
+          "retirement_signals": 82804,
+          "staging_ns": 1809900
+        }
+      },
+      {
+        "schema": "FerricTokenProgramCountersV1",
+        "phase": "worker_start",
+        "backend": "native-whole-program-v1",
+        "counters": {
+          "dispatches": 0,
+          "executions": 0,
+          "final_waits": 0,
+          "kernarg_initialized_bytes": 0,
+          "publications": 0,
+          "retirement_signals": 0,
+          "staging_ns": 0
+        }
+      },
+      {
+        "schema": "FerricTokenProgramCountersV1",
+        "phase": "before_close",
+        "backend": "native-whole-program-v1",
+        "counters": {
+          "dispatches": 82804,
+          "executions": 127,
+          "final_waits": 127,
+          "kernarg_initialized_bytes": 27815032,
+          "publications": 127,
+          "retirement_signals": 82804,
+          "staging_ns": 1810791
+        }
+      }
+    ]
+  }
+}

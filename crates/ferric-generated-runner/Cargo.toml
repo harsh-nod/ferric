@@ -1,0 +1,17 @@
+[package]
+name = "ferric-generated-runner"
+description = "Checked-in inert Qwen3 gfx942 runner declarations for Ferric"
+edition.workspace = true
+rust-version.workspace = true
+version.workspace = true
+publish = false
+
+[dependencies]
+ferric-spec = { path = "../ferric-spec" }
+vstd.workspace = true
+
+[package.metadata.verus]
+verify = true
+
+[lints]
+workspace = true

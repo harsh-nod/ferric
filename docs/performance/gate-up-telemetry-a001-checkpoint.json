@@ -1,0 +1,37 @@
+{
+  "schema": "FerricGateUpTelemetryCheckpointR1",
+  "date": "2026-10-06",
+  "scope": "Read-only sysfs diagnostics; no model execution or performance qualification",
+  "helper_sha256": "4f09cf0c1186cfa3fd6d504ec6f83b17d984e3f5fb933bd647c4f9982aea3d75",
+  "tests_sha256": "6485e9aaaf16257166a22962d3fcb7bfc2daff647684561f7f6a66e4b6cf9242",
+  "cpu_validation": {
+    "host": "mi300x-2",
+    "profile": "FerricCpuFourCore42GiBEmitterV1",
+    "tests_passed": 20,
+    "test_seconds": 0.058,
+    "status": 0,
+    "reaped_clean_unsignaled": true,
+    "result_sha256": "bca4680aebf74c8eb2aee19e0ec4523f37610b1950042ec99a1c4ab21439cf5f",
+    "stderr_sha256": "7a855abc5899db8af6df991e1a2323006ed345fd1924dea8f3c93956d91ac7a1"
+  },
+  "real_sysfs_smoke": {
+    "host": "mi350",
+    "pci": "0000:05:00.0",
+    "unique_id": "e3233d81d822f3eb",
+    "samples": 8,
+    "bytes": 14984,
+    "samples_sha256": "a5fa6f8268c96c4d27f59a58e660b4a0c8386daf5999fee09478045b85568842",
+    "sample_elapsed_ms": [1.571461, 3.070292, 3.791153, 3.390482, 3.615712, 3.400542, 4.426943, 4.451493],
+    "median_sample_elapsed_ms": 3.508127,
+    "gpu_devices_opened": false,
+    "gpu_settings_changed": false,
+    "power1_average": "unavailable, not zero",
+    "interpretation": "Idle smoke capture only. It cannot explain earlier benchmark behavior or establish measurement overhead during active inference."
+  },
+  "limitations": [
+    "Non-atomic raw sysfs readings, not per-kernel GPU time or decoded throttle state",
+    "Internal read deadlines need an external timeout for blocking OS calls",
+    "Inter-sample sleep is added after sample completion, not a fixed-rate schedule",
+    "Future instrumented runs must remain diagnostic and separate from a004 and vendor qualification"
+  ]
+}

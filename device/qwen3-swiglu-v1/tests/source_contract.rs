@@ -1,7 +1,7 @@
 use quote::ToTokens as _;
 use syn::{FnArg, Item, ItemFn, Meta, Type};
 
-const SOURCE: &str = include_str!("../src/lib.rs");
+const SOURCE: &str = include_str!("../../qwen3-all-kernels-v1/src/swiglu.rs");
 
 fn kernel() -> ItemFn {
     let kernels: Vec<_> = syn::parse_file(SOURCE)
@@ -269,6 +269,9 @@ fn kernel_uses_eight_constant_blocked_stores() {
     assert!(body.contains("workitem.checked_block::<1,8>()"));
     for component in 0..8 {
         let index = format!("index_{component}");
+        assert!(body.contains(&format!(
+            "letSome({index})=output_block.component_index({component})else"
+        )));
         assert!(body.contains(&format!("if{index}<elements")));
         assert!(body.contains(&format!(
             "qwen3_swiglu_element_v1!(gate[{index}],up[{index}])"
@@ -277,9 +280,12 @@ fn kernel_uses_eight_constant_blocked_stores() {
             "output.write_block(&output_block,{component},value)"
         )));
     }
+    assert!(!body.contains("workitem.get()"));
+    assert!(!body.contains("base+"));
+    assert_eq!(body.matches("output_block.component_index(").count(), 8);
     assert_eq!(body.matches("qwen3_swiglu_element_v1!(").count(), 8);
     assert_eq!(body.matches("output.write_block(").count(), 8);
-    assert_eq!(body.matches("fe2o3_device::trap()").count(), 10);
+    assert_eq!(body.matches("fe2o3_device::trap()").count(), 18);
     for forbidden in [
         "while",
         "loop",

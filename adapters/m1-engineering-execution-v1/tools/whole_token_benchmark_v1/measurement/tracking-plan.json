@@ -1,0 +1,50 @@
+{
+  "schema": "FerricImplementationTrackingPlanV1",
+  "change_id": "v14-native-whole-token-r1",
+  "status": "implementation-pending-native-qualification",
+  "ownership": {
+    "compiler_and_kfd_runtime": "fe2o3",
+    "model_kernels_inference_and_measurement": "ferric"
+  },
+  "experiment": "Explicit ordered64-groups-v1 versus native-whole-program-v1, same 652-dispatch/180-update TP1 decode graph",
+  "workload": {
+    "model": "Qwen3-8B",
+    "tensor_parallel": 1,
+    "concurrency": 1,
+    "input_tokens": 128,
+    "output_tokens": 128,
+    "context_tokens": 8192,
+    "decoder_precision": "BF16",
+    "output_head_precision": "FP32",
+    "greedy": true,
+    "prefix_caching": false,
+    "speculation": false
+  },
+  "stages": [
+    "remote CPU tests and exact source/binary/input custody",
+    "separate one-request correctness and decode-counter cells for both backends",
+    "three uninstrumented ABBA blocks with two warmups and four measured requests per cell",
+    "fresh matched vLLM comparison only after repeatable Ferric gain"
+  ],
+  "promotion_gates": {
+    "median_tpot_gain_percent_minimum": 5,
+    "faster_adjacent_pairs_minimum": 5,
+    "adjacent_pairs": 6,
+    "positive_median_gain_in_both_orders": true,
+    "maximum_ttft_median_regression_percent": 5,
+    "maximum_ttft_p95_regression_percent": 5,
+    "maximum_tpot_p95_regression_percent": 5,
+    "maximum_finite_output_rate_regression_percent": 5,
+    "all_output_ids_and_bytes_exact": true,
+    "all_dispatch_and_completion_counts_exact": true,
+    "all_failures_retained": true
+  },
+  "expected_mechanism_per_decode_token": {
+    "A": {"dispatches": 652, "publications": 11, "final_waits": 11, "retired_signals": 652},
+    "B": {"dispatches": 652, "publications": 1, "final_waits": 1, "retired_signals": 652}
+  },
+  "launch_plan_ready": false,
+  "native_validation_performed": false,
+  "performance_delta_available": false,
+  "caveat": "This source-progress record is not the immutable, fully bound FerricChangePlanV1 required before measured launches. No speedup is inferred from source, CPU tests, counter expectations or historical profiles."
+}

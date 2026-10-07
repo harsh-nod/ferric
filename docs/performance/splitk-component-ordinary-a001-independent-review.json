@@ -1,0 +1,55 @@
+{
+  "archive_sha256": "8a981ad022b3c865f5e0c692ac82117cc1c87d8a05b758573b7bbf8c4cde8cc5",
+  "bound_member_hashes": {
+    "outputs/component/completion.json": "e76170d3f3bd3135116364b412aada4b2e0642842283e75294a69838c91add03",
+    "outputs/component/component-results/protocol.jsonl": "60b44486c016ae424d1a933b572075f92d904dbd63f9d90f050aceae34bbd59c",
+    "outputs/component/component-results/result.json": "f9aee9a12d52c1c64ddf54fe079432046defbdac1e8472bef126abed3fa1ba9c",
+    "outputs/component/component-results/samples.jsonl": "fa506343708f0d39a1bf178cd04feabf447e8a356bce90e88b7f484254e3959d",
+    "outputs/component/launch-supervisor.json": "72e7d57bde8fb9cb44a386e0634035207580ee9c22271347fd04b0df517ae0fa",
+    "outputs/component/process-endpoints.json": "7f5da2442833d0c984e21b35f457e7420eca2264a84089b07b9ce771c263ceda",
+    "plan.json": "f4f51dbdbdb36be3991e53e02422bde2cf05fd1fcec85314114c7422a22524e6"
+  },
+  "command_response_pairs": 334,
+  "dispatches": 44,
+  "gpu_duration_proven": false,
+  "input_and_guard_parity": true,
+  "medians": [
+    {
+      "arm": "wave",
+      "comparison": "wave",
+      "host_dispatch_ms": 6.996234,
+      "samples": 6,
+      "summed_worker_elapsed_ms": 5.1468535
+    },
+    {
+      "arm": "splitk",
+      "comparison": "wave",
+      "host_dispatch_ms": 14.0103085,
+      "samples": 6,
+      "summed_worker_elapsed_ms": 10.315522
+    },
+    {
+      "arm": "mfma",
+      "comparison": "mfma",
+      "host_dispatch_ms": 7.054594,
+      "samples": 6,
+      "summed_worker_elapsed_ms": 5.166548
+    },
+    {
+      "arm": "splitk",
+      "comparison": "mfma",
+      "host_dispatch_ms": 14.0288685,
+      "samples": 6,
+      "summed_worker_elapsed_ms": 10.3209865
+    }
+  ],
+  "outer_clean_reaped_unsignaled": true,
+  "performance_configuration_sent": false,
+  "reference_output_sha256": "5eaddb8dfb119e60737997b63937d4fe2edfd4cbca08bcf2ed1b70d1b47390a8",
+  "reference_partials_sha256": "c0d41b5c6d9f4a284383ff3f1c896d4250455a4365d5bfb3ebf196c83e58ba67",
+  "schema": "FerricComponentIndependentRawAuditV1",
+  "scope": "Hot reused rows1/N4096/K12288/projection2 dyadic fixture; synchronous ordinary host dispatch only. Worker elapsed includes host work; split-K includes two sequential calls. No GPU-kernel ranking, full-model correctness, TTFT/TPOT, or speedup claim.",
+  "timed_samples": 24,
+  "verified_samples": 30,
+  "warmup_samples": 6
+}

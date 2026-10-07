@@ -1,0 +1,86 @@
+{
+  "accepted": true,
+  "archive_files": 590,
+  "archive_sha256": "3e3659cfaa0194042f2fab40a2694d96edb6831c6a749b4f4647b1c5a6453da3",
+  "bound_inputs": 280,
+  "cells": 16,
+  "dispatch_packets": 32,
+  "host_scope": "encoding, trace, process checks, and synchronous IPC; not GPU-only",
+  "model_streaming_bandwidth_claim": false,
+  "model_ttft_or_tpot_claim": false,
+  "native_default_promotion": false,
+  "output_sha256": "5eaddb8dfb119e60737997b63937d4fe2edfd4cbca08bcf2ed1b70d1b47390a8",
+  "partials_sha256": "c0d41b5c6d9f4a284383ff3f1c896d4250455a4365d5bfb3ebf196c83e58ba67",
+  "plan_sha256": "60d4385ee41e0284ddb385b4a12dce869671ff3ee492e32833a86c1967c65464",
+  "qualified_fixtures": 80,
+  "receipt_sha256": "86efe889193fbb769d0289a18c955f78fbe2cc214434122b21db2fff166f5023",
+  "schema": "FerricPairedOrderedIndependentAuditV1",
+  "scope": "hot reused-buffer component; ordinary ordered64 complete partial plus merge",
+  "source_files": 27,
+  "timed_cells": 12,
+  "timing": {
+    "host_dispatch_wall_ns": {
+      "adjacent_pair_reduction_percent": [
+        -0.5052935514918191,
+        0.8015984333236298,
+        -0.616212855172707,
+        7.384027031982607,
+        -1.1474841257136759,
+        0.5329387613639394
+      ],
+      "aggregate_median_reduction_percent": 0.0865027727465695,
+      "median_pair_reduction_percent": 0.013822604936060134,
+      "paired_median_ns": 375385.5,
+      "paired_samples_ns": [
+        375930,
+        374841,
+        378650,
+        353580,
+        379121,
+        373091
+      ],
+      "positive_pairs": 3,
+      "unpaired_median_ns": 375710.5,
+      "unpaired_samples_ns": [
+        374040,
+        377870,
+        376331,
+        381770,
+        374820,
+        375090
+      ]
+    },
+    "ordered_worker_elapsed_ns": {
+      "adjacent_pair_reduction_percent": [
+        0.6772877703378742,
+        0.797012166949022,
+        -0.9185339128614134,
+        10.338131140050264,
+        0.08863944261660538,
+        -0.050562016257632916
+      ],
+      "aggregate_median_reduction_percent": 0.44781593220993304,
+      "median_pair_reduction_percent": 0.3829636064772398,
+      "paired_median_ns": 257875.0,
+      "paired_samples_ns": [
+        258100,
+        257650,
+        260280,
+        235470,
+        258121,
+        257240
+      ],
+      "positive_pairs": 4,
+      "unpaired_median_ns": 259035.0,
+      "unpaired_samples_ns": [
+        259860,
+        259720,
+        257911,
+        262620,
+        258350,
+        257110
+      ]
+    }
+  },
+  "worker_scope": "queue publication, wait, and exit fence; excludes preparation/staging; not shader-only"
+}

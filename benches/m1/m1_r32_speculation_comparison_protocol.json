@@ -1,0 +1,15 @@
+{
+  "authority": "ferric-m1-r32-speculation-comparison-protocol-only",
+  "format": "FERRIC-M1-R32-SPECULATION-COMPARISON-PROTOCOL-V1",
+  "nonclaim": "This record authenticates an externally frozen eligible holdout, low-acceptance deterministic-plan cell, exact paired sample roster, Ferric speculative and target-only identities, and raw counters. It recomputes integer throughput, exact rational medians, the 1.10 eligible throughput gate, 1.05 eligible p99-latency ceiling, and 0.95 low-acceptance throughput floor. It does not validate external eligibility, holdout selection, plan admission, source or artifact correctness, collector behavior, observation truth, hardware behavior, numerical correctness, independent reproduction, or qualification; it is partial non-evidence and does not close m1.r32 or M1.",
+  "obligation_id": "m1.r32",
+  "schema": {
+    "arithmetic": "Each engine rate is floor(total_tokens*1000000000/duration_ns); even medians and mean accepted tokens per speculative target invocation are exact reduced rationals. The eligible cell must accept at least one token, have speculative/target-only throughput at least 1100000 ppm, and have p99 latency at most 1050000 ppm. The low-acceptance cell must have throughput at least 950000 ppm.",
+    "bindings": "The pre-observation policy freezes exact Ferric and fe2o3 source closures, model and artifact plan identities, speculative and target-only source, implementation, artifact, config, and protocol identities, exact workload and holdout members, the low-acceptance deterministic admitted plan, and a unique SHA-256 pairing identity for every row.",
+    "order": "Exactly two cells appear in eligible-speculation then low-acceptance order. Each has ten ordered warmup pairs then thirty ordered recorded pairs. Every row contains both engines, the exact alternating engine order, its predeclared pairing identity, passed status, no faults, and raw positive counters.",
+    "output": "The checker rejects submitted summaries, recomputes all medians and gates, carries the raw rows, and publishes one descriptor-held record without replacement before final pathname and byte revalidation.",
+    "thresholds": "The release-policy constants 1100000, 1050000, and 950000 ppm are checker-owned and must be repeated exactly in the external policy. Equality passes."
+  },
+  "status": "PARTIAL_NON_EVIDENCE",
+  "target": "gfx942:xnack-"
+}

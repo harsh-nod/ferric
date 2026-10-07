@@ -1,0 +1,2703 @@
+{
+  "custody": {
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/abi-images.json": "dd2a5b227bed9be626f8ed9c0bd0c2d16ede2fb075a2a4b37d518e04a882cd90",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v11/fe2o3-engineering-v1/7744a526d899fbf38302c83638903e0fcd66982bc03be5dc92996ab451f3227a/observation.hsaco": "de9db78c0ef7ad5d84fc903d41ee9db59026113d79e23f12d3909761363b9390",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v11/fe2o3-engineering-v1/7744a526d899fbf38302c83638903e0fcd66982bc03be5dc92996ab451f3227a/observation.json": "7f9c0ab622d19721c71ff69197121b6af677fd85d07939bada4c148955cca0e8",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v14/fe2o3-engineering-v1/2c1332e73f150935046c803f446716b5f73f7dd33e80145cc6404c509004779a/observation.hsaco": "8f21681fe9103b670ee5666f429a45682e77fc90eb16802a02c4b6fb93a192c8",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v14/fe2o3-engineering-v1/2c1332e73f150935046c803f446716b5f73f7dd33e80145cc6404c509004779a/observation.json": "eb058fceb9519c4e9f9fb9d347263dcb80e957c1accd87122c4e139a9e571752",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v15/fe2o3-engineering-v1/322c87ef9bdbf6d4e45f31b5d389e7664db8beadcb9c3f85dbe2a4758aaa87e9/observation.hsaco": "68607fc1d12eb6151dd55e7b53dcb88b00d484cfa0c087c002666b224093b45c",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v15/fe2o3-engineering-v1/322c87ef9bdbf6d4e45f31b5d389e7664db8beadcb9c3f85dbe2a4758aaa87e9/observation.json": "6698058977ce1634dcf1408861779c09f8538edf95d0fcd4dc74753d71a19c8c",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v20/fe2o3-engineering-v1/57eff949c3ff65368c11128df8c6c75ff75df80eb83d924142cd007ae34b5f0a/observation.hsaco": "b8ddfbba99a3c5b37937174e7b3fd8a16432605c30ab1bf914a0d66fd476d495",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v20/fe2o3-engineering-v1/57eff949c3ff65368c11128df8c6c75ff75df80eb83d924142cd007ae34b5f0a/observation.json": "290feecf21d60d87bfba888d1635a8f0cda1dbaf3663d440df8be1101f623f09",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v21/fe2o3-engineering-v1/96d7621d021c031e7f24050d32dc7e0168ebf3d529b46cba29dca3024c73a7ad/observation.hsaco": "45c91170c4e83178f3f3f849daffb0b0e1e302ec2c3d4f1178df1a48a9ccc069",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v21/fe2o3-engineering-v1/96d7621d021c031e7f24050d32dc7e0168ebf3d529b46cba29dca3024c73a7ad/observation.json": "514a7d8a7db5227a4ed437b70fb549bd325a3c55fe907f48cb705737ae4f7d17",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v27/fe2o3-engineering-v1/878ad9d837b9f8485ecd2139d75c2e8d54ae83351f34b5cde6a4c3f36357be94/observation.hsaco": "5aebe1c2f6456b1ef48c4dba17e3ed1e1355aa593cff7d7755c787a71b7e9075",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v27/fe2o3-engineering-v1/878ad9d837b9f8485ecd2139d75c2e8d54ae83351f34b5cde6a4c3f36357be94/observation.json": "cf97c13e9558469d870af1b264539b22e0db417cea5fd340a135251bcebe1590",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v5/fe2o3-engineering-v1/13a145352770d4cf1b0b6445fc1349f7002822b576c7965089a5c4b0ec82938b/observation.hsaco": "98b5fdb14ac7242e324e1801e1885c98e77473d622b2e9b3f9f12f14c7d75502",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v5/fe2o3-engineering-v1/13a145352770d4cf1b0b6445fc1349f7002822b576c7965089a5c4b0ec82938b/observation.json": "c559d0533907323aff7dda03215adab6326423c3f151b296e22394c9baf37d00",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v8/fe2o3-engineering-v1/bffbfd1c03bca3640075fa2e1d202c6e7fd95198bd7d4c90988df4c2f37e8fa2/observation.hsaco": "5f19b3ba59035a5f0ebc90cdf3a40466f9910908a45e082d146cb674028da6cb",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v8/fe2o3-engineering-v1/bffbfd1c03bca3640075fa2e1d202c6e7fd95198bd7d4c90988df4c2f37e8fa2/observation.json": "19f4d8ec936d119214748445563b2b1f5955e04f4424503a0361c4bb6e2495d3",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-inputs/v19/fe2o3-engineering-v1/0f1dc95268aca76a3aeaf69eda200875d317b5d4dbf26af7f9dcf96a4a9f581a/observation.hsaco": "951619f87213020aaf0eebf794a37ef523400fac1f23ce9fd90e1b78d4b3e1da",
+    "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-inputs/v19/fe2o3-engineering-v1/0f1dc95268aca76a3aeaf69eda200875d317b5d4dbf26af7f9dcf96a4a9f581a/observation.json": "36fcfee3a886fb79719351708c38c0ae9af9617d5b9d723aca103242f825456c",
+    "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.hsaco": "d28610d291eeec0589afbf269e26d21b7111c96f08106e1f661d6a66f024bf03",
+    "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.json": "a7417322dafe8e0af927a6457f0dea2c324e94ec2692329f7d76a215ed3273bb",
+    "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-candidate/graph.json": "81089c41901ba372220ccde0c6402f4b299be8be994df3e4db7b2d45bd5826b1",
+    "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-control/graph.json": "3df9f1a8e4db8f618e2f6c65c5868ea72b6d91605d2ea899d1ab70fc94075057",
+    "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-full-counters/build.stderr": "cc3777e2951e8ef67e140fa9be6f6dd3eaa1e60284abe61fd9e9caad0c68538d",
+    "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-full-counters/build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-image/roster.json": "54f6c32544669ad4407643e12eb6c22efc0a24967f20ea2d695e24f46488e379",
+    "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a006/image-custody.json": "a4fc897479b23e6b2f4397d95ed56a24babd4cdc60aa147032e388fa2d45066a",
+    "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/model-source-a009.json": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119",
+    "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/model-source-a009.tar.gz": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+    "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/runtime-da6b-projected-a001.json": "7556969848bba4bfb13e14bc1b2d56882dbd46e48e3f95adc381cbf675890c8a",
+    "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/runtime-da6b-projected-a001.tar.gz": "f44d31f140938f918f159f47fb6c81975063c34526221029a4bc1ff10c72a462",
+    "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh": "cc797b77ac431b613658d136df2bba173cffb7ffd786634c6701767456264c9c",
+    "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu_guard_42g_emitter.py": "4cff431e7d81a014b89cd391c5c89b40260b35d8d8a13fb667d11db2f560a55c",
+    "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu_profile_42g.py": "517671a75602c92beb7f3d43a5584be10a4284d15f68033e616a9462ff7fa224",
+    "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/source/Cargo.lock": "b605fb665bbd9b6ba266c0b6f74f4b9cab50bd1845e136dc6ac6cb6b2dadd252",
+    "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_m1_engineering_execution_v1-15580f19085c98cf": "5e52ef57f75b43323339949bb5074b6ba07f0067a06c321f4a98472515b41d23",
+    "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_counters-177781e340fee626": "00c400d01e97c57556d6714e75740cdf27ac70c588171eac3227e10c3592e2c7",
+    "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4": "439996fc9ce9060d9631995c1a1a4f1e8374a68a50195ad8a071bf6de38b8cab",
+    "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/source_policy-9a234a61e41f5071": "f92e8ae2b7a4fab63cefbc6fd7adb36969884b2d8e5801b474fb3f916928260f",
+    "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/release/fe2o3-gfx950-engineering-worker": "74d764e8797ba0413e38b762765d07faf74aa6a0af5daf60c0a1a56adc64f20a",
+    "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/release/ferric-qwen3-prefill-width-native-counters": "fa2049edf8daed70ba268be1b6799f5a4ba42e106e27025f776509876f371231",
+    "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/release/ferric-qwen3-prefill-width-native-live": "60bf47551d1ebdfc91f49b529dab8211e3f860a07bdd05921e642b72d505e9a4"
+  },
+  "native_qualified": false,
+  "phases": {
+    "actual-abi-candidate": {
+      "files": {
+        "helper": {
+          "bytes": 12811,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+          "sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64"
+        },
+        "inner": {
+          "bytes": 7551,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-abi-candidate/receipt.json",
+          "sha256": "2eef41503930b0b11400fffd3c6131af2f2a23c4bb432143e216281bd2da2d2b"
+        },
+        "result": {
+          "bytes": 2704,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-abi-candidate-a009/result.json",
+          "sha256": "d6fc243c43d4717a305601fa2e1b5240e3cf70ebd0f6f5f8a008b08e3ba1371e"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-abi-candidate/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 1824,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-abi-candidate/stdout",
+          "sha256": "e8e8c621314974ef98a7c3a1a7b00b70cc35acb36ef8cf4073b006e780bce2fc"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-abi-candidate-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-abi-candidate-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 7355,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-abi-candidate-a009/stdout",
+          "sha256": "fe462b1b9368f3e623419814abb4a739ad0eb63cf5452e603cc7d7a2ca221cd4"
+        }
+      },
+      "group": "actual",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "actual_images_pack_gate_up_native724_and_reuse180_slots",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "build_executed": false,
+        "helper_sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64",
+        "inputs": {
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/abi-images.json": "dd2a5b227bed9be626f8ed9c0bd0c2d16ede2fb075a2a4b37d518e04a882cd90",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v11/fe2o3-engineering-v1/7744a526d899fbf38302c83638903e0fcd66982bc03be5dc92996ab451f3227a/observation.hsaco": "de9db78c0ef7ad5d84fc903d41ee9db59026113d79e23f12d3909761363b9390",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v11/fe2o3-engineering-v1/7744a526d899fbf38302c83638903e0fcd66982bc03be5dc92996ab451f3227a/observation.json": "7f9c0ab622d19721c71ff69197121b6af677fd85d07939bada4c148955cca0e8",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v14/fe2o3-engineering-v1/2c1332e73f150935046c803f446716b5f73f7dd33e80145cc6404c509004779a/observation.hsaco": "8f21681fe9103b670ee5666f429a45682e77fc90eb16802a02c4b6fb93a192c8",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v14/fe2o3-engineering-v1/2c1332e73f150935046c803f446716b5f73f7dd33e80145cc6404c509004779a/observation.json": "eb058fceb9519c4e9f9fb9d347263dcb80e957c1accd87122c4e139a9e571752",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v15/fe2o3-engineering-v1/322c87ef9bdbf6d4e45f31b5d389e7664db8beadcb9c3f85dbe2a4758aaa87e9/observation.hsaco": "68607fc1d12eb6151dd55e7b53dcb88b00d484cfa0c087c002666b224093b45c",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v15/fe2o3-engineering-v1/322c87ef9bdbf6d4e45f31b5d389e7664db8beadcb9c3f85dbe2a4758aaa87e9/observation.json": "6698058977ce1634dcf1408861779c09f8538edf95d0fcd4dc74753d71a19c8c",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v20/fe2o3-engineering-v1/57eff949c3ff65368c11128df8c6c75ff75df80eb83d924142cd007ae34b5f0a/observation.hsaco": "b8ddfbba99a3c5b37937174e7b3fd8a16432605c30ab1bf914a0d66fd476d495",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v20/fe2o3-engineering-v1/57eff949c3ff65368c11128df8c6c75ff75df80eb83d924142cd007ae34b5f0a/observation.json": "290feecf21d60d87bfba888d1635a8f0cda1dbaf3663d440df8be1101f623f09",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v21/fe2o3-engineering-v1/96d7621d021c031e7f24050d32dc7e0168ebf3d529b46cba29dca3024c73a7ad/observation.hsaco": "45c91170c4e83178f3f3f849daffb0b0e1e302ec2c3d4f1178df1a48a9ccc069",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v21/fe2o3-engineering-v1/96d7621d021c031e7f24050d32dc7e0168ebf3d529b46cba29dca3024c73a7ad/observation.json": "514a7d8a7db5227a4ed437b70fb549bd325a3c55fe907f48cb705737ae4f7d17",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v27/fe2o3-engineering-v1/878ad9d837b9f8485ecd2139d75c2e8d54ae83351f34b5cde6a4c3f36357be94/observation.hsaco": "5aebe1c2f6456b1ef48c4dba17e3ed1e1355aa593cff7d7755c787a71b7e9075",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v27/fe2o3-engineering-v1/878ad9d837b9f8485ecd2139d75c2e8d54ae83351f34b5cde6a4c3f36357be94/observation.json": "cf97c13e9558469d870af1b264539b22e0db417cea5fd340a135251bcebe1590",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v5/fe2o3-engineering-v1/13a145352770d4cf1b0b6445fc1349f7002822b576c7965089a5c4b0ec82938b/observation.hsaco": "98b5fdb14ac7242e324e1801e1885c98e77473d622b2e9b3f9f12f14c7d75502",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v5/fe2o3-engineering-v1/13a145352770d4cf1b0b6445fc1349f7002822b576c7965089a5c4b0ec82938b/observation.json": "c559d0533907323aff7dda03215adab6326423c3f151b296e22394c9baf37d00",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v8/fe2o3-engineering-v1/bffbfd1c03bca3640075fa2e1d202c6e7fd95198bd7d4c90988df4c2f37e8fa2/observation.hsaco": "5f19b3ba59035a5f0ebc90cdf3a40466f9910908a45e082d146cb674028da6cb",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v8/fe2o3-engineering-v1/bffbfd1c03bca3640075fa2e1d202c6e7fd95198bd7d4c90988df4c2f37e8fa2/observation.json": "19f4d8ec936d119214748445563b2b1f5955e04f4424503a0361c4bb6e2495d3",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-inputs/v19/fe2o3-engineering-v1/0f1dc95268aca76a3aeaf69eda200875d317b5d4dbf26af7f9dcf96a4a9f581a/observation.hsaco": "951619f87213020aaf0eebf794a37ef523400fac1f23ce9fd90e1b78d4b3e1da",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-inputs/v19/fe2o3-engineering-v1/0f1dc95268aca76a3aeaf69eda200875d317b5d4dbf26af7f9dcf96a4a9f581a/observation.json": "36fcfee3a886fb79719351708c38c0ae9af9617d5b9d723aca103242f825456c",
+          "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.hsaco": "d28610d291eeec0589afbf269e26d21b7111c96f08106e1f661d6a66f024bf03",
+          "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.json": "a7417322dafe8e0af927a6457f0dea2c324e94ec2692329f7d76a215ed3273bb",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-candidate/graph.json": "81089c41901ba372220ccde0c6402f4b299be8be994df3e4db7b2d45bd5826b1",
+          "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a006/image-custody.json": "a4fc897479b23e6b2f4397d95ed56a24babd4cdc60aa147032e388fa2d45066a"
+        },
+        "model_parity": false,
+        "native_executed": false,
+        "planning_increment_bytes": 33554432,
+        "returncode": 0,
+        "role": "abi-candidate",
+        "schema": "FerricNativeGateUpCpuActualQualificationR2",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+        "test_binary": {
+          "bytes": 42269168,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "sha256": "439996fc9ce9060d9631995c1a1a4f1e8374a68a50195ad8a071bf6de38b8cab"
+        },
+        "test_totals": [
+          1,
+          0,
+          0,
+          0,
+          173
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+        "abi-candidate"
+      ],
+      "role": "abi-candidate",
+      "source_rosters": {},
+      "test_counts": [
+        [
+          1,
+          0,
+          0,
+          0,
+          173
+        ]
+      ]
+    },
+    "actual-abi-control": {
+      "files": {
+        "helper": {
+          "bytes": 12811,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+          "sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64"
+        },
+        "inner": {
+          "bytes": 7548,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-abi-control/receipt.json",
+          "sha256": "aacd617ae13c24c359cc60c9349b7a8c420e9d63461505314eed8322a1aadf3c"
+        },
+        "result": {
+          "bytes": 2702,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-abi-control-a009/result.json",
+          "sha256": "da88720d4827a2c99ee17f60bc89b962c42a6900d3c24394bc90f35a40e06653"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-abi-control/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 1826,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-abi-control/stdout",
+          "sha256": "3f76e6969b55b40e98fc33546607bcdf007ec6148b4ef71084feb287e5c28e55"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-abi-control-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-abi-control-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 7352,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-abi-control-a009/stdout",
+          "sha256": "ff602ba76d3a225277d7d086eb33cfcab060931fc886c01943a5f31cdbc10742"
+        }
+      },
+      "group": "actual",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "actual_images_pack_gate_up_control652_and_reuse180_slots",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "build_executed": false,
+        "helper_sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64",
+        "inputs": {
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/abi-images.json": "dd2a5b227bed9be626f8ed9c0bd0c2d16ede2fb075a2a4b37d518e04a882cd90",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v11/fe2o3-engineering-v1/7744a526d899fbf38302c83638903e0fcd66982bc03be5dc92996ab451f3227a/observation.hsaco": "de9db78c0ef7ad5d84fc903d41ee9db59026113d79e23f12d3909761363b9390",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v11/fe2o3-engineering-v1/7744a526d899fbf38302c83638903e0fcd66982bc03be5dc92996ab451f3227a/observation.json": "7f9c0ab622d19721c71ff69197121b6af677fd85d07939bada4c148955cca0e8",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v14/fe2o3-engineering-v1/2c1332e73f150935046c803f446716b5f73f7dd33e80145cc6404c509004779a/observation.hsaco": "8f21681fe9103b670ee5666f429a45682e77fc90eb16802a02c4b6fb93a192c8",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v14/fe2o3-engineering-v1/2c1332e73f150935046c803f446716b5f73f7dd33e80145cc6404c509004779a/observation.json": "eb058fceb9519c4e9f9fb9d347263dcb80e957c1accd87122c4e139a9e571752",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v15/fe2o3-engineering-v1/322c87ef9bdbf6d4e45f31b5d389e7664db8beadcb9c3f85dbe2a4758aaa87e9/observation.hsaco": "68607fc1d12eb6151dd55e7b53dcb88b00d484cfa0c087c002666b224093b45c",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v15/fe2o3-engineering-v1/322c87ef9bdbf6d4e45f31b5d389e7664db8beadcb9c3f85dbe2a4758aaa87e9/observation.json": "6698058977ce1634dcf1408861779c09f8538edf95d0fcd4dc74753d71a19c8c",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v20/fe2o3-engineering-v1/57eff949c3ff65368c11128df8c6c75ff75df80eb83d924142cd007ae34b5f0a/observation.hsaco": "b8ddfbba99a3c5b37937174e7b3fd8a16432605c30ab1bf914a0d66fd476d495",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v20/fe2o3-engineering-v1/57eff949c3ff65368c11128df8c6c75ff75df80eb83d924142cd007ae34b5f0a/observation.json": "290feecf21d60d87bfba888d1635a8f0cda1dbaf3663d440df8be1101f623f09",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v21/fe2o3-engineering-v1/96d7621d021c031e7f24050d32dc7e0168ebf3d529b46cba29dca3024c73a7ad/observation.hsaco": "45c91170c4e83178f3f3f849daffb0b0e1e302ec2c3d4f1178df1a48a9ccc069",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v21/fe2o3-engineering-v1/96d7621d021c031e7f24050d32dc7e0168ebf3d529b46cba29dca3024c73a7ad/observation.json": "514a7d8a7db5227a4ed437b70fb549bd325a3c55fe907f48cb705737ae4f7d17",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v27/fe2o3-engineering-v1/878ad9d837b9f8485ecd2139d75c2e8d54ae83351f34b5cde6a4c3f36357be94/observation.hsaco": "5aebe1c2f6456b1ef48c4dba17e3ed1e1355aa593cff7d7755c787a71b7e9075",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v27/fe2o3-engineering-v1/878ad9d837b9f8485ecd2139d75c2e8d54ae83351f34b5cde6a4c3f36357be94/observation.json": "cf97c13e9558469d870af1b264539b22e0db417cea5fd340a135251bcebe1590",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v5/fe2o3-engineering-v1/13a145352770d4cf1b0b6445fc1349f7002822b576c7965089a5c4b0ec82938b/observation.hsaco": "98b5fdb14ac7242e324e1801e1885c98e77473d622b2e9b3f9f12f14c7d75502",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v5/fe2o3-engineering-v1/13a145352770d4cf1b0b6445fc1349f7002822b576c7965089a5c4b0ec82938b/observation.json": "c559d0533907323aff7dda03215adab6326423c3f151b296e22394c9baf37d00",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v8/fe2o3-engineering-v1/bffbfd1c03bca3640075fa2e1d202c6e7fd95198bd7d4c90988df4c2f37e8fa2/observation.hsaco": "5f19b3ba59035a5f0ebc90cdf3a40466f9910908a45e082d146cb674028da6cb",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-base/inputs/unpacked/base/native-inputs/v8/fe2o3-engineering-v1/bffbfd1c03bca3640075fa2e1d202c6e7fd95198bd7d4c90988df4c2f37e8fa2/observation.json": "19f4d8ec936d119214748445563b2b1f5955e04f4424503a0361c4bb6e2495d3",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-inputs/v19/fe2o3-engineering-v1/0f1dc95268aca76a3aeaf69eda200875d317b5d4dbf26af7f9dcf96a4a9f581a/observation.hsaco": "951619f87213020aaf0eebf794a37ef523400fac1f23ce9fd90e1b78d4b3e1da",
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-v16-fences-a001/abi-fixture/native-inputs/v19/fe2o3-engineering-v1/0f1dc95268aca76a3aeaf69eda200875d317b5d4dbf26af7f9dcf96a4a9f581a/observation.json": "36fcfee3a886fb79719351708c38c0ae9af9617d5b9d723aca103242f825456c",
+          "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.hsaco": "d28610d291eeec0589afbf269e26d21b7111c96f08106e1f661d6a66f024bf03",
+          "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.json": "a7417322dafe8e0af927a6457f0dea2c324e94ec2692329f7d76a215ed3273bb",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-control/graph.json": "3df9f1a8e4db8f618e2f6c65c5868ea72b6d91605d2ea899d1ab70fc94075057",
+          "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a006/image-custody.json": "a4fc897479b23e6b2f4397d95ed56a24babd4cdc60aa147032e388fa2d45066a"
+        },
+        "model_parity": false,
+        "native_executed": false,
+        "planning_increment_bytes": 33554432,
+        "returncode": 0,
+        "role": "abi-control",
+        "schema": "FerricNativeGateUpCpuActualQualificationR2",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+        "test_binary": {
+          "bytes": 42269168,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "sha256": "439996fc9ce9060d9631995c1a1a4f1e8374a68a50195ad8a071bf6de38b8cab"
+        },
+        "test_totals": [
+          1,
+          0,
+          0,
+          0,
+          173
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+        "abi-control"
+      ],
+      "role": "abi-control",
+      "source_rosters": {},
+      "test_counts": [
+        [
+          1,
+          0,
+          0,
+          0,
+          173
+        ]
+      ]
+    },
+    "actual-capture-candidate": {
+      "files": {
+        "helper": {
+          "bytes": 12811,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+          "sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64"
+        },
+        "inner": {
+          "bytes": 1327,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-candidate/receipt.json",
+          "sha256": "4a6f99f5cf8729f4a3d3a7e187b02fb75a8f6bf7007d3e14f4e2db9c8a82c4ec"
+        },
+        "result": {
+          "bytes": 2716,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-capture-candidate-a009/result.json",
+          "sha256": "c867c6cb722e1584ddec5a719d54a917e6c2555c8977b14dc85b55c2e9788b11"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-candidate/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 545,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-candidate/stdout",
+          "sha256": "1ebcb9215aa9f5e3f3373473cc57af288f8db92e2153e9642448943b06e13f30"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-capture-candidate-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-capture-candidate-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1213,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-capture-candidate-a009/stdout",
+          "sha256": "1875fb5779c72232c95703f078dd4b8adb10ce4af1a66fff0568728e010087f5"
+        }
+      },
+      "group": "actual",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_m1_engineering_execution_v1-15580f19085c98cf",
+          "capture_gate_up_native724_actual_driver_graphs",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "build_executed": false,
+        "graph": {
+          "bytes": 763930,
+          "sha256": "81089c41901ba372220ccde0c6402f4b299be8be994df3e4db7b2d45bd5826b1"
+        },
+        "helper_sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64",
+        "inputs": {},
+        "model_parity": false,
+        "native_executed": false,
+        "planning_increment_bytes": 33554432,
+        "returncode": 0,
+        "role": "capture-candidate",
+        "schema": "FerricNativeGateUpCpuActualQualificationR2",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+        "test_binary": {
+          "bytes": 51691272,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_m1_engineering_execution_v1-15580f19085c98cf",
+          "sha256": "5e52ef57f75b43323339949bb5074b6ba07f0067a06c321f4a98472515b41d23"
+        },
+        "test_totals": [
+          1,
+          0,
+          0,
+          0,
+          551
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+        "capture-candidate"
+      ],
+      "role": "capture-candidate",
+      "source_rosters": {},
+      "test_counts": [
+        [
+          1,
+          0,
+          0,
+          0,
+          551
+        ]
+      ]
+    },
+    "actual-capture-control": {
+      "files": {
+        "helper": {
+          "bytes": 12811,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+          "sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64"
+        },
+        "inner": {
+          "bytes": 1326,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-control/receipt.json",
+          "sha256": "78580854ea408529b744860397ae0e31d607476b3418810a0503ac37990a302a"
+        },
+        "result": {
+          "bytes": 2714,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-capture-control-a009/result.json",
+          "sha256": "2f4b28ba9e689ab7c1e8e2ebd6ceddc1fa2f3644887c9584ead129d1459139dc"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-control/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 547,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-capture-control/stdout",
+          "sha256": "a90b7bdb8e1da624b59e93e529e6b08dd24b0d5fbda0ad10a4da9f99733b283c"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-capture-control-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-capture-control-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1212,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-capture-control-a009/stdout",
+          "sha256": "6e9446f50fe8e7aae1e4a999141b21b87e8e4aef5f0f650d176046cbd8d1e2d2"
+        }
+      },
+      "group": "actual",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_m1_engineering_execution_v1-15580f19085c98cf",
+          "capture_gate_up_control652_actual_driver_graphs",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "build_executed": false,
+        "graph": {
+          "bytes": 720730,
+          "sha256": "3df9f1a8e4db8f618e2f6c65c5868ea72b6d91605d2ea899d1ab70fc94075057"
+        },
+        "helper_sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64",
+        "inputs": {},
+        "model_parity": false,
+        "native_executed": false,
+        "planning_increment_bytes": 33554432,
+        "returncode": 0,
+        "role": "capture-control",
+        "schema": "FerricNativeGateUpCpuActualQualificationR2",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+        "test_binary": {
+          "bytes": 51691272,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_m1_engineering_execution_v1-15580f19085c98cf",
+          "sha256": "5e52ef57f75b43323339949bb5074b6ba07f0067a06c321f4a98472515b41d23"
+        },
+        "test_totals": [
+          1,
+          0,
+          0,
+          0,
+          551
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+        "capture-control"
+      ],
+      "role": "capture-control",
+      "source_rosters": {},
+      "test_counts": [
+        [
+          1,
+          0,
+          0,
+          0,
+          551
+        ]
+      ]
+    },
+    "actual-full-counters": {
+      "files": {
+        "helper": {
+          "bytes": 12811,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+          "sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64"
+        },
+        "inner": {
+          "bytes": 1535,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-full-counters/receipt.json",
+          "sha256": "a0ade49c3e843eb6bd68351822faded5cfa33d30cdabb4112783beca24c88616"
+        },
+        "result": {
+          "bytes": 2713,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-full-counters-a009/result.json",
+          "sha256": "4bd94ffeeb39f9fadf43444502aa61c845cf487da5cde3223be7f87229f591a3"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-full-counters/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 21439,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-full-counters/stdout",
+          "sha256": "e2096e8e724d93cf5e09db034fb4df91316dd7a7b65c20e63d3a01385bd63db7"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-full-counters-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-full-counters-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1397,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-full-counters-a009/stdout",
+          "sha256": "2c6a9ee8a256bbd8440065f17aaa31666016a766c695e1fb359fcb1ccdb3d515"
+        }
+      },
+      "group": "actual",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_counters-177781e340fee626",
+          "--test-threads=1"
+        ],
+        "build_argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "test",
+          "--no-run",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--features",
+          "c1-token-program",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-counters"
+        ],
+        "build_executed": true,
+        "helper_sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64",
+        "inputs": {},
+        "model_parity": false,
+        "native_executed": false,
+        "planning_increment_bytes": 536870912,
+        "returncode": 0,
+        "role": "full-counters",
+        "schema": "FerricNativeGateUpCpuActualQualificationR2",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+        "test_binary": {
+          "bytes": 42301440,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_counters-177781e340fee626",
+          "sha256": "00c400d01e97c57556d6714e75740cdf27ac70c588171eac3227e10c3592e2c7"
+        },
+        "test_totals": [
+          156,
+          0,
+          18,
+          0,
+          0
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+        "full-counters"
+      ],
+      "role": "full-counters",
+      "source_rosters": {},
+      "test_counts": [
+        [
+          156,
+          0,
+          18,
+          0,
+          0
+        ]
+      ]
+    },
+    "actual-full-live": {
+      "files": {
+        "helper": {
+          "bytes": 12811,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+          "sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64"
+        },
+        "inner": {
+          "bytes": 1118,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-full-live/receipt.json",
+          "sha256": "20f86319ee9a3a9395a6b21ee83ead764901ae35ab7d22775c1dc87f17452f10"
+        },
+        "result": {
+          "bytes": 2707,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-full-live-a009/result.json",
+          "sha256": "ef2cadbdd847e989080b60e3e7c04942c6daf507e6abab1ec25baaf9ee11a274"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-full-live/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 21439,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-full-live/stdout",
+          "sha256": "54501d95f2e76ec8de5f77f508c473bf10956f1833c9625582f5b8b0645fb43c"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-full-live-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-full-live-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1030,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-full-live-a009/stdout",
+          "sha256": "a21bd9448e129b5f72e141b638525f534b5c0a31726333fea79e002d9f723bd7"
+        }
+      },
+      "group": "actual",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "--test-threads=1"
+        ],
+        "build_executed": false,
+        "helper_sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64",
+        "inputs": {},
+        "model_parity": false,
+        "native_executed": false,
+        "planning_increment_bytes": 33554432,
+        "returncode": 0,
+        "role": "full-live",
+        "schema": "FerricNativeGateUpCpuActualQualificationR2",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+        "test_binary": {
+          "bytes": 42269168,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "sha256": "439996fc9ce9060d9631995c1a1a4f1e8374a68a50195ad8a071bf6de38b8cab"
+        },
+        "test_totals": [
+          156,
+          0,
+          18,
+          0,
+          0
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+        "full-live"
+      ],
+      "role": "full-live",
+      "source_rosters": {},
+      "test_counts": [
+        [
+          156,
+          0,
+          18,
+          0,
+          0
+        ]
+      ]
+    },
+    "actual-image": {
+      "files": {
+        "helper": {
+          "bytes": 12811,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+          "sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64"
+        },
+        "inner": {
+          "bytes": 1865,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-image/receipt.json",
+          "sha256": "a23a83f6d898332b3fa7816ca0b72e62cd22bfbb69bf782f840303de135f1c53"
+        },
+        "result": {
+          "bytes": 2696,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-image-a009/result.json",
+          "sha256": "c7b5bd40ccac05b201ef587b970a27c9fd8f16948df6f1e6342f0bce8453e22d"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-image/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 743,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-image/stdout",
+          "sha256": "9baf56b2eba4be0b161104dae02c234a7a894673e426ed47a8fc857cafa0dce8"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-image-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-image-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1739,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-image-a009/stdout",
+          "sha256": "c981b8dbb8788bf293ed50d39a92ab89eb2992a2d204989e98f24ecede7f6d6b"
+        }
+      },
+      "group": "actual",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_m1_engineering_execution_v1-15580f19085c98cf",
+          "splitk_actual_component_image_admits_exact_physical_abi_and_resources",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "build_executed": false,
+        "helper_sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64",
+        "inputs": {
+          "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.hsaco": "d28610d291eeec0589afbf269e26d21b7111c96f08106e1f661d6a66f024bf03",
+          "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.json": "a7417322dafe8e0af927a6457f0dea2c324e94ec2692329f7d76a215ed3273bb"
+        },
+        "model_parity": false,
+        "native_executed": false,
+        "planning_increment_bytes": 33554432,
+        "returncode": 0,
+        "role": "image",
+        "roster": {
+          "bytes": 305,
+          "sha256": "54f6c32544669ad4407643e12eb6c22efc0a24967f20ea2d695e24f46488e379"
+        },
+        "schema": "FerricNativeGateUpCpuActualQualificationR2",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+        "test_binary": {
+          "bytes": 51691272,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_m1_engineering_execution_v1-15580f19085c98cf",
+          "sha256": "5e52ef57f75b43323339949bb5074b6ba07f0067a06c321f4a98472515b41d23"
+        },
+        "test_totals": [
+          1,
+          0,
+          0,
+          0,
+          551
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+        "image"
+      ],
+      "role": "image",
+      "source_rosters": {},
+      "test_counts": [
+        [
+          1,
+          0,
+          0,
+          0,
+          551
+        ]
+      ]
+    },
+    "actual-profile-actual": {
+      "files": {
+        "helper": {
+          "bytes": 12811,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+          "sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64"
+        },
+        "inner": {
+          "bytes": 1906,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-profile-actual/receipt.json",
+          "sha256": "f8a1f638b8fc1d6a75a8a3a354e4e3d711d0afd754c6b240e762dbf94b4a1317"
+        },
+        "result": {
+          "bytes": 2705,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-profile-actual-a009/result.json",
+          "sha256": "c9599a480cc501b45d6764d6fb6ae9289c78e0188dd102f5c52da235e1ec177d"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-profile-actual/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 244,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-profile-actual/stdout",
+          "sha256": "d34aeb6cf6aefcbbdd644a58e0d62940e10b08ffbe54fdb001db9c350181c706"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-profile-actual-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-profile-actual-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1790,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-actual-profile-actual-a009/stdout",
+          "sha256": "f1829d201af70302f6ef04fe378fa7fead1678145825e9b17c210eca5cc8ab08"
+        }
+      },
+      "group": "actual",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "native_gate_up_actual_image_and_roster_open_for_both_arms",
+          "--ignored",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "build_executed": false,
+        "helper_sha256": "2acbfda2db40a8b78696929e93e86bd115bffa9a012609059e70729267859d64",
+        "inputs": {
+          "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.hsaco": "d28610d291eeec0589afbf269e26d21b7111c96f08106e1f661d6a66f024bf03",
+          "/tmp/ferric-v16-emitter-b95a642-r1/emission-79a-fixes-sdk55c-c1-splitk4-gate-up-a001/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b/observation.json": "a7417322dafe8e0af927a6457f0dea2c324e94ec2692329f7d76a215ed3273bb",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/actual-image/roster.json": "54f6c32544669ad4407643e12eb6c22efc0a24967f20ea2d695e24f46488e379"
+        },
+        "model_parity": false,
+        "native_executed": false,
+        "planning_increment_bytes": 33554432,
+        "returncode": 0,
+        "role": "profile-actual",
+        "schema": "FerricNativeGateUpCpuActualQualificationR2",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_preparation_sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736",
+        "test_binary": {
+          "bytes": 42269168,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "sha256": "439996fc9ce9060d9631995c1a1a4f1e8374a68a50195ad8a071bf6de38b8cab"
+        },
+        "test_totals": [
+          1,
+          0,
+          0,
+          0,
+          173
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_actual_a009.py",
+        "profile-actual"
+      ],
+      "role": "profile-actual",
+      "source_rosters": {},
+      "test_counts": [
+        [
+          1,
+          0,
+          0,
+          0,
+          173
+        ]
+      ]
+    },
+    "model-clippy": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 380765,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/clippy/receipt.json",
+          "sha256": "b9c063f74e763b4cf4bb2b206359e7003ab3b954513a70dce775da87be9463eb"
+        },
+        "result": {
+          "bytes": 2703,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-clippy-a009/result.json",
+          "sha256": "56b88a50be5810df57dda63afccf61c5adb7ce9791825056c0c0ae61e1a5594c"
+        },
+        "role_stderr": {
+          "bytes": 1396,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/clippy/stderr",
+          "sha256": "d6a5c2ff3aafb9e366e073dcba1fcd29e16cfc0d802049e6b7ac4c3d90ecad66"
+        },
+        "role_stdout": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/clippy/stdout",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-clippy-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-clippy-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 976,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-clippy-a009/stdout",
+          "sha256": "caa4b3a76db127af1abf05e90598db52f7e042dc632f751888f88771bad6a5fa"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "clippy",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--features",
+          "c1-token-program",
+          "--lib",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-live",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-counters",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 134217728,
+        "returncode": 0,
+        "role": "clippy",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "clippy"
+      ],
+      "role": "clippy",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": []
+    },
+    "model-default": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 380602,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/default/receipt.json",
+          "sha256": "77adfdb9dc6a7856ae2e04b2ea4e2cd2310efa9c525666d40c0fbb510f5fb291"
+        },
+        "result": {
+          "bytes": 2704,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-default-a009/result.json",
+          "sha256": "8de35378b3d2ce2ac1c62a907cd03c32e4ce42e238434f6e0f601b268e204bfa"
+        },
+        "role_stderr": {
+          "bytes": 224,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/default/stderr",
+          "sha256": "6a68bbeccfabbd8c2edbc37e463fd18dcd7b14b6262bbb6e0797b558c2f82aa9"
+        },
+        "role_stdout": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/default/stdout",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-default-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-default-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 845,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-default-a009/stdout",
+          "sha256": "3a787b6680eab6e20ec588c1cdab9ed9ea6318264ba6fcb59ca7e73c66f9874c"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "check",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--no-default-features",
+          "--all-targets"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 268435456,
+        "returncode": 0,
+        "role": "default",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "default"
+      ],
+      "role": "default",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": []
+    },
+    "model-library": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 380981,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/library/receipt.json",
+          "sha256": "91ca6d3dc87a268099a4a48da1ebb427de657a9b7b30c544379c0ae400f15f29"
+        },
+        "result": {
+          "bytes": 2705,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-library-a009/result.json",
+          "sha256": "6b8113ec8c702739f280121d5aa7e2806c4de4503eb3b411b028235c29204de9"
+        },
+        "role_stderr": {
+          "bytes": 1557,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/library/stderr",
+          "sha256": "40efbcaaea248b01c9db2321a02c6850d3eef685190df625400c841a71a740ef"
+        },
+        "role_stdout": {
+          "bytes": 1731,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/library/stdout",
+          "sha256": "33de401ad6adb25e27b56f0995f5c09b8b1ba1e3acebd2c92eac98f2f382b8a8"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-library-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-library-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1164,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-library-a009/stdout",
+          "sha256": "f453bd9f7827e515a550d8262e9ed1d3c5270c53f2db2ae87f9e3a4bac246f88"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--features",
+          "c1-token-program",
+          "--lib",
+          "splitk",
+          "--",
+          "--test-threads=1"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 201326592,
+        "returncode": 0,
+        "role": "library",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119",
+        "test_binary": {
+          "bytes": 51691272,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_m1_engineering_execution_v1-15580f19085c98cf",
+          "sha256": "5e52ef57f75b43323339949bb5074b6ba07f0067a06c321f4a98472515b41d23"
+        },
+        "test_totals": [
+          11,
+          0,
+          1,
+          0,
+          540
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "library"
+      ],
+      "role": "library",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": [
+        [
+          11,
+          0,
+          1,
+          0,
+          540
+        ]
+      ]
+    },
+    "model-prepare": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 382627,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/prepare/receipt.json",
+          "sha256": "49f859e9a386f552ec2a6ffc3ff14f11497d772680466aaf3c0365e2ed522736"
+        },
+        "result": {
+          "bytes": 2705,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-prepare-a009/result.json",
+          "sha256": "ab5a84b3e4fda50d7a3b70af9bd6b791f427aa61305e11bea290d3f4c87e0307"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/prepare/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 2020264,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/prepare/stdout",
+          "sha256": "33f6c937c7ae14c2e1a4d1353431ceef1776c40c3e897c0f6294af84e5f1d5dd"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-prepare-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-prepare-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 2604,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-prepare-a009/stdout",
+          "sha256": "6f182c861e611fdb754f2282f9f2ac070640935acefe7211c69f726281fb5bf1"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "metadata",
+          "--locked",
+          "--offline",
+          "--format-version",
+          "1",
+          "--features",
+          "c1-token-program",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml"
+        ],
+        "current_wire_packages": [
+          {
+            "name": "fe2o3-amd-target",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-amdhsa-loader",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-aql",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-drm-uapi",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-hsaco",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-kfd",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-kfd-uapi",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-runtime-model",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-target-spec",
+            "source": "git+https://github.com/harsh-nod/fe2o3.git?rev=da6b561c5a3f12acc5b0e6da74c808273e728710#da6b561c5a3f12acc5b0e6da74c808273e728710",
+            "version": "0.1.0"
+          }
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 402653184,
+        "returncode": 0,
+        "role": "prepare",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "prepare"
+      ],
+      "role": "prepare",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "1800d1fa91e3e8666b32c736a81f9fa7143c3aa38a6eb0400d09a18249389ac0"
+      },
+      "test_counts": []
+    },
+    "model-profile": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 381051,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/profile/receipt.json",
+          "sha256": "12d4f9d814cfb884210b1576b278d10712d58593b90d2409327c4e16c42fca6e"
+        },
+        "result": {
+          "bytes": 2697,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-profile-a009/result.json",
+          "sha256": "a590f92ea777c87a93ba7149b42d3af0a10feba36a485ec2d8c325ce037a5bb5"
+        },
+        "role_stderr": {
+          "bytes": 263,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/profile/stderr",
+          "sha256": "f1832217fd6b44cf07563c57d7ca7a02f57b2b6212ed8cad805bde71bd78dcb5"
+        },
+        "role_stdout": {
+          "bytes": 847,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/profile/stdout",
+          "sha256": "72bdf2ca98aff7a9404e20c20b8d9f87132f21a609cd20cded1fc5d6a59906c1"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-profile-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-profile-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1230,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-profile-a009/stdout",
+          "sha256": "3af63fc6c71e2bc8bd8f83c286707775fde3dfda61676d6b10e93ee413fbea1e"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--features",
+          "c1-token-program",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-live",
+          "native_gate_up_live_profile",
+          "--",
+          "--test-threads=1"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 134217728,
+        "returncode": 0,
+        "role": "profile",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119",
+        "test_binary": {
+          "bytes": 42269168,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "sha256": "439996fc9ce9060d9631995c1a1a4f1e8374a68a50195ad8a071bf6de38b8cab"
+        },
+        "test_totals": [
+          4,
+          0,
+          1,
+          0,
+          169
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "profile"
+      ],
+      "role": "profile",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": [
+        [
+          4,
+          0,
+          1,
+          0,
+          169
+        ]
+      ]
+    },
+    "model-release-counters": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 380940,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/release-counters/receipt.json",
+          "sha256": "db66f6b9af2122ce7367e38fbe6ffde2353ce3d7624ea29d918ef319bd01d75c"
+        },
+        "result": {
+          "bytes": 2714,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-release-counters-a009/result.json",
+          "sha256": "034cc2919d0d31c48b84b01843f64b0f8a1d13fde699345b0d2ad8b4bdd2ef92"
+        },
+        "role_stderr": {
+          "bytes": 226,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/release-counters/stderr",
+          "sha256": "cadc4bf9277173f3138fb6fde0876ac1d5472763b7d19ca14ffacdf952829891"
+        },
+        "role_stdout": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/release-counters/stdout",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-release-counters-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-release-counters-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1153,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-release-counters-a009/stdout",
+          "sha256": "1e7de281f0e36bf6adf009b72e6985236e7b922dff994f8f7b7f95e4651f5a9f"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--features",
+          "c1-token-program",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-counters"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 536870912,
+        "release_binary": {
+          "bytes": 10603176,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/release/ferric-qwen3-prefill-width-native-counters",
+          "sha256": "fa2049edf8daed70ba268be1b6799f5a4ba42e106e27025f776509876f371231"
+        },
+        "returncode": 0,
+        "role": "release-counters",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "release-counters"
+      ],
+      "role": "release-counters",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": []
+    },
+    "model-release-live": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 380928,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/release-live/receipt.json",
+          "sha256": "3d04cb4d57f7cc2d41b947e071a438b4cc79af4d41712b1d9494f74bd1ecd1c3"
+        },
+        "result": {
+          "bytes": 2711,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-release-live-a009/result.json",
+          "sha256": "78009d8bf304cbc59a294bf47ce00eb4d954e89c1ccd52b84e2a23346902433d"
+        },
+        "role_stderr": {
+          "bytes": 1399,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/release-live/stderr",
+          "sha256": "0165560aa2bc6772f8282762704088a114b0677920d5fdad14878b2229b39acb"
+        },
+        "role_stdout": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/release-live/stdout",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-release-live-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-release-live-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1141,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-release-live-a009/stdout",
+          "sha256": "4152579bdc8aaf569f41f60123c2044a2e3df0b782d66b9c9c4b4ec9d180d9cc"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--features",
+          "c1-token-program",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-live"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 536870912,
+        "release_binary": {
+          "bytes": 10598816,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/release/ferric-qwen3-prefill-width-native-live",
+          "sha256": "60bf47551d1ebdfc91f49b529dab8211e3f860a07bdd05921e642b72d505e9a4"
+        },
+        "returncode": 0,
+        "role": "release-live",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "release-live"
+      ],
+      "role": "release-live",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": []
+    },
+    "model-source-policy": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 380958,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/source-policy/receipt.json",
+          "sha256": "ab14d6d9f833bfda24de9f1b90e09f465a21abccceb24589ee8aad4e67c72f14"
+        },
+        "result": {
+          "bytes": 2712,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-source-policy-a009/result.json",
+          "sha256": "65d27cc19ccd75b2119e77365d2ede541f05b471b7f545a43c3d45eee6661d6e"
+        },
+        "role_stderr": {
+          "bytes": 365,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/source-policy/stderr",
+          "sha256": "cb6103ccf302d7b6ba7f109f1b14f3af4d52c6a76cc78151b50d03ac86deb2b3"
+        },
+        "role_stdout": {
+          "bytes": 4880,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/source-policy/stdout",
+          "sha256": "32de039ebeb529dac57091d2efab0bc2bde364b2b9eb6390563138e11ae3375d"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-source-policy-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-source-policy-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1145,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-source-policy-a009/stdout",
+          "sha256": "76107a4ac6e15ecc0120f52c839768f960b99fcb25e95b4f7d46ab72543bdaa9"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--no-default-features",
+          "--test",
+          "source_policy",
+          "--",
+          "--test-threads=1"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 536870912,
+        "returncode": 0,
+        "role": "source-policy",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119",
+        "test_binary": {
+          "bytes": 6005224,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/source_policy-9a234a61e41f5071",
+          "sha256": "f92e8ae2b7a4fab63cefbc6fd7adb36969884b2d8e5801b474fb3f916928260f"
+        },
+        "test_totals": [
+          58,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "source-policy"
+      ],
+      "role": "source-policy",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": [
+        [
+          58,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "model-union": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 380744,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/union/receipt.json",
+          "sha256": "49548e7d26e9f71d9eb6f5ccfcf530d18dca175a516a871d6b4501011c11fa50"
+        },
+        "result": {
+          "bytes": 2702,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-union-a009/result.json",
+          "sha256": "ae8fde83d21e8a082d891de425812b9debc538a3e04bd874ecc8e5cee4cfd229"
+        },
+        "role_stderr": {
+          "bytes": 1380,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/union/stderr",
+          "sha256": "a30f72dc71e24a872699fa70eb68aac72f4fd4292ced5486f5b2d03c7db1da19"
+        },
+        "role_stdout": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/union/stdout",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-union-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-union-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 967,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-union-a009/stdout",
+          "sha256": "deade7b26f9270efa0155872d95fd771e2eb3c7588bb9bfaa5c4fb31e376769c"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "check",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--features",
+          "c1-token-program,model-timestamps",
+          "--lib",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-live",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-counters"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 536870912,
+        "returncode": 0,
+        "role": "union",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "union"
+      ],
+      "role": "union",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": []
+    },
+    "model-worker": {
+      "files": {
+        "helper": {
+          "bytes": 13305,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+          "sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148"
+        },
+        "inner": {
+          "bytes": 381036,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/worker/receipt.json",
+          "sha256": "cbc13b03d12e58d1ad2ded2faabdcab652f2ea0f124f580c769bc1aa54e51e4e"
+        },
+        "result": {
+          "bytes": 2704,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-worker-a009/result.json",
+          "sha256": "f1b56140141181d454f93c6003e7db8b30a2ff62edbfbce84e1b7bf30de1bae2"
+        },
+        "role_stderr": {
+          "bytes": 427,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/worker/stderr",
+          "sha256": "b3f5701142c74f613cfddfc23734a3c11f0cf114f2a7205bf389b3acd24ba29d"
+        },
+        "role_stdout": {
+          "bytes": 807,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-model-a009/worker/stdout",
+          "sha256": "d9ffdab9389bf415e2f473d9f374e710070d4ce813313d64f52902fbb18ee3ab"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-worker-a009/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-worker-a009/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1215,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-gate-up-model-worker-a009/stdout",
+          "sha256": "6e6e15ce0c396406cd09c4c7e0888413b1eeaf827489b09eaccdbd672b149af4"
+        }
+      },
+      "group": "model",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/gate-up-native-library-a003/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+          "--features",
+          "c1-token-program",
+          "--bin",
+          "ferric-qwen3-prefill-width-native-live",
+          "gate_up_tests",
+          "--",
+          "--test-threads=1"
+        ],
+        "helper_sha256": "ac3a502e11b60f6b6e23dfa70053b74391381917217b1f470af43663fed29148",
+        "model_performance_qualified": false,
+        "native_executed": false,
+        "planning_increment_bytes": 134217728,
+        "returncode": 0,
+        "role": "worker",
+        "schema": "FerricNativeGateUpModelCpuQualificationR3",
+        "source_archive_sha256": "5a49de79a9fe0d4bedcfa77212c6832fd97ebd626e97a37ca5753545bdc24f7d",
+        "source_manifest_sha256": "c53c170a8b853e14a7156fd308b97434422152031fed3b8c0d0ca74bc15b1119",
+        "test_binary": {
+          "bytes": 42269168,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/debug/deps/ferric_qwen3_prefill_width_native_live-4f3b04d3bd6a21f4",
+          "sha256": "439996fc9ce9060d9631995c1a1a4f1e8374a68a50195ad8a071bf6de38b8cab"
+        },
+        "test_totals": [
+          6,
+          0,
+          0,
+          0,
+          168
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/gate-up-model-a009/qualify_model_a009.py",
+        "worker"
+      ],
+      "role": "worker",
+      "source_rosters": {
+        "source_after": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c",
+        "source_before": "368f9e38bab063beaef09f693f62b97b0dcf86fa88cded914f999e66f95b955c"
+      },
+      "test_counts": [
+        [
+          6,
+          0,
+          0,
+          0,
+          168
+        ]
+      ]
+    },
+    "runtime-clippy": {
+      "files": {
+        "helper": {
+          "bytes": 12467,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+          "sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71"
+        },
+        "inner": {
+          "bytes": 115918,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/clippy/receipt.json",
+          "sha256": "6d7639d1b5677468dbb87b468695b6f5c1ba7ac7195be113be863fcf97a792af"
+        },
+        "result": {
+          "bytes": 2700,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-clippy-a001/result.json",
+          "sha256": "e42c90860e42fba5b6048a28f7af1795ca0a7bc6b760057de6c4a95f1d674aaa"
+        },
+        "role_stderr": {
+          "bytes": 1496,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/clippy/stderr",
+          "sha256": "5a62fa8b1175dd49d89eeeeb12dd7f0750f27bb3735f9721a79fcb482ee1992c"
+        },
+        "role_stdout": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/clippy/stdout",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-clippy-a001/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-clippy-a001/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1119,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-clippy-a001/stdout",
+          "sha256": "c037454aeab110d6eff8fb6a1a08c503e70b05fac45d78f7dd6cbf19fc288dfc"
+        }
+      },
+      "group": "runtime",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "clippy",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/source/Cargo.toml",
+          "-p",
+          "fe2o3-kfd",
+          "--features",
+          "engineering-gfx950",
+          "--lib",
+          "--bin",
+          "fe2o3-gfx950-engineering-worker",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "compiler_qualified": false,
+        "helper_sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71",
+        "native_executed": false,
+        "performance_qualified": false,
+        "planning_increment_bytes": 134217728,
+        "returncode": 0,
+        "revision": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+        "role": "clippy",
+        "schema": "FerricCurrentRuntimeCpuQualificationR1",
+        "scope": "exact nine-crate runtime commit bytes with projected workspace membership; publication independently checked; not whole compiler qualification",
+        "source_archive_sha256": "f44d31f140938f918f159f47fb6c81975063c34526221029a4bc1ff10c72a462",
+        "source_manifest_sha256": "7556969848bba4bfb13e14bc1b2d56882dbd46e48e3f95adc381cbf675890c8a"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+        "clippy"
+      ],
+      "role": "clippy",
+      "source_rosters": {
+        "source_after": "f6234d2aea4c47a297c26474d20643ba0c993a7a05286fb898cf7dd934d4bce5"
+      },
+      "test_counts": []
+    },
+    "runtime-default": {
+      "files": {
+        "helper": {
+          "bytes": 12467,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+          "sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71"
+        },
+        "inner": {
+          "bytes": 115930,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/default/receipt.json",
+          "sha256": "4e9115d3359881a08d0cad10b24a68f3b83cef6761eea660c0f8048aeafa163c"
+        },
+        "result": {
+          "bytes": 2701,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-default-a001/result.json",
+          "sha256": "c539b0cf058e0636097b2508ba3994db1c2ef579052f1520240264af541ea7c7"
+        },
+        "role_stderr": {
+          "bytes": 665,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/default/stderr",
+          "sha256": "48ec7772fa7a001e62a1737e06e1e83a6f72321ac95614ea2aa67ff07515cf13"
+        },
+        "role_stdout": {
+          "bytes": 45035,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/default/stdout",
+          "sha256": "462041d4a5a8932d135d1329c60485488f119356c5d22744250ba1b1dbcb2cd1"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-default-a001/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-default-a001/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1101,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-default-a001/stdout",
+          "sha256": "3ced35263be0b159738f1a2b96b85ee88750c909c69345139a65abc1108c73ca"
+        }
+      },
+      "group": "runtime",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/source/Cargo.toml",
+          "-p",
+          "fe2o3-kfd",
+          "--no-default-features",
+          "--lib",
+          "--",
+          "--test-threads=1"
+        ],
+        "compiler_qualified": false,
+        "helper_sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71",
+        "native_executed": false,
+        "performance_qualified": false,
+        "planning_increment_bytes": 268435456,
+        "returncode": 0,
+        "revision": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+        "role": "default",
+        "schema": "FerricCurrentRuntimeCpuQualificationR1",
+        "scope": "exact nine-crate runtime commit bytes with projected workspace membership; publication independently checked; not whole compiler qualification",
+        "source_archive_sha256": "f44d31f140938f918f159f47fb6c81975063c34526221029a4bc1ff10c72a462",
+        "source_manifest_sha256": "7556969848bba4bfb13e14bc1b2d56882dbd46e48e3f95adc381cbf675890c8a",
+        "test_totals": [
+          [
+            477,
+            0,
+            1,
+            0,
+            0
+          ]
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+        "default"
+      ],
+      "role": "default",
+      "source_rosters": {
+        "source_after": "f6234d2aea4c47a297c26474d20643ba0c993a7a05286fb898cf7dd934d4bce5"
+      },
+      "test_counts": [
+        [
+          477,
+          0,
+          1,
+          0,
+          0
+        ]
+      ]
+    },
+    "runtime-format": {
+      "files": {
+        "helper": {
+          "bytes": 12467,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+          "sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71"
+        },
+        "inner": {
+          "bytes": 115807,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/format/receipt.json",
+          "sha256": "c1aad33cc1f72489bd42b34076799f697044f1e630fe4a1877f1f159b8966787"
+        },
+        "result": {
+          "bytes": 2692,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-format-a001/result.json",
+          "sha256": "b60fd56ef306e0dcd4e11f15205bb24408e97edb8fcaa19240a0ecfa0a7b1af3"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/format/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/format/stdout",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-format-a001/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-format-a001/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1044,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-format-a001/stdout",
+          "sha256": "1b1b600e7dbf2e214c3a9a5751dbe7bd41601376599ac888915696c31fb337f9"
+        }
+      },
+      "group": "runtime",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/rustfmt",
+          "--check",
+          "--edition",
+          "2024",
+          "--config",
+          "skip_children=true",
+          "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/source/crates/fe2o3-kfd/src/mixed_conditional_dispatch_v26.rs"
+        ],
+        "compiler_qualified": false,
+        "helper_sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71",
+        "native_executed": false,
+        "performance_qualified": false,
+        "planning_increment_bytes": 16777216,
+        "returncode": 0,
+        "revision": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+        "role": "format",
+        "schema": "FerricCurrentRuntimeCpuQualificationR1",
+        "scope": "exact nine-crate runtime commit bytes with projected workspace membership; publication independently checked; not whole compiler qualification",
+        "source_archive_sha256": "f44d31f140938f918f159f47fb6c81975063c34526221029a4bc1ff10c72a462",
+        "source_manifest_sha256": "7556969848bba4bfb13e14bc1b2d56882dbd46e48e3f95adc381cbf675890c8a"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+        "format"
+      ],
+      "role": "format",
+      "source_rosters": {
+        "source_after": "f6234d2aea4c47a297c26474d20643ba0c993a7a05286fb898cf7dd934d4bce5"
+      },
+      "test_counts": []
+    },
+    "runtime-prepare": {
+      "files": {
+        "helper": {
+          "bytes": 12467,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+          "sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71"
+        },
+        "inner": {
+          "bytes": 121369,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/prepare/receipt.json",
+          "sha256": "102dc68bf5cddfc98a2401a177b6d21be333e9c95df256bd5b74440ba83b7279"
+        },
+        "result": {
+          "bytes": 2693,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-prepare-a001/result.json",
+          "sha256": "84d01cd12995cc05382010a9230cef761ea1d314ce22209d697d23405c8ad4ec"
+        },
+        "role_stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/prepare/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "role_stdout": {
+          "bytes": 176376,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/prepare/stdout",
+          "sha256": "5dbf5445cb939291ce384bf72e64458e415c4687d4c24894b302751f223c0ece"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-prepare-a001/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-prepare-a001/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 5396,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-prepare-a001/stdout",
+          "sha256": "6d27f10906951fa4dafc5259a60c4a990c2d6791dec4f5492ee452093d79ef8f"
+        }
+      },
+      "group": "runtime",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "metadata",
+          "--offline",
+          "--format-version",
+          "1",
+          "--features",
+          "engineering-gfx950",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/source/Cargo.toml"
+        ],
+        "compiler_qualified": false,
+        "helper_sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71",
+        "lock_projection": {
+          "all_other_resolved_edges_unchanged": true,
+          "packages": 41,
+          "removed_edge": "spin -> lock_api",
+          "removed_inactive_packages": [
+            "lock_api",
+            "scopeguard"
+          ],
+          "upstream_closure_packages": 43,
+          "versions_and_checksums_unchanged": true
+        },
+        "native_executed": false,
+        "performance_qualified": false,
+        "planning_increment_bytes": 67108864,
+        "resolved_packages": [
+          {
+            "name": "autocfg",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.5.1"
+          },
+          {
+            "name": "bitflags",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "2.13.1"
+          },
+          {
+            "name": "block-buffer",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.12.1"
+          },
+          {
+            "name": "cfg-if",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.4"
+          },
+          {
+            "name": "cpufeatures",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.3.1"
+          },
+          {
+            "name": "crypto-common",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.2.2"
+          },
+          {
+            "name": "digest",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.11.3"
+          },
+          {
+            "name": "errno",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.3.14"
+          },
+          {
+            "name": "fe2o3-amd-target",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-amdhsa-loader",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-aql",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-drm-uapi",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-hsaco",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-kfd",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-kfd-uapi",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-runtime-model",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "fe2o3-target-spec",
+            "source": null,
+            "version": "0.1.0"
+          },
+          {
+            "name": "hybrid-array",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.4.14"
+          },
+          {
+            "name": "itoa",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.18"
+          },
+          {
+            "name": "libc",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.2.189"
+          },
+          {
+            "name": "linux-raw-sys",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.12.1"
+          },
+          {
+            "name": "memchr",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "2.8.3"
+          },
+          {
+            "name": "num-traits",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.2.19"
+          },
+          {
+            "name": "proc-macro2",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.107"
+          },
+          {
+            "name": "quote",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.47"
+          },
+          {
+            "name": "rmp",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.8.15"
+          },
+          {
+            "name": "rmpv",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.3.1"
+          },
+          {
+            "name": "rustix",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.1.4"
+          },
+          {
+            "name": "serde",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.229"
+          },
+          {
+            "name": "serde_core",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.229"
+          },
+          {
+            "name": "serde_derive",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.229"
+          },
+          {
+            "name": "serde_json",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.151"
+          },
+          {
+            "name": "sha2",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.11.0"
+          },
+          {
+            "name": "spin",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.12.3"
+          },
+          {
+            "name": "syn",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "3.0.4"
+          },
+          {
+            "name": "typenum",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.20.1"
+          },
+          {
+            "name": "unicode-ident",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.24"
+          },
+          {
+            "name": "windows-link",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.2.1"
+          },
+          {
+            "name": "windows-sys",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "0.61.2"
+          },
+          {
+            "name": "zeroize",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.9.0"
+          },
+          {
+            "name": "zmij",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "version": "1.0.23"
+          }
+        ],
+        "returncode": 0,
+        "revision": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+        "role": "prepare",
+        "schema": "FerricCurrentRuntimeCpuQualificationR1",
+        "scope": "exact nine-crate runtime commit bytes with projected workspace membership; publication independently checked; not whole compiler qualification",
+        "source_archive_sha256": "f44d31f140938f918f159f47fb6c81975063c34526221029a4bc1ff10c72a462",
+        "source_manifest_sha256": "7556969848bba4bfb13e14bc1b2d56882dbd46e48e3f95adc381cbf675890c8a"
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+        "prepare"
+      ],
+      "role": "prepare",
+      "source_rosters": {
+        "source_after": "f6234d2aea4c47a297c26474d20643ba0c993a7a05286fb898cf7dd934d4bce5"
+      },
+      "test_counts": []
+    },
+    "runtime-tests": {
+      "files": {
+        "helper": {
+          "bytes": 12467,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+          "sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71"
+        },
+        "inner": {
+          "bytes": 116052,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/tests/receipt.json",
+          "sha256": "975cd049aecb0de01bbff03ef6f21270685a50a63620c9edd77ccb6c047fa0dc"
+        },
+        "result": {
+          "bytes": 2700,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-tests-a001/result.json",
+          "sha256": "66418fe48fc9ff7e172eff5388b05982cc2c083f53ba127b4ce65839e8d30947"
+        },
+        "role_stderr": {
+          "bytes": 1814,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/tests/stderr",
+          "sha256": "6e6b6b9bdda87c4d47ba4eb23cbca5f56399af5ac428d67f35f72d24ed4aa554"
+        },
+        "role_stdout": {
+          "bytes": 78686,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/tests/stdout",
+          "sha256": "17d172833bd39dad0605768cadf06eda7af696841777a5a18be21c8bc11d4848"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-tests-a001/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-tests-a001/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1171,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-tests-a001/stdout",
+          "sha256": "8fdbdaceb00756f131120332c72b5d35822d6567d4a42b4b8e40d0d9ffffffab"
+        }
+      },
+      "group": "runtime",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/source/Cargo.toml",
+          "-p",
+          "fe2o3-kfd",
+          "--features",
+          "engineering-gfx950",
+          "--lib",
+          "--bin",
+          "fe2o3-gfx950-engineering-worker",
+          "--",
+          "--test-threads=1"
+        ],
+        "compiler_qualified": false,
+        "helper_sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71",
+        "native_executed": false,
+        "performance_qualified": false,
+        "planning_increment_bytes": 536870912,
+        "returncode": 0,
+        "revision": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+        "role": "tests",
+        "schema": "FerricCurrentRuntimeCpuQualificationR1",
+        "scope": "exact nine-crate runtime commit bytes with projected workspace membership; publication independently checked; not whole compiler qualification",
+        "source_archive_sha256": "f44d31f140938f918f159f47fb6c81975063c34526221029a4bc1ff10c72a462",
+        "source_manifest_sha256": "7556969848bba4bfb13e14bc1b2d56882dbd46e48e3f95adc381cbf675890c8a",
+        "test_totals": [
+          [
+            748,
+            0,
+            3,
+            0,
+            0
+          ],
+          [
+            9,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+        "tests"
+      ],
+      "role": "tests",
+      "source_rosters": {
+        "source_after": "f6234d2aea4c47a297c26474d20643ba0c993a7a05286fb898cf7dd934d4bce5"
+      },
+      "test_counts": [
+        [
+          748,
+          0,
+          3,
+          0,
+          0
+        ],
+        [
+          9,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "runtime-worker": {
+      "files": {
+        "helper": {
+          "bytes": 12467,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+          "sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71"
+        },
+        "inner": {
+          "bytes": 116122,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/worker/receipt.json",
+          "sha256": "3fa91d54b543ec49e3081644de6c7aee0ff38281b0e2b00398c9e6656e74c83b"
+        },
+        "result": {
+          "bytes": 2700,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-worker-a001/result.json",
+          "sha256": "86abf8acb4a28af7db2f80d14cef60ffed55cf1da88e9138c3d0d60130f06e2f"
+        },
+        "role_stderr": {
+          "bytes": 1499,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/worker/stderr",
+          "sha256": "fb068ff881dfa2ef1bb0acb8c6a19c483dc23e772a9773708525c9dbb064df78"
+        },
+        "role_stdout": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/worker/stdout",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": {
+          "bytes": 2,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-worker-a001/exit.status",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+        },
+        "stderr": {
+          "bytes": 0,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-worker-a001/stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "bytes": 1317,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/results/pages-runtime-da6b-worker-a001/stdout",
+          "sha256": "f3270511d779f386b98b2107b24fdf74cb4ecf37f0deb9cae00a80241340796a"
+        }
+      },
+      "group": "runtime",
+      "inner_fixed": {
+        "accepted": true,
+        "argv": [
+          "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+          "build",
+          "--release",
+          "--locked",
+          "--offline",
+          "--manifest-path",
+          "/tmp/ferric-v16-emitter-b95a642-r1/runtime-da6b-a001/source/Cargo.toml",
+          "-p",
+          "fe2o3-kfd",
+          "--features",
+          "engineering-gfx950",
+          "--bin",
+          "fe2o3-gfx950-engineering-worker"
+        ],
+        "compiler_qualified": false,
+        "helper_sha256": "92cbcc7d171a9ed7fea8f5eedca0772751e79a338d43c3c991250d00db457e71",
+        "native_executed": false,
+        "performance_qualified": false,
+        "planning_increment_bytes": 268435456,
+        "returncode": 0,
+        "revision": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+        "role": "worker",
+        "schema": "FerricCurrentRuntimeCpuQualificationR1",
+        "scope": "exact nine-crate runtime commit bytes with projected workspace membership; publication independently checked; not whole compiler qualification",
+        "source_archive_sha256": "f44d31f140938f918f159f47fb6c81975063c34526221029a4bc1ff10c72a462",
+        "source_manifest_sha256": "7556969848bba4bfb13e14bc1b2d56882dbd46e48e3f95adc381cbf675890c8a",
+        "worker": {
+          "bytes": 2093512,
+          "path": "/tmp/ferric-v16-emitter-b95a642-r1/target-fence-client-a001/release/fe2o3-gfx950-engineering-worker",
+          "sha256": "74d764e8797ba0413e38b762765d07faf74aa6a0af5daf60c0a1a56adc64f20a"
+        }
+      },
+      "outer_argv": [
+        "/bin/bash",
+        "/tmp/ferric-v16-emitter-b95a642-r1/owner/cpu-env-42g-emitter.sh",
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/inputs/runtime-da6b-a001/qualify_runtime.py",
+        "worker"
+      ],
+      "role": "worker",
+      "source_rosters": {
+        "source_after": "f6234d2aea4c47a297c26474d20643ba0c993a7a05286fb898cf7dd934d4bce5"
+      },
+      "test_counts": []
+    }
+  },
+  "runtime_revision": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+  "schema": "FerricGateUpAuditedCpuCatalogA009"
+}

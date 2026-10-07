@@ -1,0 +1,91 @@
+{
+  "schema": "FerricNativeGateUpIndependentReviewR1",
+  "date": "2026-10-06",
+  "status": "inconclusive",
+  "independent_custody_audit": "passed",
+  "independent_numerical_audit": "passed",
+  "plan_sha256": "67bf416039c4062d76e3044137fa77dc2a5d5b1eeed9978c601272479cf5fe3f",
+  "report_sha256": "7968a1ddb16d08adeb6fa3abd3d7996617cfe1f5c28663b670236fcef0a88e8e",
+  "retained_tree": {
+    "schema": "FerricRetainedStageContentRosterV1",
+    "files": 2905,
+    "directories_excluding_root": 110,
+    "logical_bytes": 369045130,
+    "canonical_roster_bytes": 486781,
+    "canonical_roster_sha256": "216493e6642e225d1af7009973d7f71eb8095f8507dda829dc5b85b1a8935329",
+    "plan_files_verified": 351,
+    "source_pins_verified": 46,
+    "nested_local_bindings_verified": 3040,
+    "runtime_lock_sha256": "b605fb665bbd9b6ba266c0b6f74f4b9cab50bd1845e136dc6ac6cb6b2dadd252",
+    "runtime_source_scope": "778 files from archive plus explicitly retained qualified Cargo.lock; not archive alone",
+    "controller_source_files_verified": 1441
+  },
+  "lifecycle": {
+    "clean_reaped_unsignaled_native_cells": 14,
+    "clean_cpu_role_closures": 28,
+    "accepted_complete_self_only_descriptor_scans": 749,
+    "preserved_refused_descriptor_scans": 13,
+    "refused_scan_interpretation": "Twelve incomplete scans and one worker-appearance refusal are linked to bounded fresh accepted retries under the existing policy. Not zero refused scans.",
+    "resource_snapshots_verified": 2260,
+    "minimum_root_free_bytes": 84230733824
+  },
+  "correctness": {
+    "requests": 74,
+    "exact_output_token_ids": 9472,
+    "streamed_utf8_exact": true,
+    "raw_batches_verified": 9694,
+    "raw_model_dispatches_verified": 6658150,
+    "scope": "Fixed prompt, 128 input and 128 output tokens; not broad model quality qualification"
+  },
+  "timing": {
+    "timed_requests_per_arm": 24,
+    "excluded_warmup_requests": 24,
+    "excluded_counter_requests": 2,
+    "ttft_ms": {
+      "control_median": 414.320062,
+      "candidate_median": 400.4010335,
+      "control_p95": 432.79094585,
+      "candidate_p95": 434.33002705
+    },
+    "tpot_ms": {
+      "control_median": 51.16525300000001,
+      "candidate_median": 44.5872775,
+      "control_p95": 53.8425953,
+      "candidate_p95": 50.6339936
+    },
+    "finite_output_tokens_per_second": {"control": 18.784980784695357, "candidate": 20.333478683393174},
+    "observed_median_tpot_reduction_percent": 12.856333379217356,
+    "observed_median_ttft_reduction_percent": 3.3594869707274766,
+    "observed_finite_output_rate_gain_percent": 8.243276458176751,
+    "pair_tpot_gain_percent_in_order": [15.748774939446552, 6.548361501484634, -6.308345731159393, -6.210157558372886, 16.441322659024603, 16.023449189543093],
+    "positive_pairs": 4,
+    "required_positive_pairs": 5,
+    "scope": "Native ingress, finite measured windows; not HTTP, calibrated GPU time or loaded steady-state throughput"
+  },
+  "cell_medians_ttft_tpot_ms_in_order": [
+    {"cell": "block1-A1", "ttft": 431.448982, "tpot": 52.908201},
+    {"cell": "block1-B1", "ttft": 398.0780215, "tpot": 44.5758075},
+    {"cell": "block1-B2", "ttft": 399.0674275, "tpot": 44.3817975},
+    {"cell": "block1-A2", "ttft": 401.3907185, "tpot": 47.4917275},
+    {"cell": "block2-A1", "ttft": 401.359329, "tpot": 47.554036},
+    {"cell": "block2-B1", "ttft": 429.6377915, "tpot": 50.553909},
+    {"cell": "block2-B2", "ttft": 430.1852515, "tpot": 50.324525},
+    {"cell": "block2-A2", "ttft": 400.5232535, "tpot": 47.3820265},
+    {"cell": "block3-A1", "ttft": 428.2376805, "tpot": 52.8987885},
+    {"cell": "block3-B1", "ttft": 396.606441, "tpot": 44.201528},
+    {"cell": "block3-B2", "ttft": 401.927069, "tpot": 44.5542335},
+    {"cell": "block3-A2", "ttft": 429.596966, "tpot": 53.055565}
+  ],
+  "diagnosis": {
+    "block2_reversal": "All eight candidate timed requests have elevated TPOT, as do their warmups. Unchanged prefill TTFT is also elevated. Not explained by one TTFT outlier.",
+    "gpu_clock_power_temperature_samples_available": false,
+    "cpu_scope": "Process endpoints include warmups and timed requests together, exclude setup and teardown, and are not GPU time.",
+    "cause_established": false,
+    "no_posthoc_pair_exclusion": true
+  },
+  "checks": {"faster_adjacent_pairs": false, "median_tpot_gain": true, "positive_both_orders": true, "regression_limits": true},
+  "performance_qualified": false,
+  "default_promotion": false,
+  "http_selection_admitted": false,
+  "vendor_comparison_performed": false
+}

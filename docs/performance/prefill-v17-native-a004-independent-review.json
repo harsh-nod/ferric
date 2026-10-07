@@ -1,0 +1,142 @@
+{
+  "schema": "FerricV17IndependentRawReviewV1",
+  "archive": {
+    "file": "prefill-v17-native-complete-a004.tar.gz",
+    "bytes": 75559089,
+    "sha256": "ba3c28709dd76a55a4b700a314f39c152fac9c8a15b37d2196825f015a5ea05d",
+    "entries": 2805
+  },
+  "physical_plan_sha256": "14d9594e8cd192dd869dbac409eec6ad4375ea4902c2039ceda3274d6ab3e049",
+  "report_sha256": "465a6c6e31867ea78420a78b4225e90acea0c1abfc6babaa338f82cfbc8e65cf",
+  "scope": "Independent streamed raw token/timestamp arithmetic and outer-to-inner hash custody. Not a rerun of host/path-dependent native admission; no local builds or tests.",
+  "verified": {
+    "clean_cells": 14,
+    "raw_stdout_token_parity": true,
+    "requests": 74,
+    "output_tokens": 9472,
+    "measured_per_arm": 24,
+    "warmups_per_latency_cell": 2,
+    "raw_summary_exact": true,
+    "hashes_checked": 86,
+    "all_outer_completion_inner_raw_links_match": true,
+    "timing_instrumented": false
+  },
+  "mechanism": {
+    "A": {
+      "executions": 127,
+      "publications": 127,
+      "final_waits": 127,
+      "dispatches": 82804,
+      "retirement_signals": 82804,
+      "kernarg_initialized_bytes": 27815032
+    },
+    "B": {
+      "executions": 135,
+      "publications": 135,
+      "final_waits": 135,
+      "dispatches": 87708,
+      "retirement_signals": 87708,
+      "kernarg_initialized_bytes": 29467192,
+      "prefill_executions": 8,
+      "prefill_dispatches_each": 613,
+      "prefill_dynamic_slots": 216,
+      "decode_executions": 127,
+      "decode_dispatches_each": 652,
+      "decode_dynamic_slots": 180,
+      "registrations": 2,
+      "releases": 2
+    },
+    "model_dispatches_per_request": 87711,
+    "model_batches_per_request": 135,
+    "program_scope_excludes_three_head_singletons": true
+  },
+  "recomputed": {
+    "arms": {
+      "A": {
+        "requests": 24,
+        "ttft_ms": {
+          "mean": 892.3163522916667,
+          "median": 868.1564535,
+          "p95": 1099.9273838999998
+        },
+        "tpot_ms": {
+          "mean": 52.505267999999994,
+          "median": 53.210963,
+          "p95": 55.389391749999994
+        },
+        "finite_output_tokens_per_second": 16.929360179099927
+      },
+      "B": {
+        "requests": 24,
+        "ttft_ms": {
+          "mean": 762.3996649583332,
+          "median": 772.931099,
+          "p95": 785.066423
+        },
+        "tpot_ms": {
+          "mean": 51.52585520833333,
+          "median": 53.1927635,
+          "p95": 53.884683349999996
+        },
+        "finite_output_tokens_per_second": 17.518593825550205
+      }
+    },
+    "pairs": [
+      {
+        "block": 1,
+        "order": "AB",
+        "ttft_gain_percent": 10.924869819926357
+      },
+      {
+        "block": 1,
+        "order": "BA",
+        "ttft_gain_percent": 11.819430353531466
+      },
+      {
+        "block": 2,
+        "order": "AB",
+        "ttft_gain_percent": 15.679814614163037
+      },
+      {
+        "block": 2,
+        "order": "BA",
+        "ttft_gain_percent": 5.366131804192378
+      },
+      {
+        "block": 3,
+        "order": "AB",
+        "ttft_gain_percent": 9.66758432927033
+      },
+      {
+        "block": 3,
+        "order": "BA",
+        "ttft_gain_percent": 20.56455522210324
+      }
+    ],
+    "gains": {
+      "median_ttft": 10.968685899424692,
+      "median_tpot": 0.03420253830023989,
+      "p95_ttft": 28.625613427642914,
+      "finite_rate": 3.480542916073781
+    },
+    "regression": {
+      "ttft_p95": -28.625613427642914,
+      "tpot_median": -0.03420253830023989,
+      "tpot_p95": -2.7166003316871565,
+      "finite_rate": -3.480542916073781
+    },
+    "checks": {
+      "minimum_median_ttft_gain": true,
+      "minimum_faster_pairs": true,
+      "positive_both_orders": true,
+      "secondary_no_regression": true
+    },
+    "summaries_match": true
+  },
+  "conclusion": "All preregistered within-native TTFT gates pass. Median TTFT improves 10.97%; median TPOT is essentially unchanged (0.034% improvement). Candidate is eligible for the separate matched HTTP experiment; this is not default promotion, an ordered64 comparison, or a vendor performance lead.",
+  "limitations": [
+    "No measured clock, temperature, power or throttle-state equivalence.",
+    "Finite interval GPU attribution is not continuous isolation.",
+    "Report floating-point last-bit differences are arithmetic reduction order only; raw per-request summaries match exactly."
+  ]
+}

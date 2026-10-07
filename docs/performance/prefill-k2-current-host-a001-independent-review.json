@@ -1,0 +1,74 @@
+{
+  "schema": "FerricPrefillK2CurrentHostIndependentReviewV1",
+  "sdk_revision": "55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9",
+  "source_archive_sha256": "0ffa3ac71dadeec468dadd5be79339c2eb9dbd60228211c5390a155710c54f44",
+  "qualifier_sha256": "0a3c1e2c2350b3f9e4b141a52ac2a79aa3434a11eb93f524e3102ddc66c76235",
+  "cpu_receipt_pairs": {
+    "prepare": [
+      "20fd0ceaaf362957cd4fffef9bdc0c86c3334f90303c89f32d5aaefe9c7331ac",
+      "ddce9108cd9a54f56e37ebfbbf00e68a510e4a1a34c0062e6e17c991e9bc5052"
+    ],
+    "test-default": [
+      "7706d3bba531b1bce4fd02b02e8be09bb84f52c8ba828aecc4569f6e6f304cbb",
+      "4f00289fa8fe69e9bed9f52fabd41f05026f396a9af54157ce605515dfc3bee9"
+    ],
+    "test-enabled": [
+      "408880f0f6a7299c3332fe05d7da5be812ac4d3e7d8b87f90715e6aef79788b9",
+      "0ad7ebd8fb11e8f9f0b6c8cc5a8904080ce7e7d515036fad59025dc507ec3978"
+    ],
+    "clippy-default": [
+      "54551c39708bc2ea681291ad644997615c826ec92d6e66ca9455c8ddb9631671",
+      "c696cfd949c16f4ff438b2ab4ad820410bb0c039e8131096f4e9dcfa6fa6d4c9"
+    ],
+    "clippy-enabled": [
+      "9282d9e9371e45a7bbd384c8cf05b382acc63848995567d675256a45b9efeb81",
+      "9e358b8c948d0c5fe43f9059593c1d48eb844c78e252be2540fadaf848fd3659"
+    ]
+  },
+  "source_files": 24,
+  "kernel_bodies_unchanged": true,
+  "source_change": "Two direct SDK revisions; generated lock separately retained; no kernel-body or feature-gating changes",
+  "lock_sha256": "d445c85e6aa9c8f1d027581d36c8e8359a22bf86f8eccf4b60f229cd5e15a75b",
+  "lock_packages": 167,
+  "git_packages": {
+    "fe2o3": 57,
+    "pliron": 2
+  },
+  "closed_git_sources_verified": true,
+  "registry_version_changes": {
+    "smallvec": [
+      "1.15.2",
+      "1.16.0"
+    ],
+    "thiserror": [
+      "2.0.16",
+      "2.0.20"
+    ],
+    "thiserror-impl": [
+      "2.0.16",
+      "2.0.20"
+    ],
+    "toml": [
+      "1.1.4",
+      "1.1.5"
+    ]
+  },
+  "dependency_edge_change": "fe2o3-compiler-execution-protocol adds fe2o3-rustc-invocation, matching upstream source; thiserror-impl uses syn 3.0.4 instead of 2.0.119",
+  "profiles": {
+    "gfx950,mfma": {
+      "tests_passed": 22,
+      "tests_ignored": 0,
+      "strict_clippy_passed": true
+    },
+    "gfx950,prefill-mfma-k2": {
+      "tests_passed": 22,
+      "tests_ignored": 0,
+      "strict_clippy_passed": true
+    }
+  },
+  "all_clean_reaped_unsignaled": true,
+  "local_builds_or_tests": false,
+  "native_correctness": false,
+  "native_performance": false,
+  "default_promotion": false
+}

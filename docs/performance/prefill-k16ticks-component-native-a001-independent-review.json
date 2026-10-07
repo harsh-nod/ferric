@@ -1,0 +1,56 @@
+{
+  "schema": "FerricK16TicksIndependentReviewV1",
+  "accepted": true,
+  "archive_sha256": "f83f0b046d7ed5961d14e76e40b6e260f1d121587d0c6a251f046434ce454f60",
+  "receipt_sha256": "a42b17e3a04aafd508df41454c278e371188bb1e8884eabc53d9e122d96a55c1",
+  "plan_sha256": "6c44c94e9868d156d3ab4d59885f0b9f9c70c47cab998e8a2e258a0b0b624a69",
+  "result_sha256": "b1f2db255393c3ca84c7251c4545422f3647d850afed854cb5f99322bfd866fd",
+  "outer_sha256": "e246a95da4286ded38fad0e24ff4f724bb963a385213670439ecd3c6ea1eff31",
+  "custody": {
+    "archive_bytes": 58437124,
+    "entries": 167,
+    "regular_files": 138,
+    "logical_bytes": 62653944,
+    "plan_bound_files": 97,
+    "tested_sources": 28,
+    "fresh_cpu_tests_passed": 77,
+    "kernel_runtime_files_identical_to_audited_latency_cohort": 61,
+    "all_rosters_and_hashes_match": true
+  },
+  "native": {
+    "clean_reaped_unsignaled": true,
+    "calls": 16,
+    "profiled_packets": 16,
+    "protocol_records": 339,
+    "counter_snapshots": 32,
+    "write_payload_hashes_recomputed": 43,
+    "read_payload_hashes_recomputed": 68,
+    "complete_output_and_guard_checks": 16,
+    "output_elements_per_call": 393216,
+    "packet_ids": "0..15",
+    "queue_epoch": 0,
+    "same_device_image_and_allocation_controls": true,
+    "isolation_is_sampled": true
+  },
+  "raw_packet_ticks": {
+    "warmup_intervals_in_order": [25356, 21800, 24656, 22036],
+    "control_timed": [24824, 24836, 24768, 24660, 24536, 24900],
+    "paired_timed": [21848, 21816, 21668, 21712, 21800, 21692],
+    "control_median": 24796,
+    "paired_median": 21756,
+    "median_reduction_percent": 12.26004194224875,
+    "positive_adjacent_pairs": 6,
+    "total_adjacent_pairs": 6
+  },
+  "profiled_host_wall_ns": {
+    "control_median": 3962742,
+    "paired_median": 3964312.5
+  },
+  "profiled_worker_wall_ns": {
+    "control_median": 361275,
+    "paired_median": 362270
+  },
+  "model_performance_qualified": false,
+  "promoted": false,
+  "scope": "Separate hot-buffer profiled same-device packet intervals; frequency unspecified, not calibrated nanoseconds, not shader-only or model performance."
+}

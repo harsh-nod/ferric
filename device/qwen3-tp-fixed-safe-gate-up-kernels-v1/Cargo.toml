@@ -1,0 +1,23 @@
+[package]
+name = "ferric-qwen3-tp-fixed-safe-gate-up-kernels-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[workspace]
+
+[features]
+default = []
+gfx950 = []
+fixed-safe-gate-up-r1 = ["gfx950", "dep:fe2o3-host"]
+
+[dependencies]
+fe2o3-device = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "1a5999f6e1c5f2363bc2d525af65e84c46502ce6", version = "=0.1.0" }
+
+[target.'cfg(not(target_arch = "amdgpu"))'.dependencies]
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "1a5999f6e1c5f2363bc2d525af65e84c46502ce6", version = "=0.1.0", optional = true }
+
+[lib]
+name = "ferric_qwen3_tp_fixed_safe_gate_up_kernels_v1"
+path = "src/lib.rs"

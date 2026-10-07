@@ -7,18 +7,61 @@ optimization, autotuning, and runner generation offline.
 
 ```text
 crates/ferric-spec       executable sequential semantics and Verus targets
-crates/ferric-kernels    fe2o3 kernels, contracts, and finite schedules
+crates/ferric-kernels    structural kernel catalog and finite schedules
+crates/ferric-qwen-kernels Ferric-owned Qwen kernel compiler profiles
+crates/ferric-generated-runner checked-in inert runner declarations
 crates/ferric-engine     scheduler, KV, speculation, and generated runner
 crates/ferric-build      model admission, packing, planning, tuning, bundles
 src/bin/ferricd.rs       thin unverified serving boundary
-generated/               model/target-specific generated runner
 proofs/                  system-level refinement proofs
 benches/                 identity-bound qualification harnesses
 ```
 
-Only `ferric-spec` and the first `ferric-engine` state model exist today.
-Crates are added when they contain real final-path behavior; placeholder GPU
-execution is not permitted.
+`ferric-spec`, the first `ferric-engine` state model, the finite structural
+K1-K7 profile catalog in `ferric-kernels`, and the pinned Qwen3 configuration,
+tokenizer, and streaming safetensors admission slices of `ferric-build` exist
+today. Tokenizer admission authenticates the exact shared
+payload and exhaustively binds its vocabulary IDs, merge order, processing
+pipeline, added tokens, special tokens, and chat-template metadata. The sealed
+authority now retains the admitted vocabulary and merge program for bounded,
+deterministic UTF-8 encode and exact byte decode. The one authenticated Qwen3
+program uses pinned Unicode 9 NFC tables and a private fixed Split regex over
+bundled Oniguruma Unicode 16 tables; it does not expose a general tokenizer or
+caller-selected regex path.
+Safetensors admission authenticates exact full files and validates the closed
+Qwen3 BF16 tensor schema without buffering tensor payloads. A fixed-width
+canonical record revalidates all pinned and derived identities, but does not
+sign the record or confer authentication authority for external files. These
+slices do not establish full Hugging Face tokenizer equivalence, transform or
+pack tensors, inspect tensor values, or load device memory. The structural
+kernel catalog covers every
+operation in the 22 exact B3 plans and names Ferric-owned source declarations
+for all seven kernel families. Those declarations do not establish file
+availability, implementation, review, or authority, and profiles that require
+additional coverage remain explicitly marked as required extensions. The
+catalog grants no proof, artifact, compilation, load, launch, dispatch,
+hardware, performance, or qualification authority. Crates are added when they
+contain real final-path behavior; placeholder GPU execution is not permitted.
+
+The data-only `ferric-generated-runner` crate and roadmap-facing
+`generated/qwen3_m1.rs` are byte-exact checked-in publications of the current
+deterministic Qwen3/gfx942 declaration generator. The crate source is compiled;
+the standalone path is retained as an inert auditable artifact, and neither is
+an independent template. They name all 22
+target-then-draft B3 selections, their exact operation offsets and counts, and
+four logical scalar-input schemas. `ferric-build` expands those declarations
+against authenticated admission, the sequential plan catalog, the structural
+kernel catalog, and the preliminary identity closure. The resulting retained
+record covers all 10,648 exact typed operations, including buffer kinds and
+shapes, and regeneration is tested for byte equality. A non-clone publication
+step revalidates and consumes that complete build-owned declaration before the
+engine accepts logical custody. The current bounded bridge uses the acyclic
+`ferric-engine -> ferric-build` dependency so no public caller-authored record
+can mint equivalent custody. Engine lookup binds a request-local `StepPlan` to
+an exact retained plan identity and independently bounds its operation span.
+This is not a physical runtime: it contains no address, allocation, artifact,
+loader, queue, packet, launch, completion, hardware observation,
+graph-refinement proof, performance result, or qualification authority.
 
 ## Dependency Boundary
 
@@ -30,6 +73,16 @@ must not depend on compiler crates, LLVM, COMGR, HIP launch APIs, vendor GEMM
 libraries, PyTorch, Python, runtime JIT facilities, or the fe2o3 legacy
 compiler.
 
+The authenticated tokenizer path has exactly two admitted crates.io roots: `onig`
+6.5.3 with default features disabled and `unicode-normalization-alignments`
+0.1.12. `proofs/RUNTIME_DEPENDENCY_TCB` binds their complete resolved package,
+source, checksum, feature, target-kind, build-script, proc-macro, and edge
+closure. The source gate regenerates that closure from full Cargo metadata and
+the checksum-bearing format-4 lockfile, rejects every other registry root, and
+binds the canonical records into its source inventory and dependency TCB.
+Oniguruma C compilation and unsafe FFI and both libraries' Unicode tables are
+contracted dependencies rather than verified Ferric code.
+
 The qualified release is produced by the strict `cargo-verus build --release`
 invocation. Rebuilding the binary afterward with a different Cargo invocation
 would create a new, unqualified artifact even when source files are unchanged.
@@ -40,7 +93,7 @@ The offline build owns:
 strict model admission
   -> canonical Model IR
   -> algorithm and execution planning
-  -> fe2o3 kernel compilation and proof
+  -> Ferric-owned model kernels over reusable fe2o3 compiler APIs
   -> finite schedule qualification
   -> generated runner
   -> signed deployment bundle
@@ -48,7 +101,7 @@ strict model admission
 
 ## Generated Runtime
 
-The generated runner embeds exact:
+The final generated runtime is required to embed exact:
 
 - target and draft model identities;
 - tokenizer, vocabulary, and numerical policy identities;
@@ -58,9 +111,10 @@ The generated runner embeds exact:
 - prefill, target decode, speculative, and sampling command graphs; and
 - target, compiler, schedule, and complete plan identities.
 
-At admission, Ferric authenticates the bundle and instantiates bounded command
-templates. The generation loop patches only admitted addresses, lengths,
-positions, page-table locations, and RNG counters.
+The current generated declaration slice fixes 22 operation templates and four
+logical scalar patch schemas, but it does not instantiate device command
+packets, addresses, or runtime patch values. Those operations remain future
+runtime and independent-validation work.
 
 ## State Transition
 
@@ -75,6 +129,23 @@ current state
   -> validate the compact result record
   -> atomically apply StateDelta
 ```
+
+The physical queue exposes a legacy observation-budget wait and a production
+`wait_for(timeout_ms)` path. The production path enforces both Ferric's
+completion-progress/stalled-scan policy and one absolute monotonic wall-clock
+deadline. If either bound is reached, Ferric consumes the exact published owner
+through fe2o3's KFD-backed `wait_for(0)` terminalizer. A queue that completes in
+that final race returns completed custody; otherwise the failure retains queue,
+program, allocation, model-memory, and scheduler custody plus the addressless
+timeout observation and Ferric progress diagnostic. Rearmed failures also
+permanently fault their paired `Engine`.
+
+The concrete serving adapter and authenticated speculative bootstrap/rearm
+paths retain an opaque nonzero timeout before publication and select this
+combined wait. Bootstrap retry, repeated executor, and rollover-published
+custody preserve the same timeout, so it cannot be substituted after
+publication. This is a runtime ownership and liveness contract, not evidence
+that Qwen hardware execution or serving performance has been qualified.
 
 Cancellation changes logical request state but cannot release storage. Storage
 is retired only after the last referencing device epoch is quiescent.
@@ -97,9 +168,36 @@ exclusive writes, immutable sharing, copy-on-write before extension,
 commit-only publication, rollback unreachability, and quiescence before reuse.
 
 The M0 metadata state machine supports exclusive writable pages, sealed sharing
-of full committed prefix pages, and copy-on-write extension. It does not yet
-allocate, initialize, or share physical GPU KV buffers; that refinement begins
-with the device runtime milestone.
+of full committed prefix pages, and copy-on-write extension. The M1 logical
+foundation now adds an exact one-request, 16-token-page physical metadata
+projection over the 8192-token envelope, including generational ownership,
+initialized-prefix reads, accepted-prefix commit, rejected-tail rollback,
+cancellation, retirement, and quiescence-gated reuse. A separate verified
+32-slot interleaving model proves that one generational request transition
+frames every other request and that cancellation cannot publish or resurrect
+retiring work.
+
+These are source-level sequential refinements. They do not allocate, address,
+initialize, copy, or share GPU memory, produce quiescence from a device
+completion, or connect the generated declarations to a queue. The production
+multi-request device allocator and runtime composition remain open M1 work.
+
+`ferric-engine::device_cache` now adds a single-request engine custody bridge
+over that refinement: separate non-clone target/draft page-lease tables, an
+exact pending-write/completion typestate, initialized-only mapping and commit,
+rollback and cancellation retirement, and exact-epoch terminal quiescence.
+Page-allocation and initialized-write authorities have no production
+constructors because fe2o3 allocation authority and exact packet, buffer, and
+KV-write-effect authority are still missing; scoped unit-test stand-ins do not
+fill that gap. Rollback-retired pages from an earlier epoch require their own
+exact completion settlement before later cancellation can become terminal.
+The quiescent state exposes no release or reuse operation until fe2o3 provides
+the corresponding physical leases. This bridge does not implement the
+still-open multi-request device allocator, physical runner, hardware
+initialization, or M1 path obligation. It also consumes exact-completion
+authority directly; the future physical runner must compose and fan out one
+ordered queue completion into scheduler, KV, and resource permits without
+duplicating that linear authority.
 
 ## Speculative Round
 
@@ -121,13 +219,14 @@ once per draft token.
 Reusable capabilities belong upstream in fe2o3:
 
 - a connected production D1-D7 path for Ferric's closed Rust subset;
-- parameterized LLM kernel families and proof-bound finite schedules;
 - long-lived HSA queues, typed allocations, asynchronous copies, and bounded
   multi-packet command batches;
-- generated multi-kernel dispatch and graph identity binding;
+- generic multi-kernel dispatch and executable identity binding;
 - runner-visible quiescence capabilities;
 - numerical contracts for BF16, FP32, FP8, FP4, MFMA, exponentials, and
   reductions; and
 - translation validators and machine-resource gates.
 
-Ferric consumes these APIs. It does not duplicate them.
+Ferric consumes these APIs. Qwen kernels, inference graphs, finite model
+schedule catalogs, and generated inference runners remain Ferric-owned; they
+are not upstream fe2o3 components.

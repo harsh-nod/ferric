@@ -1,0 +1,1084 @@
+//! Typed host-visible output custody for one M1 compact-completion batch.
+//!
+//! K7 writes one canonical record per target sequence. This module binds that
+//! Ferric shape to generic `fe2o3` host-download storage while retaining an
+//! addressless range that can be used both by fixed dispatch and by completed
+//! readback. It constructs no packet, publishes no queue, launches no work,
+//! and grants no completion, content, inference, or refinement authority.
+
+use core::fmt;
+
+use fe2o3_service_host::{
+    HostDownloadRoleV1, HostVisibleAllocationV1, ServiceAllocationErrorV1, ServiceAllocationKeyV1,
+    ServiceAllocationSessionV1, ServiceHostDispatchRangeV1,
+};
+use ferric_qwen_kernels::logits::Qwen3LogitsCompactRecordLayoutV1;
+use ferric_spec::{Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection};
+
+use crate::{
+    BoundM1CompletionCanaryV1, BoundM1DirectDiagnosticChoicesV1, BoundM1QualificationLogitsV1,
+    BoundM1SpeculativeDiagnosticChoicesV1, M1CompletionCanaryErrorV1, M1CompletionCanaryLayoutV1,
+};
+
+type CompletionOutputAllocationKeyV1 =
+    ServiceAllocationKeyV1<HostDownloadRoleV1, HostVisibleAllocationV1>;
+
+/// Exact alignment required by K7's compact-record output pointer.
+pub const M1_COMPLETION_OUTPUT_ALIGNMENT_V1: u64 = 4;
+
+/// Checked target selection and exact host-download byte shape.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct M1CompletionOutputShapeV1 {
+    selection: Qwen3PlanSelection,
+    sequences: u32,
+    extent_bytes: u64,
+}
+
+impl M1CompletionOutputShapeV1 {
+    /// Returns the exact target selection bound to this output.
+    #[must_use]
+    pub const fn selection(self) -> Qwen3PlanSelection {
+        self.selection
+    }
+
+    /// Returns the exact number of fixed sequence records.
+    #[must_use]
+    pub const fn sequences(self) -> u32 {
+        self.sequences
+    }
+
+    /// Returns `sequences * 120` checked output bytes.
+    #[must_use]
+    pub const fn extent_bytes(self) -> u64 {
+        self.extent_bytes
+    }
+
+    /// Revalidates that a later step still names the exact same target shape.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`M1CompletionOutputErrorV1::SelectionDrift`] when the selection
+    /// differs, including changes that preserve the same sequence count.
+    pub fn revalidate_selection(
+        self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<(), M1CompletionOutputErrorV1> {
+        let actual = m1_completion_output_shape_v1(selection)?;
+        if actual != self {
+            return Err(M1CompletionOutputErrorV1::SelectionDrift {
+                expected: self.selection,
+                actual: selection,
+            });
+        }
+        Ok(())
+    }
+
+    /// Selects one canonical 120-byte record from an exact completed byte copy.
+    ///
+    /// This is only a byte-layout operation. The caller must obtain `bytes`
+    /// from generic generation-checked `read_completed` custody before using
+    /// the result as a completed device record.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`M1CompletionOutputErrorV1::ReadbackExtentDrift`] unless the
+    /// complete byte slice has this shape's exact extent, or
+    /// [`M1CompletionOutputErrorV1::SequenceOutOfRange`] for an invalid lane.
+    pub fn record_bytes(
+        self,
+        bytes: &[u8],
+        sequence: u32,
+    ) -> Result<&[u8], M1CompletionOutputErrorV1> {
+        let actual = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+        if actual != self.extent_bytes {
+            return Err(M1CompletionOutputErrorV1::ReadbackExtentDrift {
+                expected: self.extent_bytes,
+                actual,
+            });
+        }
+        if sequence >= self.sequences {
+            return Err(M1CompletionOutputErrorV1::SequenceOutOfRange {
+                sequences: self.sequences,
+                actual: sequence,
+            });
+        }
+        let record_bytes = Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES_USIZE;
+        let start = usize::try_from(sequence)
+            .ok()
+            .and_then(|sequence| sequence.checked_mul(record_bytes))
+            .ok_or(M1CompletionOutputErrorV1::ExtentOverflow)?;
+        let end = start
+            .checked_add(record_bytes)
+            .ok_or(M1CompletionOutputErrorV1::ExtentOverflow)?;
+        bytes
+            .get(start..end)
+            .ok_or(M1CompletionOutputErrorV1::ExtentOverflow)
+    }
+}
+
+/// Fail-closed M1 completion-output allocation or shape error.
+#[derive(Debug)]
+pub enum M1CompletionOutputErrorV1 {
+    /// The selection does not name one admitted target plan.
+    InvalidTargetSelection {
+        /// Rejected role/mode/bucket tuple.
+        selection: Qwen3PlanSelection,
+    },
+    /// The exact record extent overflowed its host representation.
+    ExtentOverflow,
+    /// A later step selection differs from the retained allocation shape.
+    SelectionDrift {
+        /// Exact retained target selection.
+        expected: Qwen3PlanSelection,
+        /// Rejected later selection.
+        actual: Qwen3PlanSelection,
+    },
+    /// A retained generic allocation key no longer has the exact byte extent.
+    AllocationExtentDrift {
+        /// Exact required bytes.
+        expected: u64,
+        /// Rejected key extent.
+        actual: u64,
+    },
+    /// A retained generic allocation key cannot satisfy K7 record alignment.
+    AllocationAlignmentDrift {
+        /// Minimum required alignment.
+        required: u64,
+        /// Rejected key alignment.
+        actual: u64,
+    },
+    /// Owner revalidation derived a different host dispatch range.
+    DispatchRangeDrift,
+    /// Maintenance-only output custody cannot authorize a served completion.
+    DraftCatchupCustodyDrift,
+    /// A completed byte copy differs from the exact full output extent.
+    ReadbackExtentDrift {
+        /// Exact required bytes.
+        expected: u64,
+        /// Rejected byte count.
+        actual: u64,
+    },
+    /// A requested record lane lies outside the fixed output shape.
+    SequenceOutOfRange {
+        /// Exact sequence count.
+        sequences: u32,
+        /// Rejected zero-based lane.
+        actual: u32,
+    },
+    /// The generic allocation owner rejected allocation, mapping, or range use.
+    Allocation(ServiceAllocationErrorV1),
+    /// Guarded output geometry or initialization could not be represented.
+    Canary(M1CompletionCanaryErrorV1),
+}
+
+impl fmt::Display for M1CompletionOutputErrorV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "M1 completion output rejected: {self:?}")
+    }
+}
+
+impl std::error::Error for M1CompletionOutputErrorV1 {}
+
+impl From<ServiceAllocationErrorV1> for M1CompletionOutputErrorV1 {
+    fn from(error: ServiceAllocationErrorV1) -> Self {
+        Self::Allocation(error)
+    }
+}
+
+/// Move-only custody of one exact M1 host-download allocation binding.
+///
+/// Native allocation ownership remains in the generic allocation session and
+/// later moves into the queue ledger. The retained range is inert and remains
+/// generation checked by both fixed-batch binding and completed readback.
+///
+/// ```compile_fail
+/// use ferric_engine::BoundM1CompletionOutputV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<BoundM1CompletionOutputV1>();
+/// ```
+#[must_use = "the exact host-download allocation binding must remain retained"]
+#[derive(Debug)]
+pub struct BoundM1CompletionOutputV1 {
+    shape: M1CompletionOutputShapeV1,
+    key: CompletionOutputAllocationKeyV1,
+    dispatch_range: ServiceHostDispatchRangeV1,
+    data_index: usize,
+    completion_canary: Option<BoundM1CompletionCanaryV1>,
+    direct_diagnostic_choices: Option<BoundM1DirectDiagnosticChoicesV1>,
+    qualification_logits: Option<BoundM1QualificationLogitsV1>,
+    engineering_s1_k4_logits: Option<BoundM1QualificationLogitsV1>,
+    speculative_diagnostic_choices: Option<BoundM1SpeculativeDiagnosticChoicesV1>,
+    draft_catchup: Option<M1DraftCatchupOutputCustodyV1>,
+}
+
+#[derive(Debug)]
+struct M1DraftCatchupOutputCustodyV1 {
+    parent_shape: M1CompletionOutputShapeV1,
+    dispatch_range: ServiceHostDispatchRangeV1,
+    data_index: usize,
+    speculative_diagnostic_choices: BoundM1SpeculativeDiagnosticChoicesV1,
+}
+
+/// Preclock invalid-token images for one exact speculative-output restoration.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDiagnosticResetHostStorageV1 {
+    shape: crate::M1SpeculativeDiagnosticChoicesShapeV1,
+    draft_image: Box<[u8]>,
+    target_image: Box<[u8]>,
+}
+
+impl M1AuthenticatedDiagnosticResetHostStorageV1 {
+    pub(crate) fn try_new(parent: Qwen3PlanSelection) -> Option<Self> {
+        exact_s1_speculative_catchup_output_transition(
+            m1_completion_output_shape_v1(parent).ok()?,
+        )?;
+        let shape = crate::m1_speculative_diagnostic_choices_shape_v1(parent).ok()?;
+        let draft_image =
+            crate::speculative_diagnostic_choices::replacement_image(shape.draft_extent_bytes())
+                .ok()?;
+        let target_image =
+            crate::speculative_diagnostic_choices::replacement_image(shape.target_extent_bytes())
+                .ok()?;
+        Some(Self {
+            shape,
+            draft_image,
+            target_image,
+        })
+    }
+
+    pub(crate) fn accepts_parent(&self, parent: Qwen3PlanSelection) -> bool {
+        self.shape.selection() == parent
+            && m1_completion_output_shape_v1(parent)
+                .ok()
+                .and_then(exact_s1_speculative_catchup_output_transition)
+                .is_some()
+            && crate::m1_speculative_diagnostic_choices_shape_v1(parent)
+                .is_ok_and(|shape| shape == self.shape)
+            && usize::try_from(self.shape.draft_extent_bytes()) == Ok(self.draft_image.len())
+            && usize::try_from(self.shape.target_extent_bytes()) == Ok(self.target_image.len())
+            && self.draft_image.iter().all(|byte| *byte == u8::MAX)
+            && self.target_image.iter().all(|byte| *byte == u8::MAX)
+    }
+
+    pub(crate) fn matches_restored_output(&self, output: &BoundM1CompletionOutputV1) -> bool {
+        self.accepts_parent(output.shape().selection())
+            && output.can_retarget_exact_s1_speculative_to_draft_catchup(self.shape.selection())
+            && output
+                .speculative_diagnostic_choices()
+                .is_some_and(|choices| {
+                    choices.shape() == self.shape
+                        && choices.retained_draft_range().extent_bytes()
+                            == self.shape.draft_extent_bytes()
+                        && choices.retained_target_range().extent_bytes()
+                            == self.shape.target_extent_bytes()
+                })
+    }
+
+    pub(crate) fn into_images(self) -> (Box<[u8]>, Box<[u8]>) {
+        (self.draft_image, self.target_image)
+    }
+}
+
+impl BoundM1CompletionOutputV1 {
+    /// Returns the exact target selection and output geometry.
+    #[must_use]
+    pub const fn shape(&self) -> M1CompletionOutputShapeV1 {
+        self.shape
+    }
+
+    /// Returns the initially owner-checked range retained for post-recycle
+    /// `completed_read_request` and `read_completed`.
+    #[must_use]
+    pub const fn retained_host_dispatch_range(&self) -> ServiceHostDispatchRangeV1 {
+        self.dispatch_range
+    }
+
+    /// Addressless dispatch-data ordinal retained for caller-buffer readback.
+    pub(crate) const fn data_index(&self) -> usize {
+        self.data_index
+    }
+
+    /// Returns the opt-in adjacent-guard snapshot association, when present.
+    #[must_use]
+    pub(crate) const fn completion_canary(&self) -> Option<BoundM1CompletionCanaryV1> {
+        self.completion_canary
+    }
+
+    /// Returns direct target choice capture when explicitly enabled.
+    #[must_use = "direct diagnostic choice custody remains paired with compact output"]
+    pub const fn direct_diagnostic_choices(&self) -> Option<&BoundM1DirectDiagnosticChoicesV1> {
+        if self.is_draft_catchup() {
+            None
+        } else {
+            self.direct_diagnostic_choices.as_ref()
+        }
+    }
+
+    pub(crate) fn direct_diagnostic_choices_mut(
+        &mut self,
+    ) -> Option<&mut BoundM1DirectDiagnosticChoicesV1> {
+        if self.is_draft_catchup() {
+            None
+        } else {
+            self.direct_diagnostic_choices.as_mut()
+        }
+    }
+
+    /// Returns qualification-only logits capture when explicitly enabled.
+    #[must_use = "qualification logits custody remains paired with compact output"]
+    pub const fn qualification_logits(&self) -> Option<&BoundM1QualificationLogitsV1> {
+        self.qualification_logits.as_ref()
+    }
+
+    /// Separate engineering-only all-row capture; never qualification authority.
+    #[must_use]
+    pub const fn engineering_s1_k4_logits(&self) -> Option<&BoundM1QualificationLogitsV1> {
+        self.engineering_s1_k4_logits.as_ref()
+    }
+
+    /// Returns diagnostic-only S1/K4 choice capture when explicitly enabled.
+    #[must_use = "speculative diagnostic choice custody remains paired with compact output"]
+    pub const fn speculative_diagnostic_choices(
+        &self,
+    ) -> Option<&BoundM1SpeculativeDiagnosticChoicesV1> {
+        if self.is_draft_catchup() {
+            None
+        } else {
+            self.speculative_diagnostic_choices.as_ref()
+        }
+    }
+
+    pub(crate) fn speculative_diagnostic_choices_mut(
+        &mut self,
+    ) -> Option<&mut BoundM1SpeculativeDiagnosticChoicesV1> {
+        if self.is_draft_catchup() {
+            None
+        } else {
+            self.speculative_diagnostic_choices.as_mut()
+        }
+    }
+
+    pub(crate) const fn is_draft_catchup(&self) -> bool {
+        self.draft_catchup.is_some()
+    }
+
+    pub(crate) const fn draft_catchup_parent_selection(&self) -> Option<Qwen3PlanSelection> {
+        match self.draft_catchup.as_ref() {
+            Some(custody) => Some(custody.parent_shape.selection()),
+            None => None,
+        }
+    }
+
+    pub(crate) fn can_retarget_exact_s1_speculative_to_draft_catchup(
+        &self,
+        parent: Qwen3PlanSelection,
+    ) -> bool {
+        self.shape.selection() == parent
+            && exact_s1_speculative_catchup_output_transition(self.shape).is_some()
+            && self.completion_canary.is_none()
+            && self.direct_diagnostic_choices.is_none()
+            && self.qualification_logits.is_none()
+            && self.engineering_s1_k4_logits.is_none()
+            && self.draft_catchup.is_none()
+            && self
+                .speculative_diagnostic_choices
+                .as_ref()
+                .is_some_and(|choices| choices.shape().selection() == parent)
+    }
+
+    /// Suspends the original choice owner inside the same linear output owner.
+    /// The allocation key is never replaced; only its identical S1 shape changes.
+    pub(crate) fn retarget_exact_s1_speculative_to_draft_catchup(
+        mut self,
+        parent: Qwen3PlanSelection,
+    ) -> Result<Self, Box<Self>> {
+        if !self.can_retarget_exact_s1_speculative_to_draft_catchup(parent) {
+            return Err(Box::new(self));
+        }
+        let Some(next) = exact_s1_speculative_catchup_output_transition(self.shape) else {
+            return Err(Box::new(self));
+        };
+        let Some(choices) = self.speculative_diagnostic_choices.take() else {
+            return Err(Box::new(self));
+        };
+        self.draft_catchup = Some(M1DraftCatchupOutputCustodyV1 {
+            parent_shape: self.shape,
+            dispatch_range: self.dispatch_range,
+            data_index: self.data_index,
+            speculative_diagnostic_choices: choices,
+        });
+        self.shape = next;
+        Ok(self)
+    }
+
+    /// Restores the exact suspended attachment after checked maintenance.
+    pub(crate) fn restore_exact_s1_speculative_after_draft_catchup(
+        mut self,
+        parent: Qwen3PlanSelection,
+    ) -> Result<Self, Box<Self>> {
+        let valid = self.draft_catchup.as_ref().is_some_and(|custody| {
+            custody.parent_shape.selection() == parent
+                && exact_s1_speculative_catchup_output_transition(custody.parent_shape)
+                    == Some(self.shape)
+                && custody.dispatch_range == self.dispatch_range
+                && custody.data_index == self.data_index
+                && custody.speculative_diagnostic_choices.shape().selection() == parent
+        });
+        if !valid
+            || self.completion_canary.is_some()
+            || self.direct_diagnostic_choices.is_some()
+            || self.qualification_logits.is_some()
+            || self.engineering_s1_k4_logits.is_some()
+            || self.speculative_diagnostic_choices.is_some()
+        {
+            return Err(Box::new(self));
+        }
+        let Some(custody) = self.draft_catchup.take() else {
+            return Err(Box::new(self));
+        };
+        self.shape = custody.parent_shape;
+        self.speculative_diagnostic_choices = Some(custody.speculative_diagnostic_choices);
+        Ok(self)
+    }
+
+    /// Retargets the bare S1 prefill output binding for the exact S1 direct
+    /// decode successor. The allocation and dispatch range are unchanged; both
+    /// selections have one compact record with identical byte geometry.
+    /// Selection-bound diagnostic and guard attachments are rejected intact.
+    pub(crate) fn retarget_exact_s1_prefill_to_decode(
+        mut self,
+        selection: Qwen3PlanSelection,
+    ) -> Result<Self, Box<Self>> {
+        let Ok(next) = m1_completion_output_shape_v1(selection) else {
+            return Err(Box::new(self));
+        };
+        if !exact_s1_prefill_decode_output_transition(self.shape, next)
+            || self.completion_canary.is_some()
+            || self.direct_diagnostic_choices.is_some()
+            || self.qualification_logits.is_some()
+            || self.engineering_s1_k4_logits.is_some()
+            || self.speculative_diagnostic_choices.is_some()
+            || self.draft_catchup.is_some()
+        {
+            return Err(Box::new(self));
+        }
+        self.shape = next;
+        Ok(self)
+    }
+
+    pub(crate) fn can_retarget_exact_s1_prefill_to_decode(
+        &self,
+        selection: Qwen3PlanSelection,
+    ) -> bool {
+        m1_completion_output_shape_v1(selection).is_ok_and(|next| {
+            exact_s1_prefill_decode_output_transition(self.shape, next)
+                && self.completion_canary.is_none()
+                && self.direct_diagnostic_choices.is_none()
+                && self.qualification_logits.is_none()
+                && self.engineering_s1_k4_logits.is_none()
+                && self.speculative_diagnostic_choices.is_none()
+                && self.draft_catchup.is_none()
+        })
+    }
+
+    pub(crate) fn attach_qualification_logits(
+        mut self,
+        qualification_logits: BoundM1QualificationLogitsV1,
+    ) -> Self {
+        self.qualification_logits = Some(qualification_logits);
+        self
+    }
+
+    pub(crate) fn attach_engineering_s1_k4_logits(
+        mut self,
+        logits: BoundM1QualificationLogitsV1,
+    ) -> Self {
+        self.engineering_s1_k4_logits = Some(logits);
+        self
+    }
+
+    pub(crate) fn attach_direct_diagnostic_choices(
+        mut self,
+        choices: BoundM1DirectDiagnosticChoicesV1,
+    ) -> Self {
+        self.direct_diagnostic_choices = Some(choices);
+        self
+    }
+
+    pub(crate) fn attach_speculative_diagnostic_choices(
+        mut self,
+        choices: BoundM1SpeculativeDiagnosticChoicesV1,
+    ) -> Self {
+        self.speculative_diagnostic_choices = Some(choices);
+        self
+    }
+
+    /// Revalidates the exact selection, key geometry, owner generation, and
+    /// mapped host range before fixed-dispatch construction.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`M1CompletionOutputErrorV1`] for target-selection drift, key
+    /// geometry drift, or generic owner/range rejection.
+    pub(crate) fn host_dispatch_range(
+        &self,
+        allocations: &ServiceAllocationSessionV1,
+        selection: Qwen3PlanSelection,
+    ) -> Result<ServiceHostDispatchRangeV1, M1CompletionOutputErrorV1> {
+        self.shape.revalidate_selection(selection)?;
+        if self.is_draft_catchup()
+            && (self.completion_canary.is_some()
+                || self.direct_diagnostic_choices.is_some()
+                || self.qualification_logits.is_some()
+                || self.engineering_s1_k4_logits.is_some()
+                || self.speculative_diagnostic_choices.is_some())
+        {
+            return Err(M1CompletionOutputErrorV1::DraftCatchupCustodyDrift);
+        }
+        let (allocation_extent, interior_offset) = match self.completion_canary {
+            Some(canary) => (
+                canary.layout().snapshot_extent_bytes(),
+                canary.layout().interior_offset_bytes(),
+            ),
+            None => (self.shape.extent_bytes, 0),
+        };
+        validate_key_geometry(self.key, allocation_extent)?;
+        let typed = allocations.range(
+            self.key,
+            interior_offset,
+            self.shape.extent_bytes,
+            M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+        )?;
+        let range = allocations.host_dispatch_range(typed)?;
+        if range != self.dispatch_range {
+            return Err(M1CompletionOutputErrorV1::DispatchRangeDrift);
+        }
+        if let Some(canary) = self.completion_canary {
+            let snapshot_typed = allocations.range(
+                self.key,
+                0,
+                allocation_extent,
+                M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+            )?;
+            let snapshot_host = allocations.host_dispatch_range(snapshot_typed)?;
+            let snapshot = allocations.host_dispatch_snapshot_range(snapshot_host)?;
+            if snapshot != canary.snapshot_range() {
+                return Err(M1CompletionOutputErrorV1::DispatchRangeDrift);
+            }
+        }
+        Ok(range)
+    }
+}
+
+fn exact_s1_prefill_decode_output_transition(
+    prior: M1CompletionOutputShapeV1,
+    next: M1CompletionOutputShapeV1,
+) -> bool {
+    let prior_selection = prior.selection();
+    let next_selection = next.selection();
+    prior_selection.role == Qwen3ModelRole::Target8B
+        && prior_selection.mode == Qwen3ExecutionMode::Prefill
+        && prior_selection.bucket == Qwen3PlanBucket::PrefillS1T128
+        && next_selection.role == Qwen3ModelRole::Target8B
+        && next_selection.mode == Qwen3ExecutionMode::Decode
+        && next_selection.bucket == Qwen3PlanBucket::DecodeS1C8192
+        && prior.sequences() == 1
+        && prior.sequences() == next.sequences()
+        && prior.extent_bytes() == next.extent_bytes()
+}
+
+fn exact_s1_speculative_catchup_output_transition(
+    parent: M1CompletionOutputShapeV1,
+) -> Option<M1CompletionOutputShapeV1> {
+    let selection = parent.selection();
+    if selection.role != Qwen3ModelRole::Target8B
+        || selection.mode != Qwen3ExecutionMode::Speculative
+        || !matches!(
+            selection.bucket,
+            Qwen3PlanBucket::SpeculativeS1K4C8192
+                | Qwen3PlanBucket::SpeculativeS1K8C8192
+                | Qwen3PlanBucket::SpeculativeS1K16C8192
+        )
+    {
+        return None;
+    }
+    let completion = m1_completion_output_shape_v1(Qwen3PlanSelection {
+        role: Qwen3ModelRole::Target8B,
+        mode: Qwen3ExecutionMode::Decode,
+        bucket: Qwen3PlanBucket::DecodeS1C8192,
+    })
+    .ok()?;
+    (parent.sequences() == 1 && parent.extent_bytes() == completion.extent_bytes())
+        .then_some(completion)
+}
+
+/// Derives the exact M1 compact-output geometry for one target selection.
+///
+/// # Errors
+///
+/// Returns [`M1CompletionOutputErrorV1::InvalidTargetSelection`] unless the
+/// selection names an admitted target role/mode/bucket combination.
+pub fn m1_completion_output_shape_v1(
+    selection: Qwen3PlanSelection,
+) -> Result<M1CompletionOutputShapeV1, M1CompletionOutputErrorV1> {
+    let dimensions = selection
+        .bucket
+        .dimensions(selection.role, selection.mode)
+        .filter(|_| selection.role == Qwen3ModelRole::Target8B)
+        .ok_or(M1CompletionOutputErrorV1::InvalidTargetSelection { selection })?;
+    let extent_bytes = u64::from(dimensions.sequences)
+        .checked_mul(Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES)
+        .ok_or(M1CompletionOutputErrorV1::ExtentOverflow)?;
+    usize::try_from(extent_bytes).map_err(|_| M1CompletionOutputErrorV1::ExtentOverflow)?;
+    Ok(M1CompletionOutputShapeV1 {
+        selection,
+        sequences: dimensions.sequences,
+        extent_bytes,
+    })
+}
+
+/// Allocates and GPU-maps one exact coherent host-download output.
+///
+/// Allocation and mapping remain owned by `allocations`; successful return
+/// retains only the typed key, exact Ferric shape, and owner-checked addressless
+/// dispatch range. A generic allocation failure leaves all native custody in
+/// the allocation session according to its fail-closed phase.
+///
+/// # Errors
+///
+/// Returns [`M1CompletionOutputErrorV1`] for an invalid target selection,
+/// extent conversion, generic allocation/mapping rejection, or unexpected key
+/// geometry drift.
+pub fn allocate_m1_completion_output_v1(
+    allocations: &mut ServiceAllocationSessionV1,
+    selection: Qwen3PlanSelection,
+) -> Result<BoundM1CompletionOutputV1, M1CompletionOutputErrorV1> {
+    let shape = m1_completion_output_shape_v1(selection)?;
+    let requested_bytes = usize::try_from(shape.extent_bytes)
+        .map_err(|_| M1CompletionOutputErrorV1::ExtentOverflow)?;
+    let data_index = allocations.allocation_count();
+    let key = allocations.allocate_host_visible::<HostDownloadRoleV1>(requested_bytes)?;
+    validate_key_geometry(key, shape.extent_bytes())?;
+    let _mapped = allocations.map_host_visible(key)?;
+    let typed = allocations.range(
+        key,
+        0,
+        shape.extent_bytes,
+        M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+    )?;
+    let dispatch_range = allocations.host_dispatch_range(typed)?;
+    Ok(BoundM1CompletionOutputV1 {
+        shape,
+        key,
+        dispatch_range,
+        data_index,
+        completion_canary: None,
+        direct_diagnostic_choices: None,
+        qualification_logits: None,
+        engineering_s1_k4_logits: None,
+        speculative_diagnostic_choices: None,
+        draft_catchup: None,
+    })
+}
+
+/// Allocates one opt-in initialized guarded coherent K7 output.
+///
+/// The backing is exactly `[64 * 0xA5 | S * 120 zero bytes | 64 * 0x5A]`.
+/// The retained dispatch range names only the K7 interior, while the retained
+/// snapshot token names the complete initialized enclosing allocation. No
+/// queue association or completed-copy authority is created here.
+///
+/// # Errors
+///
+/// Returns [`M1CompletionOutputErrorV1`] for target/layout rejection or a
+/// generic initialized host-visible allocation/range failure.
+pub fn allocate_m1_guarded_completion_output_v1(
+    allocations: &mut ServiceAllocationSessionV1,
+    selection: Qwen3PlanSelection,
+) -> Result<BoundM1CompletionOutputV1, M1CompletionOutputErrorV1> {
+    let shape = m1_completion_output_shape_v1(selection)?;
+    let layout =
+        M1CompletionCanaryLayoutV1::for_shape(shape).map_err(M1CompletionOutputErrorV1::Canary)?;
+    let initialized = layout
+        .initialized_bytes()
+        .map_err(M1CompletionOutputErrorV1::Canary)?;
+    let data_index = allocations.allocation_count();
+    let key = allocations.allocate_initialized_host_visible::<HostDownloadRoleV1>(initialized)?;
+    validate_key_geometry(key, layout.snapshot_extent_bytes())?;
+    let snapshot_typed = allocations.range(
+        key,
+        0,
+        layout.snapshot_extent_bytes(),
+        M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+    )?;
+    let snapshot_host = allocations.host_dispatch_range(snapshot_typed)?;
+    let dispatch_range = snapshot_host.checked_subrange(
+        layout.interior_offset_bytes(),
+        layout.interior_extent_bytes(),
+        M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+    )?;
+    let snapshot_range = allocations.host_dispatch_snapshot_range(snapshot_host)?;
+    Ok(BoundM1CompletionOutputV1 {
+        shape,
+        key,
+        dispatch_range,
+        data_index,
+        completion_canary: Some(BoundM1CompletionCanaryV1::new(layout, snapshot_range)),
+        direct_diagnostic_choices: None,
+        qualification_logits: None,
+        engineering_s1_k4_logits: None,
+        speculative_diagnostic_choices: None,
+        draft_catchup: None,
+    })
+}
+
+fn validate_key_geometry(
+    key: CompletionOutputAllocationKeyV1,
+    expected_extent: u64,
+) -> Result<(), M1CompletionOutputErrorV1> {
+    if key.extent_bytes() != expected_extent {
+        return Err(M1CompletionOutputErrorV1::AllocationExtentDrift {
+            expected: expected_extent,
+            actual: key.extent_bytes(),
+        });
+    }
+    if key.alignment() < M1_COMPLETION_OUTPUT_ALIGNMENT_V1
+        || !key
+            .alignment()
+            .is_multiple_of(M1_COMPLETION_OUTPUT_ALIGNMENT_V1)
+    {
+        return Err(M1CompletionOutputErrorV1::AllocationAlignmentDrift {
+            required: M1_COMPLETION_OUTPUT_ALIGNMENT_V1,
+            actual: key.alignment(),
+        });
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        check_inert_completion_record, CompletionWireExpectation, CompletionWireSemanticExpectation,
+    };
+    use ferric_spec::{
+        completion::CompletionEpoch, Identity, Qwen3ExecutionMode, Qwen3PlanBucket, RequestId,
+        StepPlan, TokenId,
+    };
+
+    const fn target(mode: Qwen3ExecutionMode, bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode,
+            bucket,
+        }
+    }
+
+    #[test]
+    fn every_target_bucket_has_exact_sequence_major_record_extent() {
+        let cases = [
+            (
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+                1,
+            ),
+            (
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS8T128,
+                8,
+            ),
+            (
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T512,
+                1,
+            ),
+            (
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T2048,
+                1,
+            ),
+            (
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+                1,
+            ),
+            (
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+                8,
+            ),
+            (
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS32C8192,
+                32,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                1,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                8,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                1,
+            ),
+            (
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                1,
+            ),
+        ];
+        for (mode, bucket, sequences) in cases {
+            let selection = target(mode, bucket);
+            let shape = m1_completion_output_shape_v1(selection).unwrap();
+            assert_eq!(shape.selection(), selection);
+            assert_eq!(shape.sequences(), sequences);
+            assert_eq!(
+                shape.extent_bytes(),
+                u64::from(sequences) * Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_and_stale_selections_fail_closed_even_when_extent_matches() {
+        let draft = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        assert!(matches!(
+            m1_completion_output_shape_v1(draft),
+            Err(M1CompletionOutputErrorV1::InvalidTargetSelection { selection })
+                if selection == draft
+        ));
+        let invalid = target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::DecodeS1C8192);
+        assert!(matches!(
+            m1_completion_output_shape_v1(invalid),
+            Err(M1CompletionOutputErrorV1::InvalidTargetSelection { selection })
+                if selection == invalid
+        ));
+
+        let exact = target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let stale = target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128);
+        let shape = m1_completion_output_shape_v1(exact).unwrap();
+        assert_eq!(
+            shape.extent_bytes(),
+            m1_completion_output_shape_v1(stale).unwrap().extent_bytes()
+        );
+        assert!(matches!(
+            shape.revalidate_selection(stale),
+            Err(M1CompletionOutputErrorV1::SelectionDrift { expected, actual })
+                if expected == exact && actual == stale
+        ));
+    }
+
+    #[test]
+    fn output_retarget_gate_admits_only_exact_s1_prefill_to_decode() {
+        let prefill = m1_completion_output_shape_v1(target(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        ))
+        .unwrap();
+        let decode = m1_completion_output_shape_v1(target(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ))
+        .unwrap();
+        assert!(exact_s1_prefill_decode_output_transition(prefill, decode));
+
+        for rejected in [
+            m1_completion_output_shape_v1(target(
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T512,
+            ))
+            .unwrap(),
+            m1_completion_output_shape_v1(target(
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ))
+            .unwrap(),
+        ] {
+            assert!(!exact_s1_prefill_decode_output_transition(rejected, decode));
+            assert!(!exact_s1_prefill_decode_output_transition(
+                prefill, rejected
+            ));
+        }
+    }
+
+    #[test]
+    fn draft_catchup_retarget_admits_only_exact_singleton_speculative_shapes() {
+        let decode = m1_completion_output_shape_v1(target(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ))
+        .unwrap();
+        for bucket in [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ] {
+            let parent =
+                m1_completion_output_shape_v1(target(Qwen3ExecutionMode::Speculative, bucket))
+                    .unwrap();
+            assert_eq!(
+                exact_s1_speculative_catchup_output_transition(parent),
+                Some(decode)
+            );
+            let mut wrong_extent = parent;
+            wrong_extent.extent_bytes += 4;
+            assert!(exact_s1_speculative_catchup_output_transition(wrong_extent).is_none());
+            let mut wrong_width = parent;
+            wrong_width.sequences = 2;
+            assert!(exact_s1_speculative_catchup_output_transition(wrong_width).is_none());
+        }
+        for selection in [
+            decode.selection(),
+            target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+            target(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+            ),
+        ] {
+            let shape = m1_completion_output_shape_v1(selection).unwrap();
+            assert!(exact_s1_speculative_catchup_output_transition(shape).is_none());
+        }
+    }
+
+    #[test]
+    fn draft_catchup_reset_storage_preserves_exact_unwritten_choice_sentinels() {
+        for (bucket, draft_bytes, target_bytes) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 16, 20),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 32, 36),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 64, 68),
+        ] {
+            let parent = target(Qwen3ExecutionMode::Speculative, bucket);
+            let storage = M1AuthenticatedDiagnosticResetHostStorageV1::try_new(parent).unwrap();
+            assert!(storage.accepts_parent(parent));
+            assert_eq!(storage.draft_image.len(), draft_bytes);
+            assert_eq!(storage.target_image.len(), target_bytes);
+            for image in [&*storage.draft_image, &*storage.target_image] {
+                for word in image.chunks_exact(4) {
+                    let token = u32::from_le_bytes(word.try_into().unwrap());
+                    assert_eq!(token, u32::MAX);
+                    assert!(token >= ferric_spec::QWEN3_VOCABULARY_SIZE);
+                    assert_ne!(token, 0);
+                }
+            }
+            let draft_ptr = storage.draft_image.as_ptr();
+            let target_ptr = storage.target_image.as_ptr();
+            let (draft_image, target_image) = storage.into_images();
+            assert_eq!(draft_image.as_ptr(), draft_ptr);
+            assert_eq!(target_image.as_ptr(), target_ptr);
+        }
+    }
+
+    #[test]
+    fn draft_catchup_reset_storage_rejects_cross_parent_zero_and_extent_drift() {
+        let parents = [
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+        ]
+        .map(|bucket| target(Qwen3ExecutionMode::Speculative, bucket));
+        for parent in parents {
+            let mut storage = M1AuthenticatedDiagnosticResetHostStorageV1::try_new(parent).unwrap();
+            for other in parents {
+                assert_eq!(storage.accepts_parent(other), parent == other);
+            }
+            storage.draft_image[..4].fill(0);
+            assert!(!storage.accepts_parent(parent));
+            storage.draft_image[..4].fill(u8::MAX);
+            storage.target_image[..4].fill(0);
+            assert!(!storage.accepts_parent(parent));
+            storage.target_image[..4].fill(u8::MAX);
+            assert!(storage.accepts_parent(parent));
+            storage.target_image = vec![u8::MAX; storage.target_image.len() + 4].into_boxed_slice();
+            assert!(!storage.accepts_parent(parent));
+        }
+    }
+
+    #[test]
+    fn draft_catchup_reset_storage_rejects_non_singleton_speculative_selections() {
+        for selection in [
+            target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192),
+            target(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128),
+            target(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+            ),
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: Qwen3ExecutionMode::Speculative,
+                bucket: Qwen3PlanBucket::SpeculativeS1K4C8192,
+            },
+        ] {
+            assert!(M1AuthenticatedDiagnosticResetHostStorageV1::try_new(selection).is_none());
+        }
+    }
+
+    #[test]
+    fn record_slicing_rejects_extent_and_lane_drift() {
+        let shape = m1_completion_output_shape_v1(target(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        ))
+        .unwrap();
+        let bytes = vec![0; usize::try_from(shape.extent_bytes()).unwrap()];
+        for sequence in 0..shape.sequences() {
+            assert_eq!(
+                shape.record_bytes(&bytes, sequence).unwrap().len(),
+                Qwen3LogitsCompactRecordLayoutV1::RECORD_BYTES_USIZE
+            );
+        }
+        assert!(matches!(
+            shape.record_bytes(&bytes[..bytes.len() - 1], 0),
+            Err(M1CompletionOutputErrorV1::ReadbackExtentDrift { .. })
+        ));
+        assert!(matches!(
+            shape.record_bytes(&bytes, shape.sequences()),
+            Err(M1CompletionOutputErrorV1::SequenceOutOfRange { .. })
+        ));
+    }
+
+    #[test]
+    fn one_exact_record_slice_matches_the_existing_wire_decoder_contract() {
+        let selection = target(Qwen3ExecutionMode::Decode, Qwen3PlanBucket::DecodeS1C8192);
+        let shape = m1_completion_output_shape_v1(selection).unwrap();
+        let request = RequestId::new(3, 7);
+        let epoch = CompletionEpoch::new(11);
+        let plan_id = Identity::new([9; 32]);
+        let token: TokenId = 41;
+        let plan = StepPlan::new(request, epoch, plan_id, selection);
+        let mut bytes = vec![0; usize::try_from(shape.extent_bytes()).unwrap()];
+        bytes[Qwen3LogitsCompactRecordLayoutV1::REQUEST_SLOT_OFFSET..][..4]
+            .copy_from_slice(&request.slot().to_le_bytes());
+        bytes[Qwen3LogitsCompactRecordLayoutV1::REQUEST_GENERATION_OFFSET..][..4]
+            .copy_from_slice(&request.generation().to_le_bytes());
+        bytes[Qwen3LogitsCompactRecordLayoutV1::COMPLETION_EPOCH_OFFSET..][..8]
+            .copy_from_slice(&epoch.value().to_le_bytes());
+        bytes[Qwen3LogitsCompactRecordLayoutV1::PLAN_IDENTITY_OFFSET..][..32]
+            .copy_from_slice(plan_id.as_bytes());
+        bytes[Qwen3LogitsCompactRecordLayoutV1::EMITTED_TOKEN_COUNT_OFFSET] = 1;
+        let token_offset = Qwen3LogitsCompactRecordLayoutV1::token_offset(0).unwrap();
+        bytes[token_offset..][..4].copy_from_slice(&token.to_le_bytes());
+
+        let record = shape.record_bytes(&bytes, 0).unwrap();
+        let checked = check_inert_completion_record(
+            record,
+            CompletionWireExpectation::new(
+                &plan,
+                CompletionWireSemanticExpectation::DirectFinalRow { choice: token },
+            ),
+        )
+        .unwrap();
+        assert_eq!(checked.record().request, request);
+        assert_eq!(checked.record().epoch, epoch);
+        assert_eq!(checked.record().plan_id, plan_id);
+    }
+}

@@ -1,0 +1,298 @@
+{
+  "arms": {
+    "ferric": {
+      "archive": {
+        "bytes": 819835,
+        "path": "/home/harsh/.codex-tmp/ferric-perf-swarm-v6/proposals/perf-r6-http-complete-audit-a001/v18-http-ferric-r6-complete-a001.tar.gz",
+        "sha256": "9f9bbfea428513e65db180622b8094625759484ae56ce8be1b01656c65e10880"
+      },
+      "gpu_samples": {
+        "active_positive": true,
+        "all_accepted": true,
+        "all_root": true,
+        "all_same_owners": true,
+        "count": 123,
+        "max_interval_ms": 802.183297,
+        "native_owned_fd_rescans": [
+          {
+            "attempts": [
+              {
+                "attempt": 1,
+                "context": {
+                  "allowed_changed_identity_fields": [],
+                  "allowed_identity": {
+                    "cgroup": "0::/user.slice/user-9661.slice/session-25942.scope\n",
+                    "pid": 3140342,
+                    "pid_namespace": [
+                      4,
+                      4026531836
+                    ],
+                    "proc_uid": 9661,
+                    "start_time_ticks": 67252629,
+                    "uids": [
+                      9661,
+                      9661,
+                      9661,
+                      9661
+                    ]
+                  },
+                  "initial_identity": {
+                    "cgroup": "0::/user.slice/user-9661.slice/session-25942.scope\n",
+                    "pid": 3140342,
+                    "pid_namespace": [
+                      4,
+                      4026531836
+                    ],
+                    "proc_uid": 9661,
+                    "start_time_ticks": 67252629,
+                    "uids": [
+                      9661,
+                      9661,
+                      9661,
+                      9661
+                    ]
+                  },
+                  "operation": "descriptor_stat",
+                  "path": "/proc/3140342/fd/6",
+                  "pid": 3140342,
+                  "process_attempt": 1
+                },
+                "cumulative_descriptors": 7,
+                "error": {
+                  "errno": 2,
+                  "filename": "/proc/3140342/fd/6",
+                  "filename2": null,
+                  "message": "[Errno 2] No such file or directory: '/proc/3140342/fd/6'",
+                  "type": "FileNotFoundError"
+                },
+                "pid": 3140342,
+                "reason": "proc-entry-missing-during-process-attempt",
+                "retry_identity": {
+                  "cgroup": "0::/user.slice/user-9661.slice/session-25942.scope\n",
+                  "pid": 3140342,
+                  "pid_namespace": [
+                    4,
+                    4026531836
+                  ],
+                  "proc_uid": 9661,
+                  "start_time_ticks": 67252629,
+                  "uids": [
+                    9661,
+                    9661,
+                    9661,
+                    9661
+                  ]
+                },
+                "retry_policy": "native-owned-complete-rescan-fd-enoent-v1",
+                "retry_requested": true
+              },
+              {
+                "attempt": 2,
+                "cumulative_descriptors": 13,
+                "identity": {
+                  "cgroup": "0::/user.slice/user-9661.slice/session-25942.scope\n",
+                  "pid": 3140342,
+                  "pid_namespace": [
+                    4,
+                    4026531836
+                  ],
+                  "proc_uid": 9661,
+                  "start_time_ticks": 67252629,
+                  "uids": [
+                    9661,
+                    9661,
+                    9661,
+                    9661
+                  ]
+                },
+                "pid": 3140342,
+                "reason": "complete-stable-rescan"
+              }
+            ],
+            "member": "outer-gpu-sample-0119.stdout"
+          }
+        ],
+        "phases": {
+          "active": 86,
+          "postflight": 1,
+          "preflight": 1,
+          "startup": 35
+        }
+      },
+      "independent_review": {
+        "path": "/home/harsh/.codex-tmp/ferric-perf-swarm-v6/proposals/perf-r6-http-complete-audit-a001/independent-review.json",
+        "sha256": "3d19c69a3e2e48df5133e694bd890af2d7c4abcce2d3bb8f9db6fd0c6a2220de"
+      },
+      "measured_output_tokens": 3840,
+      "measured_requests": 30,
+      "metrics": {
+        "e2e_ms": {
+          "mean": 7559.161961233333,
+          "median": 7565.798825,
+          "p95": 7698.09535605,
+          "p99": 7725.04361151
+        },
+        "finite_output_rate_tokens_s": 16.932224938670075,
+        "raw_checks_pass": true,
+        "tpot_ms": {
+          "mean": 53.34937804146982,
+          "median": 53.399712629921254,
+          "p95": 54.4087667527559,
+          "p99": 54.65144643094488
+        },
+        "ttft_ms": {
+          "mean": 783.6189665,
+          "median": 783.7669659999999,
+          "p95": 789.9687716000001,
+          "p99": 793.57492282
+        },
+        "windows_sum_s": 226.786498166
+      },
+      "raw_member_hashes": {
+        "diagnostic-after.json": "33c5a7f2f5fbac3724452b384bce537bfb8b41d738ae0200e2f5f29b63a95986",
+        "diagnostic-before.json": "d9199b611a10f660dc1bf92fe99b9df2fddd90ccaa71ed26a10bc35e4e7b018c",
+        "ferric-final-events.json": "9df67f3373963bee9b8f3e0941e2df75ee754e7794f0a6e46b5915e33a960e75",
+        "ferric-teardown.json": "dc7f80e2627adf8fa8f9543843d4f1bbf92a10e004daf8d81741d10fba299847",
+        "frozen-plan.json": "eb91e12ee440c45135f4a7755d780cb8bf1d8aae19c383b601df3dcda850ef4a",
+        "http-controller-cleanup.json": "e1f1c82205c46a7213a2bccd3c2a34b8da3a2be8badd24058408006c41d8fff5",
+        "identity.json": "bca10562ecb990c7ac44fd9da4acc2fce8afaa594882933ab9cb8a40d63b106b",
+        "launch-supervisor.json": "02b542746a09174ec27fc4afb2fca0817ea2f5ed50d033063ed1319c49895f03",
+        "outer-receipt.json": "caafae1b2f68782ad868be6913c99073b2442889e5ad006efafadaded59710b3",
+        "receipt.json": "ce534284ec4bd53ec8412b84eec98f19fc753862c51560c3f8f1ed8142d6d653",
+        "timed-raw.json": "4d47c4d7f7b1813edeef2866ff9941d216c85bd1edef218b0c1c323df32aca2e"
+      },
+      "same_plan_clean_lifecycle": true,
+      "warmups_excluded": 10
+    },
+    "vllm": {
+      "archive": {
+        "bytes": 731514,
+        "path": "/home/harsh/.codex-tmp/ferric-perf-swarm-v6/proposals/perf-r6-vllm-complete-audit-a001/v18-http-vllm-r6-complete-a001.tar.gz",
+        "sha256": "70392889d4b8fa250bea544caa2d14f1041cdd9a5c18aa5837471557ae2e4976"
+      },
+      "gpu_samples": {
+        "active_positive": true,
+        "all_accepted": true,
+        "all_root": true,
+        "all_same_owners": true,
+        "count": 30,
+        "max_interval_ms": 825.873172,
+        "phases": {
+          "active": 8,
+          "postflight": 1,
+          "preflight": 1,
+          "startup": 20
+        },
+        "startup_reconciliations": [
+          {
+            "accepted_attempt": 1,
+            "after_owner_count": 1,
+            "before_owner_count": 0,
+            "kind": "initial-container-birth",
+            "member": "outer-gpu-sample-0003.stdout",
+            "rejected_attempt_retained": true,
+            "shared_interval_ms": 1552.036002
+          }
+        ]
+      },
+      "independent_review": {
+        "path": "/home/harsh/.codex-tmp/ferric-perf-swarm-v6/proposals/perf-r6-vllm-complete-audit-a001/independent-review.json",
+        "sha256": "510158935802b2e46e663367892ea5801aaf56d2e9ff6ba8447221b7dd852a03"
+      },
+      "measured_output_tokens": 3840,
+      "measured_requests": 30,
+      "metrics": {
+        "e2e_ms": {
+          "mean": 577.9665619666666,
+          "median": 577.874458,
+          "p95": 579.3532255,
+          "p99": 579.5610400099999
+        },
+        "finite_output_rate_tokens_s": 221.37967662907252,
+        "raw_checks_pass": true,
+        "tpot_ms": {
+          "mean": 4.397087545144357,
+          "median": 4.397164220472441,
+          "p95": 4.4020235078740155,
+          "p99": 4.402977211811024
+        },
+        "ttft_ms": {
+          "mean": 19.5009997,
+          "median": 19.322446999999997,
+          "p95": 20.687245,
+          "p99": 20.8252425
+        },
+        "windows_sum_s": 17.345765693
+      },
+      "raw_member_hashes": {
+        "cache-retirement.json": "c419c55e73dc3fbf27f8cf8ce797b96b7ab8212924632e64c576a729a51c3163",
+        "container-retirement.json": "6c2d4e8ad5c7ee832a7ab791cb046d833dad1e8b191d41c25961dde0b2939998",
+        "container-shutdown.json": "8438e813e3715f17748c649f3df886f499e14f7c3711ba07e9d373b8e82dbe35",
+        "diagnostic-after.json": "b88e49f0bd2af878b654b26569f9e5bcf5647c6fad2f39f0e6e801bade5bb216",
+        "diagnostic-before.json": "733bf6d1044ecbed5707c49b606b32df61bfaac6efac154394dfb1307d9c641e",
+        "frozen-plan.json": "eb91e12ee440c45135f4a7755d780cb8bf1d8aae19c383b601df3dcda850ef4a",
+        "identity.json": "c9a00ba02c8575602f7b3c9d7eaef4c2eea39ee66a6f64623bc70c97a2ebaf42",
+        "launch-supervisor.json": "a45cdb71dae87c70650c5382f92cbf2785330375e33a90de83aa7b90c3d040b4",
+        "outer-receipt.json": "187d25e972ecef1929e69c7933adc0c82518e7e8c937df8c70aadd5e1aa7c709",
+        "receipt.json": "29a8805f8c67608b7bc2b0344d6a10fd41532baf25861b565854db353ff63b2b",
+        "timed-raw.json": "22194f26d452d1d73606d60018dfee6f9504639488fab4fb5cbd66d6b8d1e4a4"
+      },
+      "same_plan_clean_lifecycle": true,
+      "warmups_excluded": 10
+    }
+  },
+  "correctness": {
+    "both_timed_and_warmup_utf8_usage_exact": true,
+    "ferric_exact_internal_output_tokens": 5376,
+    "ferric_exact_internal_requests": 42,
+    "reference_sha256": "cd7f512537e44d677244c606cba919e57747e8c26caf3c0df4a0aca7acc0eb8b",
+    "vllm_timed_token_ids_available": false,
+    "vllm_untimed_exact_token_id_diagnostics": 2
+  },
+  "ferric_performance_lead": false,
+  "formal_proof": false,
+  "gpu_overlap": false,
+  "limits": [
+    "One sequential 30-request measured cohort per engine after 10 warmups, not cross-engine ABBA.",
+    "Same physical plan, monitor/client/workload hashes and TP1/C1 128/128 controls; no historical R3/R5 pooling.",
+    "SSE-derived HTTP TTFT/TPOT and finite closed-loop output rate including drain, not token ITL or steady-state throughput.",
+    "vLLM post-load LM-head weights are BF16 with configured FP32 head computation; timed token IDs are not retained.",
+    "Root-visible finite descriptor samples with paired endpoints, not continuous GPU isolation.",
+    "Clock, power, temperature and throttle equivalence were not established.",
+    "Numerical parity and observer repairs do not demonstrate a speed improvement.",
+    "This comparison uses standalone V17 B native-prefill16, not unmeasured native-prefill32 or composed kernel/fence changes."
+  ],
+  "measurement_order": [
+    "ferric",
+    "vllm"
+  ],
+  "native_default_promotion": false,
+  "plan_sha256": "eb91e12ee440c45135f4a7755d780cb8bf1d8aae19c383b601df3dcda850ef4a",
+  "ratios": {
+    "finite_output_rate_vllm_over_ferric": 13.07445875724709,
+    "tpot_median_ferric_over_vllm": 12.14412515714136,
+    "ttft_median_ferric_over_vllm": 40.56251084554663
+  },
+  "revision": "R6",
+  "schema": "FerricMatchedNativeHttpPairIndependentReviewV1",
+  "settings": {
+    "arrival": "closed-loop",
+    "completion_tokens": 128,
+    "concurrency": 1,
+    "context": 8192,
+    "dtype": "bfloat16",
+    "head_dtype": "float32",
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "prompt_tokens": 128,
+    "request_timeout_seconds": 120,
+    "samples": 30,
+    "seed": 0,
+    "speculation": false,
+    "temperature": 0,
+    "tpot_slo_ms": 1000,
+    "ttft_slo_ms": 10000,
+    "warmups": 10
+  },
+  "status": "matched_sequential_engineering_comparison_complete"
+}

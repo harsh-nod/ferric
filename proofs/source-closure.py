@@ -22,6 +22,11 @@ def digest(path: Path) -> str:
     return hasher.hexdigest()
 
 
+def canonical_mode(path: Path) -> int:
+    """Record the executable bit that Git preserves, independent of checkout umask."""
+    return 0o755 if path.stat().st_mode & stat.S_IXUSR else 0o644
+
+
 def source_paths(repo: Path) -> list[Path]:
     paths = [
         repo / "Cargo.toml",
@@ -29,7 +34,23 @@ def source_paths(repo: Path) -> list[Path]:
         repo / "rust-toolchain.toml",
         repo / ".github/workflows/verus.yml",
     ]
-    for root in (repo / "crates", repo / "proofs", repo / "docs"):
+    for path in paths:
+        if path.is_symlink():
+            fail(f"source closure contains a symlink: {path}")
+    for root in (
+        repo / "adapters",
+        repo / "benches",
+        repo / "crates",
+        repo / "device",
+        repo / "proofs",
+        repo / "docs",
+        repo / "generated",
+        repo / "services",
+    ):
+        if root.is_symlink():
+            fail(f"source closure contains a symlink: {root}")
+        if not root.is_dir():
+            fail(f"source closure root is not a directory: {root}")
         for path in root.rglob("*"):
             if path.is_symlink():
                 fail(f"source closure contains a symlink: {path}")
@@ -43,7 +64,7 @@ def source_paths(repo: Path) -> list[Path]:
                 fail(f"source closure contains a forbidden generated input: {path}")
             paths.append(path)
     paths = sorted(set(paths), key=lambda path: path.relative_to(repo).as_posix())
-    if any(not path.is_file() for path in paths):
+    if any(path.is_symlink() or not path.is_file() for path in paths):
         fail("source closure contains a missing file")
     return paths
 
@@ -58,7 +79,7 @@ def main() -> None:
     try:
         for path in source_paths(repo):
             relative = path.relative_to(repo).as_posix()
-            mode = stat.S_IMODE(path.stat().st_mode)
+            mode = canonical_mode(path)
             records.append(f"{relative}|{mode:o}|{path.stat().st_size}|{digest(path)}")
         output.write_text("\n".join(records) + "\n", encoding="utf-8")
     except (OSError, UnicodeError, ValueError) as error:

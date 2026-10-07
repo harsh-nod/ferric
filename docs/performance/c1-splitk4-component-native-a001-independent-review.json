@@ -1,0 +1,60 @@
+{
+  "schema": "FerricSplitK4GateUpComponentIndependentReviewV1",
+  "status": "independent_raw_audit_pass",
+  "archive_sha256": "27b50ac530fd372b2f6acc89fab2e2726087d18cda05880d2a078ff6c28d6549",
+  "archive_bytes": 58639183,
+  "receipt_sha256": "ea65aae3f2ed066d31fb7b0fe0518fa0b088c492ca62349d99fe023b6efc3103",
+  "plan_sha256": "a3291deb45cc84bfb51b14e1df2fe5b0b670591c1f1797398fc31ed69676296e",
+  "result_sha256": "0bd649e2c11b06d1ef4ec9eefeedbf98b52d5f7e78bbc0479c3834a46f13d4a0",
+  "custody": {
+    "entries": 178,
+    "regular_files": 149,
+    "logical_bytes": 63768069,
+    "plan_files_verified": 97,
+    "source_files_verified": 28,
+    "cpu_harness_tests_passed": 80
+  },
+  "native": {
+    "status": 0,
+    "clean_reaped_unsignaled": true,
+    "verified_cells": 16,
+    "timed_cells": 12,
+    "timed_cells_per_arm": 6,
+    "ordered_frames": 16,
+    "dispatch_packets": 24
+  },
+  "numerical": {
+    "independently_regenerated_fixture": true,
+    "protocol_rows_verified": 501,
+    "write_payload_hashes_verified": 85,
+    "read_payload_hashes_verified": 134,
+    "all_output_scratch_tail_and_guards_match": true,
+    "inputs_unchanged": true,
+    "worker_elapsed_matches_protocol": true
+  },
+  "host_dispatch_wall_ns": {
+    "wave_median": 361685.5,
+    "splitk4_median": 276445.5,
+    "median_gain_percent": 23.567436350088677,
+    "positive_adjacent_pairs": 5,
+    "adjacent_gain_percent": [23.490704887452495, -5.1663621135982885, 23.7044595824485, 24.477258326675667, 23.254137672922848, 23.742211731122886]
+  },
+  "ordered_worker_elapsed_ns": {
+    "wave_median": 258195,
+    "splitk4_median": 157080.5,
+    "median_gain_percent": 39.16206742965588,
+    "positive_adjacent_pairs": 6,
+    "adjacent_gain_percent": [39.84456965222459, 0.3101217656012123, 39.10469705176817, 39.33237700151204, 39.4078591832008, 38.99455997530769]
+  },
+  "candidate_timing": "Combined partial and merge in one ordered frame; not divided by two",
+  "scope": "Hot-reused-buffer dyadic component correctness and synchronous host/completion timing",
+  "model_performance_qualified": false,
+  "default_promotion": false,
+  "limitations": [
+    "One Wave sample is 157680 ns versus the other approximately 257000-259000 ns samples; timing/wait aliasing is possible, not established",
+    "Not calibrated GPU or shader execution time",
+    "Control and candidate compiler identities differ",
+    "No Qwen token parity or full-model performance conclusion",
+    "Resource and isolation conclusions use retained qualified receipts, not continuous exclusion"
+  ]
+}

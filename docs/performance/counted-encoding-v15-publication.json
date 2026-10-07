@@ -1,0 +1,52 @@
+{
+  "schema": "FerricCountedEncodingPublicationV1",
+  "date": "2026-10-05",
+  "repository": "harsh-nod/fe2o3",
+  "branch": "main",
+  "commit": "cea62c79d1622ca5fa53a727611a102e067c4ea2",
+  "parent": "13c49a56cf11b66379e39fbef06c5b64dce32110",
+  "fresh_fetch_and_rebase_before_push": true,
+  "ci_skipped": true,
+  "github_actions_runs_observed": 0,
+  "source_archive_sha256": "3beb91f8547961835c82f88e66ef43bb66330cff277ad63ffa5ada590633732f",
+  "worker_sha256": "4efae4c21d135869ca8ca2dff5b2951097f1cc76b40dcf044abef495af98622c",
+  "remote_qualification": {
+    "host": "mi300x",
+    "profile": "G28",
+    "library_tests_passed": 711,
+    "worker_tests_passed": 7,
+    "hardware_tests_ignored": 3,
+    "strict_all_targets_clippy": "passed",
+    "release_worker": "passed"
+  },
+  "temporary_core_worktree_removed": true,
+  "ferric_client": "published-pin qualification passed; exact candidate integrated in shared Ferric checkout",
+  "ferric_source_pushed": false,
+  "ferric_published_pin_qualification": {
+    "native_controller_tests_passed": 126,
+    "counter_controller_tests_passed": 127,
+    "ordered_controller_tests_passed": 126,
+    "source_policy_tests_passed": 56,
+    "strict_all_binary_clippy": "passed",
+    "actual_image_cpu_gates_passed": 2,
+    "release_controllers_passed": 3,
+    "production_source_sha256": "68d43769c30ce1f8cb10fcf91ea9125b235e7e589767b89d7974a3a69290ab1a",
+    "manifest_sha256": "2d044080c9067e0075da4b93a4eaec1f56fc8a129d458800426f1f8b3cc1c220",
+    "lock_sha256": "2bb47898bc320d151fa6fa24b9dff4af09c89f102293e6271f7ba1ddffda7426",
+    "source_policy_sha256": "a3eb5b753efd6c2a778bc508f8ecb4006980c3ccaafe23dd610f131568f35634",
+    "source_receipt": "products/perf-v14-20261005/v15-publicpin-a001/qualification.json"
+  },
+  "same_core_old_encode_native_control": {
+    "qualified": true,
+    "controller_tests_passed": 126,
+    "strict_clippy": "passed",
+    "release": "passed",
+    "native_executed": false,
+    "binary_sha256": "5beb1dfef0708fcfe88ce7ac917af7339af96ccba7ca19b3934f34fb2ebc185a"
+  },
+  "frozen_v14_native_core_revision": "eded9474bff22aeb8a942061f3e956c234a0ce7f",
+  "v15_abba_backend_policy": "native-whole-program-v1 for both old-encode and counted-validation; not V14 ordered64-versus-native arms",
+  "native_ttft_ms": null,
+  "native_tpot_ms": null,
+  "default_promoted": false
+}

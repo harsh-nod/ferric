@@ -1,0 +1,40 @@
+[package]
+name = "ferric-qwen3-all-kernels-worker-v3-verifier-v1"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+# Keep this authority adapter isolated from the legacy Ferric workspace while
+# it follows the current Worker V3 verifier boundary.
+[workspace]
+
+[dependencies]
+ed25519-dalek = { version = "=2.2.0", default-features = false, features = ["fast", "zeroize"] }
+fe2o3-host = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-hsaco-finalize = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-runtime-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-verifier = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-worker-v3-verification-client = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-worker-v3-verification-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+ferric-qwen3-all-kernels-device-v1 = { path = "../../device/qwen3-all-kernels-v1" }
+ferric-qwen3-all-kernels-worker-v3-source-pin-v1 = { path = "../qwen3-all-kernels-worker-v3-source-pin-v1" }
+libc = "=0.2.189"
+rustix = { version = "=1.1.4", features = ["fs"] }
+sha2 = { version = "=0.11.0", default-features = false }
+
+[dev-dependencies]
+fe2o3-artifact-transaction = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+fe2o3-external-anchor-protocol = { git = "https://github.com/harsh-nod/fe2o3.git", rev = "5a503c04f5ae107a3b3e951ec970b36c5d6a9a79", version = "=0.1.0" }
+proc-macro2 = "=1.0.107"
+quote = "=1.0.47"
+syn = { version = "=2.0.119", features = ["full", "visit"] }
+toml = "=1.1.5"
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }

@@ -1,0 +1,37 @@
+# Ferric Qwen3 RMSNorm Device V1
+
+This non-authoritative compatibility crate exposes Ferric's exact
+`qwen3_rmsnorm_v1` kernel from canonical source owned by
+`qwen3-all-kernels-v1`. It is retained for focused tests and is not a
+production selected-package or publication root. It retains the five pointer-plus-length slice
+records followed by `rows`, `width`, `epsilon`, and `behavior`; 96 explicit
+kernarg bytes; a 64-workitem workgroup; one workgroup per row; the exact
+132-profile target/draft catalog geometry; and the pure and residual-fused
+numerical contracts from `crates/ferric-qwen-kernels`.
+
+The output capabilities are compiler-issued write-only row stripes. Each wave
+lane owns columns `lane + component * 64`. Every lane forms the same FP32 sum
+as the ascending serial left fold in Ferric's authoritative direct kernel,
+then applies `sqrt(mean + epsilon)` without a convergent wave operation.
+Pure mode requires empty residual and fused-output slices. Fused mode adds BF16
+input and residual in FP32, stores the fused value narrowed to BF16, and uses
+the full FP32 sum for normalization. The source also checks that the physical
+grid has exactly `rows` workgroups before any memory access.
+Normalization is rounded to BF16 before the weight multiplication, widened to
+FP32 for that multiplication, and rounded to BF16 again for the output.
+Every observed BF16 value, FP32 intermediate, and round-to-nearest-even BF16
+result must remain finite or the kernel traps before publishing that result.
+
+The crate is intentionally outside Ferric's stable host workspace. Both
+`fe2o3-device` and `fe2o3-host` are pinned to immutable revision
+`3546d54d2c4a913f5d079701aed557d0a378bba8`. That closure supplies write-only
+generated KFD arguments and accepts empty generated-slice constructors, but its
+KFD packer does not produce the required nonnull pointer fixup for empty
+slices. Consequently pure-mode KFD packing and dispatch remain unauthorized
+until that generic transport requirement is implemented and this source is
+compiled and integrated with a later reviewed host/runtime closure.
+
+Passing this crate's host-side source, ABI, profile, adapter-construction, and
+reference tests establishes only the reviewed source contract. No compiler
+run, KIR or LLVM identity, HSACO, KFD packing, dispatch, hardware result,
+performance result, whole-Qwen execution, or M1 completion is claimed.

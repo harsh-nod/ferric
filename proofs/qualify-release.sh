@@ -9,7 +9,7 @@ fail() {
     exit 1
 }
 
-for tool in awk cargo cat chmod cmp cp dirname grep mkdir mktemp python3 rm rustc sed sha256sum sort timeout tr uname; do
+for tool in awk cargo cat chmod cmp cp dirname git grep mkdir mktemp mv patch python3 rm rustc sed sha256sum sort timeout tr uname; do
     command -v "$tool" >/dev/null 2>&1 || fail "$tool is required by the qualification gate"
 done
 
@@ -42,8 +42,8 @@ timeout_seconds=${FERRIC_PROOF_TIMEOUT_SECONDS:-600}
 case "$timeout_seconds" in
     ''|*[!0-9]*) printf 'FAIL: invalid proof timeout\n' >&2; exit 2 ;;
 esac
-[ "$timeout_seconds" -ge 1 ] && [ "$timeout_seconds" -le 1200 ] || {
-    printf 'FAIL: proof timeout must be 1 through 1200\n' >&2
+[ "$timeout_seconds" -ge 1 ] && [ "$timeout_seconds" -le 3600 ] || {
+    printf 'FAIL: proof timeout must be 1 through 3600\n' >&2
     exit 2
 }
 
@@ -64,6 +64,7 @@ proof_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-proof-target.XXXXXX")
 source_gate_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-source-gate-target.XXXXXX")
 property_binder_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-property-binder-target.XXXXXX")
 runtime_test_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-runtime-test-target.XXXXXX")
+worker_v3_behavior_target=$(mktemp -d "${TMPDIR:-/tmp}/ferric-worker-v3-behavior-target.XXXXXX")
 if [ -n "${FERRIC_RECEIPT_DIR:-}" ]; then
     receipt_dir=$FERRIC_RECEIPT_DIR
     [ ! -e "$receipt_dir" ] || fail "receipt destination already exists: $receipt_dir"
@@ -71,10 +72,12 @@ if [ -n "${FERRIC_RECEIPT_DIR:-}" ]; then
 else
     receipt_dir=$(mktemp -d "$repo/target/ferric-receipt.XXXXXX")
 fi
-trap 'chmod -R u+w "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target" 2>/dev/null || true; rm -rf "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target"' EXIT HUP INT TERM
+trap 'chmod -R u+w "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target" "$worker_v3_behavior_target" 2>/dev/null || true; rm -rf "$scratch" "$proof_target" "$source_gate_target" "$property_binder_target" "$runtime_test_target" "$worker_v3_behavior_target"' EXIT HUP INT TERM
 
 # Exclude ambient Cargo wrappers, flags, and configuration from the artifact.
 unset RUSTC RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER CARGO_BUILD_TARGET CARGO_TARGET_DIR
+RUSTC_BOOTSTRAP=fe2o3_device,fe2o3_macros
+export RUSTC_BOOTSTRAP
 export CARGO_HOME="$scratch/cargo-home"
 export CARGO_TERM_COLOR=never
 export GIT_CONFIG_NOSYSTEM=1
@@ -100,8 +103,13 @@ verus_root=$authenticated_verus
 source_snapshot="$scratch/source"
 mkdir -p "$source_snapshot"
 cp -a "$repo/Cargo.toml" "$repo/Cargo.lock" "$repo/rust-toolchain.toml" "$source_snapshot/"
+cp -a "$repo/adapters" "$source_snapshot/"
+cp -a "$repo/benches" "$source_snapshot/"
 cp -a "$repo/crates" "$repo/proofs" "$source_snapshot/"
+cp -a "$repo/device" "$source_snapshot/"
 cp -a "$repo/docs" "$source_snapshot/"
+cp -a "$repo/generated" "$source_snapshot/"
+cp -a "$repo/services" "$source_snapshot/"
 mkdir -p "$source_snapshot/.github/workflows"
 cp -a "$repo/.github/workflows/verus.yml" "$source_snapshot/.github/workflows/"
 live_source_before="$scratch/live-source-before.records"
@@ -120,10 +128,35 @@ python3 -I "$qualified_scripts/check-lock.py" \
     cd "$qualified_repo"
     cargo build --manifest-path proofs/source-gate/Cargo.toml --locked --release \
         --target-dir "$source_gate_target"
+    cargo test --manifest-path proofs/source-gate/Cargo.toml --locked --release \
+        --target-dir "$source_gate_target"
 )
 source_gate="$source_gate_target/release/ferric-source-gate"
 [ -x "$source_gate" ] || fail 'compiler-rooted source gate was not built'
 source_gate_digest=$(sha256sum "$source_gate" | awk '{ print $1 }')
+metadata="$scratch/cargo-metadata.json"
+(
+    cd "$qualified_repo"
+    CARGO_TARGET_DIR="$proof_target" cargo metadata --locked --format-version 1
+) >"$metadata"
+verifier_metadata="$scratch/verifier-cargo-metadata.json"
+(
+    cd "$qualified_repo"
+    CARGO_TARGET_DIR="$proof_target" cargo metadata \
+        --manifest-path adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.toml \
+        --locked --all-features --format-version 1
+) >"$verifier_metadata"
+generated_verifier_production_tcb="$scratch/VERIFIER_PRODUCTION_DEPENDENCY_TCB.generated"
+"$source_gate" --verifier-production-dependency-tcb \
+    "$qualified_repo" "$metadata" "$generated_verifier_production_tcb"
+cmp -s "$qualified_scripts/source-gate/VERIFIER_PRODUCTION_DEPENDENCY_TCB" \
+    "$generated_verifier_production_tcb" || \
+    fail 'production verifier dependency TCB drifted'
+generated_verifier_dev_tcb="$scratch/VERIFIER_DEV_DEPENDENCY_TCB.generated"
+"$source_gate" --verifier-dev-dependency-tcb \
+    "$qualified_repo" "$verifier_metadata" "$generated_verifier_dev_tcb"
+cmp -s "$qualified_scripts/source-gate/VERIFIER_DEV_DEPENDENCY_TCB" \
+    "$generated_verifier_dev_tcb" || fail 'development verifier dependency TCB drifted'
 source_gate_metadata="$scratch/source-gate-cargo-metadata.json"
 (
     cd "$qualified_repo"
@@ -132,7 +165,8 @@ source_gate_metadata="$scratch/source-gate-cargo-metadata.json"
 ) >"$source_gate_metadata"
 chmod -R a-w "$source_gate_target"
 generated_source_gate_tcb="$scratch/SOURCE_GATE_DEPENDENCY_TCB.generated"
-"$source_gate" --dependency-tcb "$source_gate_metadata" "$generated_source_gate_tcb"
+"$source_gate" --dependency-tcb "$qualified_repo" "$source_gate_metadata" \
+    "$metadata" "$verifier_metadata" "$generated_source_gate_tcb"
 cmp -s "$qualified_scripts/source-gate/DEPENDENCY_TCB" "$generated_source_gate_tcb" || \
     fail 'source-gate dependency or build-script TCB drifted'
 (
@@ -158,20 +192,17 @@ cmp -s "$qualified_scripts/property-binder/DEPENDENCY_TCB" \
     fail 'property-binder dependency or build-script TCB drifted'
 "$property_binder" --manifest-check "$qualified_repo"
 chmod -R a-w "$property_binder_target"
-metadata="$scratch/cargo-metadata.json"
-(
-    cd "$qualified_repo"
-    CARGO_TARGET_DIR="$proof_target" cargo metadata --locked --no-deps --format-version 1
-) >"$metadata"
 generated_coverage="$scratch/VERIFIED_MODULES.generated"
-"$source_gate" --generate "$qualified_repo" "$metadata" "$generated_coverage"
+"$source_gate" --generate "$qualified_repo" "$metadata" "$verifier_metadata" \
+    "$generated_coverage"
 cmp -s "$qualified_scripts/VERIFIED_MODULES" "$generated_coverage" || {
     printf 'FAIL: proof coverage manifest is stale; regenerate with:\n' >&2
     printf '  CARGO_TARGET_DIR=/tmp/ferric-source-gate-target cargo build --manifest-path proofs/source-gate/Cargo.toml --release --locked\n' >&2
-    printf '  /tmp/ferric-source-gate-target/release/ferric-source-gate --generate . METADATA proofs/VERIFIED_MODULES\n' >&2
+    printf '  /tmp/ferric-source-gate-target/release/ferric-source-gate --generate . METADATA VERIFIER_METADATA proofs/VERIFIED_MODULES\n' >&2
     exit 1
 }
-"$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" "$metadata"
+"$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" \
+    "$metadata" "$verifier_metadata"
 
 verified_sources="$scratch/verified-sources"
 sed -n 's/^verified=[^|]*|\([^|]*\)|.*/\1/p' "$qualified_scripts/VERIFIED_MODULES" | LC_ALL=C sort -u >"$verified_sources"
@@ -207,7 +238,7 @@ while IFS='|' read -r package crate_name extra; do
         cd "$qualified_repo"
         VERUS_Z3_PATH="$verus_root/z3" timeout "$timeout_seconds" \
             "$verus_root/cargo-verus" build -p "$package" --locked --release \
-            --target-dir "$proof_target" --fwd-verus-args-to roots -j 1 -- \
+            --target-dir "$proof_target" --fwd-verus-args-to roots -j 1 --lib -- \
             --no-cheating --output-json
     ) >"$package_transcript" 2>&1
     build_status=$?
@@ -238,7 +269,7 @@ FERRIC_NEGATIVE_TIMEOUT_SECONDS="$timeout_seconds" \
     "$qualified_scripts/negative/run-same-source.sh" \
     "$qualified_repo" "$verus_root" "$negative"
 "$qualified_scripts/negative/test-policy.sh" \
-    "$qualified_repo" "$metadata" "$negative" "$source_gate"
+    "$qualified_repo" "$metadata" "$verifier_metadata" "$negative" "$source_gate"
 "$qualified_scripts/property-binder/test-policy.sh" \
     "$qualified_repo" "$property_binder" "$source_gate" "$negative"
 
@@ -247,18 +278,93 @@ set +e
 (
     set -e
     cd "$qualified_repo"
+    export CARGO_TARGET_DIR="$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=fmt:BEGIN\n'
     cargo fmt --all -- --check
+    for adapter in \
+        adapters/m1-engineering-execution-v1 \
+        adapters/qwen3-swiglu-worker-v3-envelope-v2 \
+        adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1 \
+        services/qwen3-all-kernels-worker-v3-verifier-v1; do
+        cargo fmt --manifest-path "$adapter/Cargo.toml" -- --check
+    done
     printf 'FERRIC_QUALITY_GATE=fmt:PASS\n'
     printf 'FERRIC_QUALITY_GATE=clippy:BEGIN\n'
     cargo clippy --workspace --all-targets --locked --target-dir "$runtime_test_target" -- -D warnings
+    for adapter in \
+        adapters/m1-engineering-execution-v1 \
+        adapters/qwen3-swiglu-worker-v3-envelope-v2 \
+        adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1 \
+        services/qwen3-all-kernels-worker-v3-verifier-v1; do
+        cargo clippy --manifest-path "$adapter/Cargo.toml" --all-targets \
+            --locked --target-dir "$runtime_test_target" -- -D warnings
+    done
     printf 'FERRIC_QUALITY_GATE=clippy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=clippy-all-features:BEGIN\n'
+    cargo clippy --workspace --all-targets --all-features --locked \
+        --target-dir "$runtime_test_target" -- -D warnings
+    printf 'FERRIC_QUALITY_GATE=clippy-all-features:PASS\n'
     printf 'FERRIC_QUALITY_GATE=test-debug:BEGIN\n'
     cargo test --workspace --locked --target-dir "$runtime_test_target"
+    for adapter in \
+        adapters/m1-engineering-execution-v1 \
+        adapters/qwen3-swiglu-worker-v3-envelope-v2 \
+        adapters/qwen3-all-kernels-worker-v3-verifier-v1 \
+        adapters/qwen3-all-kernels-worker-v3-source-pin-v1 \
+        adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1 \
+        services/qwen3-all-kernels-worker-v3-verifier-v1; do
+        cargo test --manifest-path "$adapter/Cargo.toml" --all-targets \
+            --locked --target-dir "$runtime_test_target"
+    done
     printf 'FERRIC_QUALITY_GATE=test-debug:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=worker-v3-promotion-behavior:BEGIN\n'
+    FERRIC_BEHAVIOR_TARGET_DIR="$worker_v3_behavior_target" \
+        adapters/qwen3-all-kernels-worker-v3-promotion-prerequisite-v1/tests/behavioral-harness/run.sh
+    printf 'FERRIC_QUALITY_GATE=worker-v3-promotion-behavior:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=test-debug-all-features:BEGIN\n'
+    cargo test --workspace --all-features --locked --target-dir "$runtime_test_target"
+    printf 'FERRIC_QUALITY_GATE=test-debug-all-features:PASS\n'
     printf 'FERRIC_QUALITY_GATE=test-release:BEGIN\n'
     cargo test --workspace --locked --release --target-dir "$runtime_test_target"
     printf 'FERRIC_QUALITY_GATE=test-release:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=test-release-all-features:BEGIN\n'
+    cargo test --workspace --all-features --locked --release \
+        --target-dir "$runtime_test_target"
+    printf 'FERRIC_QUALITY_GATE=test-release-all-features:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=source-closure-policy:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B proofs/test-source-closure.py
+    printf 'FERRIC_QUALITY_GATE=source-closure-policy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=m1-benchmark-policy:BEGIN\n'
+    CARGO_TARGET_DIR="$runtime_test_target" PYTHONDONTWRITEBYTECODE=1 \
+        python3 -I -B benches/m1/test-policy.py .
+    printf 'FERRIC_QUALITY_GATE=m1-benchmark-policy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=m1-reference-policy:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B benches/m1/reference/test-policy.py
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B -m unittest discover \
+        -s benches/m1/reference -p 'test*.py'
+    printf 'FERRIC_QUALITY_GATE=m1-reference-policy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=m1-r29-differential-evidence:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1/evidence/test-r29-differential-evidence-policy.py
+    printf 'FERRIC_QUALITY_GATE=m1-r29-differential-evidence:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=authenticated-s1-k4-diagnostic-bridge-policy:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1-qualification/test-authenticated-s1-k4-diagnostic-bridge-policy.py .
+    printf 'FERRIC_QUALITY_GATE=authenticated-s1-k4-diagnostic-bridge-policy:PASS\n'
+    printf 'FERRIC_QUALITY_GATE=worker-v3-producer-policy:BEGIN\n'
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1-qualification/test-protected-worker-v3-build-producer-policy.py
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1-qualification/test-protected-worker-v3-all-kernels-build-producer-policy.py
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1-qualification/test-protected-worker-v3-all-kernels-release-policy.py
+    PYTHONDONTWRITEBYTECODE=1 python3 -I -B \
+        proofs/m1-qualification/test-protected-worker-v3-all-kernels-publication-selection-policy.py
+    printf 'FERRIC_QUALITY_GATE=worker-v3-producer-policy:PASS\n'
 ) >"$runtime_tests" 2>&1
 runtime_test_status=$?
 set -e
@@ -281,7 +387,8 @@ property_contract="$scratch/m0-property-contract.records"
     fail 'compiler-rooted source gate changed during qualification'
 [ "$(sha256sum "$property_binder" | awk '{ print $1 }')" = "$property_binder_digest" ] || \
     fail 'M0 property binder changed during qualification'
-"$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" "$metadata"
+"$source_gate" "$qualified_repo" "$qualified_scripts/VERIFIED_MODULES" \
+    "$metadata" "$verifier_metadata"
 "$property_binder" --manifest-check "$qualified_repo"
 
 post_closure_log="$scratch/verus-closure-post.transcript"
@@ -300,5 +407,6 @@ cmp -s "$live_source_before" "$live_source_after" || fail 'live source changed d
 python3 -I "$qualified_scripts/record-qualification.py" \
     "$qualified_repo" "$verus_root" "$artifact_stage" "$metadata" "$transcript" "$counts" \
     "$closure_log" "$negative" "$snapshot_source" "$source_gate" "$runtime_tests" \
-    "$property_binder" "$property_evidence" "$property_contract" "$receipt_dir"
+    "$property_binder" "$property_evidence" "$property_contract" "$timeout_seconds" \
+    "$receipt_dir"
 printf 'PASS: Ferric strict proof and release qualification completed\n'

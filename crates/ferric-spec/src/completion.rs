@@ -82,6 +82,48 @@ pub proof fn exact_next_is_unique(
 mod tests {
     use super::{check_exact_next, CompletionEpoch, CompletionOrderError};
 
+    const ENGINE_SYSTEM_SOURCE: &str = include_str!("../../ferric-engine/src/system.rs");
+
+    fn unique_offset(source: &str, needle: &str) -> usize {
+        let mut matches = source.match_indices(needle);
+        let Some((offset, _)) = matches.next() else {
+            panic!("source-policy anchor is absent: {needle}");
+        };
+        assert!(
+            matches.next().is_none(),
+            "source-policy anchor is not unique: {needle}"
+        );
+        offset
+    }
+
+    /// Syntactic join evidence only; this does not prove engine state effects.
+    #[test]
+    fn source_policy_pins_exact_successor_check_in_immutable_preflight() {
+        let preflight_start = unique_offset(
+            ENGINE_SYSTEM_SOURCE,
+            "pub(crate) fn preflight_complete_exact(",
+        );
+        let preflight_end =
+            unique_offset(ENGINE_SYSTEM_SOURCE, "pub fn reject_reordered_completion(");
+        let preflight = &ENGINE_SYSTEM_SOURCE[preflight_start..preflight_end];
+        let count_guard = unique_offset(preflight, "if accepted_tokens.len() != member_count");
+        let completed_epoch = unique_offset(
+            preflight,
+            "let completed_epoch = self.scheduler.completed_epoch();",
+        );
+        let exact_successor = unique_offset(
+            preflight,
+            "ferric_spec::completion::check_exact_next(completed_epoch, observed_epoch)",
+        );
+        let rejection = unique_offset(preflight, "Err(_) => {");
+        let request_preflight = unique_offset(preflight, "let mut index = 0;");
+
+        assert!(count_guard < completed_epoch);
+        assert!(completed_epoch < exact_successor);
+        assert!(exact_successor < rejection);
+        assert!(rejection < request_preflight);
+    }
+
     #[test]
     fn rejects_skipped_replayed_and_exhausted_epochs() {
         let zero = CompletionEpoch::new(0);

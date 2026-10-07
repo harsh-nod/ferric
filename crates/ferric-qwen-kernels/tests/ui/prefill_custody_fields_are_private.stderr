@@ -1,0 +1,29 @@
+error[E0451]: field `catalog` of struct `PreparedQwen3PrefillKernelV1` is private
+ --> tests/ui/prefill_custody_fields_are_private.rs:7:40
+  |
+7 |     let PreparedQwen3PrefillKernelV1 { catalog, .. } = value;
+  |                                        ^^^^^^^ private field
+
+error[E0451]: field `prepared` of struct `InertQwen3PrefillWorkerRequestV1` is private
+  --> tests/ui/prefill_custody_fields_are_private.rs:12:44
+   |
+12 |     let InertQwen3PrefillWorkerRequestV1 { prepared } = value;
+   |                                            ^^^^^^^^ private field
+
+error[E0451]: field `worker` of struct `InertQwen3PrefillWorkerEvidenceV1` is private
+  --> tests/ui/prefill_custody_fields_are_private.rs:17:45
+   |
+17 |     let InertQwen3PrefillWorkerEvidenceV1 { worker, .. } = value;
+   |                                             ^^^^^^ private field
+
+error[E0451]: field `loader_plan` of struct `InspectedQwen3PrefillKernelV1` is private
+  --> tests/ui/prefill_custody_fields_are_private.rs:22:41
+   |
+22 |     let InspectedQwen3PrefillKernelV1 { loader_plan, .. } = value;
+   |                                         ^^^^^^^^^^^ private field
+
+error[E0451]: field `profile` of struct `CheckedQwen3PrefillLaunchV1` is private
+  --> tests/ui/prefill_custody_fields_are_private.rs:27:39
+   |
+27 |     let CheckedQwen3PrefillLaunchV1 { profile, .. } = value;
+   |                                       ^^^^^^^ private field

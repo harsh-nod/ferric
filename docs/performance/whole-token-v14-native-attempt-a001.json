@@ -1,0 +1,41 @@
+{
+  "schema": "FerricNativeAttemptObservationV1",
+  "change_id": "v14-native-whole-token-r1",
+  "status": "refused_before_controller_launch",
+  "host": "smci350-rck-g03-b19-03",
+  "stage": "/dev/shm/ferric-v14-native-40695ec-a001",
+  "plan_sha256": "b098b9cde0816f54aeac54c02a1b0ccfcef507b0c08911e50e11f1a86abefd9a",
+  "cell_id": "counter-A",
+  "started_utc": "2026-10-05T19:10:49.075548+00:00",
+  "finished_utc": "2026-10-05T19:10:50.570807+00:00",
+  "supervisor_status": 125,
+  "controller_launched": false,
+  "gpu_work_launched": false,
+  "latency_admitted": false,
+  "reason": "All three preflight descriptor scans encountered a departed PID; all three postflight attempts also refused.",
+  "scan_error": "FileNotFoundError while reading /proc/<pid>/stat",
+  "foreign_gpu_users_observed": [],
+  "continuous_isolation_proven": false,
+  "raw_supervisor_child_reaped": false,
+  "raw_supervisor_cleanup_ok": false,
+  "raw_supervisor_term_sent": false,
+  "raw_supervisor_kill_sent": false,
+  "retained_archive": "products/perf-v14-20261005/native-a001-failed.tar.gz",
+  "retained_archive_sha256": "e7c5163b5868c382ad1f751f12e225f60ba6058a0ba95d32e4f1e6229cd60579",
+  "storage_recovery": {
+    "selected_allocated_bytes": 12317421568,
+    "selected_entries": 18097,
+    "root_available_before": 59247173632,
+    "root_available_after": 71326732288,
+    "required_root_available_bytes": 68719476736,
+    "scope": "Only inventoried old incremental entries and .rlib files from one unused Cargo target in the user's home.",
+    "inventory_sha256": "1a65466d289998ece1f725f802427c0f9adc44e75c90b40b6a5a31ad5239e8df",
+    "models_source_executables_shared_libraries_and_kernel_artifacts_preserved": true
+  },
+  "metrics": {
+    "ttft_ms": null,
+    "tpot_ms": null,
+    "speedup_percent": null
+  },
+  "next_step": "Test a separate scanner successor that reconciles positively departed processes, then use a fresh immutable campaign and retain this refusal."
+}

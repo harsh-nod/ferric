@@ -13,7 +13,8 @@ A change is proof-required when it affects:
   semantics;
 - resource ownership, bounds, generations, epochs, or device-visible layouts;
 - construction or validation of a kernel dispatch;
-- correspondence between a Ferric state transition and a fe2o3 contract; or
+- correspondence between a Ferric state transition, a Ferric-owned kernel
+  contract, and reusable fe2o3 compiler/runtime contracts; or
 - admission, identity, or evidence checks used by a proof-required bundle.
 
 Rust's type system and `unsafe_code = "forbid"` remain mandatory, but do not
@@ -82,16 +83,17 @@ The system refinement theorem composes these component results. A component
 proof may not silently assume another component's conclusion.
 
 M0 has no device dispatch path. Refinement from an accepted engine dispatch to
-an exact fe2o3 kernel contract is an M1 obligation and remains unsupported
-until that path exists.
+an exact Ferric-owned kernel contract over the reusable fe2o3 compiler/runtime
+boundary is an M1 obligation and remains unsupported until that path exists.
 
-## fe2o3 Boundary
+## Compiler And Runtime Boundary
 
-Ferric treats a fe2o3 kernel contract as an external lemma only when its exact
-descriptor, schedule, numerical policy, source closure, proof receipt, and
-toolchain identities match the generated plan. The integration proof must show
-that Ferric constructs every contract precondition and correctly consumes the
-postcondition.
+Ferric treats a generic fe2o3 compiler or runtime contract as an external lemma
+only when its exact descriptor, source closure, proof receipt, and toolchain
+identities match the generated plan. Ferric owns model geometry, operator
+declarations, schedules, and kernel source. The integration proof must show
+that Ferric constructs every reusable contract precondition and correctly
+consumes the postcondition.
 
 This initially proves or validates behavior only through fe2o3's admitted
 `gpu.*` representation. LLVM, object generation, HSACO, the driver, firmware,

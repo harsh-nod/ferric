@@ -1,0 +1,9402 @@
+//! Production authenticated repeated speculative execution.
+//!
+//! This bridge can start only from an authenticated released queue produced by
+//! the normal completion path. It never constructs program, queue-currentness,
+//! completion, or verifier authority.
+//! Unit tests cover the public production entry shape and custody transitions
+//! without manufacturing that authority; hardware-backed execution still has
+//! to enter through the normal verified-launch path.
+
+use core::fmt;
+use core::sync::atomic::{AtomicU64, Ordering};
+
+use arrayvec::ArrayVec;
+use ferric_spec::{
+    completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
+    Qwen3PlanSelection, RequestId, TokenId, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
+};
+
+use crate::{
+    complete_m1_authenticated_physical_step_v1, prepare_m1_authenticated_long_lived_queue_rearm_v1,
+    release_m1_authenticated_completed_step_kv_pages_v1,
+    reserve_m1_authenticated_long_lived_queue_rearm_kv_v1,
+    submit_m1_authenticated_long_lived_queue_rearm_v1, ActiveDeviceKvCache,
+    AddresslessM1PhysicalBufferRecipeV1, Engine, LogicalRunnerDeclaration,
+    M1AllocatedScheduledStepV1, M1AuthenticatedCompletedStepOutcomeV1,
+    M1AuthenticatedLongLivedQueueRearmScheduleFailureV1,
+    M1AuthenticatedLongLivedQueueReleasedRoundV1, M1AuthenticatedPhysicalQueueCreateFailureV1,
+    M1AuthenticatedPhysicalQueueSessionV1, M1AuthenticatedPhysicalRunnerV1,
+    M1AuthenticatedPrepublicationBatchV1, M1AuthenticatedRearmedRoundPageReleaseFailureV1,
+    M1AuthenticatedRearmedRoundReleaseOutcomeV1,
+    M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1, M1DeviceKvCompletionMemberV1,
+    M1DeviceKvCompletionRosterV1, M1FullStepKvWorkspaceTablesV1, M1FullStepWorkspacePlans,
+    M1LongLivedQueueRearmKvInputsV1, M1ObservedSpeculativeDiagnosticChoicesV1,
+    M1PartitionedModelMemoryKvPoolV1, M1PhysicalFixedBatchShapeV1, M1PhysicalRunnerRecipeOutcomeV1,
+    M1PrepareFailureV1, M1PreparedScheduledWorkspaceImagesV1, M1ReleasedDeviceKvMemberV1,
+    M1ScheduledDispatchV1, M1SpeculativeGenerationLoopV1, M1SpeculativeMemberControlV1,
+    M1SpeculativeMemberSeedV1, M1SpeculativeMemberStatusV1, M1SpeculativeRoundOutcomeV1,
+};
+
+static NEXT_AUTHENTICATED_SPECULATIVE_LINEAGE_ID_V1: AtomicU64 = AtomicU64::new(1);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct M1AuthenticatedSpeculativeLineageIdentityV1(u64);
+
+impl M1AuthenticatedSpeculativeLineageIdentityV1 {
+    pub(crate) fn fresh() -> Option<Self> {
+        let identity = NEXT_AUTHENTICATED_SPECULATIVE_LINEAGE_ID_V1.fetch_update(
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+            |current| current.checked_add(1),
+        );
+        identity.ok().filter(|identity| *identity != 0).map(Self)
+    }
+}
+
+/// Private move-only proof that a round-zero coordinator binding entered one
+/// exact authenticated physical queue before publication.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+    identity: M1AuthenticatedSpeculativeLineageIdentityV1,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    round: u64,
+    epoch: CompletionEpoch,
+    initial_seeds: Box<[M1SpeculativeMemberSeedV1]>,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
+    identity: M1AuthenticatedSpeculativeLineageIdentityV1,
+}
+
+/// One completed speculative window retained as inert successor history.
+///
+/// The record is flat: prior records remain in the successor's separately
+/// bounded vector, and this coordinator can never be recovered as current
+/// authority.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    initial_seeds: Box<[M1SpeculativeMemberSeedV1]>,
+    generated: Box<[(RequestId, u32)]>,
+    completed_rounds: u64,
+    last_epoch: CompletionEpoch,
+    draft_catchup: Option<M1AuthenticatedDraftCatchupPendingV1>,
+    restoration:
+        Option<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1>,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    physical_history: Option<crate::m1_queue_rearm::M1RearmRoundHistoryV1>,
+}
+
+impl M1AuthenticatedSpeculativeCompletedWindowHistoryV1 {
+    pub(crate) fn archive(
+        coordinator: M1SpeculativeGenerationLoopV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> (Vec<Self>, Self) {
+        let M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical,
+            coordinator_identity,
+            selection,
+            initial_seeds,
+            generated,
+            completed_rounds,
+            last_epoch,
+            draft_catchup,
+            restoration,
+            prior_windows,
+        } = lineage;
+        let archived = Self {
+            coordinator,
+            logical,
+            coordinator_identity,
+            selection,
+            initial_seeds,
+            generated,
+            completed_rounds,
+            last_epoch,
+            draft_catchup,
+            restoration,
+            queue_wait_timeout,
+            physical_history: None,
+        };
+        debug_assert!(archived.retains_exact_history());
+        (prior_windows, archived)
+    }
+
+    pub(crate) fn retains_exact_history(&self) -> bool {
+        let _ = (
+            &self.coordinator,
+            &self.logical,
+            self.coordinator_identity,
+            self.selection,
+            &self.initial_seeds,
+            &self.generated,
+            self.completed_rounds,
+            self.last_epoch,
+            &self.draft_catchup,
+            &self.restoration,
+            self.queue_wait_timeout,
+            &self.physical_history,
+        );
+        true
+    }
+
+    pub(crate) fn attach_physical_history(
+        &mut self,
+        history: crate::m1_queue_rearm::M1RearmRoundHistoryV1,
+    ) -> Result<(), Box<crate::m1_queue_rearm::M1RearmRoundHistoryV1>> {
+        if self.physical_history.is_some() {
+            return Err(Box::new(history));
+        }
+        self.physical_history = Some(history);
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeCausalLineageV1 {
+    logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    initial_seeds: Box<[M1SpeculativeMemberSeedV1]>,
+    generated: Box<[(RequestId, u32)]>,
+    completed_rounds: u64,
+    last_epoch: CompletionEpoch,
+    draft_catchup: Option<M1AuthenticatedDraftCatchupPendingV1>,
+    restoration:
+        Option<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1>,
+    pub(crate) prior_windows: Vec<M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+}
+
+/// Linear maintenance intent minted only after the speculative physical and
+/// logical completion owners have been joined. The copied token is not itself
+/// completion authority; the retained lineage and released queue remain required.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupPendingV1 {
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    parent: Qwen3PlanSelection,
+    request: RequestId,
+    completed_round: u64,
+    prior_epoch: CompletionEpoch,
+    epoch: CompletionEpoch,
+    draft_committed: u32,
+    target_committed: u32,
+    token: TokenId,
+    prior_dispatch_generation: u64,
+}
+
+impl M1AuthenticatedDraftCatchupPendingV1 {
+    pub(crate) const fn coordinator_identity(
+        &self,
+    ) -> crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1 {
+        self.coordinator_identity
+    }
+    pub(crate) const fn completed_round(&self) -> u64 {
+        self.completed_round
+    }
+    pub(crate) const fn parent(&self) -> Qwen3PlanSelection {
+        self.parent
+    }
+    pub(crate) const fn request(&self) -> RequestId {
+        self.request
+    }
+    pub(crate) const fn epoch(&self) -> CompletionEpoch {
+        self.epoch
+    }
+    pub(crate) const fn prior_epoch(&self) -> CompletionEpoch {
+        self.prior_epoch
+    }
+    pub(crate) const fn draft_committed(&self) -> u32 {
+        self.draft_committed
+    }
+    pub(crate) const fn target_committed(&self) -> u32 {
+        self.target_committed
+    }
+    pub(crate) const fn token(&self) -> TokenId {
+        self.token
+    }
+    pub(crate) const fn prior_dispatch_generation(&self) -> u64 {
+        self.prior_dispatch_generation
+    }
+}
+
+/// Created only by the authenticated maintenance completion join after physical
+/// draft settlement. Logical advancement borrows this same move-only witness.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupCompletedV1 {
+    pending: M1AuthenticatedDraftCatchupPendingV1,
+    dispatch_generation: u64,
+    receipt: crate::M1ObservedCompletionImageV1,
+}
+
+impl M1AuthenticatedDraftCatchupCompletedV1 {
+    pub(crate) const fn pending(&self) -> &M1AuthenticatedDraftCatchupPendingV1 {
+        &self.pending
+    }
+    pub(crate) const fn dispatch_generation(&self) -> u64 {
+        self.dispatch_generation
+    }
+
+    pub(crate) const fn completion_epoch(&self) -> CompletionEpoch {
+        self.receipt.epoch()
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupPhysicalSettlementV1 {
+    pub(crate) queue: crate::M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    pub(crate) cache: ActiveDeviceKvCache,
+    pub(crate) completed: M1AuthenticatedDraftCatchupCompletedV1,
+    pub(crate) initialized: crate::device_cache::InertInitializedDeviceKvStepWrite,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupSettlementFailureV1 {
+    queue: crate::M1AuthenticatedPhysicalReadbackQueueSessionV1,
+    retained: Box<dyn fmt::Debug>,
+}
+
+impl M1AuthenticatedDraftCatchupSettlementFailureV1 {
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self { queue, retained } = self;
+        match queue.destroy_and_release() {
+            Ok(released) => released_disposition((released, retained)),
+            Err(quarantined) => quarantined_disposition((quarantined, retained)),
+        }
+    }
+}
+
+/// Settles only the physically completed missing draft token. The K0 compact
+/// word is diagnostic, so Engine completion receives zero served tokens.
+pub(crate) fn settle_authenticated_draft_catchup_v1<const C: usize>(
+    engine: &mut Engine<C>,
+    pending: M1AuthenticatedDraftCatchupPendingV1,
+    readback: crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupCompletedReadbackV1,
+    cache: ActiveDeviceKvCache,
+) -> Result<
+    M1AuthenticatedDraftCatchupPhysicalSettlementV1,
+    Box<M1AuthenticatedDraftCatchupSettlementFailureV1>,
+> {
+    let receipt_matches = readback.parent_selection() == pending.parent()
+        && readback.request() == pending.request()
+        && readback.completion_epoch() == pending.epoch()
+        && pending.prior_dispatch_generation().checked_add(1)
+            == Some(readback.dispatch_generation());
+    let dispatch_generation = readback.dispatch_generation();
+    let completion_plan_identity = readback.completion_plan_identity();
+    let (queue, completion, kv, image, lineage, rollover_intent) = readback.into_completion_parts();
+    let projection = cache.projection();
+    let pending_write = match &kv {
+        crate::M1FullStepKvReservationCustodyV1::DraftCatchup {
+            parent,
+            target_allocation_id,
+            draft,
+        } if *parent == pending.parent()
+            && Some(*target_allocation_id) == projection.target_arena_allocation_id
+            && Some(draft.allocation_id()) == projection.draft_arena_allocation_id
+            && draft.reservations().len() == 1 =>
+        {
+            draft.reservations().first()
+        }
+        _ => None,
+    };
+    let binding_matches = receipt_matches
+        && !engine.is_faulted()
+        && lineage.is_none()
+        && rollover_intent.is_none()
+        && queue.shape() == crate::M1PhysicalFixedBatchShapeV1::DraftCatchup
+        && queue.custody().selection() == pending.parent()
+        && queue
+            .custody()
+            .completion_output()
+            .draft_catchup_parent_selection()
+            == Some(pending.parent())
+        && completion.epoch() == pending.epoch()
+        && projection.request == pending.request()
+        && projection.device == queue.custody().device()
+        && projection.target.committed_tokens == pending.target_committed()
+        && projection.target.resident_tokens == pending.target_committed()
+        && projection.draft.committed_tokens == pending.draft_committed()
+        && projection.draft.resident_tokens == pending.draft_committed()
+        && pending.draft_committed().checked_add(1) == Some(pending.target_committed())
+        && engine.pending_batch_member_count() == 1
+        && engine.pending_member(0) == Some(pending.request())
+        && engine.state(pending.request()) == Some(ferric_spec::scheduling::RequestState::InFlight)
+        && queue
+            .logical_runner()
+            .bind_step_plan(
+                pending.request(),
+                pending.epoch(),
+                crate::M1StepDispatchIntent::DraftCatchup(pending.parent()).completion_selection(),
+            )
+            .is_ok_and(|plan| *plan.plan_id() == completion_plan_identity)
+        && pending_write.is_some_and(|write| write.matches_authenticated_draft_catchup(&pending));
+    if !binding_matches {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((
+                "maintenance binding",
+                pending,
+                completion,
+                kv,
+                image,
+                lineage,
+                rollover_intent,
+                cache,
+            )),
+        }));
+    }
+    let write = pending_write.expect("maintenance reservation shape was checked");
+    if let Err(error) = cache
+        .preflight_step_completion(write, &completion)
+        .and_then(|()| cache.preflight_step_settlement(write, 1, pending.epoch()))
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((error, pending, completion, kv, image, cache)),
+        }));
+    }
+    if let Err(error) = engine.preflight_complete_exact(&completion, &[0]) {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((error, pending, completion, kv, image, cache)),
+        }));
+    }
+    let crate::M1FullStepKvReservationCustodyV1::DraftCatchup { draft, .. } = kv else {
+        unreachable!("maintenance reservation shape was checked")
+    };
+    let mut reservations = draft.into_reservations().into_iter();
+    let write = reservations
+        .next()
+        .expect("exactly one maintenance reservation");
+    let (mut cache, initialized, completion) = match cache.complete_step_write(write, completion) {
+        crate::device_cache::DeviceKvStepCompletionOutcome::Completed(completed) => {
+            completed.into_parts()
+        }
+        source => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+                queue,
+                retained: Box::new((source, pending, image, reservations)),
+            }));
+        }
+    };
+    let settlement = cache.settle_completed_step(&initialized, 1, pending.epoch());
+    if settlement != Ok(0) {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((settlement, pending, completion, initialized, image, cache)),
+        }));
+    }
+    let settled = cache.projection();
+    if settled.target != projection.target
+        || settled.draft.committed_tokens != pending.target_committed()
+        || settled.draft.resident_tokens != pending.target_committed()
+        || settled.target_write_pending
+        || settled.draft_write_pending
+        || settled.target_active_pages != projection.target_active_pages
+        || settled.target_retired_pages != projection.target_retired_pages
+        || settled.draft_retired_pages != projection.draft_retired_pages
+    {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+            queue,
+            retained: Box::new((
+                "maintenance settlement projection",
+                pending,
+                completion,
+                initialized,
+                image,
+                cache,
+            )),
+        }));
+    }
+    match engine.complete_exact(completion, &[0]) {
+        Ok(1) => Ok(M1AuthenticatedDraftCatchupPhysicalSettlementV1 {
+            queue,
+            cache,
+            completed: M1AuthenticatedDraftCatchupCompletedV1 {
+                pending,
+                dispatch_generation,
+                receipt: image,
+            },
+            initialized,
+        }),
+        result => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(Box::new(M1AuthenticatedDraftCatchupSettlementFailureV1 {
+                queue,
+                retained: Box::new((result, pending, initialized, image, cache)),
+            }))
+        }
+    }
+}
+
+fn joined_draft_catchup_pending(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    outcome: &M1SpeculativeRoundOutcomeV1,
+    choices: &M1ObservedSpeculativeDiagnosticChoicesV1,
+) -> Result<Option<M1AuthenticatedDraftCatchupPendingV1>, ()> {
+    let parent = outcome.selection();
+    if !matches!(
+        parent.bucket,
+        Qwen3PlanBucket::SpeculativeS1K4C8192
+            | Qwen3PlanBucket::SpeculativeS1K8C8192
+            | Qwen3PlanBucket::SpeculativeS1K16C8192
+    ) {
+        return Ok(None);
+    }
+    let [member] = outcome.members() else {
+        return Err(());
+    };
+    if member.status() != M1SpeculativeMemberStatusV1::Active {
+        return Ok(None);
+    }
+    let snapshot = coordinator.member(member.request()).ok_or(())?;
+    let target_committed = member.target_settlement().commit_end();
+    let draft_committed = member.draft_settlement().commit_end();
+    if target_committed == draft_committed {
+        return Ok(None);
+    }
+    let k = choices.shape().draft_tokens();
+    let candidates = choices.draft_choices_for_lane(0).ok_or(())?;
+    let token = *candidates.last().ok_or(())?;
+    if parent.role != Qwen3ModelRole::Target8B
+        || parent.mode != Qwen3ExecutionMode::Speculative
+        || choices.shape().selection() != parent
+        || choices.live_sequences() != 1
+        || candidates.len() != usize::from(k)
+        || member.accepted_draft_tokens() != k
+        || member.accepted_prefix_tokens().last() != Some(&token)
+        || snapshot.status() != M1SpeculativeMemberStatusV1::Active
+        || snapshot.target_committed_tokens() != target_committed
+        || snapshot.draft_committed_tokens() != draft_committed
+        || draft_committed.checked_add(1) != Some(target_committed)
+        || outcome.coordinator_identity() != coordinator.identity()
+        || outcome.completed_round().checked_add(1) != Some(coordinator.next_round())
+        || coordinator.last_epoch() != Some(outcome.completed_epoch())
+        || choices.dispatch_generation() == 0
+    {
+        return Err(());
+    }
+    let epoch = outcome.completed_epoch().value().checked_add(1).ok_or(())?;
+    Ok(Some(M1AuthenticatedDraftCatchupPendingV1 {
+        coordinator_identity: coordinator.identity(),
+        parent,
+        request: member.request(),
+        completed_round: outcome.completed_round(),
+        prior_epoch: outcome.completed_epoch(),
+        epoch: CompletionEpoch::new(epoch),
+        draft_committed,
+        target_committed,
+        token,
+        prior_dispatch_generation: choices.dispatch_generation(),
+    }))
+}
+
+/// Stable association rejection before any executor exists.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeExecutorInitErrorV1 {
+    CoordinatorIdentity,
+    Selection,
+    QueueShape,
+    PriorEpoch,
+    PriorRound,
+    PriorRoster,
+    PriorMember { lane: usize },
+    ActiveKv { lane: usize },
+    TerminalKv { lane: usize },
+}
+
+/// Linear production owner of a verified authenticated queue and its logical coordinator.
+#[must_use = "the authenticated executor must execute another round or be retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativePhysicalExecutorV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedDraftCatchupReadyV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    released: crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupReleasedRoundV1,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+impl M1AuthenticatedDraftCatchupReadyV1 {
+    pub(crate) const fn completed(&self) -> &M1AuthenticatedDraftCatchupCompletedV1 {
+        self.released.completed()
+    }
+
+    pub(crate) const fn selection(&self) -> Qwen3PlanSelection {
+        self.coordinator.shape().selection()
+    }
+
+    pub(crate) fn active_roster(&self) -> crate::M1SpeculativeActiveRosterV1 {
+        self.coordinator.active_roster()
+    }
+
+    pub(crate) fn member_snapshot(
+        &self,
+        request: RequestId,
+    ) -> Option<crate::M1SpeculativeMemberSnapshotV1> {
+        self.coordinator.member(request)
+    }
+
+    pub(crate) const fn retained_logical_runner(&self) -> &LogicalRunnerDeclaration {
+        self.released.retained_logical_runner()
+    }
+
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        let Self {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        } = self;
+        released
+            .close(engine)
+            .retain((coordinator, lineage, queue_wait_timeout))
+    }
+
+    pub(crate) fn execute_round<const C: usize, F, E, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        post_submit: F,
+        mut deadline: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        M1AuthenticatedDraftCatchupRestoreFailureV1,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        let epoch = self
+            .completed()
+            .completion_epoch()
+            .value()
+            .checked_add(1)
+            .map(CompletionEpoch::new);
+        let roster = self.coordinator.active_roster();
+        let binding = epoch.and_then(|epoch| {
+            self.coordinator
+                .bind_round(self.coordinator.next_round(), epoch, &roster)
+                .ok()
+        });
+        let valid = !engine.is_faulted()
+            && roster.as_slice() == [self.completed().pending().request()]
+            && self.lineage.draft_catchup.is_none()
+            && self.lineage.restoration.is_none()
+            && self.lineage.last_epoch == self.completed().completion_epoch()
+            && self.coordinator.last_epoch() == Some(self.completed().completion_epoch())
+            && inputs.recipe_workspace_plans.workspace_plans()
+                == Some(&inputs.preparation_workspace_plans)
+            && inputs.preparation_workspace_plans.kind()
+                == crate::M1FullStepWorkspaceInputKind::SpeculativeRound
+            && inputs.preparation_workspace_plans.target().selection() == self.selection()
+            && inputs.resident_completion_scratch.is_some()
+            && matches!(
+                &inputs.kv,
+                M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail { .. }
+            )
+            && binding.as_ref().is_some_and(|binding| {
+                authenticated_speculative_round_inputs_match_binding(&inputs.kv, binding)
+            });
+        if !valid {
+            return Err(M1AuthenticatedDraftCatchupRestoreFailureV1::Retry(
+                Box::new((self, inputs)),
+            ));
+        }
+        if deadline(crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1::BeforeDraftCatchupRestoreSchedule, self.queue_wait_timeout).is_none() {
+            return Err(M1AuthenticatedDraftCatchupRestoreFailureV1::DeadlineRetry(Box::new((self, inputs))));
+        }
+        let binding = binding.expect("restored logical round was checked");
+        let epoch = epoch.expect("restored epoch was checked");
+        let Self {
+            coordinator,
+            released,
+            mut lineage,
+            queue_wait_timeout,
+        } = self;
+        let (scheduled, restored) = match released.schedule_restore(engine, epoch, roster[0]) {
+            Ok(scheduled) => scheduled,
+            Err(crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreScheduleFailureV1::Rejected(released)) => {
+                return Err(M1AuthenticatedDraftCatchupRestoreFailureV1::Retry(Box::new((
+                    Self { coordinator, released: *released, lineage, queue_wait_timeout }, inputs,
+                ))));
+            }
+            Err(crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreScheduleFailureV1::Terminal(disposition)) => {
+                return Err(M1AuthenticatedDraftCatchupRestoreFailureV1::Closed(disposition.retain((coordinator, lineage, inputs, binding, queue_wait_timeout))));
+            }
+        };
+        lineage.restoration = Some(restored);
+        M1AuthenticatedSpeculativePhysicalExecutorV1::execute_scheduled_round(
+            engine,
+            coordinator,
+            binding,
+            lineage,
+            scheduled,
+            inputs,
+            queue_wait_timeout,
+            post_submit,
+            deadline,
+        )
+        .map_err(|failure| {
+            M1AuthenticatedDraftCatchupRestoreFailureV1::Ordinary(close_pending_round_failure(
+                engine, failure,
+            ))
+        })
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedDraftCatchupRestoreFailureV1 {
+    Retry(
+        Box<(
+            M1AuthenticatedDraftCatchupReadyV1,
+            M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        )>,
+    ),
+    DeadlineRetry(
+        Box<(
+            M1AuthenticatedDraftCatchupReadyV1,
+            M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        )>,
+    ),
+    Closed(M1AuthenticatedSpeculativeFailureDispositionV1),
+    Ordinary(Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>),
+}
+
+impl M1AuthenticatedDraftCatchupRestoreFailureV1 {
+    pub(crate) fn is_deadline(&self) -> bool {
+        matches!(self, Self::DeadlineRetry(_))
+            || matches!(self, Self::Ordinary(failure) if failure.stage() == M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline)
+    }
+
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        match self {
+            Self::Retry(retained) | Self::DeadlineRetry(retained) => {
+                let (ready, inputs) = *retained;
+                ready.close(engine).retain(inputs)
+            }
+            Self::Closed(disposition) => disposition,
+            Self::Ordinary(failure) => failure.close_for_resident(engine),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum M1AuthenticatedDraftCatchupExecutionFailureV1 {
+    Retry {
+        executor: Box<M1AuthenticatedSpeculativePhysicalExecutorV1>,
+        plans:
+            Box<crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1>,
+    },
+    DeadlineRetry {
+        executor: Box<M1AuthenticatedSpeculativePhysicalExecutorV1>,
+        plans:
+            Box<crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1>,
+    },
+    Closed {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
+}
+
+impl M1AuthenticatedDraftCatchupExecutionFailureV1 {
+    pub(crate) fn is_deadline(&self) -> bool {
+        matches!(self, Self::DeadlineRetry { .. })
+            || matches!(
+                self,
+                Self::Closed {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    ..
+                }
+            )
+    }
+
+    pub(crate) fn close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        match self {
+            Self::Retry { executor, plans } | Self::DeadlineRetry { executor, plans } => {
+                match executor.destroy_queue_and_retain_state(engine) {
+                    Ok(released) => released_disposition((released, plans)),
+                    Err(quarantined) => quarantined_disposition((quarantined, plans)),
+                }
+            }
+            Self::Closed { stage, disposition } => disposition.retain(stage),
+        }
+    }
+}
+
+/// Clean queue teardown retaining the final logical coordinator state.
+#[must_use = "final coordinator state and authenticated release remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    released: crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+}
+
+/// Terminal queue-release quarantine retaining the final logical state.
+#[must_use = "final coordinator state and release quarantine remain retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    released: Box<crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+}
+
+impl M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
+    pub const fn released(&self) -> &crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1 {
+        &self.released
+    }
+
+    #[must_use]
+    pub const fn coordinator(&self) -> &M1SpeculativeGenerationLoopV1 {
+        &self.coordinator
+    }
+
+    #[must_use]
+    pub const fn retains_causal_lineage(&self) -> bool {
+        let _ = &self.lineage;
+        true
+    }
+}
+
+impl M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
+    pub const fn released(&self) -> &crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1 {
+        &self.released
+    }
+
+    #[must_use]
+    pub const fn coordinator(&self) -> &M1SpeculativeGenerationLoopV1 {
+        &self.coordinator
+    }
+
+    #[must_use]
+    pub const fn retains_causal_lineage(&self) -> bool {
+        let _ = &self.lineage;
+        true
+    }
+}
+
+/// Exact linear inputs for one next generation.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativePhysicalRoundInputsV1;
+/// fn extract_page_authority(inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1) {
+///     let _pages = inputs.kv;
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativePhysicalRoundInputsV1;
+/// fn require_clone<T: Clone>() {}
+/// require_clone::<M1AuthenticatedSpeculativePhysicalRoundInputsV1>();
+/// ```
+#[must_use = "round inputs retain validated KV intent and linear workspace plans"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
+    kv: M1AuthenticatedSpeculativePhysicalRoundKvInputsV1,
+    recipe_workspace_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
+    preparation_workspace_plans: M1FullStepWorkspacePlans,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+    resident_completion_scratch:
+        Option<Box<crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1>>,
+}
+
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativePhysicalRoundKvInputsV1 {
+    Preleased(M1LongLivedQueueRearmKvInputsV1),
+    AuthenticatedTail {
+        draft_decode: ValidatedM1StepInputs,
+        target_speculative: ValidatedM1StepInputs,
+    },
+}
+
+/// Pure authenticated round-zero bootstrap rejection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeBootstrapErrorV1 {
+    Coordinator,
+    Inputs,
+    CacheRoster,
+    LineageIdentityExhausted,
+    Preparation,
+    LineageAttachment,
+}
+
+#[derive(Debug)]
+pub enum M1AuthenticatedSpeculativeBootstrapFailureCustodyV1 {
+    Unprepared(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            Vec<ActiveDeviceKvCache>,
+            M1ScheduledDispatchV1,
+            M1FullStepWorkspacePlans,
+            M1FullStepKvWorkspaceTablesV1,
+        )>,
+    ),
+    Preparation(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            Vec<ActiveDeviceKvCache>,
+            M1PrepareFailureV1,
+        )>,
+    ),
+    Attachment(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            Vec<ActiveDeviceKvCache>,
+            M1PreparedScheduledWorkspaceImagesV1,
+        )>,
+    ),
+}
+
+/// Bootstrap failure retaining every scheduler, KV, cache, and coordinator owner.
+#[must_use = "bootstrap rejection retains all linear inputs"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeBootstrapFailureV1 {
+    error: M1AuthenticatedSpeculativeBootstrapErrorV1,
+    custody: M1AuthenticatedSpeculativeBootstrapFailureCustodyV1,
+}
+
+impl M1AuthenticatedSpeculativeBootstrapFailureV1 {
+    #[must_use]
+    pub const fn error(&self) -> M1AuthenticatedSpeculativeBootstrapErrorV1 {
+        self.error
+    }
+
+    #[must_use]
+    pub const fn retains_all_custody(&self) -> bool {
+        match &self.custody {
+            M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Unprepared(_)
+            | M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Preparation(_)
+            | M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Attachment(_) => true,
+        }
+    }
+
+    #[must_use = "all rejected bootstrap custody remains linear"]
+    pub fn into_custody(self) -> M1AuthenticatedSpeculativeBootstrapFailureCustodyV1 {
+        self.custody
+    }
+}
+
+/// Logical half of a round-zero provenance join.
+///
+/// It is useful only when joined later to the physical half carried through
+/// the exact authenticated queue publication and readback.
+#[must_use = "bootstrap continuation must rejoin its authenticated physical lineage"]
+#[derive(Debug)]
+struct M1AuthenticatedSpeculativeBootstrapContinuationV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    epoch: CompletionEpoch,
+    selected: Vec<ActiveDeviceKvCache>,
+    lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+}
+
+/// Prepared round-zero images plus the only logical continuation able to join them.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeBootstrapPreparedV1;
+/// fn separate(value: M1AuthenticatedSpeculativeBootstrapPreparedV1) {
+///     let _ = value.into_parts();
+/// }
+/// ```
+#[must_use = "prepared physical custody and logical bootstrap continuation remain linear"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+    prepared: M1PreparedScheduledWorkspaceImagesV1,
+    continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+}
+
+/// Logical half of an authenticated paired-prefill rollover lineage join.
+#[must_use = "rollover continuation must rejoin the first speculative readback"]
+#[derive(Debug)]
+struct M1AuthenticatedSpeculativeRolloverContinuationV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    epoch: CompletionEpoch,
+    lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    prior_windows: Vec<M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+    resident_join_storage: Option<M1AuthenticatedResidentRolloverJoinStorageV1>,
+}
+
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedResidentRolloverJoinStorageV1 {
+    initial_seeds: Vec<M1SpeculativeMemberSeedV1>,
+    generated: Vec<(RequestId, u32)>,
+    roster: Vec<RequestId>,
+}
+
+impl M1AuthenticatedResidentRolloverJoinStorageV1 {
+    pub(crate) fn try_new(member_capacity: usize) -> Option<Self> {
+        let mut initial_seeds = Vec::new();
+        let mut generated = Vec::new();
+        let mut roster = Vec::new();
+        initial_seeds.try_reserve_exact(member_capacity).ok()?;
+        generated.try_reserve_exact(member_capacity).ok()?;
+        roster.try_reserve_exact(member_capacity).ok()?;
+        Some(Self {
+            initial_seeds,
+            generated,
+            roster,
+        })
+    }
+}
+
+/// Published first speculative generation plus its only logical continuation.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeRolloverPublishedV1;
+/// fn separate(value: M1AuthenticatedSpeculativeRolloverPublishedV1) {
+///     let _ = value.into_parts();
+/// }
+/// ```
+#[must_use = "published rollover queue and continuation must remain paired"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeRolloverPublishedV1 {
+    published: crate::M1AuthenticatedRearmedPublishedQueueV1,
+    continuation: M1AuthenticatedSpeculativeRolloverContinuationV1,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+/// Terminal first-round rollover failure without reusable queue authority.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeRolloverRoundFailureV1;
+/// fn recover_completed_owner(failure: M1AuthenticatedSpeculativeRolloverRoundFailureV1) {
+///     let _completed = failure.into_completed_step();
+/// }
+/// ```
+#[must_use = "terminal rollover failure custody remains retained"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+}
+
+impl M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+    #[must_use]
+    pub const fn stage(&self) -> M1AuthenticatedSpeculativePhysicalRoundStageV1 {
+        self.stage
+    }
+
+    #[must_use = "the terminal disposition must remain observed"]
+    pub const fn disposition(&self) -> &M1AuthenticatedSpeculativeFailureDispositionV1 {
+        &self.disposition
+    }
+
+    pub(crate) fn into_disposition(self) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        self.disposition.retain(self.stage)
+    }
+}
+
+pub(crate) fn close_deadline_phase<T>(
+    owner: T,
+    close: impl FnOnce(T) -> M1AuthenticatedSpeculativeFailureDispositionV1,
+) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+    close(owner)
+}
+
+/// Internal first-round rollover custody pending mandatory terminal closure.
+#[derive(Debug)]
+enum PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+    Unsettled {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        retained: Box<(
+            M1AuthenticatedSpeculativeRolloverContinuationV1,
+            crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+            Vec<M1SpeculativeMemberControlV1>,
+        )>,
+    },
+    Round(Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>),
+}
+
+impl M1AuthenticatedSpeculativeRolloverPublishedV1 {
+    pub(crate) fn new(
+        published: crate::M1AuthenticatedRearmedPublishedQueueV1,
+        coordinator: M1SpeculativeGenerationLoopV1,
+        epoch: CompletionEpoch,
+        lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+        prior_windows: Vec<M1AuthenticatedSpeculativeCompletedWindowHistoryV1>,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Self {
+        Self {
+            published,
+            continuation: M1AuthenticatedSpeculativeRolloverContinuationV1 {
+                coordinator,
+                epoch,
+                lineage,
+                prior_windows,
+                resident_join_storage: None,
+            },
+            queue_wait_timeout,
+        }
+    }
+
+    pub(crate) fn cancel_and_close<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let Self {
+            published,
+            continuation,
+            queue_wait_timeout,
+        } = self;
+        disposition_with_logical(
+            published.close_in_flight(engine),
+            (continuation, queue_wait_timeout),
+        )
+    }
+
+    /// Drives wait, recycle, diagnostic readback, and coordinator completion
+    /// without ever exposing the generic published queue independently.
+    ///
+    /// # Errors
+    ///
+    /// Every failure closes available queue custody, permanently faults
+    /// `engine`, and returns only a clean release or opaque quarantine.
+    pub fn complete_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        M1AuthenticatedSpeculativeRolloverRoundFailureV1,
+    > {
+        self.complete_round_with_deadline_and_scratch(engine, controls, None, None, |_, timeout| {
+            Some(timeout)
+        })
+    }
+
+    pub(crate) fn complete_round_with_deadline<const C: usize, D>(
+        self,
+        engine: &mut Engine<C>,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        M1AuthenticatedSpeculativeRolloverRoundFailureV1,
+    >
+    where
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        self.complete_round_with_deadline_and_scratch(
+            engine,
+            controls,
+            None,
+            None,
+            deadline_expired,
+        )
+    }
+
+    pub(crate) fn complete_round_with_deadline_and_scratch<const C: usize, D>(
+        self,
+        engine: &mut Engine<C>,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        mut resident_completion_scratch: Option<
+            Box<crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1>,
+        >,
+        resident_join_storage: Option<M1AuthenticatedResidentRolloverJoinStorageV1>,
+        mut deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        M1AuthenticatedSpeculativeRolloverRoundFailureV1,
+    >
+    where
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+        let Self {
+            published,
+            mut continuation,
+            queue_wait_timeout,
+        } = self;
+        continuation.resident_join_storage = resident_join_storage;
+        let (diagnostic, (continuation, controls)) =
+            complete_round_core_with_deadline::<M1NativeRearmedQueueEffectsV1, _, _, C>(
+                engine,
+                (
+                    published,
+                    resident_completion_scratch
+                        .as_deref_mut()
+                        .and_then(crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1::take_readback),
+                ),
+                (continuation, controls),
+                queue_wait_timeout,
+                &mut deadline_expired,
+            )
+            .map_err(|(stage, disposition)| {
+                M1AuthenticatedSpeculativeRolloverRoundFailureV1 { stage, disposition }
+            })?;
+        if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                disposition: close_deadline_phase(diagnostic, |diagnostic| {
+                    let closure =
+                        M1NativeRearmedQueueEffectsV1::close_diagnostic(engine, diagnostic);
+                    disposition_with_logical(
+                        closure,
+                        (continuation, controls, Boundary::BeforeSettlement),
+                    )
+                }),
+            });
+        }
+        let success = continuation.complete_rollover_round_with_deadline(
+            engine,
+            diagnostic,
+            queue_wait_timeout,
+            controls,
+            resident_completion_scratch.map(|scratch| *scratch),
+            &mut deadline_expired,
+        )?;
+        if deadline_expired(Boundary::AfterSettlement, queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                disposition: close_deadline_phase(success, |success| {
+                    success
+                        .close_for_resident(engine)
+                        .retain(Boundary::AfterSettlement)
+                }),
+            });
+        }
+        Ok(success)
+    }
+}
+
+/// Round-zero completion failure stage after authenticated bootstrap.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativeBootstrapRoundStageV1 {
+    EngineFaulted,
+    WorkspaceAllocation,
+    CompletionOutput,
+    DiagnosticCapture,
+    Prepublication,
+    QueueCreate,
+    QueueSubmit,
+    QueueWait,
+    SignalRecycle,
+    CompletionObservation,
+    DiagnosticObservation,
+    SemanticJoin,
+    Lineage,
+    CoordinatorPreflight,
+    HostAllocation,
+    PhysicalCompletion,
+    CoordinatorCommit,
+    PageRelease,
+}
+
+/// Terminal round-zero failure with no recoverable queue or readback authority.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeBootstrapRoundFailureV1;
+/// fn recover_readback(failure: M1AuthenticatedSpeculativeBootstrapRoundFailureV1) {
+///     let _readback = failure.into_custody();
+/// }
+/// ```
+#[must_use = "bootstrap retry or terminal custody remains retained"]
+pub enum M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+    /// Pure rejection before native queue creation with exact retry custody.
+    PreDetach {
+        stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+        retry: Box<M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1>,
+    },
+    /// Failure after native queue creation began, or an intentionally terminal
+    /// earlier failure after the Engine was explicitly quarantined.
+    Terminal {
+        stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+        disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
+}
+
+impl M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+    #[must_use]
+    pub const fn stage(&self) -> M1AuthenticatedSpeculativeBootstrapRoundStageV1 {
+        match self {
+            Self::PreDetach { stage, .. } | Self::Terminal { stage, .. } => *stage,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_pre_detach_retry(&self) -> bool {
+        matches!(self, Self::PreDetach { .. })
+    }
+
+    #[must_use = "the terminal disposition must remain observed when present"]
+    pub const fn disposition(&self) -> Option<&M1AuthenticatedSpeculativeFailureDispositionV1> {
+        match self {
+            Self::PreDetach { .. } => None,
+            Self::Terminal { disposition, .. } => Some(disposition),
+        }
+    }
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeBootstrapRoundFailureV1")
+            .field("stage", &self.stage())
+            .field("pre_detach_retry", &self.is_pre_detach_retry())
+            .field("terminal_disposition", &self.disposition())
+            .finish()
+    }
+}
+
+/// Opaque exact inputs for retrying a bootstrap rejection that occurred before
+/// native queue creation began.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1;
+/// fn extract(retry: M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1) {
+///     let _generic_queue_or_inputs = retry.into_parts();
+/// }
+/// ```
+#[must_use = "pre-detach bootstrap retry custody remains linear"]
+pub struct M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
+    state: M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1,
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1")
+            .field("retains_exact_inputs", &true)
+            .finish()
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+enum M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1 {
+    Allocation {
+        diagnostic: Box<dyn fmt::Debug>,
+        prepared: M1AuthenticatedSpeculativeBootstrapPreparedV1,
+        partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
+    Prepublication {
+        diagnostic: Box<dyn fmt::Debug>,
+        continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        allocated: M1AllocatedScheduledStepV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        completion: crate::BoundM1CompletionOutputV1,
+        ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
+    QueueCreate {
+        diagnostic: Box<dyn fmt::Debug>,
+        continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+        prepublication: M1AuthenticatedPrepublicationBatchV1,
+        ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
+}
+
+/// Internal round-zero custody pending mandatory terminal closure.
+#[allow(clippy::type_complexity)]
+#[derive(Debug)]
+enum PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1 {
+    Retryable(
+        Box<(
+            M1AuthenticatedSpeculativeBootstrapContinuationV1,
+            M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+            Vec<M1SpeculativeMemberControlV1>,
+        )>,
+    ),
+    PhysicalOutcome(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1SpeculativePreflightedRoundV1,
+            M1AuthenticatedCompletedStepOutcomeV1,
+        )>,
+    ),
+    CoordinatorCommit(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedCompletedStepSuccessV1,
+            Box<crate::M1SpeculativePreparedRoundCommitFailureV1>,
+        )>,
+    ),
+    LineageAfterCommit(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedCompletedStepSuccessV1,
+            M1SpeculativeRoundOutcomeV1,
+        )>,
+    ),
+    PageRelease(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            Box<crate::M1AuthenticatedCompletedStepKvReleaseFailureV1>,
+        )>,
+    ),
+    ReleasedLineage(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1AuthenticatedSpeculativeCausalLineageV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            M1AuthenticatedLongLivedQueueReleasedRoundV1,
+        )>,
+    ),
+}
+
+/// Internal failed round-zero completion before terminal closure.
+#[derive(Debug)]
+struct PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    custody: PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1,
+}
+
+impl M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
+    /// The recipe and preparation plans must describe equal addressless ranges.
+    /// They are separate because both downstream owners intentionally consume
+    /// their plan custody.
+    pub const fn new(
+        kv: M1LongLivedQueueRearmKvInputsV1,
+        recipe_workspace_plans: M1FullStepWorkspacePlans,
+        preparation_workspace_plans: M1FullStepWorkspacePlans,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Self {
+        Self {
+            kv: M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(kv),
+            recipe_workspace_plans: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(
+                recipe_workspace_plans,
+            ),
+            preparation_workspace_plans,
+            controls,
+            resident_completion_scratch: None,
+        }
+    }
+
+    /// Constructs a round whose exact missing KV tail pages are authenticated
+    /// and committed only after the retained queue has detached.
+    ///
+    /// The validated logical inputs grant no page, memory, queue, or launch
+    /// authority. Exact page spans are derived from the selected live caches
+    /// and committed by the partitioned-memory owner held inside queue custody.
+    pub const fn with_authenticated_tail_pages(
+        draft_decode: ValidatedM1StepInputs,
+        target_speculative: ValidatedM1StepInputs,
+        recipe_workspace_plans: M1FullStepWorkspacePlans,
+        preparation_workspace_plans: M1FullStepWorkspacePlans,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Self {
+        Self {
+            kv: M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
+                draft_decode,
+                target_speculative,
+            },
+            recipe_workspace_plans: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(
+                recipe_workspace_plans,
+            ),
+            preparation_workspace_plans,
+            controls,
+            resident_completion_scratch: None,
+        }
+    }
+
+    pub(crate) fn with_authenticated_tail_pages_and_completion_scratch(
+        draft_decode: ValidatedM1StepInputs,
+        target_speculative: ValidatedM1StepInputs,
+        recipe_workspace_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
+        preparation_workspace_plans: M1FullStepWorkspacePlans,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        scratch: Box<crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1>,
+    ) -> Self {
+        Self {
+            kv: M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
+                draft_decode,
+                target_speculative,
+            },
+            recipe_workspace_plans,
+            preparation_workspace_plans,
+            controls,
+            resident_completion_scratch: Some(scratch),
+        }
+    }
+}
+
+/// Effectful stage retained by a failed production round.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1AuthenticatedSpeculativePhysicalRoundStageV1 {
+    Complete,
+    Profile,
+    Inputs,
+    Epoch,
+    Bind,
+    Schedule,
+    TailPages,
+    Recipe,
+    KvReservation,
+    WorkspacePreparation,
+    Submit,
+    RegistryPublication,
+    Deadline,
+    Wait,
+    Recycle,
+    DiagnosticReadback,
+    CoordinatorPreflight,
+    PhysicalCompletion,
+    CoordinatorCommit,
+    CausalLineage,
+    PageRelease,
+}
+
+/// Proof that a failed speculative transition destroyed its queue cleanly.
+///
+/// The lower queue and all logical/KV owners remain sealed inside this object;
+/// callers receive no schedule, completion, readback, or resubmission authority.
+#[must_use = "clean queue-release evidence retains all terminal custody"]
+pub struct M1AuthenticatedSpeculativeCleanReleaseV1 {
+    retained: Box<dyn fmt::Debug>,
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativeCleanReleaseV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeCleanReleaseV1")
+            .field("queue_released", &true)
+            .field("engine_quarantined", &true)
+            .field("custody_sealed", &true)
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1AuthenticatedSpeculativeCleanReleaseV1 {
+    #[must_use]
+    pub const fn queue_released(&self) -> bool {
+        true
+    }
+
+    #[must_use]
+    pub const fn engine_quarantined(&self) -> bool {
+        true
+    }
+
+    #[must_use]
+    pub fn retains_custody(&self) -> bool {
+        let _ = &self.retained;
+        true
+    }
+}
+
+/// Opaque terminal custody after a failed speculative transition.
+///
+/// Construction always follows Engine quarantine. No contained queue or
+/// readback owner is accessible through the public API.
+#[must_use = "terminal quarantine retains all unavailable custody"]
+pub struct M1AuthenticatedSpeculativeTerminalQuarantineV1 {
+    retained: Box<dyn fmt::Debug>,
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativeTerminalQuarantineV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativeTerminalQuarantineV1")
+            .field("engine_quarantined", &true)
+            .field("custody_sealed", &true)
+            .finish_non_exhaustive()
+    }
+}
+
+impl M1AuthenticatedSpeculativeTerminalQuarantineV1 {
+    #[must_use]
+    pub const fn engine_quarantined(&self) -> bool {
+        true
+    }
+
+    #[must_use]
+    pub fn retains_custody(&self) -> bool {
+        let _ = &self.retained;
+        true
+    }
+}
+
+/// Exhaustive terminal disposition of a failed speculative queue transition.
+#[must_use = "released or quarantined custody remains retained"]
+#[derive(Debug)]
+pub enum M1AuthenticatedSpeculativeFailureDispositionV1 {
+    Released(M1AuthenticatedSpeculativeCleanReleaseV1),
+    Quarantined(M1AuthenticatedSpeculativeTerminalQuarantineV1),
+}
+
+impl M1AuthenticatedSpeculativeFailureDispositionV1 {
+    /// Whether native queue destruction completed successfully.
+    #[must_use]
+    pub const fn queue_released(&self) -> bool {
+        matches!(self, Self::Released(_))
+    }
+
+    pub(crate) fn retain(self, extra: impl fmt::Debug + 'static) -> Self {
+        match self {
+            Self::Released(released) => Self::Released(M1AuthenticatedSpeculativeCleanReleaseV1 {
+                retained: Box::new((released.retained, extra)),
+            }),
+            Self::Quarantined(quarantined) => {
+                Self::Quarantined(M1AuthenticatedSpeculativeTerminalQuarantineV1 {
+                    retained: Box::new((quarantined.retained, extra)),
+                })
+            }
+        }
+    }
+}
+
+pub(crate) fn disposition_with_logical(
+    closure: crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1,
+    logical: impl fmt::Debug + 'static,
+) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+    use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    match closure {
+        M1AuthenticatedPhysicalQueueClosureV1::Released(released) => {
+            released_disposition((released, logical))
+        }
+        M1AuthenticatedPhysicalQueueClosureV1::Quarantined(quarantined) => {
+            quarantined_disposition((quarantined, logical))
+        }
+    }
+}
+
+trait M1InitialQueueEffectsV1 {
+    type Prepared;
+    type Published;
+    type Completed;
+    type Recycled;
+    type Observed;
+    type DiagnosticObserved;
+    type Diagnostic;
+    type SubmitFailure: fmt::Debug + 'static;
+    type WaitFailure: fmt::Debug + 'static;
+    type RecycleFailure: fmt::Debug + 'static;
+    type ObservationFailure: fmt::Debug + 'static;
+    type DiagnosticObservationFailure: fmt::Debug + 'static;
+    type JoinFailure: fmt::Debug + 'static;
+
+    fn submit(prepared: Self::Prepared) -> Result<Self::Published, Self::SubmitFailure>;
+    fn close_submit_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::SubmitFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn wait(
+        published: Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Result<Self::Completed, Self::WaitFailure>;
+    fn recycle(completed: Self::Completed) -> Result<Self::Recycled, Self::RecycleFailure>;
+    fn observe(recycled: Self::Recycled) -> Result<Self::Observed, Self::ObservationFailure>;
+    fn close_observation_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ObservationFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn observe_diagnostic(
+        observed: Self::Observed,
+    ) -> Result<Self::DiagnosticObserved, Self::DiagnosticObservationFailure>;
+    fn close_diagnostic_observation_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::DiagnosticObservationFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn check(observed: Self::DiagnosticObserved) -> Result<Self::Diagnostic, Self::JoinFailure>;
+    fn close_join_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::JoinFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+}
+
+struct M1NativeInitialQueueEffectsV1;
+
+impl M1InitialQueueEffectsV1 for M1NativeInitialQueueEffectsV1 {
+    type Prepared = M1AuthenticatedPhysicalQueueSessionV1;
+    type Published = crate::M1AuthenticatedPhysicalPublishedQueueSessionV1;
+    type Completed = crate::M1AuthenticatedPhysicalCompletedQueueSessionV1;
+    type Recycled = crate::M1AuthenticatedPhysicalRecycledQueueSessionV1;
+    type Observed = crate::M1AuthenticatedObservedCompletionOutputV1;
+    type DiagnosticObserved = crate::M1AuthenticatedObservedSpeculativeDiagnosticOutputV1;
+    type Diagnostic = M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1;
+    type SubmitFailure = crate::M1AuthenticatedPhysicalQueueSubmitFailureV1;
+    type WaitFailure = Box<crate::M1AuthenticatedPhysicalQueueOperationFailureV1>;
+    type RecycleFailure = Box<crate::M1AuthenticatedPhysicalQueueOperationFailureV1>;
+    type ObservationFailure = crate::M1AuthenticatedCompletionObservationFailureV1;
+    type DiagnosticObservationFailure =
+        Box<crate::M1AuthenticatedSpeculativeDiagnosticObservationFailureV1>;
+    type JoinFailure =
+        Box<crate::M1AuthenticatedSpeculativeDiagnosticCompletedReadbackJoinFailureV1>;
+
+    fn submit(prepared: Self::Prepared) -> Result<Self::Published, Self::SubmitFailure> {
+        prepared.submit()
+    }
+
+    fn close_submit_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::SubmitFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        failure.close_without_authority(engine)
+    }
+
+    fn wait(
+        published: Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Result<Self::Completed, Self::WaitFailure> {
+        published.wait_for(timeout.milliseconds())
+    }
+
+    fn recycle(completed: Self::Completed) -> Result<Self::Recycled, Self::RecycleFailure> {
+        completed.recycle()
+    }
+
+    fn observe(recycled: Self::Recycled) -> Result<Self::Observed, Self::ObservationFailure> {
+        recycled.observe_completion()
+    }
+
+    fn close_observation_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ObservationFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        match failure.destroy_queue_and_retain_evidence(engine) {
+            Ok(released) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new(released)),
+            Err(quarantined) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(quarantined)),
+        }
+    }
+
+    fn observe_diagnostic(
+        observed: Self::Observed,
+    ) -> Result<Self::DiagnosticObserved, Self::DiagnosticObservationFailure> {
+        observed.observe_speculative_diagnostic_choices()
+    }
+
+    fn close_diagnostic_observation_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::DiagnosticObservationFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        match (*failure).destroy_queue_and_retain_evidence(engine) {
+            Ok(released) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new(released)),
+            Err(quarantined) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(quarantined)),
+        }
+    }
+
+    fn check(observed: Self::DiagnosticObserved) -> Result<Self::Diagnostic, Self::JoinFailure> {
+        observed.check_completion()
+    }
+
+    fn close_join_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::JoinFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        match (*failure).destroy_queue_and_retain_evidence(engine) {
+            Ok(released) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new(released)),
+            Err(quarantined) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(quarantined)),
+        }
+    }
+}
+
+fn execute_initial_round_core<A, L, const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: A::Prepared,
+    logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
+) -> Result<
+    (A::Diagnostic, L),
+    (
+        M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+        M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+>
+where
+    A: M1InitialQueueEffectsV1,
+    L: fmt::Debug + 'static,
+{
+    let published = match A::submit(prepared) {
+        Ok(published) => published,
+        Err(failure) => {
+            let closure = A::close_submit_failure(engine, failure);
+            return Err((
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueSubmit,
+                disposition_with_logical(closure, logical),
+            ));
+        }
+    };
+    let completed = match A::wait(published, timeout) {
+        Ok(completed) => completed,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err((
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueWait,
+                quarantined_disposition((failure, logical)),
+            ));
+        }
+    };
+    let recycled = match A::recycle(completed) {
+        Ok(recycled) => recycled,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err((
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::SignalRecycle,
+                quarantined_disposition((failure, logical)),
+            ));
+        }
+    };
+    let observed = match A::observe(recycled) {
+        Ok(observed) => observed,
+        Err(failure) => {
+            let closure = A::close_observation_failure(engine, failure);
+            return Err((
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CompletionObservation,
+                disposition_with_logical(closure, logical),
+            ));
+        }
+    };
+    let observed = match A::observe_diagnostic(observed) {
+        Ok(observed) => observed,
+        Err(failure) => {
+            let closure = A::close_diagnostic_observation_failure(engine, failure);
+            return Err((
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::DiagnosticObservation,
+                disposition_with_logical(closure, logical),
+            ));
+        }
+    };
+    match A::check(observed) {
+        Ok(diagnostic) => Ok((diagnostic, logical)),
+        Err(failure) => {
+            let closure = A::close_join_failure(engine, failure);
+            Err((
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::SemanticJoin,
+                disposition_with_logical(closure, logical),
+            ))
+        }
+    }
+}
+
+trait M1RearmedQueueEffectsV1 {
+    type Prepared: fmt::Debug + 'static;
+    type Published: fmt::Debug + 'static;
+    type Completed: fmt::Debug + 'static;
+    type Recycled: fmt::Debug + 'static;
+    type Diagnostic: fmt::Debug + 'static;
+    type SubmitFailure: fmt::Debug + 'static;
+    type ProgressFailure: fmt::Debug + 'static;
+    type ReadbackFailure: fmt::Debug + 'static;
+
+    fn close_prepared<const C: usize>(
+        engine: &mut Engine<C>,
+        prepared: Self::Prepared,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+
+    fn submit<const C: usize>(
+        engine: &mut Engine<C>,
+        prepared: Self::Prepared,
+    ) -> Result<Self::Published, Self::SubmitFailure>;
+    fn classify_submit_failure(
+        failure: Self::SubmitFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn close_published<const C: usize>(
+        engine: &mut Engine<C>,
+        published: Self::Published,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn wait<const C: usize>(
+        engine: &mut Engine<C>,
+        published: Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Result<Self::Completed, Self::ProgressFailure>;
+    fn close_progress_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ProgressFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn close_completed<const C: usize>(
+        engine: &mut Engine<C>,
+        completed: Self::Completed,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn recycle<const C: usize>(
+        engine: &mut Engine<C>,
+        completed: Self::Completed,
+    ) -> Result<Self::Recycled, Self::ProgressFailure>;
+    fn close_recycled<const C: usize>(
+        engine: &mut Engine<C>,
+        recycled: Self::Recycled,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure>;
+    fn close_readback_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ReadbackFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    fn close_diagnostic<const C: usize>(
+        engine: &mut Engine<C>,
+        diagnostic: Self::Diagnostic,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+}
+
+struct M1NativeRearmedQueueEffectsV1;
+
+struct M1NativeDraftCatchupQueueEffectsV1;
+
+impl M1RearmedQueueEffectsV1 for M1NativeDraftCatchupQueueEffectsV1 {
+    type Prepared = (
+        crate::M1AuthenticatedPreparedLongLivedQueueRearmV1,
+        AddresslessM1PhysicalBufferRecipeV1,
+        crate::authenticated_queue_rearm::M1AuthenticatedRearmPublicationHostStorageV1,
+        M1AuthenticatedDraftCatchupPendingV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type Published = (
+        crate::M1AuthenticatedRearmedPublishedQueueV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type Completed = (
+        crate::M1AuthenticatedRearmedCompletedQueueV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type Recycled = (
+        crate::M1AuthenticatedRearmedRecycledQueueV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type Diagnostic =
+        crate::authenticated_queue_rearm::M1AuthenticatedRearmedDraftCatchupReadbackV1;
+    type SubmitFailure = (
+        crate::M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type ProgressFailure = (
+        Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>,
+        crate::authenticated_physical_readback::M1AuthenticatedDraftCatchupReadbackHostStorageV1,
+    );
+    type ReadbackFailure =
+        Box<crate::authenticated_queue_rearm::M1AuthenticatedRearmedResidentReadbackFailureV1>;
+
+    fn close_prepared<const C: usize>(
+        engine: &mut Engine<C>,
+        (prepared, recipe, publication, pending, readback): Self::Prepared,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            crate::authenticated_queue_rearm::close_m1_authenticated_prepared_long_lived_queue_rearm_v1(engine, prepared, recipe),
+            (publication, pending, readback),
+        )
+    }
+
+    fn submit<const C: usize>(
+        engine: &mut Engine<C>,
+        (prepared, recipe, publication, pending, readback): Self::Prepared,
+    ) -> Result<Self::Published, Self::SubmitFailure> {
+        match crate::authenticated_queue_rearm::submit_authenticated_draft_catchup_v1(
+            engine,
+            prepared,
+            recipe,
+            publication,
+            pending,
+        ) {
+            Ok(published) => Ok((published, readback)),
+            Err(failure) => Err((failure, readback)),
+        }
+    }
+
+    fn classify_submit_failure(
+        (failure, readback): Self::SubmitFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        if failure.queue_released() {
+            crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(
+                Box::new((failure, readback)),
+            )
+        } else {
+            crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(
+                Box::new((failure, readback)),
+            )
+        }
+    }
+
+    fn close_published<const C: usize>(
+        engine: &mut Engine<C>,
+        (published, readback): Self::Published,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            published.close_in_flight(engine),
+            readback,
+        )
+    }
+
+    fn wait<const C: usize>(
+        engine: &mut Engine<C>,
+        (published, readback): Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Result<Self::Completed, Self::ProgressFailure> {
+        match published.wait_for(timeout.milliseconds(), engine) {
+            Ok(completed) => Ok((completed, readback)),
+            Err(failure) => Err((failure, readback)),
+        }
+    }
+
+    fn close_progress_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ProgressFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(
+            Box::new(failure),
+        )
+    }
+
+    fn close_completed<const C: usize>(
+        engine: &mut Engine<C>,
+        (completed, readback): Self::Completed,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            completed.close_completed(engine),
+            readback,
+        )
+    }
+
+    fn recycle<const C: usize>(
+        engine: &mut Engine<C>,
+        (completed, readback): Self::Completed,
+    ) -> Result<Self::Recycled, Self::ProgressFailure> {
+        match completed.recycle(engine) {
+            Ok(recycled) => Ok((recycled, readback)),
+            Err(failure) => Err((failure, readback)),
+        }
+    }
+
+    fn close_recycled<const C: usize>(
+        engine: &mut Engine<C>,
+        (recycled, readback): Self::Recycled,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            recycled.close_recycled(engine),
+            readback,
+        )
+    }
+
+    fn readback(
+        (recycled, readback): Self::Recycled,
+    ) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+        recycled.read_and_check_draft_catchup(readback)
+    }
+
+    fn close_readback_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ReadbackFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        failure.close(engine)
+    }
+
+    fn close_diagnostic<const C: usize>(
+        engine: &mut Engine<C>,
+        diagnostic: Self::Diagnostic,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        diagnostic.close(engine)
+    }
+}
+
+#[derive(Debug)]
+enum M1NativeRearmedReadbackFailureV1 {
+    Ordinary(Box<crate::M1AuthenticatedRearmedSpeculativeDiagnosticReadbackFailureV1>),
+    Resident(
+        Box<crate::authenticated_queue_rearm::M1AuthenticatedRearmedResidentReadbackFailureV1>,
+    ),
+}
+
+impl M1RearmedQueueEffectsV1 for M1NativeRearmedQueueEffectsV1 {
+    type Prepared = (
+        crate::M1AuthenticatedPreparedLongLivedQueueRearmV1,
+        AddresslessM1PhysicalBufferRecipeV1,
+        Option<crate::authenticated_queue_rearm::M1AuthenticatedRearmPublicationHostStorageV1>,
+        Option<
+            crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
+        >,
+        Option<crate::authenticated_queue_rearm::M1AuthenticatedDraftCatchupRestoreCustodyV1>,
+    );
+    type Published = (
+        crate::M1AuthenticatedRearmedPublishedQueueV1,
+        Option<
+            crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
+        >,
+    );
+    type Completed = (
+        crate::M1AuthenticatedRearmedCompletedQueueV1,
+        Option<
+            crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
+        >,
+    );
+    type Recycled = (
+        crate::M1AuthenticatedRearmedRecycledQueueV1,
+        Option<
+            crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
+        >,
+    );
+    type Diagnostic = crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1;
+    type SubmitFailure = (
+        crate::M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1,
+        Option<
+            crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
+        >,
+    );
+    type ProgressFailure = (
+        Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>,
+        Option<
+            crate::authenticated_physical_readback::M1AuthenticatedResidentReadbackHostStorageV1,
+        >,
+    );
+    type ReadbackFailure = M1NativeRearmedReadbackFailureV1;
+
+    fn close_prepared<const C: usize>(
+        engine: &mut Engine<C>,
+        (prepared, recipe, publication_storage, readback_storage, restored): Self::Prepared,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            crate::authenticated_queue_rearm::close_m1_authenticated_prepared_long_lived_queue_rearm_v1(
+                engine, prepared, recipe,
+            ),
+            (publication_storage, readback_storage, restored),
+        )
+    }
+
+    fn submit<const C: usize>(
+        engine: &mut Engine<C>,
+        (prepared, recipe, storage, readback_storage, restored): Self::Prepared,
+    ) -> Result<Self::Published, Self::SubmitFailure> {
+        let submitted = match (restored, storage) {
+            (Some(restored), storage) => crate::authenticated_queue_rearm::submit_authenticated_draft_catchup_restore_v1(
+                engine, prepared, recipe, storage, restored,
+            ),
+            (None, Some(storage)) => crate::authenticated_queue_rearm::submit_m1_authenticated_long_lived_queue_rearm_resident_v1(
+                engine, prepared, recipe, storage,
+            ),
+            (None, None) => submit_m1_authenticated_long_lived_queue_rearm_v1(engine, prepared, recipe),
+        };
+        match submitted {
+            Ok(published) => Ok((published, readback_storage)),
+            Err(failure) => Err((failure, readback_storage)),
+        }
+    }
+
+    fn classify_submit_failure(
+        (failure, readback_storage): Self::SubmitFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        let closure = if failure.queue_released() {
+            crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(
+                Box::new(failure),
+            )
+        } else {
+            crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(
+                Box::new(failure),
+            )
+        };
+        crate::authenticated_physical_queue::retain_in_queue_closure(closure, readback_storage)
+    }
+
+    fn close_published<const C: usize>(
+        engine: &mut Engine<C>,
+        (published, readback_storage): Self::Published,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            published.close_in_flight(engine),
+            readback_storage,
+        )
+    }
+
+    fn wait<const C: usize>(
+        engine: &mut Engine<C>,
+        (published, readback_storage): Self::Published,
+        timeout: crate::M1QueueWaitTimeoutV1,
+    ) -> Result<Self::Completed, Self::ProgressFailure> {
+        match published.wait_for(timeout.milliseconds(), engine) {
+            Ok(completed) => Ok((completed, readback_storage)),
+            Err(failure) => Err((failure, readback_storage)),
+        }
+    }
+
+    fn close_progress_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        (failure, readback_storage): Self::ProgressFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(
+            Box::new((failure, readback_storage)),
+        )
+    }
+
+    fn close_completed<const C: usize>(
+        engine: &mut Engine<C>,
+        (completed, readback_storage): Self::Completed,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            completed.close_completed(engine),
+            readback_storage,
+        )
+    }
+
+    fn recycle<const C: usize>(
+        engine: &mut Engine<C>,
+        (completed, readback_storage): Self::Completed,
+    ) -> Result<Self::Recycled, Self::ProgressFailure> {
+        match completed.recycle(engine) {
+            Ok(recycled) => Ok((recycled, readback_storage)),
+            Err(failure) => Err((failure, readback_storage)),
+        }
+    }
+
+    fn close_recycled<const C: usize>(
+        engine: &mut Engine<C>,
+        (recycled, readback_storage): Self::Recycled,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        crate::authenticated_physical_queue::retain_in_queue_closure(
+            recycled.close_recycled(engine),
+            readback_storage,
+        )
+    }
+
+    fn readback(
+        (recycled, readback_storage): Self::Recycled,
+    ) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+        match readback_storage {
+            Some(storage) => recycled
+                .read_and_check_speculative_diagnostic_completion_with_storage(storage)
+                .map_err(M1NativeRearmedReadbackFailureV1::Resident),
+            None => recycled
+                .read_and_check_speculative_diagnostic_completion()
+                .map_err(M1NativeRearmedReadbackFailureV1::Ordinary),
+        }
+    }
+
+    fn close_readback_failure<const C: usize>(
+        engine: &mut Engine<C>,
+        failure: Self::ReadbackFailure,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        match failure {
+            M1NativeRearmedReadbackFailureV1::Ordinary(failure) => {
+                match failure.destroy_queue_and_retain_custody(engine) {
+                    Ok(released) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new(released)),
+                    Err(quarantined) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(quarantined)),
+                }
+            }
+            M1NativeRearmedReadbackFailureV1::Resident(failure) => failure.close(engine),
+        }
+    }
+
+    fn close_diagnostic<const C: usize>(
+        engine: &mut Engine<C>,
+        diagnostic: Self::Diagnostic,
+    ) -> crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        let (readback, choices) = diagnostic.into_parts();
+        match readback.destroy_queue_and_retain_custody(engine) {
+            Ok(released) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((released, choices))),
+            Err(quarantined) => crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((quarantined, choices))),
+        }
+    }
+}
+
+#[cfg(test)]
+fn complete_round_core<A, L, const C: usize>(
+    engine: &mut Engine<C>,
+    published: A::Published,
+    logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
+) -> Result<
+    (A::Diagnostic, L),
+    (
+        M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+>
+where
+    A: M1RearmedQueueEffectsV1,
+    L: fmt::Debug + 'static,
+{
+    complete_round_core_with_deadline::<A, _, _, C>(
+        engine,
+        published,
+        logical,
+        timeout,
+        |_, configured| Some(configured),
+    )
+}
+
+fn complete_round_core_with_deadline<A, L, D, const C: usize>(
+    engine: &mut Engine<C>,
+    published: A::Published,
+    logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
+    mut deadline_expired: D,
+) -> Result<
+    (A::Diagnostic, L),
+    (
+        M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+>
+where
+    A: M1RearmedQueueEffectsV1,
+    A::Published: fmt::Debug + 'static,
+    A::Completed: fmt::Debug + 'static,
+    A::Recycled: fmt::Debug + 'static,
+    A::Diagnostic: fmt::Debug + 'static,
+    L: fmt::Debug + 'static,
+    D: FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        crate::M1QueueWaitTimeoutV1,
+    ) -> Option<crate::M1QueueWaitTimeoutV1>,
+{
+    use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+    let Some(wait_timeout) = deadline_expired(Boundary::BeforeCompletionWait, timeout) else {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_published(engine, published);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::BeforeCompletionWait)),
+        ));
+    };
+    let completed = match A::wait(engine, published, wait_timeout) {
+        Ok(completed) => completed,
+        Err(failure) => {
+            let closure = A::close_progress_failure(engine, failure);
+            return Err((
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Wait,
+                disposition_with_logical(closure, logical),
+            ));
+        }
+    };
+    if deadline_expired(Boundary::AfterCompletionWait, timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_completed(engine, completed);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::AfterCompletionWait)),
+        ));
+    }
+    let recycled = match A::recycle(engine, completed) {
+        Ok(recycled) => recycled,
+        Err(failure) => {
+            let closure = A::close_progress_failure(engine, failure);
+            return Err((
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Recycle,
+                disposition_with_logical(closure, logical),
+            ));
+        }
+    };
+    if deadline_expired(Boundary::BeforeReadback, timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_recycled(engine, recycled);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::BeforeReadback)),
+        ));
+    }
+    match A::readback(recycled) {
+        Ok(diagnostic) => {
+            if deadline_expired(Boundary::AfterReadback, timeout).is_none() {
+                engine.quarantine_m1_queue_rearm_failure();
+                let closure = A::close_diagnostic(engine, diagnostic);
+                Err((
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    disposition_with_logical(closure, (logical, Boundary::AfterReadback)),
+                ))
+            } else {
+                Ok((diagnostic, logical))
+            }
+        }
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let closure = A::close_readback_failure(engine, failure);
+            Err((
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::DiagnosticReadback,
+                disposition_with_logical(closure, logical),
+            ))
+        }
+    }
+}
+
+#[cfg(test)]
+fn execute_round_core<A, L, const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: A::Prepared,
+    logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
+) -> Result<
+    (A::Diagnostic, L),
+    (
+        M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+>
+where
+    A: M1RearmedQueueEffectsV1,
+    L: fmt::Debug + 'static,
+{
+    let published = match A::submit(engine, prepared) {
+        Ok(published) => published,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let closure = A::classify_submit_failure(failure);
+            return Err((
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Submit,
+                disposition_with_logical(closure, logical),
+            ));
+        }
+    };
+    complete_round_core::<A, _, C>(engine, published, logical, timeout)
+}
+
+fn execute_round_core_with_post_submit_and_deadline<A, L, F, E, D, const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: A::Prepared,
+    logical: L,
+    timeout: crate::M1QueueWaitTimeoutV1,
+    post_submit: F,
+    mut deadline_expired: D,
+) -> Result<
+    (A::Diagnostic, L),
+    (
+        M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        M1AuthenticatedSpeculativeFailureDispositionV1,
+    ),
+>
+where
+    A: M1RearmedQueueEffectsV1,
+    A::Prepared: fmt::Debug + 'static,
+    A::Published: fmt::Debug + 'static,
+    A::Completed: fmt::Debug + 'static,
+    A::Recycled: fmt::Debug + 'static,
+    A::Diagnostic: fmt::Debug + 'static,
+    L: fmt::Debug + 'static,
+    F: FnOnce() -> Result<(), E>,
+    E: fmt::Debug + 'static,
+    D: FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        crate::M1QueueWaitTimeoutV1,
+    ) -> Option<crate::M1QueueWaitTimeoutV1>,
+{
+    use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+    if deadline_expired(Boundary::BeforeQueueSubmit, timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_prepared(engine, prepared);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::BeforeQueueSubmit)),
+        ));
+    }
+    let published = match A::submit(engine, prepared) {
+        Ok(published) => published,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            let closure = A::classify_submit_failure(failure);
+            return Err((
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Submit,
+                disposition_with_logical(closure, logical),
+            ));
+        }
+    };
+    if deadline_expired(Boundary::AfterQueueSubmit, timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_published(engine, published);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+            disposition_with_logical(closure, (logical, Boundary::AfterQueueSubmit)),
+        ));
+    }
+    if let Err(error) = post_submit() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = A::close_published(engine, published);
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::RegistryPublication,
+            disposition_with_logical(closure, (logical, error)),
+        ));
+    }
+    complete_round_core_with_deadline::<A, _, _, C>(
+        engine,
+        published,
+        logical,
+        timeout,
+        deadline_expired,
+    )
+}
+
+trait M1SpeculativeRoundObservationV1: fmt::Debug {
+    fn preflight(
+        &self,
+        coordinator: &M1SpeculativeGenerationLoopV1,
+        binding: crate::M1SpeculativeRoundBindingV1,
+        controls: &[M1SpeculativeMemberControlV1],
+    ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>;
+}
+
+#[derive(Clone, Copy)]
+struct M1RolloverDiagnosticLineageV1<'a> {
+    identity: M1AuthenticatedSpeculativeLineageIdentityV1,
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    round: u64,
+    epoch: CompletionEpoch,
+    initial_seeds: &'a [M1SpeculativeMemberSeedV1],
+    checked_selection: Qwen3PlanSelection,
+    checked_epoch: CompletionEpoch,
+}
+
+trait M1RolloverRoundObservationV1: M1SpeculativeRoundObservationV1 {
+    fn rollover_lineage(&self) -> Option<M1RolloverDiagnosticLineageV1<'_>>;
+}
+
+impl M1SpeculativeRoundObservationV1
+    for crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1
+{
+    fn preflight(
+        &self,
+        coordinator: &M1SpeculativeGenerationLoopV1,
+        binding: crate::M1SpeculativeRoundBindingV1,
+        controls: &[M1SpeculativeMemberControlV1],
+    ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
+    {
+        coordinator.preflight_checked_round(binding, self.checked(), controls)
+    }
+}
+
+impl M1RolloverRoundObservationV1
+    for crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1
+{
+    fn rollover_lineage(&self) -> Option<M1RolloverDiagnosticLineageV1<'_>> {
+        let checked = self.checked();
+        let physical = checked.speculative_lineage()?;
+        Some(M1RolloverDiagnosticLineageV1 {
+            identity: physical.identity,
+            coordinator_identity: physical.coordinator_identity,
+            selection: physical.selection,
+            round: physical.round,
+            epoch: physical.epoch,
+            initial_seeds: &physical.initial_seeds,
+            checked_selection: checked.selection(),
+            checked_epoch: checked.epoch(),
+        })
+    }
+}
+
+impl M1SpeculativeRoundObservationV1 for M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1 {
+    fn preflight(
+        &self,
+        coordinator: &M1SpeculativeGenerationLoopV1,
+        binding: crate::M1SpeculativeRoundBindingV1,
+        controls: &[M1SpeculativeMemberControlV1],
+    ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
+    {
+        coordinator.preflight_checked_round(binding, self.completed().checked(), controls)
+    }
+}
+
+#[derive(Debug)]
+struct M1PreparedCoordinatorRoundCoreV1<D> {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    diagnostic: D,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+    preflighted: crate::M1SpeculativePreflightedRoundV1,
+    dispositions:
+        ArrayVec<crate::M1DeviceKvCompletionDispositionV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+}
+
+#[derive(Debug)]
+enum M1PrepareCoordinatorRoundCoreFailureV1<D> {
+    Preflight {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        diagnostic: D,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        error: crate::M1SpeculativeGenerationLoopErrorV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    },
+    CommitPreflight {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        diagnostic: D,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        preflighted: crate::M1SpeculativePreflightedRoundV1,
+        error: crate::M1SpeculativeGenerationLoopErrorV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    },
+    HostAllocation {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        diagnostic: D,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        preflighted: crate::M1SpeculativePreflightedRoundV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    },
+}
+
+fn prepare_coordinator_round_core<D, const C: usize>(
+    engine: &mut Engine<C>,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    binding: crate::M1SpeculativeRoundBindingV1,
+    diagnostic: D,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+) -> Result<M1PreparedCoordinatorRoundCoreV1<D>, Box<M1PrepareCoordinatorRoundCoreFailureV1<D>>>
+where
+    D: M1SpeculativeRoundObservationV1,
+{
+    let preflighted = match diagnostic.preflight(&coordinator, binding, &controls) {
+        Ok(preflighted) => preflighted,
+        Err(error) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(
+                M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
+                    coordinator,
+                    diagnostic,
+                    controls,
+                    error,
+                    lineage,
+                },
+            ));
+        }
+    };
+    if let Err(error) = coordinator.preflight_prepared_round_commit(&preflighted) {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(
+            M1PrepareCoordinatorRoundCoreFailureV1::CommitPreflight {
+                coordinator,
+                diagnostic,
+                controls,
+                preflighted,
+                error,
+                lineage,
+            },
+        ));
+    }
+    let mut dispositions = ArrayVec::new();
+    for outcome in preflighted.members().iter().copied() {
+        if dispositions
+            .try_push(outcome.physical_disposition())
+            .is_err()
+        {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(
+                M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                    coordinator,
+                    diagnostic,
+                    controls,
+                    preflighted,
+                    lineage,
+                },
+            ));
+        }
+    }
+    Ok(M1PreparedCoordinatorRoundCoreV1 {
+        coordinator,
+        diagnostic,
+        controls,
+        preflighted,
+        dispositions,
+        lineage,
+    })
+}
+
+#[derive(Debug)]
+struct M1CommittedCoordinatorRoundCoreV1<P> {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    outcome: M1SpeculativeRoundOutcomeV1,
+    physical: P,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+}
+
+#[derive(Debug)]
+enum M1CommitCoordinatorRoundCoreFailureV1<P> {
+    Coordinator {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        physical: P,
+        failure: Box<crate::M1SpeculativePreparedRoundCommitFailureV1>,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    },
+    CausalLineage {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        outcome: Box<M1SpeculativeRoundOutcomeV1>,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        physical: P,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    },
+}
+
+fn commit_coordinator_round_core<P, const C: usize>(
+    engine: &mut Engine<C>,
+    mut coordinator: M1SpeculativeGenerationLoopV1,
+    preflighted: crate::M1SpeculativePreflightedRoundV1,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+    physical: P,
+    mut lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+) -> Result<M1CommittedCoordinatorRoundCoreV1<P>, Box<M1CommitCoordinatorRoundCoreFailureV1<P>>> {
+    let outcome = match coordinator.commit_preflighted_round(preflighted) {
+        Ok(outcome) => outcome,
+        Err(failure) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(
+                M1CommitCoordinatorRoundCoreFailureV1::Coordinator {
+                    coordinator,
+                    controls,
+                    physical,
+                    failure,
+                    lineage,
+                },
+            ));
+        }
+    };
+    if !refresh_causal_generated_counts(&mut lineage, &coordinator, outcome.completed_epoch()) {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(
+            M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
+                coordinator,
+                outcome: Box::new(outcome),
+                controls,
+                physical,
+                lineage,
+            },
+        ));
+    }
+    Ok(M1CommittedCoordinatorRoundCoreV1 {
+        coordinator,
+        outcome,
+        physical,
+        lineage,
+    })
+}
+
+/// Public rejection or terminal failure for one production speculative round.
+///
+/// A pure pre-detach rejection yields only an opaque consuming retry owner.
+/// Terminal failures can never yield an executor, completed readback,
+/// completed-step owner, or released round.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativePhysicalRoundFailureV1;
+/// fn resubmit(failure: M1AuthenticatedSpeculativePhysicalRoundFailureV1) {
+///     let _executor = failure.into_retryable_round();
+/// }
+/// ```
+///
+/// ```compile_fail
+/// use ferric_engine::{Engine, M1AuthenticatedSpeculativePhysicalRoundFailureV1};
+/// fn retry_page_release(
+///     failure: M1AuthenticatedSpeculativePhysicalRoundFailureV1,
+///     engine: &mut Engine<32>,
+/// ) {
+///     let _ = failure.retry_page_release(engine);
+/// }
+/// ```
+#[must_use = "pre-detach retry or terminal speculative custody remains retained"]
+pub enum M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    PreDetach {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        retry: Box<M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1>,
+    },
+    Terminal {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+    },
+}
+
+impl M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    #[must_use]
+    pub const fn stage(&self) -> M1AuthenticatedSpeculativePhysicalRoundStageV1 {
+        match self {
+            Self::PreDetach { stage, .. } | Self::Terminal { stage, .. } => *stage,
+        }
+    }
+
+    #[must_use = "the terminal disposition must remain observed when present"]
+    pub const fn disposition(&self) -> Option<&M1AuthenticatedSpeculativeFailureDispositionV1> {
+        match self {
+            Self::PreDetach { .. } => None,
+            Self::Terminal { disposition, .. } => Some(disposition),
+        }
+    }
+
+    #[must_use]
+    pub const fn is_pre_detach_retry(&self) -> bool {
+        matches!(self, Self::PreDetach { .. })
+    }
+
+    #[must_use]
+    pub const fn is_terminal(&self) -> bool {
+        matches!(self, Self::Terminal { .. })
+    }
+
+    pub(crate) fn close_for_resident<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        match self {
+            Self::PreDetach { stage, retry } => retry.close_without_authority(engine).retain(stage),
+            Self::Terminal { stage, disposition } => disposition.retain(stage),
+        }
+    }
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativePhysicalRoundFailureV1")
+            .field("stage", &self.stage())
+            .field("pre_detach_retry", &self.is_pre_detach_retry())
+            .field("terminal_disposition", &self.disposition())
+            .finish()
+    }
+}
+
+/// Opaque exact executor and inputs retained before queue detachment.
+///
+/// ```compile_fail
+/// use ferric_engine::M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1;
+/// fn extract(retry: M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1) {
+///     let _executor_or_inputs = retry.into_parts();
+/// }
+/// ```
+#[must_use = "pre-detach speculative retry custody remains linear"]
+pub struct M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
+    executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
+    inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+}
+
+impl fmt::Debug for M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1")
+            .field("retains_exact_inputs", &true)
+            .finish()
+    }
+}
+
+impl M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
+    /// Retries the exact unchanged executor and inputs.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed pre-detach custody or a terminal post-detach failure.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    > {
+        self.executor.execute_round(engine, self.inputs)
+    }
+
+    #[must_use]
+    pub const fn retains_exact_inputs(&self) -> bool {
+        true
+    }
+
+    fn close_without_authority<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        engine.quarantine_m1_queue_rearm_failure();
+        match self.executor.destroy_queue_and_retain_state(engine) {
+            Ok(released) => released_disposition((released, self.inputs)),
+            Err(quarantined) => quarantined_disposition((quarantined, self.inputs)),
+        }
+    }
+}
+
+#[derive(Debug)]
+#[allow(clippy::type_complexity)]
+enum M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1 {
+    Closed(M1AuthenticatedSpeculativeFailureDispositionV1),
+    Complete(
+        Box<(
+            M1AuthenticatedSpeculativePhysicalExecutorV1,
+            M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        )>,
+    ),
+    Retryable(
+        Box<(
+            M1AuthenticatedSpeculativePhysicalExecutorV1,
+            M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        )>,
+    ),
+    CoordinatorPreflight(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            crate::M1SpeculativeGenerationLoopErrorV1,
+        )>,
+    ),
+    PhysicalCompletionPreflight(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativePreflightedRoundV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedRearmedCompletionPreflightFailureV1,
+        )>,
+    ),
+    PageRelease(Box<M1AuthenticatedSpeculativePhysicalPageReleaseCustodyV1>),
+    Schedule(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            M1AuthenticatedSpeculativePhysicalRoundKvInputsV1,
+            crate::runner::M1PhysicalRunnerRecipeInputV1,
+            M1FullStepWorkspacePlans,
+            Vec<M1SpeculativeMemberControlV1>,
+            Box<crate::M1AuthenticatedLongLivedQueueRearmScheduleTerminalV1>,
+        )>,
+    ),
+    TailPages(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            crate::runner::M1PhysicalRunnerRecipeInputV1,
+            M1FullStepWorkspacePlans,
+            Vec<M1SpeculativeMemberControlV1>,
+            crate::M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
+        )>,
+    ),
+    Recipe(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            crate::M1AuthenticatedScheduledLongLivedQueueRearmV1,
+            M1LongLivedQueueRearmKvInputsV1,
+            M1FullStepWorkspacePlans,
+            Vec<M1SpeculativeMemberControlV1>,
+            crate::M1PhysicalRunnerRecipeFailureV1,
+        )>,
+    ),
+    KvReservation(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            crate::AddresslessM1PhysicalBufferRecipeV1,
+            M1FullStepWorkspacePlans,
+            Vec<M1SpeculativeMemberControlV1>,
+            crate::M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1,
+        )>,
+    ),
+    WorkspacePreparation(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativeRoundBindingV1,
+            crate::AddresslessM1PhysicalBufferRecipeV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            Box<crate::M1AuthenticatedLongLivedQueueRearmPrepareFailureV1>,
+        )>,
+    ),
+    CoordinatorCommitPreflight(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            crate::M1SpeculativePreflightedRoundV1,
+            crate::M1SpeculativeGenerationLoopErrorV1,
+        )>,
+    ),
+    HostAllocation(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            crate::M1SpeculativePreflightedRoundV1,
+        )>,
+    ),
+    PhysicalOutcome(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            crate::M1SpeculativePreflightedRoundV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedRearmedCompletionOutcomeV1,
+        )>,
+    ),
+    CoordinatorCommit(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            Vec<M1SpeculativeMemberControlV1>,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedRearmedCompletionOutcomeV1,
+            Box<crate::M1SpeculativePreparedRoundCommitFailureV1>,
+        )>,
+    ),
+    ReleasedPhysicalOutcome(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedRearmedCompletionOutcomeV1,
+        )>,
+    ),
+    LineageAfterCommit(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            crate::M1AuthenticatedRearmedCompletionOutcomeV1,
+        )>,
+    ),
+    ReleasedLineage(
+        Box<(
+            M1SpeculativeGenerationLoopV1,
+            M1SpeculativeRoundOutcomeV1,
+            M1ObservedSpeculativeDiagnosticChoicesV1,
+            M1AuthenticatedLongLivedQueueReleasedRoundV1,
+        )>,
+    ),
+}
+
+/// Exact stage-specific terminal source retained only until opaque closure.
+#[allow(dead_code)]
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1 {
+    Schedule(Box<crate::M1AuthenticatedLongLivedQueueRearmScheduleTerminalV1>),
+    Recipe(Box<crate::M1PhysicalRunnerRecipeFailureV1>),
+    KvReservation(Box<crate::M1AuthenticatedLongLivedQueueRearmKvReservationFailureV1>),
+    WorkspacePreparation(Box<crate::M1AuthenticatedLongLivedQueueRearmPrepareFailureV1>),
+    Submit(Box<crate::M1AuthenticatedLongLivedQueueRearmSubmissionFailureV1>),
+    QueueProgress(Box<crate::M1AuthenticatedRearmedQueueProgressFailureV1>),
+    Coordinator(crate::M1SpeculativeGenerationLoopErrorV1),
+    CoordinatorCommit(Box<crate::M1SpeculativePreparedRoundCommitFailureV1>),
+    PhysicalOutcome(Box<crate::M1AuthenticatedRearmedCompletionOutcomeV1>),
+    CausalLineage,
+    HostAllocation,
+}
+
+/// Failure retaining all available authenticated, KV, logical, and input custody.
+#[must_use = "failed production round custody must be retried, torn down, or retained"]
+#[derive(Debug)]
+struct PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1,
+    lineage: Option<M1AuthenticatedSpeculativeCausalLineageV1>,
+}
+
+impl PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+    /// Destroys a recoverable queue or consumes a concrete lower terminal owner
+    /// into explicit quarantine. No effectful-stage failure is type-erased.
+    ///
+    /// # Errors
+    ///
+    /// The outer error returns unchanged pure-rejection custody that has no
+    /// queue teardown to perform. The inner error is exact release quarantine.
+    fn destroy_queue_and_retain_custody<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        Result<
+            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1,
+            Box<M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1>,
+        >,
+        Box<Self>,
+    > {
+        let Self {
+            stage,
+            custody,
+            lineage,
+        } = self;
+        match custody {
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorPreflight(
+                retained,
+            ) => {
+                let (coordinator, diagnostic, controls, error) = *retained;
+                let (readback, choices) = diagnostic.into_parts();
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, controls, error, choices),
+                );
+                Ok(match readback.destroy_queue_and_retain_custody(engine) {
+                    Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                        stage,
+                        source:
+                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Joined(
+                                source,
+                            ),
+                        logical,
+                    }),
+                    Err(source) => Err(Box::new(
+                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Joined(
+                                    source,
+                                ),
+                            logical,
+                        },
+                    )),
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorCommitPreflight(
+                retained,
+            ) => {
+                let (coordinator, diagnostic, controls, permit, error) = *retained;
+                let (readback, choices) = diagnostic.into_parts();
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, controls, permit, error, choices),
+                );
+                Ok(match readback.destroy_queue_and_retain_custody(engine) {
+                    Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                        stage,
+                        source:
+                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Joined(
+                                source,
+                            ),
+                        logical,
+                    }),
+                    Err(source) => Err(Box::new(
+                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Joined(
+                                    source,
+                                ),
+                            logical,
+                        },
+                    )),
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::HostAllocation(retained) => {
+                let (coordinator, diagnostic, controls, permit) = *retained;
+                let (readback, choices) = diagnostic.into_parts();
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, controls, permit, choices),
+                );
+                Ok(match readback.destroy_queue_and_retain_custody(engine) {
+                    Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                        stage,
+                        source:
+                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Joined(
+                                source,
+                            ),
+                        logical,
+                    }),
+                    Err(source) => Err(Box::new(
+                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Joined(
+                                    source,
+                                ),
+                            logical,
+                        },
+                    )),
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PhysicalCompletionPreflight(
+                retained,
+            ) => {
+                let (coordinator, permit, controls, choices, failure) = *retained;
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, permit, controls, choices),
+                );
+                Ok(match failure.destroy_queue_and_retain_custody(engine) {
+                    Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                        stage,
+                        source:
+                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::CompletionPreflight(
+                                source,
+                            ),
+                        logical,
+                    }),
+                    Err(source) => Err(Box::new(
+                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::CompletionPreflight(
+                                    source,
+                                ),
+                            logical,
+                        },
+                    )),
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PageRelease(retained) => {
+                let M1AuthenticatedSpeculativePhysicalPageReleaseCustodyV1 {
+                    coordinator,
+                    outcome,
+                    choices,
+                    failure,
+                } = *retained;
+                let logical = retain_logical_lineage(lineage, (coordinator, outcome, choices));
+                Ok(match failure.destroy_queue_and_retain_round(engine) {
+                    Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                        stage,
+                        source:
+                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::PageRelease(
+                                source,
+                            ),
+                        logical,
+                    }),
+                    Err(source) => Err(Box::new(
+                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::PageRelease(
+                                    source,
+                                ),
+                            logical,
+                        },
+                    )),
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PhysicalOutcome(retained) => {
+                let (coordinator, permit, controls, choices, physical) = *retained;
+                let logical = retain_logical_lineage(
+                    lineage,
+                    (coordinator, permit, controls, choices),
+                );
+                Ok(match physical.destroy_queue_and_retain_rejected(engine) {
+                    Ok(Ok(source)) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                        stage,
+                        source:
+                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::RejectedCompletion(
+                                source,
+                            ),
+                        logical,
+                    }),
+                    Ok(Err(source)) => Err(Box::new(
+                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::RejectedCompletion(
+                                    source,
+                                ),
+                            logical,
+                        },
+                    )),
+                    Err(physical) => {
+                        engine.quarantine_m1_queue_rearm_failure();
+                        Err(Box::new(M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::TerminalQuarantine(
+                                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::PhysicalOutcome(
+                                        physical,
+                                    ),
+                                ),
+                            logical,
+                        }))
+                    }
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorCommit(retained) => {
+                let (coordinator, controls, choices, physical, failure) = *retained;
+                engine.quarantine_m1_queue_rearm_failure();
+                let logical = retain_logical_lineage(lineage, (coordinator, controls, choices));
+                Ok(match physical.release_completed() {
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+                        match released.destroy_queue_and_retain_round(engine) {
+                            Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                                stage,
+                                source:
+                                    M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Released(
+                                        source,
+                                    ),
+                                logical: Box::new((logical, failure)),
+                            }),
+                            Err(source) => Err(Box::new(
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                                    stage,
+                                    source:
+                                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Released(
+                                            source,
+                                        ),
+                                    logical: Box::new((logical, failure)),
+                                },
+                            )),
+                        }
+                    }
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(source) => {
+                        match source.destroy_queue_and_retain_round(engine) {
+                            Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                                stage,
+                                source:
+                                    M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::PageRelease(
+                                        source,
+                                    ),
+                                logical: Box::new((logical, failure)),
+                            }),
+                            Err(source) => Err(Box::new(
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                                    stage,
+                                    source:
+                                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::PageRelease(
+                                            source,
+                                        ),
+                                    logical: Box::new((logical, failure)),
+                                },
+                            )),
+                        }
+                    }
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(physical) => {
+                        engine.quarantine_m1_queue_rearm_failure();
+                        Err(Box::new(M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::TerminalQuarantine(
+                                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::PhysicalOutcome(
+                                        Box::new(physical),
+                                    ),
+                                ),
+                            logical: Box::new((logical, failure)),
+                        }))
+                    }
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::LineageAfterCommit(
+                retained,
+            ) => {
+                let (coordinator, outcome, choices, physical) = *retained;
+                engine.quarantine_m1_queue_rearm_failure();
+                let logical = retain_logical_lineage(lineage, (coordinator, outcome, choices));
+                Ok(match physical.release_completed() {
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+                        match released.destroy_queue_and_retain_round(engine) {
+                            Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                                stage,
+                                source:
+                                    M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Released(
+                                        source,
+                                    ),
+                                logical,
+                            }),
+                            Err(source) => Err(Box::new(
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                                    stage,
+                                    source:
+                                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Released(
+                                            source,
+                                        ),
+                                    logical,
+                                },
+                            )),
+                        }
+                    }
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(source) => {
+                        match source.destroy_queue_and_retain_round(engine) {
+                            Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                                stage,
+                                source:
+                                    M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::PageRelease(
+                                        source,
+                                    ),
+                                logical,
+                            }),
+                            Err(source) => Err(Box::new(
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                                    stage,
+                                    source:
+                                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::PageRelease(
+                                            source,
+                                        ),
+                                    logical,
+                                },
+                            )),
+                        }
+                    }
+                    M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(physical) => {
+                        engine.quarantine_m1_queue_rearm_failure();
+                        Err(Box::new(M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::TerminalQuarantine(
+                                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::PhysicalOutcome(
+                                        Box::new(physical),
+                                    ),
+                                ),
+                            logical,
+                        }))
+                    }
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedLineage(retained) => {
+                let (coordinator, outcome, choices, released) = *retained;
+                engine.quarantine_m1_queue_rearm_failure();
+                let logical = retain_logical_lineage(lineage, (coordinator, outcome, choices));
+                Ok(match released.destroy_queue_and_retain_round(engine) {
+                    Ok(source) => Ok(M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+                        stage,
+                        source:
+                            M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1::Released(
+                                source,
+                            ),
+                        logical,
+                    }),
+                    Err(source) => Err(Box::new(
+                        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+                            stage,
+                            source:
+                                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::Released(
+                                    source,
+                                ),
+                            logical,
+                        },
+                    )),
+                })
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Schedule(retained) => {
+                let (coordinator, binding, kv, recipe, preparation, controls, source) = *retained;
+                terminal_quarantine(
+                    engine,
+                    stage,
+                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Schedule(source),
+                    (lineage, coordinator, binding, kv, recipe, preparation, controls),
+                )
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::TailPages(retained) => {
+                let (coordinator, binding, recipe, preparation, controls, source) = *retained;
+                terminal_quarantine(
+                    engine,
+                    stage,
+                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::KvReservation(
+                        Box::new(source),
+                    ),
+                    (lineage, coordinator, binding, recipe, preparation, controls),
+                )
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Recipe(retained) => {
+                let (coordinator, binding, scheduled, kv, plans, controls, source) = *retained;
+                terminal_quarantine(
+                    engine,
+                    stage,
+                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Recipe(Box::new(
+                        source,
+                    )),
+                    (lineage, coordinator, binding, scheduled, kv, plans, controls),
+                )
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::KvReservation(retained) => {
+                let (coordinator, binding, recipe, plans, controls, source) = *retained;
+                terminal_quarantine(
+                    engine,
+                    stage,
+                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::KvReservation(
+                        Box::new(source),
+                    ),
+                    (lineage, coordinator, binding, recipe, plans, controls),
+                )
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::WorkspacePreparation(retained) => {
+                let (coordinator, binding, recipe, controls, source) = *retained;
+                terminal_quarantine(
+                    engine,
+                    stage,
+                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::WorkspacePreparation(source),
+                    (lineage, coordinator, binding, recipe, controls),
+                )
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedPhysicalOutcome(retained) => {
+                let (coordinator, outcome, choices, source) = *retained;
+                terminal_quarantine(
+                    engine,
+                    stage,
+                    M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::PhysicalOutcome(
+                        Box::new(source),
+                    ),
+                    (lineage, coordinator, outcome, choices),
+                )
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(retained) => {
+                Err(Box::new(Self {
+                    stage,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(
+                        retained,
+                    ),
+                    lineage,
+                }))
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(retained) => {
+                Err(Box::new(Self {
+                    stage,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(
+                        retained,
+                    ),
+                    lineage,
+                }))
+            }
+            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(disposition) => {
+                Err(Box::new(Self {
+                    stage,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                        disposition,
+                    ),
+                    lineage,
+                }))
+            }
+        }
+    }
+}
+
+pub(crate) fn released_disposition(
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+    M1AuthenticatedSpeculativeFailureDispositionV1::Released(
+        M1AuthenticatedSpeculativeCleanReleaseV1 {
+            retained: Box::new(retained),
+        },
+    )
+}
+
+pub(crate) fn quarantined_disposition(
+    retained: impl fmt::Debug + 'static,
+) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+    M1AuthenticatedSpeculativeFailureDispositionV1::Quarantined(
+        M1AuthenticatedSpeculativeTerminalQuarantineV1 {
+            retained: Box::new(retained),
+        },
+    )
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn released_failure(
+    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    retained: impl fmt::Debug + 'static,
+) -> Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1> {
+    Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal {
+        stage,
+        disposition: released_disposition(retained),
+    })
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn quarantined_failure(
+    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    retained: impl fmt::Debug + 'static,
+) -> Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1> {
+    Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal {
+        stage,
+        disposition: quarantined_disposition(retained),
+    })
+}
+
+/// Consumes internal stage custody into a non-retryable public outcome. This
+/// is the only high-level failure exit after queue detachment.
+#[allow(clippy::boxed_local, clippy::unnecessary_box_returns)]
+fn close_pending_round_failure<const C: usize>(
+    engine: &mut Engine<C>,
+    pending: Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+) -> Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1> {
+    let PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+        stage,
+        custody,
+        lineage,
+    } = *pending;
+    let custody = match custody {
+        M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(disposition) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Box::new(M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal {
+                stage,
+                disposition,
+            });
+        }
+        custody => custody,
+    };
+    if let M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(retained) = custody {
+        let (executor, inputs) = *retained;
+        if !engine.is_faulted() {
+            return Box::new(
+                M1AuthenticatedSpeculativePhysicalRoundFailureV1::PreDetach {
+                    stage,
+                    retry: Box::new(M1AuthenticatedSpeculativePhysicalRoundPreDetachRetryV1 {
+                        executor,
+                        inputs,
+                    }),
+                },
+            );
+        }
+        engine.quarantine_m1_queue_rearm_failure();
+        return match executor.destroy_queue_and_retain_state(engine) {
+            Ok(released) => released_failure(stage, (released, inputs, lineage)),
+            Err(quarantined) => quarantined_failure(stage, (quarantined, inputs, lineage)),
+        };
+    }
+    let pending = Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+        stage,
+        custody,
+        lineage,
+    });
+    engine.quarantine_m1_queue_rearm_failure();
+    match pending.destroy_queue_and_retain_custody(engine) {
+        Ok(Ok(released)) => released_failure(stage, released),
+        Ok(Err(quarantined)) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            quarantined_failure(stage, quarantined)
+        }
+        Err(pending) => {
+            let PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                custody, lineage, ..
+            } = *pending;
+            let (executor, inputs) = match custody {
+                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(retained)
+                | M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(retained) => {
+                    *retained
+                }
+                custody => {
+                    engine.quarantine_m1_queue_rearm_failure();
+                    return quarantined_failure(stage, (custody, lineage));
+                }
+            };
+            match executor.destroy_queue_and_retain_state(engine) {
+                Ok(released) => released_failure(stage, (released, inputs, lineage)),
+                Err(quarantined) => {
+                    engine.quarantine_m1_queue_rearm_failure();
+                    quarantined_failure(stage, (quarantined, inputs, lineage))
+                }
+            }
+        }
+    }
+}
+
+#[allow(clippy::boxed_local, clippy::unnecessary_box_returns)]
+fn close_pending_bootstrap_failure<const C: usize>(
+    engine: &mut Engine<C>,
+    pending: Box<PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    engine.quarantine_m1_queue_rearm_failure();
+    let PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 { stage, custody } = *pending;
+    let disposition = match custody {
+        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::Retryable(retained) => {
+            let (continuation, diagnostic, controls) = *retained;
+            match diagnostic.destroy_queue_and_retain_evidence(engine) {
+                Ok(released) => released_disposition((released, continuation, controls)),
+                Err(quarantined) => quarantined_disposition((quarantined, continuation, controls)),
+            }
+        }
+        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::PhysicalOutcome(
+            retained,
+        ) => {
+            let (coordinator, lineage, controls, choices, preflighted, physical) = *retained;
+            let logical = (coordinator, lineage, controls, choices, preflighted);
+            match crate::m1_completed_step::close_m1_authenticated_completed_step_outcome_v1(
+                engine, physical,
+            ) {
+                crate::m1_completed_step::M1AuthenticatedCompletedStepClosureV1::Released(
+                    released,
+                ) => released_disposition((released, logical)),
+                crate::m1_completed_step::M1AuthenticatedCompletedStepClosureV1::Quarantined(
+                    quarantined,
+                ) => quarantined_disposition((quarantined, logical)),
+            }
+        }
+        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::CoordinatorCommit(
+            retained,
+        ) => {
+            let (coordinator, lineage, controls, choices, completed, failure) = *retained;
+            match completed.destroy_queue_and_retain_completion(engine) {
+                Ok(released) => released_disposition((
+                    released,
+                    coordinator,
+                    lineage,
+                    controls,
+                    choices,
+                    failure,
+                )),
+                Err(quarantined) => quarantined_disposition((
+                    quarantined,
+                    coordinator,
+                    lineage,
+                    controls,
+                    choices,
+                    failure,
+                )),
+            }
+        }
+        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::LineageAfterCommit(
+            retained,
+        ) => {
+            let (coordinator, lineage, controls, choices, completed, outcome) = *retained;
+            match completed.destroy_queue_and_retain_completion(engine) {
+                Ok(released) => released_disposition((
+                    released,
+                    coordinator,
+                    lineage,
+                    controls,
+                    choices,
+                    outcome,
+                )),
+                Err(quarantined) => quarantined_disposition((
+                    quarantined,
+                    coordinator,
+                    lineage,
+                    controls,
+                    choices,
+                    outcome,
+                )),
+            }
+        }
+        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::PageRelease(retained) => {
+            let (coordinator, lineage, outcome, choices, failure) = *retained;
+            let (error, completed) = failure.into_parts();
+            match completed.destroy_queue_and_retain_completion(engine) {
+                Ok(released) => {
+                    released_disposition((released, coordinator, lineage, outcome, choices, error))
+                }
+                Err(quarantined) => quarantined_disposition((
+                    quarantined,
+                    coordinator,
+                    lineage,
+                    outcome,
+                    choices,
+                    error,
+                )),
+            }
+        }
+        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::ReleasedLineage(
+            retained,
+        ) => {
+            let (coordinator, lineage, outcome, choices, released) = *retained;
+            match released.destroy_queue_and_retain_round(engine) {
+                Ok(release) => {
+                    released_disposition((release, coordinator, lineage, outcome, choices))
+                }
+                Err(quarantined) => {
+                    quarantined_disposition((quarantined, coordinator, lineage, outcome, choices))
+                }
+            }
+        }
+    };
+    Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1::Terminal { stage, disposition })
+}
+
+fn close_pending_rollover_failure<const C: usize>(
+    engine: &mut Engine<C>,
+    pending: PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1,
+) -> M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+    engine.quarantine_m1_queue_rearm_failure();
+    match pending {
+        PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Unsettled { stage, retained } => {
+            let (continuation, diagnostic, controls) = *retained;
+            let (readback, choices) = diagnostic.into_parts();
+            let disposition = match readback.destroy_queue_and_retain_custody(engine) {
+                Ok(released) => released_disposition((released, choices, continuation, controls)),
+                Err(quarantined) => {
+                    quarantined_disposition((quarantined, choices, continuation, controls))
+                }
+            };
+            M1AuthenticatedSpeculativeRolloverRoundFailureV1 { stage, disposition }
+        }
+        PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round(pending) => {
+            let failure = close_pending_round_failure(engine, pending);
+            match *failure {
+                M1AuthenticatedSpeculativePhysicalRoundFailureV1::Terminal {
+                    stage,
+                    disposition,
+                } => M1AuthenticatedSpeculativeRolloverRoundFailureV1 { stage, disposition },
+                M1AuthenticatedSpeculativePhysicalRoundFailureV1::PreDetach { stage, retry } => {
+                    M1AuthenticatedSpeculativeRolloverRoundFailureV1 {
+                        stage,
+                        disposition: retry.close_without_authority(engine),
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Exact lower success retained only until opaque closure.
+#[allow(dead_code)]
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1 {
+    Diagnostic(crate::M1AuthenticatedRearmedSpeculativeDiagnosticReadbackTeardownSuccessV1),
+    Joined(crate::M1AuthenticatedRearmedCompletedReadbackTeardownSuccessV1),
+    CompletionPreflight(crate::M1AuthenticatedRearmedCompletionPreflightTeardownSuccessV1),
+    RejectedCompletion(crate::M1AuthenticatedRearmedRejectedCompletionTeardownSuccessV1),
+    PageRelease(crate::M1AuthenticatedRearmedRoundPageReleaseTeardownSuccessV1),
+    Released(crate::M1AuthenticatedLongLivedQueueRearmTeardownSuccessV1),
+}
+
+/// Exact lower quarantine retained only until opaque closure.
+#[allow(dead_code)]
+#[derive(Debug)]
+enum M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1 {
+    Diagnostic(Box<crate::M1AuthenticatedRearmedSpeculativeDiagnosticReadbackTeardownFailureV1>),
+    Joined(Box<crate::M1AuthenticatedRearmedCompletedReadbackTeardownFailureV1>),
+    CompletionPreflight(Box<crate::M1AuthenticatedRearmedCompletionPreflightTeardownFailureV1>),
+    RejectedCompletion(Box<crate::M1AuthenticatedRearmedRejectedCompletionTeardownFailureV1>),
+    PageRelease(Box<crate::M1AuthenticatedRearmedRoundPageReleaseTeardownFailureV1>),
+    Released(Box<crate::M1AuthenticatedLongLivedQueueRearmTeardownFailureV1>),
+    TerminalQuarantine(M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1),
+}
+
+/// Completed queue teardown or explicit process-level terminal quarantine.
+#[must_use = "teardown disposition retains lower and logical custody"]
+#[allow(dead_code)]
+#[derive(Debug)]
+struct M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    source: M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1,
+    logical: Box<dyn fmt::Debug>,
+}
+
+/// Queue release quarantine with all logical failure context retained.
+#[must_use = "teardown failure retains lower and logical custody"]
+#[allow(dead_code)]
+#[derive(Debug)]
+struct M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    source: M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1,
+    logical: Box<dyn fmt::Debug>,
+}
+
+#[allow(dead_code)]
+impl M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1 {
+    #[must_use]
+    const fn stage(&self) -> M1AuthenticatedSpeculativePhysicalRoundStageV1 {
+        self.stage
+    }
+
+    #[must_use]
+    const fn source(&self) -> &M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessSourceV1 {
+        &self.source
+    }
+
+    #[must_use]
+    fn retains_logical_custody(&self) -> bool {
+        let _ = &self.logical;
+        true
+    }
+}
+
+#[allow(dead_code)]
+impl M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+    #[must_use]
+    const fn stage(&self) -> M1AuthenticatedSpeculativePhysicalRoundStageV1 {
+        self.stage
+    }
+
+    #[must_use]
+    const fn source(&self) -> &M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1 {
+        &self.source
+    }
+
+    #[must_use]
+    fn retains_logical_custody(&self) -> bool {
+        let _ = &self.logical;
+        true
+    }
+}
+
+#[derive(Debug)]
+struct M1AuthenticatedSpeculativePhysicalPageReleaseCustodyV1 {
+    coordinator: M1SpeculativeGenerationLoopV1,
+    outcome: M1SpeculativeRoundOutcomeV1,
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+    failure: M1AuthenticatedRearmedRoundPageReleaseFailureV1,
+}
+
+/// One committed round and the next reusable authenticated executor.
+#[must_use = "the next executor and inert choices remain linear"]
+#[derive(Debug)]
+pub struct M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
+    executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
+    outcome: M1SpeculativeRoundOutcomeV1,
+    choices: M1ObservedSpeculativeDiagnosticChoicesV1,
+}
+
+impl M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
+    pub const fn executor(&self) -> &M1AuthenticatedSpeculativePhysicalExecutorV1 {
+        &self.executor
+    }
+
+    pub const fn outcome(&self) -> &M1SpeculativeRoundOutcomeV1 {
+        &self.outcome
+    }
+
+    /// Independent device copies used for semantic checking; never M1 evidence.
+    pub const fn diagnostic_choices(&self) -> &M1ObservedSpeculativeDiagnosticChoicesV1 {
+        &self.choices
+    }
+
+    #[must_use = "all success owners remain linear"]
+    pub fn into_parts(
+        self,
+    ) -> (
+        M1AuthenticatedSpeculativePhysicalExecutorV1,
+        M1SpeculativeRoundOutcomeV1,
+        M1ObservedSpeculativeDiagnosticChoicesV1,
+    ) {
+        (self.executor, self.outcome, self.choices)
+    }
+
+    pub(crate) fn close_for_resident<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> M1AuthenticatedSpeculativeFailureDispositionV1 {
+        let (executor, outcome, choices) = self.into_parts();
+        match executor.destroy_queue_and_retain_state(engine) {
+            Ok(released) => released_disposition((released, outcome, choices)),
+            Err(quarantined) => quarantined_disposition((quarantined, outcome, choices)),
+        }
+    }
+}
+
+fn expected_queue_shape(selection: Qwen3PlanSelection) -> Option<M1PhysicalFixedBatchShapeV1> {
+    crate::M1SpeculativePhysicalShapeV1::from_selection(selection)
+        .ok()
+        .and_then(|shape| match shape.draft_tokens() {
+            4 => Some(M1PhysicalFixedBatchShapeV1::SpeculativeK4),
+            8 => Some(M1PhysicalFixedBatchShapeV1::SpeculativeK8),
+            16 => Some(M1PhysicalFixedBatchShapeV1::SpeculativeK16),
+            _ => None,
+        })
+}
+
+fn production_entry_profile_matches(
+    selection: Qwen3PlanSelection,
+    queue_shape: M1PhysicalFixedBatchShapeV1,
+) -> bool {
+    expected_queue_shape(selection) == Some(queue_shape)
+}
+
+const fn production_entry_has_active_members(active_count: usize) -> bool {
+    active_count != 0
+}
+
+#[derive(Clone, Copy)]
+struct M1PreDetachRoundFactsV1 {
+    profile_matches: bool,
+    active_count: usize,
+    inputs_match: bool,
+}
+
+fn pre_detach_round_core<O, I>(
+    owner: O,
+    inputs: I,
+    facts: M1PreDetachRoundFactsV1,
+) -> Result<(O, I), (M1AuthenticatedSpeculativePhysicalRoundStageV1, O, I)> {
+    if !facts.profile_matches {
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Profile,
+            owner,
+            inputs,
+        ));
+    }
+    if !production_entry_has_active_members(facts.active_count) {
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete,
+            owner,
+            inputs,
+        ));
+    }
+    if !facts.inputs_match {
+        return Err((
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
+            owner,
+            inputs,
+        ));
+    }
+    Ok((owner, inputs))
+}
+
+fn speculative_draft_selection(target: Qwen3PlanSelection) -> Option<Qwen3PlanSelection> {
+    let bucket = match target.bucket {
+        Qwen3PlanBucket::SpeculativeS1K4C8192
+        | Qwen3PlanBucket::SpeculativeS1K8C8192
+        | Qwen3PlanBucket::SpeculativeS1K16C8192 => Qwen3PlanBucket::DecodeS1C8192,
+        Qwen3PlanBucket::SpeculativeS8K4C8192 => Qwen3PlanBucket::DecodeS8C8192,
+        _ => return None,
+    };
+    (target.role == Qwen3ModelRole::Target8B && target.mode == Qwen3ExecutionMode::Speculative)
+        .then_some(Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket,
+        })
+}
+
+fn speculative_role_inputs_match_binding(
+    input: &ValidatedM1StepInputs,
+    expected_selection: Qwen3PlanSelection,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+    committed: impl Fn(crate::M1SpeculativeRoundMemberInputV1) -> u32,
+) -> bool {
+    let members = binding.members();
+    let Ok(live_lanes) = usize::try_from(input.live_lane_count()) else {
+        return false;
+    };
+    let width = input.dimensions().active_tokens as usize;
+    input.selection() == expected_selection
+        && live_lanes == members.len()
+        && members.iter().copied().enumerate().all(|(lane, member)| {
+            let Some(plan) = input.lanes().get(lane).and_then(Option::as_ref) else {
+                return false;
+            };
+            let Some(row_start) = lane.checked_mul(width) else {
+                return false;
+            };
+            plan.selection() == expected_selection
+                && plan.request() == member.request()
+                && plan.completion_epoch() == binding.epoch()
+                && input.token_ids().get(row_start) == Some(&member.round_anchor())
+                && input.position_ids().get(row_start) == Some(&committed(member))
+                && input.context_lengths().get(lane) == Some(&committed(member))
+                && input.active_lengths().get(lane) == Some(&input.dimensions().active_tokens)
+        })
+}
+
+fn speculative_round_inputs_match_binding(
+    inputs: &M1LongLivedQueueRearmKvInputsV1,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+) -> bool {
+    let M1LongLivedQueueRearmKvInputsV1::SpeculativeRound {
+        draft_decode,
+        target_speculative,
+        ..
+    } = inputs
+    else {
+        return false;
+    };
+    speculative_validated_pair_matches_binding(draft_decode, target_speculative, binding)
+}
+
+fn authenticated_speculative_round_inputs_match_binding(
+    inputs: &M1AuthenticatedSpeculativePhysicalRoundKvInputsV1,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+) -> bool {
+    match inputs {
+        M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(inputs) => {
+            speculative_round_inputs_match_binding(inputs, binding)
+        }
+        M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
+            draft_decode,
+            target_speculative,
+        } => speculative_validated_pair_matches_binding(draft_decode, target_speculative, binding),
+    }
+}
+
+pub(crate) fn speculative_validated_pair_matches_binding(
+    draft_decode: &ValidatedM1StepInputs,
+    target_speculative: &ValidatedM1StepInputs,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+) -> bool {
+    let target_selection = binding.shape().selection();
+    let Some(draft_selection) = speculative_draft_selection(target_selection) else {
+        return false;
+    };
+    let target_width = target_speculative.dimensions().active_tokens as usize;
+    let expected_target_width = usize::from(binding.shape().draft_tokens()) + 1;
+    speculative_role_inputs_match_binding(
+        draft_decode,
+        draft_selection,
+        binding,
+        crate::M1SpeculativeRoundMemberInputV1::draft_pre_committed,
+    ) && draft_decode.dimensions().active_tokens == 1
+        && speculative_role_inputs_match_binding(
+            target_speculative,
+            target_selection,
+            binding,
+            crate::M1SpeculativeRoundMemberInputV1::target_pre_committed,
+        )
+        && target_width == expected_target_width
+        && binding.members().iter().enumerate().all(|(lane, _)| {
+            let Some(row_start) = lane.checked_mul(target_width) else {
+                return false;
+            };
+            let Some(future_start) = row_start.checked_add(1) else {
+                return false;
+            };
+            let Some(row_end) = row_start.checked_add(target_width) else {
+                return false;
+            };
+            target_speculative
+                .token_ids()
+                .get(future_start..row_end)
+                .is_some_and(|future| future.iter().all(|token| *token == 0))
+        })
+}
+
+pub(crate) fn upgrade_m1_authenticated_speculative_lineage_v1(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+    identity: M1AuthenticatedSpeculativeLineageIdentityV1,
+) -> Result<
+    (
+        M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    ),
+    M1AuthenticatedSpeculativeBootstrapErrorV1,
+> {
+    let initial_seeds = coordinator
+        .bootstrap_seed_snapshot()
+        .map_err(|_| M1AuthenticatedSpeculativeBootstrapErrorV1::Coordinator)?;
+    Ok((
+        M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+            identity,
+            coordinator_identity: coordinator.identity(),
+            selection: coordinator.shape().selection(),
+            round: binding.round(),
+            epoch: binding.epoch(),
+            initial_seeds,
+        },
+        M1AuthenticatedSpeculativeLogicalLineageWitnessV1 { identity },
+    ))
+}
+
+#[allow(clippy::type_complexity)]
+pub(crate) fn upgrade_m1_authenticated_speculative_lineage_with_seeds_v1(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    binding: &crate::M1SpeculativeRoundBindingV1,
+    identity: M1AuthenticatedSpeculativeLineageIdentityV1,
+    initial_seeds: Box<[M1SpeculativeMemberSeedV1]>,
+) -> Result<
+    (
+        M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        M1AuthenticatedSpeculativeLogicalLineageWitnessV1,
+    ),
+    (
+        M1AuthenticatedSpeculativeBootstrapErrorV1,
+        Box<[M1SpeculativeMemberSeedV1]>,
+    ),
+> {
+    if !coordinator.matches_bootstrap_seeds(coordinator.shape().selection(), &initial_seeds) {
+        return Err((
+            M1AuthenticatedSpeculativeBootstrapErrorV1::Coordinator,
+            initial_seeds,
+        ));
+    }
+    Ok((
+        M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+            identity,
+            coordinator_identity: coordinator.identity(),
+            selection: coordinator.shape().selection(),
+            round: binding.round(),
+            epoch: binding.epoch(),
+            initial_seeds,
+        },
+        M1AuthenticatedSpeculativeLogicalLineageWitnessV1 { identity },
+    ))
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn bootstrap_unprepared_failure(
+    error: M1AuthenticatedSpeculativeBootstrapErrorV1,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    selected: Vec<ActiveDeviceKvCache>,
+    scheduled: M1ScheduledDispatchV1,
+    plans: M1FullStepWorkspacePlans,
+    tables: M1FullStepKvWorkspaceTablesV1,
+) -> Box<M1AuthenticatedSpeculativeBootstrapFailureV1> {
+    Box::new(M1AuthenticatedSpeculativeBootstrapFailureV1 {
+        error,
+        custody: M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Unprepared(Box::new((
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ))),
+    })
+}
+
+/// Binds a fresh coordinator to the exact authenticated round-zero physical
+/// inputs before any queue publication can consume them.
+///
+/// The returned prepared step contains one private move-only lineage half.
+/// Its companion continuation cannot become an executor until that same half
+/// returns through authenticated completion and page release.
+///
+/// # Errors
+///
+/// Every rejection retains all coordinator, cache, scheduler, plan, and KV
+/// custody at the exact stage reached.
+pub fn prepare_m1_authenticated_speculative_bootstrap_v1(
+    coordinator: M1SpeculativeGenerationLoopV1,
+    selected: Vec<ActiveDeviceKvCache>,
+    scheduled: M1ScheduledDispatchV1,
+    runner: &LogicalRunnerDeclaration,
+    plans: M1FullStepWorkspacePlans,
+    tables: M1FullStepKvWorkspaceTablesV1,
+) -> Result<
+    M1AuthenticatedSpeculativeBootstrapPreparedV1,
+    Box<M1AuthenticatedSpeculativeBootstrapFailureV1>,
+> {
+    let mut roster = Vec::new();
+    if roster.try_reserve_exact(scheduled.member_count()).is_err() {
+        return Err(bootstrap_unprepared_failure(
+            M1AuthenticatedSpeculativeBootstrapErrorV1::Coordinator,
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ));
+    }
+    for lane in 0..scheduled.member_count() {
+        let Some(request) = scheduled.member(lane) else {
+            return Err(bootstrap_unprepared_failure(
+                M1AuthenticatedSpeculativeBootstrapErrorV1::Inputs,
+                coordinator,
+                selected,
+                scheduled,
+                plans,
+                tables,
+            ));
+        };
+        roster.push(request);
+    }
+    let binding = match coordinator.bind_round(0, scheduled.epoch(), &roster) {
+        Ok(binding) => binding,
+        Err(_) => {
+            return Err(bootstrap_unprepared_failure(
+                M1AuthenticatedSpeculativeBootstrapErrorV1::Coordinator,
+                coordinator,
+                selected,
+                scheduled,
+                plans,
+                tables,
+            ));
+        }
+    };
+    let inputs_match = match &tables {
+        M1FullStepKvWorkspaceTablesV1::SpeculativeRound {
+            draft_decode,
+            target_speculative,
+        } => speculative_validated_pair_matches_binding(
+            draft_decode.inputs(),
+            target_speculative.inputs(),
+            &binding,
+        ),
+        _ => false,
+    };
+    if !inputs_match {
+        return Err(bootstrap_unprepared_failure(
+            M1AuthenticatedSpeculativeBootstrapErrorV1::Inputs,
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ));
+    }
+    let caches_match = selected.len() == binding.members().len()
+        && selected
+            .iter()
+            .zip(binding.members())
+            .all(|(cache, member)| {
+                let projection = cache.projection();
+                projection.request == member.request()
+                    && projection.target.committed_tokens == member.target_pre_committed()
+                    && projection.draft.committed_tokens == member.draft_pre_committed()
+            });
+    if !caches_match {
+        return Err(bootstrap_unprepared_failure(
+            M1AuthenticatedSpeculativeBootstrapErrorV1::CacheRoster,
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ));
+    }
+    let initial_seeds = match coordinator.bootstrap_seed_snapshot() {
+        Ok(seeds) => seeds,
+        Err(_) => {
+            return Err(bootstrap_unprepared_failure(
+                M1AuthenticatedSpeculativeBootstrapErrorV1::Coordinator,
+                coordinator,
+                selected,
+                scheduled,
+                plans,
+                tables,
+            ));
+        }
+    };
+    let Some(lineage_identity) = M1AuthenticatedSpeculativeLineageIdentityV1::fresh() else {
+        return Err(bootstrap_unprepared_failure(
+            M1AuthenticatedSpeculativeBootstrapErrorV1::LineageIdentityExhausted,
+            coordinator,
+            selected,
+            scheduled,
+            plans,
+            tables,
+        ));
+    };
+    let physical = M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+        identity: lineage_identity,
+        coordinator_identity: coordinator.identity(),
+        selection: coordinator.shape().selection(),
+        round: binding.round(),
+        epoch: binding.epoch(),
+        initial_seeds,
+    };
+    let prepared =
+        match crate::prepare_m1_scheduled_workspace_images_v1(scheduled, runner, plans, tables) {
+            Ok(prepared) => prepared,
+            Err(source) => {
+                return Err(Box::new(M1AuthenticatedSpeculativeBootstrapFailureV1 {
+                    error: M1AuthenticatedSpeculativeBootstrapErrorV1::Preparation,
+                    custody: M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Preparation(
+                        Box::new((coordinator, binding, selected, source)),
+                    ),
+                }));
+            }
+        };
+    let prepared = match prepared.retain_speculative_lineage(physical) {
+        Ok(prepared) => prepared,
+        Err(prepared) => {
+            return Err(Box::new(M1AuthenticatedSpeculativeBootstrapFailureV1 {
+                error: M1AuthenticatedSpeculativeBootstrapErrorV1::LineageAttachment,
+                custody: M1AuthenticatedSpeculativeBootstrapFailureCustodyV1::Attachment(Box::new(
+                    (coordinator, binding, selected, prepared),
+                )),
+            }));
+        }
+    };
+    Ok(M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+        prepared,
+        continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1 {
+            coordinator,
+            epoch: binding.epoch(),
+            selected,
+            lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
+                identity: lineage_identity,
+            },
+        },
+    })
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn bootstrap_pre_detach_failure(
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    retry_state: M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1,
+) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    Box::new(
+        M1AuthenticatedSpeculativeBootstrapRoundFailureV1::PreDetach {
+            stage,
+            retry: Box::new(M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
+                state: retry_state,
+            }),
+        },
+    )
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn bootstrap_terminal_failure<const C: usize>(
+    engine: &mut Engine<C>,
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    retained: impl fmt::Debug + 'static,
+) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    engine.quarantine_m1_queue_rearm_failure();
+    Box::new(
+        M1AuthenticatedSpeculativeBootstrapRoundFailureV1::Terminal {
+            stage,
+            disposition: quarantined_disposition(retained),
+        },
+    )
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn bootstrap_terminal_disposition(
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    disposition: M1AuthenticatedSpeculativeFailureDispositionV1,
+) -> Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    Box::new(M1AuthenticatedSpeculativeBootstrapRoundFailureV1::Terminal { stage, disposition })
+}
+
+impl M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+    /// Runs the complete authenticated round-zero physical lifecycle while
+    /// keeping the coordinator continuation joined to every queue phase.
+    ///
+    /// Pure allocation, packet-preparation, and queue-creation rejections
+    /// return opaque exact retry custody with a healthy Engine. Every other
+    /// failure faults `engine`, closes any available queue, and returns only a
+    /// clean release or opaque terminal quarantine.
+    ///
+    /// # Errors
+    ///
+    /// Returns pre-detach retry custody or terminal failure custody as
+    /// described above.
+    #[allow(clippy::too_many_arguments)]
+    pub fn execute_initial_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
+        runner: M1AuthenticatedPhysicalRunnerV1,
+        recipe: AddresslessM1PhysicalBufferRecipeV1,
+        ring_bytes: u32,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+    > {
+        execute_bootstrap_from_allocation(
+            engine,
+            self,
+            partitioned_memory,
+            runner,
+            recipe,
+            ring_bytes,
+            queue_wait_timeout,
+            controls,
+        )
+    }
+}
+
+impl M1AuthenticatedSpeculativeBootstrapPreDetachRetryV1 {
+    /// Retries the exact unchanged inputs retained by a pre-detach rejection.
+    ///
+    /// # Errors
+    ///
+    /// Returns renewed pre-detach retry custody or a terminal failure if the
+    /// retry advances beyond the pure rejection boundary.
+    pub fn retry<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+    > {
+        match self.state {
+            M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Allocation {
+                diagnostic,
+                prepared,
+                partitioned_memory,
+                runner,
+                recipe,
+                ring_bytes,
+                queue_wait_timeout,
+                controls,
+            } => {
+                drop(diagnostic);
+                execute_bootstrap_from_allocation(
+                    engine,
+                    prepared,
+                    partitioned_memory,
+                    runner,
+                    recipe,
+                    ring_bytes,
+                    queue_wait_timeout,
+                    controls,
+                )
+            }
+            M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Prepublication {
+                diagnostic,
+                continuation,
+                runner,
+                allocated,
+                recipe,
+                completion,
+                ring_bytes,
+                queue_wait_timeout,
+                controls,
+            } => {
+                drop(diagnostic);
+                execute_bootstrap_from_prepublication(
+                    engine,
+                    continuation,
+                    runner,
+                    allocated,
+                    recipe,
+                    completion,
+                    ring_bytes,
+                    queue_wait_timeout,
+                    controls,
+                )
+            }
+            M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::QueueCreate {
+                diagnostic,
+                continuation,
+                prepublication,
+                ring_bytes,
+                queue_wait_timeout,
+                controls,
+            } => {
+                drop(diagnostic);
+                execute_bootstrap_from_queue_create(
+                    engine,
+                    continuation,
+                    prepublication,
+                    ring_bytes,
+                    queue_wait_timeout,
+                    controls,
+                )
+            }
+        }
+    }
+
+    /// Confirms this opaque owner retains every exact input needed for retry.
+    #[must_use]
+    pub const fn retains_exact_inputs(&self) -> bool {
+        true
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn execute_bootstrap_from_allocation<const C: usize>(
+    engine: &mut Engine<C>,
+    bootstrap: M1AuthenticatedSpeculativeBootstrapPreparedV1,
+    partitioned_memory: M1PartitionedModelMemoryKvPoolV1,
+    runner: M1AuthenticatedPhysicalRunnerV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+> {
+    if engine.is_faulted() {
+        return Err(bootstrap_terminal_failure(
+            engine,
+            M1AuthenticatedSpeculativeBootstrapRoundStageV1::EngineFaulted,
+            (
+                bootstrap,
+                partitioned_memory,
+                runner,
+                recipe,
+                ring_bytes,
+                queue_wait_timeout,
+                controls,
+            ),
+        ));
+    }
+    let M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+        prepared,
+        continuation,
+    } = bootstrap;
+    let mut allocated =
+        match crate::allocate_m1_prepublication_workspaces_v1(partitioned_memory, prepared) {
+            Ok(allocated) => allocated,
+            Err(failure) => match failure.into_preflight_prepared() {
+                Ok((diagnostic, partitioned_memory, prepared)) => {
+                    return Err(bootstrap_pre_detach_failure(
+                        M1AuthenticatedSpeculativeBootstrapRoundStageV1::WorkspaceAllocation,
+                        M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Allocation {
+                            diagnostic: Box::new(diagnostic),
+                            prepared: M1AuthenticatedSpeculativeBootstrapPreparedV1 {
+                                prepared,
+                                continuation,
+                            },
+                            partitioned_memory,
+                            runner,
+                            recipe,
+                            ring_bytes,
+                            queue_wait_timeout,
+                            controls,
+                        },
+                    ));
+                }
+                Err(failure) => {
+                    return Err(bootstrap_terminal_failure(
+                        engine,
+                        M1AuthenticatedSpeculativeBootstrapRoundStageV1::WorkspaceAllocation,
+                        (
+                            failure,
+                            continuation,
+                            runner,
+                            recipe,
+                            ring_bytes,
+                            queue_wait_timeout,
+                            controls,
+                        ),
+                    ));
+                }
+            },
+        };
+    let selection = continuation.coordinator.shape().selection();
+    let completion = match allocated.allocate_completion_output(selection) {
+        Ok(completion) => completion,
+        Err(error) => {
+            return Err(bootstrap_terminal_failure(
+                engine,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CompletionOutput,
+                (
+                    error,
+                    allocated,
+                    continuation,
+                    runner,
+                    recipe,
+                    ring_bytes,
+                    queue_wait_timeout,
+                    controls,
+                ),
+            ));
+        }
+    };
+    let completion = match allocated.enable_speculative_diagnostic_choices_capture(completion) {
+        Ok(completion) => completion,
+        Err(failure) => {
+            return Err(bootstrap_terminal_failure(
+                engine,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::DiagnosticCapture,
+                (
+                    failure,
+                    allocated,
+                    continuation,
+                    runner,
+                    recipe,
+                    ring_bytes,
+                    queue_wait_timeout,
+                    controls,
+                ),
+            ));
+        }
+    };
+    execute_bootstrap_from_prepublication(
+        engine,
+        continuation,
+        runner,
+        allocated,
+        recipe,
+        completion,
+        ring_bytes,
+        queue_wait_timeout,
+        controls,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn execute_bootstrap_from_prepublication<const C: usize>(
+    engine: &mut Engine<C>,
+    continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+    runner: M1AuthenticatedPhysicalRunnerV1,
+    allocated: M1AllocatedScheduledStepV1,
+    recipe: AddresslessM1PhysicalBufferRecipeV1,
+    completion: crate::BoundM1CompletionOutputV1,
+    ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+> {
+    if engine.is_faulted() {
+        return Err(bootstrap_terminal_failure(
+            engine,
+            M1AuthenticatedSpeculativeBootstrapRoundStageV1::EngineFaulted,
+            (
+                continuation,
+                runner,
+                allocated,
+                recipe,
+                completion,
+                ring_bytes,
+                queue_wait_timeout,
+                controls,
+            ),
+        ));
+    }
+    let prepublication = match runner.prepare_first_step(allocated, recipe, completion) {
+        Ok(prepublication) => prepublication,
+        Err(failure) => {
+            let (diagnostic, runner, allocated, recipe, completion) = failure.into_retry_inputs();
+            return Err(bootstrap_pre_detach_failure(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::Prepublication,
+                M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::Prepublication {
+                    diagnostic: Box::new(diagnostic),
+                    continuation,
+                    runner,
+                    allocated,
+                    recipe,
+                    completion,
+                    ring_bytes,
+                    queue_wait_timeout,
+                    controls,
+                },
+            ));
+        }
+    };
+    execute_bootstrap_from_queue_create(
+        engine,
+        continuation,
+        prepublication,
+        ring_bytes,
+        queue_wait_timeout,
+        controls,
+    )
+}
+
+fn execute_bootstrap_from_queue_create<const C: usize>(
+    engine: &mut Engine<C>,
+    continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+    prepublication: M1AuthenticatedPrepublicationBatchV1,
+    ring_bytes: u32,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+> {
+    if engine.is_faulted() {
+        return Err(bootstrap_terminal_failure(
+            engine,
+            M1AuthenticatedSpeculativeBootstrapRoundStageV1::EngineFaulted,
+            (
+                continuation,
+                prepublication,
+                ring_bytes,
+                queue_wait_timeout,
+                controls,
+            ),
+        ));
+    }
+    let queue = match M1AuthenticatedPhysicalQueueSessionV1::create(ring_bytes, prepublication) {
+        Ok(queue) => queue,
+        Err(M1AuthenticatedPhysicalQueueCreateFailureV1::Rejected {
+            diagnostic,
+            prepublication,
+        }) => {
+            return Err(bootstrap_pre_detach_failure(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueCreate,
+                M1AuthenticatedSpeculativeBootstrapPreDetachRetryStateV1::QueueCreate {
+                    diagnostic: Box::new(diagnostic),
+                    continuation,
+                    prepublication: *prepublication,
+                    ring_bytes,
+                    queue_wait_timeout,
+                    controls,
+                },
+            ));
+        }
+        Err(M1AuthenticatedPhysicalQueueCreateFailureV1::Terminal(terminal)) => {
+            return Err(bootstrap_terminal_failure(
+                engine,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::QueueCreate,
+                (terminal, continuation, queue_wait_timeout, controls),
+            ));
+        }
+    };
+    let (diagnostic, (continuation, controls)) =
+        execute_initial_round_core::<M1NativeInitialQueueEffectsV1, _, C>(
+            engine,
+            queue,
+            (continuation, controls),
+            queue_wait_timeout,
+        )
+        .map_err(|(stage, disposition)| bootstrap_terminal_disposition(stage, disposition))?;
+    continuation.complete_initial_round(engine, diagnostic, queue_wait_timeout, controls)
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn bootstrap_round_retryable(
+    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1,
+    continuation: M1AuthenticatedSpeculativeBootstrapContinuationV1,
+    diagnostic: M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+) -> Box<PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1> {
+    Box::new(PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+        stage,
+        custody: PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::Retryable(
+            Box::new((continuation, diagnostic, controls)),
+        ),
+    })
+}
+
+impl M1AuthenticatedSpeculativeBootstrapContinuationV1 {
+    /// Joins the private physical lineage half after round-zero authenticated
+    /// readback, settles physical KV, commits the coordinator, and only then
+    /// releases retired pages into the repeated executor.
+    ///
+    /// # Errors
+    ///
+    /// Every failure quarantines the Engine, consumes the completed queue, and
+    /// returns only clean release evidence or opaque terminal quarantine.
+    fn complete_initial_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        diagnostic: M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+    > {
+        self.complete_initial_round_pending(engine, diagnostic, queue_wait_timeout, controls)
+            .map_err(|failure| close_pending_bootstrap_failure(engine, failure))
+    }
+
+    fn complete_initial_round_pending<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        diagnostic: M1AuthenticatedSpeculativeDiagnosticCompletedReadbackV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1>,
+    > {
+        let checked = diagnostic.completed().checked();
+        let Some(physical) = checked.speculative_lineage() else {
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                self,
+                diagnostic,
+                controls,
+            ));
+        };
+        if physical.identity != self.lineage.identity
+            || physical.coordinator_identity != self.coordinator.identity()
+            || physical.selection != self.coordinator.shape().selection()
+            || physical.round != 0
+            || physical.epoch != self.epoch
+            || checked.selection() != physical.selection
+            || checked.epoch() != physical.epoch
+            || !self
+                .coordinator
+                .matches_bootstrap_seeds(physical.selection, &physical.initial_seeds)
+        {
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                self,
+                diagnostic,
+                controls,
+            ));
+        }
+        let physical_coordinator_identity = physical.coordinator_identity;
+        let physical_selection = physical.selection;
+
+        let mut initial_seeds = Vec::new();
+        let mut generated = Vec::new();
+        let mut roster = Vec::new();
+        let mut completion_members = Vec::new();
+        let member_count = physical.initial_seeds.len();
+        if initial_seeds.try_reserve_exact(member_count).is_err()
+            || generated.try_reserve_exact(member_count).is_err()
+            || roster.try_reserve_exact(member_count).is_err()
+            || completion_members.try_reserve_exact(member_count).is_err()
+        {
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::HostAllocation,
+                self,
+                diagnostic,
+                controls,
+            ));
+        }
+        initial_seeds.extend_from_slice(&physical.initial_seeds);
+        roster.extend(physical.initial_seeds.iter().map(|seed| seed.request()));
+        generated.extend(roster.iter().copied().map(|request| (request, 0)));
+        let binding = match self.coordinator.bind_round(0, self.epoch, &roster) {
+            Ok(binding) => binding,
+            Err(_) => {
+                return Err(bootstrap_round_retryable(
+                    M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
+                    self,
+                    diagnostic,
+                    controls,
+                ));
+            }
+        };
+        let Self {
+            coordinator,
+            epoch,
+            selected,
+            lineage: logical,
+        } = self;
+        let lineage = M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical,
+            coordinator_identity: physical_coordinator_identity,
+            selection: physical_selection,
+            initial_seeds: initial_seeds.into_boxed_slice(),
+            generated: generated.into_boxed_slice(),
+            completed_rounds: 0,
+            last_epoch: epoch,
+            draft_catchup: None,
+            restoration: None,
+            prior_windows: Vec::new(),
+        };
+        let prepared = match prepare_coordinator_round_core(
+            engine,
+            coordinator,
+            binding,
+            diagnostic,
+            controls,
+            lineage,
+        ) {
+            Ok(prepared) => prepared,
+            Err(failure) => {
+                let (coordinator, diagnostic, controls, lineage) = match *failure {
+                    M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
+                        coordinator,
+                        diagnostic,
+                        controls,
+                        lineage,
+                        ..
+                    }
+                    | M1PrepareCoordinatorRoundCoreFailureV1::CommitPreflight {
+                        coordinator,
+                        diagnostic,
+                        controls,
+                        lineage,
+                        ..
+                    }
+                    | M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                        coordinator,
+                        diagnostic,
+                        controls,
+                        lineage,
+                        ..
+                    } => (coordinator, diagnostic, controls, lineage),
+                };
+                let M1AuthenticatedSpeculativeCausalLineageV1 { logical, .. } = lineage;
+                return Err(bootstrap_round_retryable(
+                    M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
+                    Self {
+                        coordinator,
+                        epoch,
+                        selected,
+                        lineage: logical,
+                    },
+                    diagnostic,
+                    controls,
+                ));
+            }
+        };
+        let M1PreparedCoordinatorRoundCoreV1 {
+            coordinator,
+            diagnostic,
+            controls,
+            preflighted,
+            dispositions,
+            lineage,
+        } = prepared;
+        if selected.len() != preflighted.members().len() {
+            engine.quarantine_m1_queue_rearm_failure();
+            let M1AuthenticatedSpeculativeCausalLineageV1 { logical, .. } = lineage;
+            return Err(bootstrap_round_retryable(
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorPreflight,
+                Self {
+                    coordinator,
+                    epoch,
+                    selected,
+                    lineage: logical,
+                },
+                diagnostic,
+                controls,
+            ));
+        }
+        for ((cache, outcome), disposition) in selected
+            .into_iter()
+            .zip(preflighted.members())
+            .zip(dispositions)
+        {
+            debug_assert_eq!(cache.projection().request, outcome.request());
+            completion_members.push(match disposition {
+                crate::M1DeviceKvCompletionDispositionV1::Continue => {
+                    M1DeviceKvCompletionMemberV1::continuing(cache)
+                }
+                crate::M1DeviceKvCompletionDispositionV1::Retire => {
+                    M1DeviceKvCompletionMemberV1::retiring(cache)
+                }
+            });
+        }
+        let (readback, choices) = diagnostic.into_parts();
+        let physical = complete_m1_authenticated_physical_step_v1(
+            engine,
+            readback,
+            M1DeviceKvCompletionRosterV1::new(completion_members),
+        );
+        let physical = match physical {
+            M1AuthenticatedCompletedStepOutcomeV1::Completed(physical) => physical,
+            physical => {
+                return Err(Box::new(PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::PhysicalCompletion,
+                    custody:
+                        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::PhysicalOutcome(
+                            Box::new((
+                                coordinator,
+                                lineage,
+                                controls,
+                                choices,
+                                preflighted,
+                                physical,
+                            )),
+                        ),
+                }));
+            }
+        };
+        let committed = commit_coordinator_round_core(
+            engine,
+            coordinator,
+            preflighted,
+            controls,
+            (choices, physical),
+            lineage,
+        )
+        .map_err(|failure| match *failure {
+            M1CommitCoordinatorRoundCoreFailureV1::Coordinator {
+                coordinator,
+                controls,
+                physical: (choices, physical),
+                failure,
+                lineage,
+            } => Box::new(PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::CoordinatorCommit,
+                custody:
+                    PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::CoordinatorCommit(
+                        Box::new((
+                            coordinator,
+                            lineage,
+                            controls,
+                            choices,
+                            physical,
+                            failure,
+                        )),
+                    ),
+            }),
+            M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
+                coordinator,
+                outcome,
+                controls,
+                physical: (choices, physical),
+                lineage,
+            } => Box::new(PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                custody:
+                    PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::LineageAfterCommit(
+                        Box::new((coordinator, lineage, controls, choices, physical, *outcome)),
+                    ),
+            }),
+        })?;
+        let M1CommittedCoordinatorRoundCoreV1 {
+            coordinator,
+            outcome,
+            physical: (choices, physical),
+            mut lineage,
+        } = committed;
+        let released = match release_m1_authenticated_completed_step_kv_pages_v1(physical) {
+            Ok(released) => M1AuthenticatedLongLivedQueueReleasedRoundV1::initial(released),
+            Err(failure) => {
+                return Err(Box::new(PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::PageRelease,
+                    custody:
+                        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::PageRelease(
+                            Box::new((coordinator, lineage, outcome, choices, failure)),
+                        ),
+                }));
+            }
+        };
+        let catchup = joined_draft_catchup_pending(&coordinator, &outcome, &choices);
+        if validate_prior_association(&coordinator, &outcome, &released).is_err()
+            || !validate_causal_lineage(&coordinator, &released, &lineage)
+            || catchup.is_err()
+        {
+            engine.quarantine_m1_queue_rearm_failure();
+            return Err(Box::new(
+                PendingM1AuthenticatedSpeculativeBootstrapRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativeBootstrapRoundStageV1::Lineage,
+                    custody:
+                        PendingM1AuthenticatedSpeculativeBootstrapRoundFailureCustodyV1::ReleasedLineage(
+                            Box::new((coordinator, lineage, outcome, choices, released)),
+                        ),
+                },
+            ));
+        }
+        lineage.draft_catchup = catchup.expect("joined catch-up preflight succeeded");
+        Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
+            executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
+                coordinator,
+                released,
+                lineage,
+                queue_wait_timeout,
+            },
+            outcome,
+            choices,
+        })
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn complete_authenticated_rearmed_speculative_round_with_deadline<const C: usize>(
+    engine: &mut Engine<C>,
+    coordinator: M1SpeculativeGenerationLoopV1,
+    binding: crate::M1SpeculativeRoundBindingV1,
+    diagnostic: crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+    controls: Vec<M1SpeculativeMemberControlV1>,
+    lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    resident_completion_scratch: Option<
+        crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
+    >,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    deadline_expired: impl FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        crate::M1QueueWaitTimeoutV1,
+    ) -> Option<crate::M1QueueWaitTimeoutV1>,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+> {
+    let prepared =
+        prepare_coordinator_round_core(engine, coordinator, binding, diagnostic, controls, lineage)
+            .map_err(map_rearmed_coordinator_preparation_failure)?;
+    complete_authenticated_rearmed_speculative_round_prepared_with_deadline(
+        engine,
+        prepared,
+        resident_completion_scratch,
+        queue_wait_timeout,
+        deadline_expired,
+    )
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn map_rearmed_coordinator_preparation_failure(
+    failure: Box<
+        M1PrepareCoordinatorRoundCoreFailureV1<
+            crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+        >,
+    >,
+) -> Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1> {
+    let (custody, lineage) =
+        match *failure {
+            M1PrepareCoordinatorRoundCoreFailureV1::Preflight {
+                coordinator,
+                diagnostic,
+                controls,
+                error,
+                lineage,
+            } => (
+                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorPreflight(
+                    Box::new((coordinator, diagnostic, controls, error)),
+                ),
+                lineage,
+            ),
+            M1PrepareCoordinatorRoundCoreFailureV1::CommitPreflight {
+                coordinator,
+                diagnostic,
+                controls,
+                preflighted,
+                error,
+                lineage,
+            } => (
+                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorCommitPreflight(
+                    Box::new((coordinator, diagnostic, controls, preflighted, error)),
+                ),
+                lineage,
+            ),
+            M1PrepareCoordinatorRoundCoreFailureV1::HostAllocation {
+                coordinator,
+                diagnostic,
+                controls,
+                preflighted,
+                lineage,
+            } => (
+                M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::HostAllocation(Box::new(
+                    (coordinator, diagnostic, controls, preflighted),
+                )),
+                lineage,
+            ),
+        };
+    Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
+        custody,
+        lineage: Some(lineage),
+    })
+}
+
+fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline<const C: usize>(
+    engine: &mut Engine<C>,
+    prepared: M1PreparedCoordinatorRoundCoreV1<
+        crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+    >,
+    resident_completion_scratch: Option<
+        crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
+    >,
+    queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+    mut deadline_expired: impl FnMut(
+        crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+        crate::M1QueueWaitTimeoutV1,
+    ) -> Option<crate::M1QueueWaitTimeoutV1>,
+) -> Result<
+    M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+    Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+> {
+    use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+    let M1PreparedCoordinatorRoundCoreV1 {
+        coordinator,
+        diagnostic,
+        controls,
+        preflighted,
+        dispositions,
+        lineage,
+    } = prepared;
+    if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let closure = M1NativeRearmedQueueEffectsV1::close_diagnostic(engine, diagnostic);
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                    disposition_with_logical(
+                        closure,
+                        (
+                            coordinator,
+                            controls,
+                            preflighted,
+                            dispositions,
+                            lineage,
+                            Boundary::BeforeSettlement,
+                        ),
+                    ),
+                ),
+                lineage: None,
+            },
+        ));
+    }
+    let (readback, choices) = diagnostic.into_parts();
+    let completion = match resident_completion_scratch {
+        Some(scratch) => readback.complete_resident(engine, dispositions, scratch),
+        None => readback.complete(engine, dispositions.into_iter().collect()),
+    };
+    let physical = match completion {
+        Ok(physical) => physical,
+        Err(failure) => {
+            return Err(Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::PhysicalCompletion,
+                custody:
+                    M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PhysicalCompletionPreflight(
+                        Box::new((coordinator, preflighted, controls, choices, failure)),
+                    ),
+                lineage: Some(lineage),
+            }));
+        }
+    };
+    if deadline_expired(Boundary::AfterSettlement, queue_wait_timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let disposition = physical.destroy_queue_and_retain_any(
+            engine,
+            (
+                coordinator,
+                preflighted,
+                controls,
+                choices,
+                lineage,
+                Boundary::AfterSettlement,
+            ),
+        );
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                    disposition,
+                ),
+                lineage: None,
+            },
+        ));
+    }
+    if !matches!(
+        physical.outcome(),
+        crate::M1AuthenticatedCompletedStepOutcomeV1::Completed(_)
+    ) {
+        engine.quarantine_m1_queue_rearm_failure();
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::PhysicalCompletion,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PhysicalOutcome(
+                    Box::new((coordinator, preflighted, controls, choices, physical)),
+                ),
+                lineage: Some(lineage),
+            },
+        ));
+    }
+    let committed = commit_coordinator_round_core(
+        engine,
+        coordinator,
+        preflighted,
+        controls,
+        (choices, physical),
+        lineage,
+    )
+    .map_err(|failure| match *failure {
+        M1CommitCoordinatorRoundCoreFailureV1::Coordinator {
+            coordinator,
+            controls,
+            physical: (choices, physical),
+            failure,
+            lineage,
+        } => Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+            stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorCommit,
+            custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::CoordinatorCommit(
+                Box::new((coordinator, controls, choices, physical, failure)),
+            ),
+            lineage: Some(lineage),
+        }),
+        M1CommitCoordinatorRoundCoreFailureV1::CausalLineage {
+            coordinator,
+            outcome,
+            controls: _,
+            physical: (choices, physical),
+            lineage,
+        } => Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+            stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
+            custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::LineageAfterCommit(
+                Box::new((coordinator, *outcome, choices, physical)),
+            ),
+            lineage: Some(lineage),
+        }),
+    })?;
+    let M1CommittedCoordinatorRoundCoreV1 {
+        coordinator,
+        outcome,
+        physical: (choices, physical),
+        mut lineage,
+    } = committed;
+    if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let disposition = physical.destroy_queue_and_retain_any(
+            engine,
+            (
+                coordinator,
+                outcome,
+                choices,
+                lineage,
+                Boundary::BeforeSettlement,
+            ),
+        );
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                    disposition,
+                ),
+                lineage: None,
+            },
+        ));
+    }
+    let released = physical.release_completed();
+    if deadline_expired(Boundary::AfterSettlement, queue_wait_timeout).is_none() {
+        engine.quarantine_m1_queue_rearm_failure();
+        let disposition = match released {
+            M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+                match released.destroy_queue_and_retain_round(engine) {
+                    Ok(clean) => released_disposition(clean),
+                    Err(quarantined) => quarantined_disposition(quarantined),
+                }
+            }
+            M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(rejected) => {
+                match rejected.destroy_queue_and_retain_round(engine) {
+                    Ok(clean) => released_disposition(clean),
+                    Err(quarantined) => quarantined_disposition(quarantined),
+                }
+            }
+            M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(not_completed) => {
+                not_completed.destroy_queue_and_retain_any(engine, Boundary::AfterSettlement)
+            }
+        };
+        return Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                    disposition.retain((
+                        coordinator,
+                        outcome,
+                        choices,
+                        lineage,
+                        Boundary::AfterSettlement,
+                    )),
+                ),
+                lineage: None,
+            },
+        ));
+    }
+    match released {
+        M1AuthenticatedRearmedRoundReleaseOutcomeV1::Released(released) => {
+            let catchup = joined_draft_catchup_pending(&coordinator, &outcome, &choices);
+            if validate_prior_association(&coordinator, &outcome, &released).is_err()
+                || !validate_causal_lineage(&coordinator, &released, &lineage)
+                || catchup.is_err()
+            {
+                engine.quarantine_m1_queue_rearm_failure();
+                return Err(Box::new(
+                    PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
+                        custody:
+                            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedLineage(
+                                Box::new((coordinator, outcome, choices, released)),
+                            ),
+                        lineage: Some(lineage),
+                    },
+                ));
+            }
+            lineage.draft_catchup = catchup.expect("joined catch-up preflight succeeded");
+            Ok(M1AuthenticatedSpeculativePhysicalRoundSuccessV1 {
+                executor: M1AuthenticatedSpeculativePhysicalExecutorV1 {
+                    coordinator,
+                    released,
+                    lineage,
+                    queue_wait_timeout,
+                },
+                outcome,
+                choices,
+            })
+        }
+        M1AuthenticatedRearmedRoundReleaseOutcomeV1::Rejected(failure) => Err(Box::new(
+            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::PageRelease,
+                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::PageRelease(
+                    Box::new(M1AuthenticatedSpeculativePhysicalPageReleaseCustodyV1 {
+                        coordinator,
+                        outcome,
+                        choices,
+                        failure: *failure,
+                    }),
+                ),
+                lineage: Some(lineage),
+            },
+        )),
+        M1AuthenticatedRearmedRoundReleaseOutcomeV1::NotCompleted(not_completed) => {
+            engine.quarantine_m1_queue_rearm_failure();
+            Err(Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::PhysicalCompletion,
+                custody:
+                    M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::ReleasedPhysicalOutcome(
+                        Box::new((coordinator, outcome, choices, not_completed)),
+                    ),
+                lineage: Some(lineage),
+            }))
+        }
+    }
+}
+
+#[derive(Debug)]
+enum M1RolloverCoordinatorPreparationFailureV1<D> {
+    Unsettled {
+        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+        continuation: M1AuthenticatedSpeculativeRolloverContinuationV1,
+        diagnostic: D,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    },
+    Coordinator(Box<M1PrepareCoordinatorRoundCoreFailureV1<D>>),
+}
+
+impl M1AuthenticatedSpeculativeRolloverContinuationV1 {
+    /// Joins the first speculative readback to the causal witness created from
+    /// its exact authenticated paired-prefill predecessor.
+    ///
+    /// # Errors
+    ///
+    /// Every failure quarantines the Engine, consumes the detached queue when
+    /// possible, and returns no retry or scheduling authority.
+    fn complete_rollover_round_with_deadline<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        diagnostic: crate::M1AuthenticatedRearmedSpeculativeDiagnosticCompletedReadbackV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+        resident_completion_scratch: Option<
+            crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1,
+        >,
+        deadline_expired: impl FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        M1AuthenticatedSpeculativeRolloverRoundFailureV1,
+    > {
+        let prepared = self
+            .complete_rollover_round_pending(engine, diagnostic, controls)
+            .map_err(|failure| {
+                let pending = match *failure {
+                    M1RolloverCoordinatorPreparationFailureV1::Unsettled {
+                        stage,
+                        continuation,
+                        diagnostic,
+                        controls,
+                    } => PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Unsettled {
+                        stage,
+                        retained: Box::new((continuation, diagnostic, controls)),
+                    },
+                    M1RolloverCoordinatorPreparationFailureV1::Coordinator(failure) => {
+                        PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round(
+                            map_rearmed_coordinator_preparation_failure(failure),
+                        )
+                    }
+                };
+                close_pending_rollover_failure(engine, pending)
+            })?;
+        complete_authenticated_rearmed_speculative_round_prepared_with_deadline(
+            engine,
+            prepared,
+            resident_completion_scratch,
+            queue_wait_timeout,
+            deadline_expired,
+        )
+        .map_err(|failure| {
+            close_pending_rollover_failure(
+                engine,
+                PendingM1AuthenticatedSpeculativeRolloverRoundFailureV1::Round(failure),
+            )
+        })
+    }
+
+    fn complete_rollover_round_pending<D, const C: usize>(
+        mut self,
+        engine: &mut Engine<C>,
+        diagnostic: D,
+        controls: Vec<M1SpeculativeMemberControlV1>,
+    ) -> Result<
+        M1PreparedCoordinatorRoundCoreV1<D>,
+        Box<M1RolloverCoordinatorPreparationFailureV1<D>>,
+    >
+    where
+        D: M1RolloverRoundObservationV1,
+    {
+        let Some(physical) = diagnostic.rollover_lineage() else {
+            return Err(Box::new(
+                M1RolloverCoordinatorPreparationFailureV1::Unsettled {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
+                    continuation: self,
+                    diagnostic,
+                    controls,
+                },
+            ));
+        };
+        if physical.identity != self.lineage.identity
+            || physical.coordinator_identity != self.coordinator.identity()
+            || physical.selection != self.coordinator.shape().selection()
+            || physical.round != 0
+            || physical.epoch != self.epoch
+            || physical.checked_selection != physical.selection
+            || physical.checked_epoch != physical.epoch
+            || !self
+                .coordinator
+                .matches_bootstrap_seeds(physical.selection, physical.initial_seeds)
+        {
+            return Err(Box::new(
+                M1RolloverCoordinatorPreparationFailureV1::Unsettled {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage,
+                    continuation: self,
+                    diagnostic,
+                    controls,
+                },
+            ));
+        }
+        let resident = self.resident_join_storage.is_some();
+        let (mut initial_seeds, mut generated, mut roster) = match self.resident_join_storage.take()
+        {
+            Some(storage) => (storage.initial_seeds, storage.generated, storage.roster),
+            None => (Vec::new(), Vec::new(), Vec::new()),
+        };
+        initial_seeds.clear();
+        generated.clear();
+        roster.clear();
+        let member_count = physical.initial_seeds.len();
+        let insufficient_resident_storage = resident
+            && (initial_seeds.capacity() < member_count
+                || generated.capacity() < member_count
+                || roster.capacity() < member_count);
+        let ordinary_reserve_failed = !resident
+            && (initial_seeds.try_reserve_exact(member_count).is_err()
+                || generated.try_reserve_exact(member_count).is_err()
+                || roster.try_reserve_exact(member_count).is_err());
+        if insufficient_resident_storage || ordinary_reserve_failed {
+            self.resident_join_storage = Some(M1AuthenticatedResidentRolloverJoinStorageV1 {
+                initial_seeds,
+                generated,
+                roster,
+            });
+            return Err(Box::new(
+                M1RolloverCoordinatorPreparationFailureV1::Unsettled {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
+                    continuation: self,
+                    diagnostic,
+                    controls,
+                },
+            ));
+        }
+        initial_seeds.extend_from_slice(physical.initial_seeds);
+        roster.extend(physical.initial_seeds.iter().map(|seed| seed.request()));
+        generated.extend(roster.iter().copied().map(|request| (request, 0)));
+        let binding = match self.coordinator.bind_round(0, self.epoch, &roster) {
+            Ok(binding) => binding,
+            Err(_) => {
+                self.resident_join_storage = Some(M1AuthenticatedResidentRolloverJoinStorageV1 {
+                    initial_seeds,
+                    generated,
+                    roster,
+                });
+                return Err(Box::new(
+                    M1RolloverCoordinatorPreparationFailureV1::Unsettled {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Bind,
+                        continuation: self,
+                        diagnostic,
+                        controls,
+                    },
+                ));
+            }
+        };
+        let lineage = M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical: self.lineage,
+            coordinator_identity: physical.coordinator_identity,
+            selection: physical.selection,
+            initial_seeds: initial_seeds.into_boxed_slice(),
+            generated: generated.into_boxed_slice(),
+            completed_rounds: 0,
+            last_epoch: self.epoch,
+            draft_catchup: None,
+            restoration: None,
+            prior_windows: self.prior_windows,
+        };
+        prepare_coordinator_round_core(
+            engine,
+            self.coordinator,
+            binding,
+            diagnostic,
+            controls,
+            lineage,
+        )
+        .map_err(|failure| {
+            Box::new(M1RolloverCoordinatorPreparationFailureV1::Coordinator(
+                failure,
+            ))
+        })
+    }
+}
+
+struct M1AuthenticatedSpeculativeAssociationHeaderV1<'a> {
+    coordinator_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    prior_identity: crate::speculative_generation_loop::M1SpeculativeCoordinatorIdentityV1,
+    selection: Qwen3PlanSelection,
+    prior_selection: Qwen3PlanSelection,
+    checked_selection: Qwen3PlanSelection,
+    queue_selection: Qwen3PlanSelection,
+    queue_shape: M1PhysicalFixedBatchShapeV1,
+    coordinator_last_epoch: Option<CompletionEpoch>,
+    prior_epoch: CompletionEpoch,
+    checked_epoch: CompletionEpoch,
+    coordinator_next_round: u64,
+    prior_round: u64,
+    active: &'a [RequestId],
+    prior_active: &'a [RequestId],
+    released_active: &'a [RequestId],
+}
+
+fn validate_prior_association_header(
+    header: &M1AuthenticatedSpeculativeAssociationHeaderV1<'_>,
+) -> Result<(), M1AuthenticatedSpeculativeExecutorInitErrorV1> {
+    if header.prior_identity != header.coordinator_identity {
+        return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::CoordinatorIdentity);
+    }
+    if header.prior_selection != header.selection
+        || header.checked_selection != header.selection
+        || header.queue_selection != header.selection
+    {
+        return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::Selection);
+    }
+    if !production_entry_profile_matches(header.selection, header.queue_shape) {
+        return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::QueueShape);
+    }
+    if header.coordinator_last_epoch != Some(header.prior_epoch)
+        || header.checked_epoch != header.prior_epoch
+    {
+        return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorEpoch);
+    }
+    if header
+        .prior_round
+        .checked_add(1)
+        .is_none_or(|next| next != header.coordinator_next_round)
+    {
+        return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorRound);
+    }
+    if header.prior_active != header.active || header.released_active != header.active {
+        return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorRoster);
+    }
+    Ok(())
+}
+
+fn validate_prior_association(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    prior: &M1SpeculativeRoundOutcomeV1,
+    released: &M1AuthenticatedLongLivedQueueReleasedRoundV1,
+) -> Result<(), M1AuthenticatedSpeculativeExecutorInitErrorV1> {
+    let current = released.current_released();
+    let checked = current.checked();
+    let selection = coordinator.shape().selection();
+    let active = coordinator.active_roster();
+    let mut released_active = crate::M1SpeculativeActiveRosterV1::new();
+    for member in current.members() {
+        if let M1ReleasedDeviceKvMemberV1::Active(cache) = member {
+            released_active.push(cache.projection().request);
+        }
+    }
+    validate_prior_association_header(&M1AuthenticatedSpeculativeAssociationHeaderV1 {
+        coordinator_identity: coordinator.identity(),
+        prior_identity: prior.coordinator_identity(),
+        selection,
+        prior_selection: prior.selection(),
+        checked_selection: checked.selection(),
+        queue_selection: current.queue().custody().selection(),
+        queue_shape: current.queue().shape(),
+        coordinator_last_epoch: coordinator.last_epoch(),
+        prior_epoch: prior.completed_epoch(),
+        checked_epoch: checked.epoch(),
+        coordinator_next_round: coordinator.next_round(),
+        prior_round: prior.completed_round(),
+        active: &active,
+        prior_active: prior.next_active_roster(),
+        released_active: &released_active,
+    })?;
+    if checked.records().len() != prior.members().len()
+        || current.members().len() != prior.members().len()
+    {
+        return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorRoster);
+    }
+    for (lane, ((record, outcome), released_member)) in checked
+        .records()
+        .iter()
+        .zip(prior.members())
+        .zip(current.members())
+        .enumerate()
+    {
+        let wire = record.record();
+        if wire.request != outcome.request()
+            || released_member.request() != outcome.request()
+            || usize::from(wire.emitted_token_count) != outcome.raw_emitted().tokens().len()
+            || wire.emitted_tokens[..usize::from(wire.emitted_token_count)]
+                != *outcome.raw_emitted().tokens()
+        {
+            return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorMember { lane });
+        }
+        if let M1ReleasedDeviceKvMemberV1::Active(cache) = released_member {
+            let projection = cache.projection();
+            let Some(member) = coordinator.member(outcome.request()) else {
+                return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::ActiveKv { lane });
+            };
+            if outcome.status() != M1SpeculativeMemberStatusV1::Active
+                || projection.target.committed_tokens != member.target_committed_tokens()
+                || projection.draft.committed_tokens != member.draft_committed_tokens()
+            {
+                return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::ActiveKv { lane });
+            }
+        } else if let M1ReleasedDeviceKvMemberV1::Terminal(terminal) = released_member {
+            let Some(member) = coordinator.member(outcome.request()) else {
+                return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::TerminalKv { lane });
+            };
+            if outcome.status() == M1SpeculativeMemberStatusV1::Active
+                || member.status() != outcome.status()
+                || active.contains(&outcome.request())
+                || terminal.target().committed_tokens != outcome.target_settlement().commit_end()
+                || terminal.draft().committed_tokens != outcome.draft_settlement().commit_end()
+            {
+                return Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::TerminalKv { lane });
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_causal_lineage(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    released: &M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    lineage: &M1AuthenticatedSpeculativeCausalLineageV1,
+) -> bool {
+    let Ok(physical) = released.speculative_lineage_witness() else {
+        return false;
+    };
+    validate_causal_lineage_join(
+        coordinator,
+        physical,
+        lineage,
+        released.current_released().checked().epoch(),
+        released.speculative_history_count(lineage.selection),
+    )
+}
+
+fn validate_causal_lineage_join(
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    physical: &M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    lineage: &M1AuthenticatedSpeculativeCausalLineageV1,
+    current_epoch: CompletionEpoch,
+    history_count: usize,
+) -> bool {
+    physical.identity == lineage.logical.identity
+        && physical.coordinator_identity == lineage.coordinator_identity
+        && physical.coordinator_identity == coordinator.identity()
+        && physical.selection == lineage.selection
+        && physical.round == 0
+        && physical.epoch.value() != 0
+        && physical.initial_seeds == lineage.initial_seeds
+        && lineage.completed_rounds == coordinator.next_round()
+        && coordinator.last_epoch() == Some(lineage.last_epoch)
+        && current_epoch == lineage.last_epoch
+        && history_count
+            .checked_add(1)
+            .and_then(|count| u64::try_from(count).ok())
+            == Some(lineage.completed_rounds)
+        && coordinator.matches_causal_lineage(
+            lineage.selection,
+            &lineage.initial_seeds,
+            &lineage.generated,
+            lineage.completed_rounds,
+            Some(lineage.last_epoch),
+        )
+}
+
+fn refresh_causal_generated_counts(
+    lineage: &mut M1AuthenticatedSpeculativeCausalLineageV1,
+    coordinator: &M1SpeculativeGenerationLoopV1,
+    epoch: CompletionEpoch,
+) -> bool {
+    if lineage.generated.len() != lineage.initial_seeds.len() {
+        return false;
+    }
+    for ((request, generated), seed) in lineage.generated.iter_mut().zip(&lineage.initial_seeds) {
+        let Some(member) = coordinator.member(seed.request()) else {
+            return false;
+        };
+        if *request != seed.request() || member.request() != seed.request() {
+            return false;
+        }
+        *generated = member.generated_tokens();
+    }
+    lineage.completed_rounds = coordinator.next_round();
+    lineage.last_epoch = epoch;
+    coordinator.matches_causal_lineage(
+        lineage.selection,
+        &lineage.initial_seeds,
+        &lineage.generated,
+        lineage.completed_rounds,
+        Some(lineage.last_epoch),
+    )
+}
+
+#[allow(clippy::unnecessary_box_returns)]
+fn retryable_failure(
+    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    executor: M1AuthenticatedSpeculativePhysicalExecutorV1,
+    inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+) -> Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1> {
+    Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+        stage,
+        custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Retryable(Box::new((
+            executor, inputs,
+        ))),
+        lineage: None,
+    })
+}
+
+fn retain_logical_lineage(
+    lineage: Option<M1AuthenticatedSpeculativeCausalLineageV1>,
+    logical: impl fmt::Debug + 'static,
+) -> Box<dyn fmt::Debug> {
+    Box::new((lineage, logical))
+}
+
+#[allow(clippy::unnecessary_wraps)]
+fn terminal_quarantine<const C: usize>(
+    engine: &mut Engine<C>,
+    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1,
+    source: M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1,
+    logical: impl fmt::Debug + 'static,
+) -> Result<
+    Result<
+        M1AuthenticatedSpeculativePhysicalRoundTeardownSuccessV1,
+        Box<M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1>,
+    >,
+    Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+> {
+    engine.quarantine_m1_queue_rearm_failure();
+    Ok(Err(Box::new(
+        M1AuthenticatedSpeculativePhysicalRoundTeardownFailureV1 {
+            stage,
+            source:
+                M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::TerminalQuarantine(
+                    source,
+                ),
+            logical: Box::new(logical),
+        },
+    )))
+}
+
+impl M1AuthenticatedSpeculativePhysicalExecutorV1 {
+    pub(crate) const fn draft_catchup_pending(
+        &self,
+    ) -> Option<&M1AuthenticatedDraftCatchupPendingV1> {
+        self.lineage.draft_catchup.as_ref()
+    }
+
+    pub(crate) fn execute_draft_catchup<const C: usize, F, E, D>(
+        self,
+        engine: &mut Engine<C>,
+        mut plans: crate::authenticated_resident_session::M1AuthenticatedResidentDraftCatchupPlansV1,
+        post_submit: F,
+        mut deadline: D,
+    ) -> Result<M1AuthenticatedDraftCatchupReadyV1, M1AuthenticatedDraftCatchupExecutionFailureV1>
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+        let ready = !engine.is_faulted()
+            && self.active_count() == 1
+            && plans.parent() == self.selection()
+            && self.lineage.draft_catchup.as_ref().is_some_and(|pending| {
+                pending.coordinator_identity() == self.coordinator.identity()
+                    && pending.parent() == self.selection()
+                    && pending.completed_round().checked_add(1)
+                        == Some(self.coordinator.next_round())
+                    && self.coordinator.last_epoch() == Some(pending.prior_epoch())
+                    && self.lineage.last_epoch == pending.prior_epoch()
+                    && self.coordinator.active_roster().as_slice() == [pending.request()]
+                    && self
+                        .coordinator
+                        .member(pending.request())
+                        .is_some_and(|member| {
+                            member.status() == M1SpeculativeMemberStatusV1::Active
+                                && member.draft_committed_tokens() == pending.draft_committed()
+                                && member.target_committed_tokens() == pending.target_committed()
+                        })
+            });
+        if !ready {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Retry {
+                executor: Box::new(self),
+                plans: Box::new(plans),
+            });
+        }
+        if deadline(
+            Boundary::BeforeDraftCatchupSchedule,
+            self.queue_wait_timeout,
+        )
+        .is_none()
+        {
+            return Err(
+                M1AuthenticatedDraftCatchupExecutionFailureV1::DeadlineRetry {
+                    executor: Box::new(self),
+                    plans: Box::new(plans),
+                },
+            );
+        }
+        let Self {
+            coordinator,
+            released,
+            mut lineage,
+            queue_wait_timeout,
+        } = self;
+        let pending = lineage
+            .draft_catchup
+            .as_ref()
+            .expect("checked pending catch-up");
+        let scheduled = match released.schedule_draft_catchup(engine, pending, plans.scratch_mut())
+        {
+            Ok(scheduled) => scheduled,
+            Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Rejected(rejected)) => {
+                let (_, released) = rejected.into_parts();
+                return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Retry {
+                    executor: Box::new(Self {
+                        coordinator,
+                        released,
+                        lineage,
+                        queue_wait_timeout,
+                    }),
+                    plans: Box::new(plans),
+                });
+            }
+            Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Terminal(terminal)) => {
+                return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Schedule,
+                    disposition: quarantined_disposition((
+                        terminal,
+                        coordinator,
+                        lineage,
+                        plans,
+                        queue_wait_timeout,
+                    )),
+                });
+            }
+        };
+        if deadline(Boundary::BeforeDraftCatchupPreparation, queue_wait_timeout).is_none() {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                disposition: crate::authenticated_queue_rearm::close_draft_catchup_scheduled(
+                    engine,
+                    scheduled,
+                    (coordinator, lineage, plans, queue_wait_timeout),
+                )
+                .into_disposition(),
+            });
+        }
+        let pending = lineage
+            .draft_catchup
+            .take()
+            .expect("same pending catch-up remains retained");
+        let (_, recipe_input, preparation, mut scratch) = plans.into_parts();
+        let (prepared, recipe) =
+            match crate::authenticated_queue_rearm::prepare_authenticated_draft_catchup_v1(
+                engine,
+                scheduled,
+                &pending,
+                preparation,
+                recipe_input,
+                &mut scratch,
+            ) {
+                Ok(prepared) => prepared,
+                Err(failure) => {
+                    return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::WorkspacePreparation,
+                        disposition: failure.into_disposition().retain((
+                            coordinator,
+                            lineage,
+                            pending,
+                            scratch,
+                            queue_wait_timeout,
+                        )),
+                    })
+                }
+            };
+        let storage = (scratch.take_publication(), scratch.take_readback());
+        let (Some(publication), Some(readback)) = storage else {
+            let closure = crate::authenticated_queue_rearm::close_m1_authenticated_prepared_long_lived_queue_rearm_v1(engine, prepared, recipe);
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::WorkspacePreparation,
+                disposition: disposition_with_logical(
+                    closure,
+                    (
+                        coordinator,
+                        lineage,
+                        pending,
+                        scratch,
+                        storage,
+                        queue_wait_timeout,
+                    ),
+                ),
+            });
+        };
+        let (diagnostic, (mut coordinator, mut lineage, scratch)) =
+            execute_round_core_with_post_submit_and_deadline::<
+                M1NativeDraftCatchupQueueEffectsV1,
+                _,
+                _,
+                _,
+                _,
+                C,
+            >(
+                engine,
+                (prepared, recipe, publication, pending, readback),
+                (coordinator, lineage, scratch),
+                queue_wait_timeout,
+                post_submit,
+                &mut deadline,
+            )
+            .map_err(|(stage, disposition)| {
+                M1AuthenticatedDraftCatchupExecutionFailureV1::Closed { stage, disposition }
+            })?;
+        if deadline(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                disposition: disposition_with_logical(
+                    diagnostic.close(engine),
+                    (coordinator, lineage, scratch, queue_wait_timeout),
+                ),
+            });
+        }
+        let released = match diagnostic.complete(engine) {
+            Ok(released) => released,
+            Err(disposition) => {
+                return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::PhysicalCompletion,
+                    disposition: disposition.retain((coordinator, lineage, scratch)),
+                })
+            }
+        };
+        if coordinator
+            .commit_authenticated_draft_catchup(released.completed())
+            .is_err()
+        {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorCommit,
+                disposition: released
+                    .close(engine)
+                    .retain((coordinator, lineage, scratch)),
+            });
+        }
+        lineage.last_epoch = released.completed().completion_epoch();
+        let lineage_matches = coordinator.matches_causal_lineage(
+            lineage.selection,
+            &lineage.initial_seeds,
+            &lineage.generated,
+            lineage.completed_rounds,
+            Some(lineage.last_epoch),
+        );
+        let within_deadline = deadline(Boundary::AfterSettlement, queue_wait_timeout).is_some();
+        if !lineage_matches || !within_deadline {
+            return Err(M1AuthenticatedDraftCatchupExecutionFailureV1::Closed {
+                stage: if lineage_matches {
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
+                } else {
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::CausalLineage
+                },
+                disposition: released
+                    .close(engine)
+                    .retain((coordinator, lineage, scratch)),
+            });
+        }
+        Ok(M1AuthenticatedDraftCatchupReadyV1 {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        })
+    }
+
+    pub(crate) fn try_reserve_resident_window_history(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), std::collections::TryReserveError> {
+        self.lineage.prior_windows.try_reserve_exact(additional)?;
+        self.released
+            .try_reserve_resident_window_terminal_lineage(additional)
+    }
+
+    pub(crate) fn try_reserve_resident_round_history(
+        &mut self,
+        additional: usize,
+    ) -> Result<(), crate::M1RearmedCompletionPreflightErrorV1> {
+        self.released.try_reserve_round_history(additional)
+    }
+
+    pub(crate) fn has_reserved_resident_round_history_capacity(&self, additional: usize) -> bool {
+        self.released
+            .has_reserved_round_history_capacity(additional)
+    }
+
+    /// Returns the wall-clock budget retained for every queue generation.
+    #[must_use]
+    pub const fn queue_wait_timeout(&self) -> crate::M1QueueWaitTimeoutV1 {
+        self.queue_wait_timeout
+    }
+
+    #[must_use]
+    pub const fn selection(&self) -> Qwen3PlanSelection {
+        self.coordinator.shape().selection()
+    }
+
+    #[must_use]
+    pub const fn next_round(&self) -> u64 {
+        self.coordinator.next_round()
+    }
+
+    #[must_use]
+    pub fn active_count(&self) -> usize {
+        self.coordinator.active_count()
+    }
+
+    #[must_use]
+    pub fn is_complete(&self) -> bool {
+        self.active_count() == 0
+    }
+
+    /// Number of earlier completed speculative windows retained as flat records.
+    #[must_use]
+    pub fn prior_window_count(&self) -> usize {
+        self.lineage.prior_windows.len()
+    }
+
+    pub(crate) fn active_roster(&self) -> crate::M1SpeculativeActiveRosterV1 {
+        self.coordinator.active_roster()
+    }
+
+    pub(crate) fn member_snapshot(
+        &self,
+        request: RequestId,
+    ) -> Option<crate::M1SpeculativeMemberSnapshotV1> {
+        self.coordinator.member(request)
+    }
+
+    pub(crate) const fn retained_logical_runner(&self) -> &LogicalRunnerDeclaration {
+        self.released.current_released().queue().logical_runner()
+    }
+
+    pub(crate) const fn new_window_released_round(
+        &self,
+    ) -> &M1AuthenticatedLongLivedQueueReleasedRoundV1 {
+        &self.released
+    }
+
+    pub(crate) fn into_completed_new_window_handoff(
+        self,
+    ) -> Result<M1AuthenticatedCompletedSpeculativeWindowHandoffV1, Box<Self>> {
+        if !self.is_complete() {
+            return Err(Box::new(self));
+        }
+        let Self {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        } = self;
+        Ok(M1AuthenticatedCompletedSpeculativeWindowHandoffV1 {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        })
+    }
+
+    pub(crate) fn from_completed_new_window_handoff(
+        handoff: M1AuthenticatedCompletedSpeculativeWindowHandoffV1,
+    ) -> Self {
+        Self {
+            coordinator: handoff.coordinator,
+            released: handoff.released,
+            lineage: handoff.lineage,
+            queue_wait_timeout: handoff.queue_wait_timeout,
+        }
+    }
+
+    /// Destroys the authenticated queue while retaining the final coordinator,
+    /// checked completion, and complete queue history on either lower outcome.
+    ///
+    /// # Errors
+    ///
+    /// Returns exact lower queue-release quarantine with final logical state.
+    pub fn destroy_queue_and_retain_state<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+    ) -> Result<
+        M1AuthenticatedSpeculativeExecutorTeardownSuccessV1,
+        Box<M1AuthenticatedSpeculativeExecutorTeardownFailureV1>,
+    > {
+        let Self {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout: _,
+        } = self;
+        match released.destroy_queue_and_retain_round(engine) {
+            Ok(released) => Ok(M1AuthenticatedSpeculativeExecutorTeardownSuccessV1 {
+                coordinator,
+                released,
+                lineage,
+            }),
+            Err(released) => Err(Box::new(
+                M1AuthenticatedSpeculativeExecutorTeardownFailureV1 {
+                    coordinator,
+                    released,
+                    lineage,
+                },
+            )),
+        }
+    }
+
+    /// Executes one authenticated KFD queue generation.
+    ///
+    /// The executor is returned only after physical settlement, logical commit,
+    /// page release, and causal validation all succeed. Pure validation and
+    /// scheduling rejection before detachment returns one opaque exact retry
+    /// owner. Once scheduling detaches the queue, the Engine is quarantined even
+    /// when queue destruction itself succeeds.
+    ///
+    /// # Errors
+    ///
+    /// Returns opaque pre-detach retry custody, clean queue-release evidence, or
+    /// opaque terminal quarantine. No failure exposes raw readback, completion,
+    /// or scheduling authority.
+    pub fn execute_round<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    > {
+        self.execute_round_pending(engine, inputs)
+            .map_err(|failure| close_pending_round_failure(engine, failure))
+    }
+
+    /// Executes one round with deadline checks around every physical effect and
+    /// a sealed registry transition immediately after successful submission.
+    pub(crate) fn execute_round_with_post_submit_and_deadline<const C: usize, F, E, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        post_submit: F,
+        deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<M1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        self.execute_round_pending_with_post_submit_and_deadline(
+            engine,
+            inputs,
+            post_submit,
+            deadline_expired,
+        )
+        .map_err(|failure| close_pending_round_failure(engine, failure))
+    }
+
+    fn execute_round_pending<const C: usize>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    > {
+        self.execute_round_pending_with_post_submit(engine, inputs, || {
+            Ok::<(), core::convert::Infallible>(())
+        })
+    }
+
+    fn execute_round_pending_with_post_submit<const C: usize, F, E>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        post_submit: F,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+    {
+        self.execute_round_pending_with_post_submit_and_deadline(
+            engine,
+            inputs,
+            post_submit,
+            |_, configured| Some(configured),
+        )
+    }
+
+    fn execute_round_pending_with_post_submit_and_deadline<const C: usize, F, E, D>(
+        self,
+        engine: &mut Engine<C>,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        post_submit: F,
+        deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        let facts = M1PreDetachRoundFactsV1 {
+            profile_matches: production_entry_profile_matches(
+                self.selection(),
+                self.released.current_released().queue().shape(),
+            ),
+            active_count: self.active_count(),
+            inputs_match: self.lineage.draft_catchup.is_none()
+                && self.lineage.restoration.is_none()
+                && inputs.recipe_workspace_plans.workspace_plans()
+                    == Some(&inputs.preparation_workspace_plans)
+                && inputs
+                    .recipe_workspace_plans
+                    .workspace_plans()
+                    .is_some_and(|plans| {
+                        plans.kind() == crate::M1FullStepWorkspaceInputKind::SpeculativeRound
+                    })
+                && matches!(
+                    &inputs.kv,
+                    M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail { .. }
+                        | M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(
+                            M1LongLivedQueueRearmKvInputsV1::SpeculativeRound { .. }
+                        )
+                ),
+        };
+        let (this, inputs) = match pre_detach_round_core(self, inputs, facts) {
+            Ok(retained) => retained,
+            Err((M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete, executor, inputs)) => {
+                return Err(Box::new(
+                    PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete,
+                        custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Complete(
+                            Box::new((executor, inputs)),
+                        ),
+                        lineage: None,
+                    },
+                ));
+            }
+            Err((stage, executor, inputs)) => {
+                return Err(retryable_failure(stage, executor, inputs));
+            }
+        };
+        let Self {
+            coordinator,
+            released,
+            lineage,
+            queue_wait_timeout,
+        } = this;
+        let epoch = match released
+            .current_released()
+            .checked()
+            .epoch()
+            .value()
+            .checked_add(1)
+            .map(CompletionEpoch::new)
+        {
+            Some(epoch) => epoch,
+            None => {
+                return Err(retryable_failure(
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::Epoch,
+                    Self {
+                        coordinator,
+                        released,
+                        lineage,
+                        queue_wait_timeout,
+                    },
+                    inputs,
+                ));
+            }
+        };
+        let roster = coordinator.active_roster();
+        let binding = match coordinator.bind_round(coordinator.next_round(), epoch, &roster) {
+            Ok(binding) => binding,
+            Err(_) => {
+                return Err(retryable_failure(
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::Bind,
+                    Self {
+                        coordinator,
+                        released,
+                        lineage,
+                        queue_wait_timeout,
+                    },
+                    inputs,
+                ));
+            }
+        };
+        if !authenticated_speculative_round_inputs_match_binding(&inputs.kv, &binding) {
+            return Err(retryable_failure(
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
+                Self {
+                    coordinator,
+                    released,
+                    lineage,
+                    queue_wait_timeout,
+                },
+                inputs,
+            ));
+        }
+        let M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
+            kv,
+            recipe_workspace_plans,
+            preparation_workspace_plans,
+            controls,
+            mut resident_completion_scratch,
+        } = inputs;
+        let scheduled_result = match resident_completion_scratch.as_deref_mut() {
+            Some(scratch) => released.schedule_next_exact_resident(engine, epoch, &roster, scratch),
+            None => released.schedule_next_exact(engine, epoch, &roster),
+        };
+        let scheduled = match scheduled_result {
+            Ok(scheduled) => scheduled,
+            Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Rejected(rejected)) => {
+                let (_error, released) = rejected.into_parts();
+                return Err(retryable_failure(
+                    M1AuthenticatedSpeculativePhysicalRoundStageV1::Schedule,
+                    Self {
+                        coordinator,
+                        released,
+                        lineage,
+                        queue_wait_timeout,
+                    },
+                    M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
+                        kv,
+                        recipe_workspace_plans,
+                        preparation_workspace_plans,
+                        controls,
+                        resident_completion_scratch,
+                    },
+                ));
+            }
+            Err(M1AuthenticatedLongLivedQueueRearmScheduleFailureV1::Terminal(terminal)) => {
+                return Err(Box::new(
+                    PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Schedule,
+                        custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Schedule(
+                            Box::new((
+                                coordinator,
+                                binding,
+                                kv,
+                                recipe_workspace_plans,
+                                preparation_workspace_plans,
+                                controls,
+                                terminal,
+                            )),
+                        ),
+                        lineage: Some(lineage),
+                    },
+                ));
+            }
+        };
+        Self::execute_scheduled_round(
+            engine,
+            coordinator,
+            binding,
+            lineage,
+            scheduled,
+            M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
+                kv,
+                recipe_workspace_plans,
+                preparation_workspace_plans,
+                controls,
+                resident_completion_scratch,
+            },
+            queue_wait_timeout,
+            post_submit,
+            deadline_expired,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn execute_scheduled_round<const C: usize, F, E, D>(
+        engine: &mut Engine<C>,
+        coordinator: M1SpeculativeGenerationLoopV1,
+        binding: crate::M1SpeculativeRoundBindingV1,
+        mut lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+        scheduled: crate::M1AuthenticatedScheduledLongLivedQueueRearmV1,
+        inputs: M1AuthenticatedSpeculativePhysicalRoundInputsV1,
+        queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+        post_submit: F,
+        mut deadline_expired: D,
+    ) -> Result<
+        M1AuthenticatedSpeculativePhysicalRoundSuccessV1,
+        Box<PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1>,
+    >
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: fmt::Debug + 'static,
+        D: FnMut(
+            crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+            crate::M1QueueWaitTimeoutV1,
+        ) -> Option<crate::M1QueueWaitTimeoutV1>,
+    {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+        if lineage.restoration.is_some()
+            && deadline_expired(Boundary::BeforeDraftCatchupPreparation, queue_wait_timeout)
+                .is_none()
+        {
+            return Err(Box::new(
+                PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                        crate::authenticated_queue_rearm::close_draft_catchup_scheduled(
+                            engine,
+                            scheduled,
+                            (coordinator, binding, lineage, inputs, queue_wait_timeout),
+                        )
+                        .into_disposition(),
+                    ),
+                    lineage: None,
+                },
+            ));
+        }
+        let M1AuthenticatedSpeculativePhysicalRoundInputsV1 {
+            kv,
+            recipe_workspace_plans,
+            preparation_workspace_plans,
+            controls,
+            mut resident_completion_scratch,
+        } = inputs;
+        let (scheduled, kv) = match kv {
+            M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::Preleased(kv) => (scheduled, kv),
+            M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail {
+                draft_decode,
+                target_speculative,
+            } => {
+                let materialized = match resident_completion_scratch.as_deref_mut() {
+                    Some(scratch) => crate::authenticated_queue_rearm::materialize_m1_authenticated_speculative_round_tail_pages_resident_v1(
+                        scheduled,
+                        draft_decode,
+                        target_speculative,
+                        u32::from(binding.shape().draft_tokens()),
+                        scratch,
+                    ),
+                    None => crate::authenticated_queue_rearm::materialize_m1_authenticated_speculative_round_tail_pages_v1(
+                        scheduled,
+                        draft_decode,
+                        target_speculative,
+                        u32::from(binding.shape().draft_tokens()),
+                    ),
+                };
+                match materialized {
+                    Ok(materialized) => materialized,
+                    Err(source) => {
+                        engine.quarantine_m1_queue_rearm_failure();
+                        return Err(Box::new(
+                            PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                                stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::TailPages,
+                                custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::TailPages(
+                                    Box::new((
+                                        coordinator,
+                                        binding,
+                                        recipe_workspace_plans,
+                                        preparation_workspace_plans,
+                                        controls,
+                                        source,
+                                    )),
+                                ),
+                                lineage: Some(lineage),
+                            },
+                        ));
+                    }
+                }
+            }
+        };
+        let recipe_outcome = match lineage.restoration.as_ref() {
+            Some(restored) => match scheduled.derive_draft_catchup_restore_recipe_input(
+                recipe_workspace_plans,
+                restored.completed(),
+            ) {
+                Ok(outcome) => outcome,
+                Err(recipe_workspace_plans) => {
+                    engine.quarantine_m1_queue_rearm_failure();
+                    return Err(Box::new(
+                        PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                            stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Recipe,
+                            custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                                crate::authenticated_queue_rearm::close_draft_catchup_scheduled(engine, scheduled, (
+                                    coordinator, binding, kv, preparation_workspace_plans, controls,
+                                    recipe_workspace_plans, resident_completion_scratch, lineage,
+                                )).into_disposition(),
+                            ),
+                            lineage: None,
+                        },
+                    ));
+                }
+            },
+            None => scheduled.derive_retained_step_recipe_input(recipe_workspace_plans),
+        };
+        let recipe = match recipe_outcome {
+            M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+            M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+                engine.quarantine_m1_queue_rearm_failure();
+                return Err(Box::new(
+                    PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Recipe,
+                        custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Recipe(
+                            Box::new((
+                                coordinator,
+                                binding,
+                                scheduled,
+                                kv,
+                                preparation_workspace_plans,
+                                controls,
+                                failure,
+                            )),
+                        ),
+                        lineage: Some(lineage),
+                    },
+                ));
+            }
+        };
+        let reserved_result = match (resident_completion_scratch.as_deref_mut(), lineage.restoration.as_ref()) {
+            (Some(scratch), Some(restored)) => crate::authenticated_queue_rearm::reserve_authenticated_draft_catchup_restore_kv_v1(
+                engine, scheduled, kv, scratch, restored.completed(),
+            ),
+            (Some(scratch), None) => crate::authenticated_queue_rearm::reserve_m1_authenticated_long_lived_queue_rearm_kv_resident_v1(
+                engine, scheduled, kv, scratch,
+            ),
+            (None, _) => reserve_m1_authenticated_long_lived_queue_rearm_kv_v1(engine, scheduled, kv),
+        };
+        let reserved =
+            match reserved_result {
+                Ok(reserved) => reserved,
+                Err(failure) => {
+                    return Err(Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                        stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::KvReservation,
+                        custody:
+                            M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::KvReservation(
+                                Box::new((
+                                    coordinator,
+                                    binding,
+                                    recipe,
+                                    preparation_workspace_plans,
+                                    controls,
+                                    failure,
+                                )),
+                            ),
+                        lineage: Some(lineage),
+                    }));
+                }
+            };
+        let preparation_result = match resident_completion_scratch.as_deref_mut() {
+            Some(scratch) => crate::authenticated_queue_rearm::prepare_m1_authenticated_long_lived_queue_rearm_resident_v1(
+                engine,
+                reserved,
+                preparation_workspace_plans,
+                scratch,
+            ),
+            None => prepare_m1_authenticated_long_lived_queue_rearm_v1(
+                engine,
+                reserved,
+                preparation_workspace_plans,
+            ),
+        };
+        let prepared = match preparation_result {
+            Ok(prepared) => prepared,
+            Err(failure) => {
+                return Err(Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::WorkspacePreparation,
+                    custody:
+                        M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::WorkspacePreparation(
+                            Box::new((coordinator, binding, recipe, controls, failure)),
+                        ),
+                    lineage: Some(lineage),
+                }));
+            }
+        };
+        let publication_storage = resident_completion_scratch
+            .as_deref_mut()
+            .and_then(
+                crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1::take_publication,
+            );
+        let readback_storage = resident_completion_scratch
+            .as_deref_mut()
+            .and_then(
+                crate::authenticated_queue_rearm::M1AuthenticatedResidentCompletionScratchV1::take_readback,
+            );
+        let restoration = lineage.restoration.take();
+        let (diagnostic, (coordinator, binding, controls, lineage)) =
+            execute_round_core_with_post_submit_and_deadline::<
+                M1NativeRearmedQueueEffectsV1,
+                _,
+                _,
+                _,
+                _,
+                C,
+            >(
+                engine,
+                (
+                    prepared,
+                    recipe,
+                    publication_storage,
+                    readback_storage,
+                    restoration,
+                ),
+                (coordinator, binding, controls, lineage),
+                queue_wait_timeout,
+                post_submit,
+                &mut deadline_expired,
+            )
+            .map_err(|(stage, disposition)| {
+                Box::new(PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                        disposition,
+                    ),
+                    lineage: None,
+                })
+            })?;
+        if deadline_expired(Boundary::BeforeSettlement, queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            let closure = M1NativeRearmedQueueEffectsV1::close_diagnostic(engine, diagnostic);
+            return Err(Box::new(
+                PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                        disposition_with_logical(
+                            closure,
+                            (
+                                coordinator,
+                                binding,
+                                controls,
+                                lineage,
+                                Boundary::BeforeSettlement,
+                            ),
+                        ),
+                    ),
+                    lineage: None,
+                },
+            ));
+        }
+        let success = complete_authenticated_rearmed_speculative_round_with_deadline(
+            engine,
+            coordinator,
+            binding,
+            diagnostic,
+            controls,
+            lineage,
+            resident_completion_scratch.map(|scratch| *scratch),
+            queue_wait_timeout,
+            &mut deadline_expired,
+        )?;
+        if deadline_expired(Boundary::AfterSettlement, queue_wait_timeout).is_none() {
+            engine.quarantine_m1_queue_rearm_failure();
+            let (executor, outcome, choices) = success.into_parts();
+            let disposition = match executor.destroy_queue_and_retain_state(engine) {
+                Ok(released) => released_disposition((released, outcome, choices)),
+                Err(quarantined) => quarantined_disposition((quarantined, outcome, choices)),
+            };
+            return Err(Box::new(
+                PendingM1AuthenticatedSpeculativePhysicalRoundFailureV1 {
+                    stage: M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline,
+                    custody: M1AuthenticatedSpeculativePhysicalRoundFailureCustodyV1::Closed(
+                        match disposition {
+                            M1AuthenticatedSpeculativeFailureDispositionV1::Released(released) => {
+                                released_disposition((released, Boundary::AfterSettlement))
+                            }
+                            M1AuthenticatedSpeculativeFailureDispositionV1::Quarantined(
+                                quarantined,
+                            ) => quarantined_disposition((quarantined, Boundary::AfterSettlement)),
+                        },
+                    ),
+                    lineage: None,
+                },
+            ));
+        }
+        Ok(success)
+    }
+}
+
+/// Crate-private completed-executor handoff for authenticated new-window work.
+///
+/// It exposes no raw queue, program, model-memory, or KV decomposition outside
+/// Ferric's authenticated transition implementation.
+#[derive(Debug)]
+pub(crate) struct M1AuthenticatedCompletedSpeculativeWindowHandoffV1 {
+    pub(crate) coordinator: M1SpeculativeGenerationLoopV1,
+    pub(crate) released: M1AuthenticatedLongLivedQueueReleasedRoundV1,
+    pub(crate) lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+    pub(crate) queue_wait_timeout: crate::M1QueueWaitTimeoutV1,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::convert::Infallible;
+    use ferric_build::{
+        m1_step_workspace_requirements, plan_addressless_m1_step_workspace,
+        AvailableM1StepWorkspace, DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration,
+        M1StepWorkspacePlanOutcome,
+    };
+    use ferric_spec::{
+        validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
+        Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, StepPlan,
+    };
+
+    fn model_queue_wait_timeout() -> crate::M1QueueWaitTimeoutV1 {
+        crate::M1QueueWaitTimeoutV1::new(1_000).expect("model wait timeout is nonzero")
+    }
+
+    use crate::authenticated_physical_queue::M1AuthenticatedPhysicalQueueClosureV1;
+    use crate::authenticated_test_runtime::{
+        ModelCompletedQueueV1, ModelDiagnosticV1, ModelMemberReadbackV1, ModelPreparedQueueV1,
+        ModelPublishedQueueV1, ModelQueueFailureV1, ModelQueuePhaseV1, ModelQueueV1,
+        ModelReadbackFailureV1, ModelRecycledQueueV1, ModelSubmitFailureV1, ModelWaitFailureV1,
+    };
+    use crate::speculative_generation_loop::CheckedMemberObservationV1;
+    use crate::{
+        CheckedCompletionSemantics, M1DeviceKvCompletionDispositionV1, M1SpeculativeTokenBlockV1,
+    };
+    use stats_alloc::{Region, INSTRUMENTED_SYSTEM};
+
+    struct ModelInitialQueueEffectsV1;
+
+    fn close_model_submit_failure(
+        failure: ModelSubmitFailureV1,
+    ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        let clean = failure.releases_cleanly;
+        failure.prepared.destroy(clean);
+        if clean {
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model prepared destroyed"))
+        } else {
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(
+                "model prepared quarantined",
+            ))
+        }
+    }
+
+    fn close_model_readback_failure(
+        failure: ModelReadbackFailureV1,
+    ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+        let clean = failure.releases_cleanly;
+        failure.recycled.destroy(clean);
+        if clean {
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model recycled destroyed"))
+        } else {
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(
+                "model recycled quarantined",
+            ))
+        }
+    }
+
+    impl M1InitialQueueEffectsV1 for ModelInitialQueueEffectsV1 {
+        type Prepared = ModelPreparedQueueV1;
+        type Published = ModelPublishedQueueV1;
+        type Completed = ModelCompletedQueueV1;
+        type Recycled = ModelRecycledQueueV1;
+        type Observed = ModelDiagnosticV1;
+        type DiagnosticObserved = ModelDiagnosticV1;
+        type Diagnostic = ModelDiagnosticV1;
+        type SubmitFailure = ModelSubmitFailureV1;
+        type WaitFailure = ModelWaitFailureV1;
+        type RecycleFailure = Infallible;
+        type ObservationFailure = ModelReadbackFailureV1;
+        type DiagnosticObservationFailure = Infallible;
+        type JoinFailure = Infallible;
+
+        fn submit(prepared: Self::Prepared) -> Result<Self::Published, Self::SubmitFailure> {
+            prepared.submit()
+        }
+
+        fn close_submit_failure<const C: usize>(
+            engine: &mut Engine<C>,
+            failure: Self::SubmitFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            engine.quarantine_m1_queue_rearm_failure();
+            close_model_submit_failure(failure)
+        }
+
+        fn wait(
+            published: Self::Published,
+            _timeout: crate::M1QueueWaitTimeoutV1,
+        ) -> Result<Self::Completed, Self::WaitFailure> {
+            published.wait()
+        }
+
+        fn recycle(completed: Self::Completed) -> Result<Self::Recycled, Self::RecycleFailure> {
+            Ok(completed.recycle())
+        }
+
+        fn observe(recycled: Self::Recycled) -> Result<Self::Observed, Self::ObservationFailure> {
+            recycled.readback()
+        }
+
+        fn close_observation_failure<const C: usize>(
+            engine: &mut Engine<C>,
+            failure: Self::ObservationFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            engine.quarantine_m1_queue_rearm_failure();
+            close_model_readback_failure(failure)
+        }
+
+        fn observe_diagnostic(
+            observed: Self::Observed,
+        ) -> Result<Self::DiagnosticObserved, Self::DiagnosticObservationFailure> {
+            Ok(observed)
+        }
+
+        fn close_diagnostic_observation_failure<const C: usize>(
+            _engine: &mut Engine<C>,
+            failure: Self::DiagnosticObservationFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            match failure {}
+        }
+
+        fn check(
+            observed: Self::DiagnosticObserved,
+        ) -> Result<Self::Diagnostic, Self::JoinFailure> {
+            Ok(observed)
+        }
+
+        fn close_join_failure<const C: usize>(
+            _engine: &mut Engine<C>,
+            failure: Self::JoinFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            match failure {}
+        }
+    }
+
+    struct ModelRearmedQueueEffectsV1;
+
+    impl M1RearmedQueueEffectsV1 for ModelRearmedQueueEffectsV1 {
+        type Prepared = ModelPreparedQueueV1;
+        type Published = ModelPublishedQueueV1;
+        type Completed = ModelCompletedQueueV1;
+        type Recycled = ModelRecycledQueueV1;
+        type Diagnostic = ModelDiagnosticV1;
+        type SubmitFailure = ModelSubmitFailureV1;
+        type ProgressFailure = ModelWaitFailureV1;
+        type ReadbackFailure = ModelReadbackFailureV1;
+
+        fn close_prepared<const C: usize>(
+            _engine: &mut Engine<C>,
+            prepared: Self::Prepared,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            prepared.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model prepared destroyed"))
+        }
+
+        fn submit<const C: usize>(
+            _engine: &mut Engine<C>,
+            prepared: Self::Prepared,
+        ) -> Result<Self::Published, Self::SubmitFailure> {
+            prepared.submit()
+        }
+
+        fn classify_submit_failure(
+            failure: Self::SubmitFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            close_model_submit_failure(failure)
+        }
+
+        fn close_published<const C: usize>(
+            _engine: &mut Engine<C>,
+            published: Self::Published,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            if published.close() {
+                M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new(
+                    "model published settled and destroyed",
+                ))
+            } else {
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(
+                    "model published quarantine retained",
+                ))
+            }
+        }
+
+        fn wait<const C: usize>(
+            _engine: &mut Engine<C>,
+            published: Self::Published,
+            _timeout: crate::M1QueueWaitTimeoutV1,
+        ) -> Result<Self::Completed, Self::ProgressFailure> {
+            published.wait()
+        }
+
+        fn close_progress_failure<const C: usize>(
+            engine: &mut Engine<C>,
+            failure: Self::ProgressFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            engine.quarantine_m1_queue_rearm_failure();
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(failure))
+        }
+
+        fn close_completed<const C: usize>(
+            _engine: &mut Engine<C>,
+            completed: Self::Completed,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            completed.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model completed destroyed"))
+        }
+
+        fn recycle<const C: usize>(
+            _engine: &mut Engine<C>,
+            completed: Self::Completed,
+        ) -> Result<Self::Recycled, Self::ProgressFailure> {
+            Ok(completed.recycle())
+        }
+
+        fn close_recycled<const C: usize>(
+            _engine: &mut Engine<C>,
+            recycled: Self::Recycled,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            recycled.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model recycled destroyed"))
+        }
+
+        fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+            recycled.readback()
+        }
+
+        fn close_readback_failure<const C: usize>(
+            _engine: &mut Engine<C>,
+            failure: Self::ReadbackFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            close_model_readback_failure(failure)
+        }
+
+        fn close_diagnostic<const C: usize>(
+            _engine: &mut Engine<C>,
+            diagnostic: Self::Diagnostic,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            diagnostic.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new("model diagnostic destroyed"))
+        }
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverPreparedQueueV1 {
+        queue: ModelPreparedQueueV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverPublishedQueueV1 {
+        queue: ModelPublishedQueueV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverCompletedQueueV1 {
+        queue: ModelCompletedQueueV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverRecycledQueueV1 {
+        queue: ModelRecycledQueueV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverDiagnosticV1 {
+        diagnostic: ModelDiagnosticV1,
+        physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        checked_selection: Qwen3PlanSelection,
+        checked_epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverSubmitFailureV1 {
+        lower: ModelSubmitFailureV1,
+        _physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverProgressFailureV1 {
+        _lower: ModelWaitFailureV1,
+        _physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    }
+
+    #[derive(Debug)]
+    struct ModelRolloverReadbackFailureV1 {
+        lower: ModelReadbackFailureV1,
+        _physical: M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    }
+
+    struct ModelRolloverQueueEffectsV1;
+
+    impl M1RearmedQueueEffectsV1 for ModelRolloverQueueEffectsV1 {
+        type Prepared = ModelRolloverPreparedQueueV1;
+        type Published = ModelRolloverPublishedQueueV1;
+        type Completed = ModelRolloverCompletedQueueV1;
+        type Recycled = ModelRolloverRecycledQueueV1;
+        type Diagnostic = ModelRolloverDiagnosticV1;
+        type SubmitFailure = ModelRolloverSubmitFailureV1;
+        type ProgressFailure = ModelRolloverProgressFailureV1;
+        type ReadbackFailure = ModelRolloverReadbackFailureV1;
+
+        fn close_prepared<const C: usize>(
+            _engine: &mut Engine<C>,
+            prepared: Self::Prepared,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverPreparedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = prepared;
+            queue.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                physical,
+                checked_selection,
+                checked_epoch,
+            )))
+        }
+
+        fn submit<const C: usize>(
+            _engine: &mut Engine<C>,
+            prepared: Self::Prepared,
+        ) -> Result<Self::Published, Self::SubmitFailure> {
+            let ModelRolloverPreparedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = prepared;
+            match queue.submit() {
+                Ok(queue) => Ok(ModelRolloverPublishedQueueV1 {
+                    queue,
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                }),
+                Err(lower) => Err(ModelRolloverSubmitFailureV1 {
+                    lower,
+                    _physical: physical,
+                }),
+            }
+        }
+
+        fn classify_submit_failure(
+            failure: Self::SubmitFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            close_model_submit_failure(failure.lower)
+        }
+
+        fn close_published<const C: usize>(
+            _engine: &mut Engine<C>,
+            published: Self::Published,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverPublishedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = published;
+            if queue.close() {
+                M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                )))
+            } else {
+                M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new((
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                )))
+            }
+        }
+
+        fn wait<const C: usize>(
+            _engine: &mut Engine<C>,
+            published: Self::Published,
+            _timeout: crate::M1QueueWaitTimeoutV1,
+        ) -> Result<Self::Completed, Self::ProgressFailure> {
+            let ModelRolloverPublishedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = published;
+            match queue.wait() {
+                Ok(queue) => Ok(ModelRolloverCompletedQueueV1 {
+                    queue,
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                }),
+                Err(lower) => Err(ModelRolloverProgressFailureV1 {
+                    _lower: lower,
+                    _physical: physical,
+                }),
+            }
+        }
+
+        fn close_progress_failure<const C: usize>(
+            engine: &mut Engine<C>,
+            failure: Self::ProgressFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            engine.quarantine_m1_queue_rearm_failure();
+            M1AuthenticatedPhysicalQueueClosureV1::Quarantined(Box::new(failure))
+        }
+
+        fn close_completed<const C: usize>(
+            _engine: &mut Engine<C>,
+            completed: Self::Completed,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverCompletedQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = completed;
+            queue.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                physical,
+                checked_selection,
+                checked_epoch,
+            )))
+        }
+
+        fn recycle<const C: usize>(
+            _engine: &mut Engine<C>,
+            completed: Self::Completed,
+        ) -> Result<Self::Recycled, Self::ProgressFailure> {
+            Ok(ModelRolloverRecycledQueueV1 {
+                queue: completed.queue.recycle(),
+                physical: completed.physical,
+                checked_selection: completed.checked_selection,
+                checked_epoch: completed.checked_epoch,
+            })
+        }
+
+        fn close_recycled<const C: usize>(
+            _engine: &mut Engine<C>,
+            recycled: Self::Recycled,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverRecycledQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = recycled;
+            queue.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                physical,
+                checked_selection,
+                checked_epoch,
+            )))
+        }
+
+        fn readback(recycled: Self::Recycled) -> Result<Self::Diagnostic, Self::ReadbackFailure> {
+            let ModelRolloverRecycledQueueV1 {
+                queue,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = recycled;
+            match queue.readback() {
+                Ok(diagnostic) => Ok(ModelRolloverDiagnosticV1 {
+                    diagnostic,
+                    physical,
+                    checked_selection,
+                    checked_epoch,
+                }),
+                Err(lower) => Err(ModelRolloverReadbackFailureV1 {
+                    lower,
+                    _physical: physical,
+                }),
+            }
+        }
+
+        fn close_readback_failure<const C: usize>(
+            _engine: &mut Engine<C>,
+            failure: Self::ReadbackFailure,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            close_model_readback_failure(failure.lower)
+        }
+
+        fn close_diagnostic<const C: usize>(
+            _engine: &mut Engine<C>,
+            diagnostic: Self::Diagnostic,
+        ) -> M1AuthenticatedPhysicalQueueClosureV1 {
+            let ModelRolloverDiagnosticV1 {
+                diagnostic,
+                physical,
+                checked_selection,
+                checked_epoch,
+            } = diagnostic;
+            diagnostic.destroy(true);
+            M1AuthenticatedPhysicalQueueClosureV1::Released(Box::new((
+                physical,
+                checked_selection,
+                checked_epoch,
+            )))
+        }
+    }
+
+    impl M1SpeculativeRoundObservationV1 for ModelDiagnosticV1 {
+        fn preflight(
+            &self,
+            coordinator: &M1SpeculativeGenerationLoopV1,
+            binding: crate::M1SpeculativeRoundBindingV1,
+            controls: &[M1SpeculativeMemberControlV1],
+        ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
+        {
+            let epoch = binding.epoch();
+            let mut observations =
+                ArrayVec::<CheckedMemberObservationV1, { M1_MAX_ACTIVE_SEQUENCES as usize }>::new();
+            for (input, member) in binding.members().iter().zip(&self.members) {
+                observations.push(CheckedMemberObservationV1 {
+                    request: input.request(),
+                    semantics: CheckedCompletionSemantics::Speculative {
+                        accepted_draft_tokens: member.accepted,
+                        correction_or_bonus: *member
+                            .emitted
+                            .last()
+                            .expect("model completion has a correction or bonus"),
+                    },
+                    emitted: M1SpeculativeTokenBlockV1::from_slice(&member.emitted)
+                        .expect("model completion respects the selected K bound"),
+                });
+            }
+            coordinator.preflight_observed_round(
+                binding,
+                coordinator.shape().selection(),
+                epoch,
+                &observations,
+                controls,
+            )
+        }
+    }
+
+    impl M1SpeculativeRoundObservationV1 for ModelRolloverDiagnosticV1 {
+        fn preflight(
+            &self,
+            coordinator: &M1SpeculativeGenerationLoopV1,
+            binding: crate::M1SpeculativeRoundBindingV1,
+            controls: &[M1SpeculativeMemberControlV1],
+        ) -> Result<crate::M1SpeculativePreflightedRoundV1, crate::M1SpeculativeGenerationLoopErrorV1>
+        {
+            self.diagnostic.preflight(coordinator, binding, controls)
+        }
+    }
+
+    #[derive(Debug)]
+    struct ModelResidentSameShapeInputsV1 {
+        prepared: ModelPreparedQueueV1,
+        epoch: CompletionEpoch,
+    }
+
+    #[derive(Debug)]
+    struct ModelResidentSameShapeExecutorV1 {
+        coordinator: M1SpeculativeGenerationLoopV1,
+        lineage: M1AuthenticatedSpeculativeCausalLineageV1,
+        controls: std::collections::VecDeque<Vec<M1SpeculativeMemberControlV1>>,
+    }
+
+    impl crate::authenticated_resident_session::M1AuthenticatedResidentSameShapeExecutorV1<1>
+        for ModelResidentSameShapeExecutorV1
+    {
+        type Inputs = ModelResidentSameShapeInputsV1;
+        type Evidence = ModelDiagnosticV1;
+        type Failure = Box<dyn fmt::Debug>;
+
+        fn execute_same_shape_round_with_join_and_deadline<F, J, D>(
+            mut self,
+            engine: &mut Engine<1>,
+            inputs: Self::Inputs,
+            post_submit: F,
+            deadline: &mut D,
+        ) -> Result<(Self, M1SpeculativeRoundOutcomeV1, Self::Evidence), Self::Failure>
+        where
+            F: FnOnce() -> Result<(), J>,
+            J: fmt::Debug + 'static,
+            D: FnMut(
+                crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1,
+                crate::M1QueueWaitTimeoutV1,
+            ) -> Option<crate::M1QueueWaitTimeoutV1>,
+        {
+            let roster = self.coordinator.active_roster();
+            let binding = self
+                .coordinator
+                .bind_round(self.coordinator.next_round(), inputs.epoch, &roster)
+                .map_err(|error| Box::new(error) as Box<dyn fmt::Debug>)?;
+            let mut controls = self
+                .controls
+                .pop_front()
+                .expect("preallocated model controls");
+            controls.push(M1SpeculativeMemberControlV1::continuing(roster[0]));
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_round_core_with_post_submit_and_deadline::<
+                    ModelRearmedQueueEffectsV1,
+                    _,
+                    _,
+                    J,
+                    _,
+                    1,
+                >(
+                    engine,
+                    inputs.prepared,
+                    (self.coordinator, binding, controls, self.lineage),
+                    model_queue_wait_timeout(),
+                    post_submit,
+                    deadline,
+                )
+                .map_err(|error| Box::new(error) as Box<dyn fmt::Debug>)?;
+            let prepared = prepare_coordinator_round_core(
+                engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .map_err(|error| error as Box<dyn fmt::Debug>)?;
+            let M1PreparedCoordinatorRoundCoreV1 {
+                coordinator,
+                diagnostic,
+                controls,
+                preflighted,
+                dispositions,
+                lineage,
+            } = prepared;
+            debug_assert_eq!(
+                dispositions.as_slice(),
+                &[M1DeviceKvCompletionDispositionV1::Continue]
+            );
+            let committed = commit_coordinator_round_core(
+                engine,
+                coordinator,
+                preflighted,
+                controls,
+                diagnostic,
+                lineage,
+            )
+            .map_err(|error| error as Box<dyn fmt::Debug>)?;
+            committed.physical.queue.release_generation();
+            Ok((
+                Self {
+                    coordinator: committed.coordinator,
+                    lineage: committed.lineage,
+                    controls: self.controls,
+                },
+                committed.outcome,
+                committed.physical,
+            ))
+        }
+    }
+
+    fn resident_plan() -> crate::M1ServingPlanV1 {
+        crate::M1ServingPlanV1::new(
+            selection(Qwen3PlanBucket::SpeculativeS1K4C8192),
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: Qwen3ExecutionMode::Decode,
+                bucket: Qwen3PlanBucket::DecodeS1C8192,
+            },
+        )
+        .unwrap()
+    }
+
+    fn advance_resident_model_registry(
+        registry: &mut crate::M1ServingRegistryV1<1>,
+        disposition: crate::M1ServingCompletionDispositionV1,
+    ) {
+        let batch = registry.plan_next().unwrap().unwrap();
+        let epoch = batch.epoch();
+        let reservation = registry.reserve_publication(batch).unwrap();
+        let identity = reservation.registry_identity();
+        registry.record_publication(reservation).unwrap();
+        registry
+            .preflight_completion_exact_for(identity, epoch, &[disposition])
+            .unwrap();
+        registry.apply_preflighted_completion(epoch, &[disposition]);
+    }
+
+    fn resident_model_fixture(
+        round_count: usize,
+    ) -> (
+        crate::M1ServingRegistryV1<1>,
+        ModelResidentSameShapeExecutorV1,
+        ModelQueueV1,
+        Vec<(M1SpeculativeRoundOutcomeV1, ModelDiagnosticV1)>,
+    ) {
+        let request = RequestId::new(0, 1);
+        let plan = resident_plan();
+        let prefill = crate::M1ServingPlanV1::new(
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Target8B,
+                mode: Qwen3ExecutionMode::Prefill,
+                bucket: Qwen3PlanBucket::PrefillS1T128,
+            },
+            Qwen3PlanSelection {
+                role: Qwen3ModelRole::Draft06B,
+                mode: Qwen3ExecutionMode::Prefill,
+                bucket: Qwen3PlanBucket::PrefillS1T128,
+            },
+        )
+        .unwrap();
+        let mut registry = crate::M1ServingRegistryV1::<1>::new().unwrap();
+        registry.admit(request, prefill).unwrap();
+        advance_resident_model_registry(
+            &mut registry,
+            crate::M1ServingCompletionDispositionV1::Continue(plan),
+        );
+        advance_resident_model_registry(
+            &mut registry,
+            crate::M1ServingCompletionDispositionV1::Continue(plan),
+        );
+
+        let queue = ModelQueueV1::new(
+            core::iter::repeat_n(None, round_count),
+            (0..round_count).map(|_| model_members(1, 0, None)),
+        );
+        let coordinator = coordinator(selection(Qwen3PlanBucket::SpeculativeS1K4C8192));
+        let lineage = model_lineage(&coordinator);
+        let mut controls = std::collections::VecDeque::new();
+        controls.try_reserve_exact(round_count).unwrap();
+        for _ in 0..round_count {
+            let mut round = Vec::new();
+            round.try_reserve_exact(1).unwrap();
+            controls.push_back(round);
+        }
+        let mut evidence = Vec::new();
+        evidence.try_reserve_exact(round_count).unwrap();
+        (
+            registry,
+            ModelResidentSameShapeExecutorV1 {
+                coordinator,
+                lineage,
+                controls,
+            },
+            queue,
+            evidence,
+        )
+    }
+
+    fn execute_resident_model_round(
+        registry: crate::M1ServingRegistryV1<1>,
+        engine: &mut Engine<1>,
+        executor: ModelResidentSameShapeExecutorV1,
+        queue: &ModelQueueV1,
+        evidence: &mut Vec<(M1SpeculativeRoundOutcomeV1, ModelDiagnosticV1)>,
+    ) -> (
+        crate::M1ServingRegistryV1<1>,
+        ModelResidentSameShapeExecutorV1,
+    ) {
+        let request = RequestId::new(0, 1);
+        let success = crate::authenticated_resident_session::execute_m1_authenticated_resident_same_shape_round_core_v1(
+            registry,
+            engine,
+            executor,
+            request,
+            resident_plan(),
+            |_, epoch| Some(ModelResidentSameShapeInputsV1 {
+                prepared: ModelPreparedQueueV1::new(queue.clone()),
+                epoch,
+            }),
+            |outcome, diagnostic| {
+                evidence.push((outcome, diagnostic));
+                None
+            },
+            &mut |_, timeout| Some(timeout),
+        )
+        .unwrap();
+        success.into_parts()
+    }
+
+    #[test]
+    #[ignore = "must run alone because the allocator counter is process-global"]
+    fn production_used_resident_same_shape_core_allocates_zero_times() {
+        let (mut registry, mut executor, queue, mut evidence) = resident_model_fixture(18);
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        (registry, executor) =
+            execute_resident_model_round(registry, &mut engine, executor, &queue, &mut evidence);
+
+        let one = Region::new(&INSTRUMENTED_SYSTEM);
+        (registry, executor) =
+            execute_resident_model_round(registry, &mut engine, executor, &queue, &mut evidence);
+        let one = one.change();
+        println!(
+            "resident-alloc-one allocations={} reallocations={}",
+            one.allocations, one.reallocations
+        );
+        assert_eq!(one.allocations, 0, "one full resident round allocated");
+        assert_eq!(one.reallocations, 0, "one full resident round reallocated");
+
+        let repeated = Region::new(&INSTRUMENTED_SYSTEM);
+        for _ in 2..18 {
+            (registry, executor) = execute_resident_model_round(
+                registry,
+                &mut engine,
+                executor,
+                &queue,
+                &mut evidence,
+            );
+        }
+        let repeated = repeated.change();
+        println!(
+            "resident-alloc-repeated allocations={} reallocations={}",
+            repeated.allocations, repeated.reallocations
+        );
+        assert_eq!(
+            repeated.allocations, 0,
+            "repeated full resident rounds allocated"
+        );
+        assert_eq!(
+            repeated.reallocations, 0,
+            "repeated full resident rounds reallocated"
+        );
+        assert_eq!(executor.coordinator.next_round(), 18);
+        assert_eq!(executor.lineage.completed_rounds, 18);
+        assert_eq!(evidence.len(), 18);
+        assert!(!engine.is_faulted());
+
+        let hostile = Region::new(&INSTRUMENTED_SYSTEM);
+        let restored_heap_roster = executor
+            .coordinator
+            .active_roster()
+            .iter()
+            .copied()
+            .collect::<Vec<_>>();
+        core::hint::black_box(restored_heap_roster);
+        let hostile = hostile.change();
+        println!(
+            "resident-alloc-hostile allocations={} reallocations={}",
+            hostile.allocations, hostile.reallocations
+        );
+        assert!(
+            hostile.allocations > 0,
+            "allocator gate did not detect restoration of a heap roster"
+        );
+    }
+
+    #[test]
+    fn resident_same_shape_core_rejects_missing_storage_before_queue_effects() {
+        let (registry, executor, queue, _evidence) = resident_model_fixture(1);
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let failure = crate::authenticated_resident_session::execute_m1_authenticated_resident_same_shape_round_core_v1(
+            registry,
+            &mut engine,
+            executor,
+            RequestId::new(0, 1),
+            resident_plan(),
+            |_, _| None,
+            |_, _| None,
+            &mut |_, timeout| Some(timeout),
+        )
+        .unwrap_err();
+        let crate::authenticated_resident_session::M1AuthenticatedResidentSameShapeRoundCoreFailureV1::LogicalInputs {
+            registry,
+            executor,
+        } = *failure
+        else {
+            panic!("missing storage reached the wrong resident failure phase");
+        };
+        assert_eq!(executor.coordinator.next_round(), 0);
+        assert_eq!(
+            registry.plan_next().unwrap().unwrap().requests(),
+            [RequestId::new(0, 1)]
+        );
+        assert_eq!(queue.snapshot().phase, ModelQueuePhaseV1::Prepared);
+        assert_eq!(queue.snapshot().submits, 0);
+        assert!(!engine.is_faulted());
+    }
+
+    #[test]
+    fn resident_same_shape_deadline_rolls_back_reservation_and_retains_custody() {
+        use crate::authenticated_resident_session::{
+            M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary,
+            M1AuthenticatedResidentSameShapeRoundCoreFailureV1 as Failure,
+        };
+
+        let (registry, executor, queue, _evidence) = resident_model_fixture(1);
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let failure = crate::authenticated_resident_session::execute_m1_authenticated_resident_same_shape_round_core_v1(
+            registry,
+            &mut engine,
+            executor,
+            RequestId::new(0, 1),
+            resident_plan(),
+            |_, epoch| Some(ModelResidentSameShapeInputsV1 {
+                prepared: ModelPreparedQueueV1::new(queue.clone()),
+                epoch,
+            }),
+            |_, _| None,
+            &mut |boundary, timeout| {
+                if boundary == Boundary::BeforeQueueSubmit {
+                    None
+                } else {
+                    Some(timeout)
+                }
+            },
+        )
+        .unwrap_err();
+        let Failure::Physical {
+            registry,
+            failure: retained,
+            abort,
+        } = *failure
+        else {
+            panic!("deadline reached the wrong resident failure phase");
+        };
+        assert!(abort
+            .expect("pre-submit reservation remains present")
+            .is_ok());
+        assert!(format!("{retained:?}").contains("Deadline"));
+        assert_eq!(
+            registry.plan_next().unwrap().unwrap().requests(),
+            [RequestId::new(0, 1)]
+        );
+        assert_eq!(queue.snapshot().phase, ModelQueuePhaseV1::Destroyed);
+        assert_eq!(queue.snapshot().submits, 0);
+        assert_eq!(queue.snapshot().destroys, 1);
+        assert!(engine.is_faulted());
+    }
+
+    impl M1RolloverRoundObservationV1 for ModelRolloverDiagnosticV1 {
+        fn rollover_lineage(&self) -> Option<M1RolloverDiagnosticLineageV1<'_>> {
+            Some(M1RolloverDiagnosticLineageV1 {
+                identity: self.physical.identity,
+                coordinator_identity: self.physical.coordinator_identity,
+                selection: self.physical.selection,
+                round: self.physical.round,
+                epoch: self.physical.epoch,
+                initial_seeds: &self.physical.initial_seeds,
+                checked_selection: self.checked_selection,
+                checked_epoch: self.checked_epoch,
+            })
+        }
+    }
+
+    fn selection(bucket: Qwen3PlanBucket) -> Qwen3PlanSelection {
+        Qwen3PlanSelection {
+            role: Qwen3ModelRole::Target8B,
+            mode: Qwen3ExecutionMode::Speculative,
+            bucket,
+        }
+    }
+
+    fn coordinator(selection: Qwen3PlanSelection) -> crate::M1SpeculativeGenerationLoopV1 {
+        crate::M1SpeculativeGenerationLoopV1::new(
+            selection,
+            &[crate::M1SpeculativeMemberSeedV1::new(
+                RequestId::new(0, 1),
+                70,
+                10,
+                10,
+                crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap(),
+            )],
+        )
+        .unwrap()
+    }
+
+    fn pending_join_fixture(
+        bucket: Qwen3PlanBucket,
+        accepted: u8,
+        policy: crate::M1SpeculativeGenerationPolicyV1,
+        cancelling: bool,
+        epoch: CompletionEpoch,
+    ) -> (
+        M1SpeculativeGenerationLoopV1,
+        M1SpeculativeRoundOutcomeV1,
+        M1ObservedSpeculativeDiagnosticChoicesV1,
+    ) {
+        let selection = selection(bucket);
+        let request = RequestId::new(0, 1);
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(
+            selection,
+            &[M1SpeculativeMemberSeedV1::new(request, 70, 10, 10, policy)],
+        )
+        .unwrap();
+        let width = coordinator.shape().draft_tokens();
+        let draft: Vec<_> = (100..100 + u32::from(width)).collect();
+        let mut target = draft.clone();
+        target.push(700);
+        target[usize::from(accepted)] = 700;
+        let mut emitted = draft[..usize::from(accepted)].to_vec();
+        emitted.push(700);
+        let binding = coordinator.bind_round(0, epoch, &[request]).unwrap();
+        let control = if cancelling {
+            M1SpeculativeMemberControlV1::cancelling(
+                request,
+                crate::M1SpeculativeCancellationReasonV1::Client,
+            )
+        } else {
+            M1SpeculativeMemberControlV1::continuing(request)
+        };
+        let preflighted = coordinator
+            .preflight_observed_round(
+                binding,
+                selection,
+                epoch,
+                &[CheckedMemberObservationV1 {
+                    request,
+                    semantics: CheckedCompletionSemantics::Speculative {
+                        accepted_draft_tokens: accepted,
+                        correction_or_bonus: 700,
+                    },
+                    emitted: M1SpeculativeTokenBlockV1::from_slice(&emitted).unwrap(),
+                }],
+                &[control],
+            )
+            .unwrap();
+        let outcome = coordinator.commit_preflighted_round(preflighted).unwrap();
+        let choices = crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+            selection, 41, &draft, &target,
+        );
+        (coordinator, outcome, choices)
+    }
+
+    #[test]
+    fn joined_draft_catchup_pending_mints_only_full_active_acceptance_for_every_k() {
+        for (bucket, width) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 4),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
+        ] {
+            for accepted in 0..=width {
+                let (coordinator, outcome, choices) = pending_join_fixture(
+                    bucket,
+                    accepted,
+                    crate::M1SpeculativeGenerationPolicyV1::new(64, &[]).unwrap(),
+                    false,
+                    CompletionEpoch::new(7),
+                );
+                let before = coordinator.member(RequestId::new(0, 1)).unwrap();
+                let pending =
+                    joined_draft_catchup_pending(&coordinator, &outcome, &choices).unwrap();
+                if accepted < width {
+                    assert!(pending.is_none(), "{bucket:?} accepted={accepted}");
+                    assert_eq!(
+                        before.target_committed_tokens(),
+                        before.draft_committed_tokens()
+                    );
+                } else {
+                    let pending = pending.unwrap();
+                    assert_eq!(pending.coordinator_identity(), coordinator.identity());
+                    assert_eq!(pending.parent(), selection(bucket));
+                    assert_eq!(pending.request(), before.request());
+                    assert_eq!(pending.completed_round(), 0);
+                    assert_eq!(pending.prior_epoch(), CompletionEpoch::new(7));
+                    assert_eq!(pending.epoch(), CompletionEpoch::new(8));
+                    assert_eq!(pending.prior_dispatch_generation(), 41);
+                    assert_eq!(pending.draft_committed(), 10 + u32::from(width));
+                    assert_eq!(pending.target_committed(), pending.draft_committed() + 1);
+                    assert_eq!(pending.token(), 99 + u32::from(width));
+                    assert_ne!(pending.token(), 70);
+                    assert_ne!(pending.token(), before.next_anchor());
+                    assert_eq!(before.next_anchor(), 700);
+                }
+                assert_eq!(coordinator.member(before.request()), Some(before));
+                assert_eq!(coordinator.next_round(), 1);
+                assert_eq!(coordinator.last_epoch(), Some(CompletionEpoch::new(7)));
+            }
+        }
+    }
+
+    #[test]
+    fn joined_draft_catchup_pending_does_not_mint_for_terminal_full_acceptance() {
+        for (bucket, width) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 4),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
+        ] {
+            for (limit, stop, cancelling) in [
+                (1, None, false),
+                (u32::from(width) + 1, None, false),
+                (64, Some(100), false),
+                (64, Some(700), false),
+                (64, None, true),
+            ] {
+                let stops: Vec<_> = stop.into_iter().collect();
+                let (coordinator, outcome, choices) = pending_join_fixture(
+                    bucket,
+                    width,
+                    crate::M1SpeculativeGenerationPolicyV1::new(limit, &stops).unwrap(),
+                    cancelling,
+                    CompletionEpoch::new(7),
+                );
+                assert_ne!(
+                    outcome.members()[0].status(),
+                    M1SpeculativeMemberStatusV1::Active
+                );
+                assert!(
+                    joined_draft_catchup_pending(&coordinator, &outcome, &choices)
+                        .unwrap()
+                        .is_none()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn joined_draft_catchup_pending_rejects_foreign_owner_wrong_choices_and_exhausted_epoch() {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(64, &[]).unwrap();
+        for (bucket, width) in [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 4),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 16),
+        ] {
+            let (coordinator, outcome, choices) =
+                pending_join_fixture(bucket, width, policy, false, CompletionEpoch::new(7));
+            let (other, _, _) =
+                pending_join_fixture(bucket, width, policy, false, CompletionEpoch::new(7));
+            assert!(joined_draft_catchup_pending(&other, &outcome, &choices).is_err());
+            let zero_generation =
+                crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+                    selection(bucket),
+                    0,
+                    choices.draft_choice_matrix(),
+                    choices.target_choice_matrix(),
+                );
+            assert!(
+                joined_draft_catchup_pending(&coordinator, &outcome, &zero_generation).is_err()
+            );
+            let mut wrong_draft = choices.draft_choice_matrix().to_vec();
+            *wrong_draft.last_mut().unwrap() = 701;
+            let wrong_choices =
+                crate::speculative_diagnostic_choices::synthetic_observed_choices_for_test(
+                    selection(bucket),
+                    41,
+                    &wrong_draft,
+                    choices.target_choice_matrix(),
+                );
+            assert!(joined_draft_catchup_pending(&coordinator, &outcome, &wrong_choices).is_err());
+            let (wrong_coordinator, wrong_outcome, _) =
+                pending_join_fixture(bucket, width, policy, false, CompletionEpoch::new(u64::MAX));
+            assert!(
+                joined_draft_catchup_pending(&wrong_coordinator, &wrong_outcome, &choices).is_err()
+            );
+            assert_eq!(coordinator.next_round(), 1);
+            assert_eq!(coordinator.last_epoch(), Some(CompletionEpoch::new(7)));
+        }
+    }
+
+    fn model_lineage(
+        coordinator: &M1SpeculativeGenerationLoopV1,
+    ) -> M1AuthenticatedSpeculativeCausalLineageV1 {
+        let initial_seeds = coordinator.bootstrap_seed_snapshot().unwrap();
+        let generated = initial_seeds
+            .iter()
+            .map(|seed| (seed.request(), 0))
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
+        M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 {
+                identity: M1AuthenticatedSpeculativeLineageIdentityV1::fresh().unwrap(),
+            },
+            coordinator_identity: coordinator.identity(),
+            selection: coordinator.shape().selection(),
+            initial_seeds,
+            generated,
+            completed_rounds: 0,
+            last_epoch: CompletionEpoch::new(39),
+            draft_catchup: None,
+            restoration: None,
+            prior_windows: Vec::new(),
+        }
+    }
+
+    fn model_rollover_halves(
+        coordinator: M1SpeculativeGenerationLoopV1,
+        epoch: CompletionEpoch,
+    ) -> (
+        M1AuthenticatedSpeculativeRolloverContinuationV1,
+        M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+    ) {
+        let identity = M1AuthenticatedSpeculativeLineageIdentityV1::fresh().unwrap();
+        let initial_seeds = coordinator.bootstrap_seed_snapshot().unwrap();
+        let coordinator_identity = coordinator.identity();
+        let selection = coordinator.shape().selection();
+        (
+            M1AuthenticatedSpeculativeRolloverContinuationV1 {
+                coordinator,
+                epoch,
+                lineage: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 { identity },
+                prior_windows: Vec::new(),
+                resident_join_storage: None,
+            },
+            M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+                identity,
+                coordinator_identity,
+                selection,
+                round: 0,
+                epoch,
+                initial_seeds,
+            },
+        )
+    }
+
+    fn model_members(
+        member_count: usize,
+        accepted: u8,
+        stop_lane: Option<usize>,
+    ) -> Vec<ModelMemberReadbackV1> {
+        (0..member_count)
+            .map(|lane| {
+                let mut emitted = (0..accepted)
+                    .map(|token| 500 + u32::from(token) + u32::try_from(lane).unwrap() * 16)
+                    .collect::<Vec<_>>();
+                emitted.push(if stop_lane == Some(lane) {
+                    999
+                } else {
+                    700 + u32::try_from(lane).unwrap()
+                });
+                ModelMemberReadbackV1 { accepted, emitted }
+            })
+            .collect()
+    }
+
+    fn model_coordinator(
+        selected: Qwen3PlanSelection,
+        member_count: usize,
+    ) -> M1SpeculativeGenerationLoopV1 {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap();
+        let seeds = (0..member_count)
+            .map(|lane| {
+                M1SpeculativeMemberSeedV1::new(
+                    RequestId::new(u32::try_from(lane).unwrap(), 1),
+                    70 + u32::try_from(lane).unwrap(),
+                    10,
+                    10,
+                    policy,
+                )
+            })
+            .collect::<Vec<_>>();
+        M1SpeculativeGenerationLoopV1::new(selected, &seeds).unwrap()
+    }
+
+    fn finish_model_round<const C: usize>(
+        engine: &mut Engine<C>,
+        prepared: M1PreparedCoordinatorRoundCoreV1<ModelDiagnosticV1>,
+    ) -> M1CommittedCoordinatorRoundCoreV1<ModelDiagnosticV1> {
+        assert_eq!(
+            prepared.dispositions.len(),
+            prepared.preflighted.members().len()
+        );
+        let committed = commit_coordinator_round_core(
+            engine,
+            prepared.coordinator,
+            prepared.preflighted,
+            prepared.controls,
+            prepared.diagnostic,
+            prepared.lineage,
+        )
+        .unwrap();
+        committed.physical.queue.release_generation();
+        committed
+    }
+
+    fn finish_model_rollover_round<const C: usize>(
+        engine: &mut Engine<C>,
+        prepared: M1PreparedCoordinatorRoundCoreV1<ModelRolloverDiagnosticV1>,
+    ) -> M1CommittedCoordinatorRoundCoreV1<ModelRolloverDiagnosticV1> {
+        assert_eq!(
+            prepared.dispositions.len(),
+            prepared.preflighted.members().len()
+        );
+        let committed = commit_coordinator_round_core(
+            engine,
+            prepared.coordinator,
+            prepared.preflighted,
+            prepared.controls,
+            prepared.diagnostic,
+            prepared.lineage,
+        )
+        .unwrap();
+        committed.physical.diagnostic.queue.release_generation();
+        committed
+    }
+
+    #[test]
+    fn pre_detach_core_returns_the_same_owners_without_queue_or_engine_mutation() {
+        #[derive(Debug)]
+        struct ModelPreDetachOwnerV1 {
+            identity: u64,
+            queue: ModelQueueV1,
+        }
+
+        for (expected, facts) in [
+            (
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Profile,
+                M1PreDetachRoundFactsV1 {
+                    profile_matches: false,
+                    active_count: 8,
+                    inputs_match: true,
+                },
+            ),
+            (
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Complete,
+                M1PreDetachRoundFactsV1 {
+                    profile_matches: true,
+                    active_count: 0,
+                    inputs_match: true,
+                },
+            ),
+            (
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Inputs,
+                M1PreDetachRoundFactsV1 {
+                    profile_matches: true,
+                    active_count: 8,
+                    inputs_match: false,
+                },
+            ),
+        ] {
+            let queue = ModelQueueV1::new([], []);
+            let engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (stage, owner, inputs) = pre_detach_round_core(
+                ModelPreDetachOwnerV1 {
+                    identity: 71,
+                    queue: queue.clone(),
+                },
+                "exact round inputs",
+                facts,
+            )
+            .unwrap_err();
+            assert_eq!(stage, expected);
+            assert_eq!(owner.identity, 71);
+            assert_eq!(inputs, "exact round inputs");
+            assert_eq!(owner.queue.snapshot(), queue.snapshot());
+            assert_eq!(queue.snapshot().submits, 0);
+            assert_eq!(queue.snapshot().destroys, 0);
+            assert!(!engine.is_faulted());
+        }
+    }
+
+    #[test]
+    fn model_queue_cores_drive_initial_repeated_and_rollover_lifecycles() {
+        let profiles = [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 1_usize, 3_u8),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 1, 5),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 1, 9),
+            (Qwen3PlanBucket::SpeculativeS8K4C8192, 8, 2),
+        ];
+        for (bucket, member_count, accepted) in profiles {
+            let selected = selection(bucket);
+            let queue = ModelQueueV1::new(
+                [None, None],
+                [
+                    model_members(member_count, accepted, None),
+                    model_members(member_count, 1, None),
+                ],
+            );
+            let coordinator = model_coordinator(selected, member_count);
+            let lineage = model_lineage(&coordinator);
+            let roster = coordinator.active_roster();
+            let binding = coordinator
+                .bind_round(0, CompletionEpoch::new(40), &roster)
+                .unwrap();
+            let controls = roster
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect::<Vec<_>>();
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_initial_round_core::<ModelInitialQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    (coordinator, binding, controls, lineage),
+                    model_queue_wait_timeout(),
+                )
+                .unwrap();
+            let prepared = prepare_coordinator_round_core(
+                &mut engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .unwrap();
+            let first = finish_model_round(&mut engine, prepared);
+            assert_eq!(first.outcome.members().len(), member_count);
+            assert!(first
+                .outcome
+                .members()
+                .iter()
+                .all(|member| member.accepted_draft_tokens() == accepted));
+
+            let coordinator = first.coordinator;
+            let lineage = first.lineage;
+            let roster = coordinator.active_roster();
+            let binding = coordinator
+                .bind_round(1, CompletionEpoch::new(41), &roster)
+                .unwrap();
+            let controls = roster
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect::<Vec<_>>();
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    (coordinator, binding, controls, lineage),
+                    model_queue_wait_timeout(),
+                )
+                .unwrap();
+            let prepared = prepare_coordinator_round_core(
+                &mut engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .unwrap();
+            let second = finish_model_round(&mut engine, prepared);
+            assert_eq!(second.outcome.completed_round(), 1);
+            assert_eq!(second.lineage.completed_rounds, 2);
+            assert!(!engine.is_faulted());
+            let snapshot = queue.snapshot();
+            assert_eq!(snapshot.submits, 2);
+            assert_eq!(snapshot.waits, 2);
+            assert_eq!(snapshot.recycles, 2);
+            assert_eq!(snapshot.readbacks, 2);
+            assert_eq!(snapshot.releases, 2);
+
+            let rollover_epoch = CompletionEpoch::new(42);
+            let rollover_coordinator = model_coordinator(selected, member_count);
+            let rollover = ModelQueueV1::new([None], [model_members(member_count, accepted, None)]);
+            let rollover_controls = rollover_coordinator
+                .active_roster()
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect::<Vec<_>>();
+            let (continuation, physical) =
+                model_rollover_halves(rollover_coordinator, rollover_epoch);
+            let (diagnostic, (continuation, rollover_controls)) =
+                execute_round_core::<ModelRolloverQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelRolloverPreparedQueueV1 {
+                        queue: ModelPreparedQueueV1::new(rollover.clone()),
+                        physical,
+                        checked_selection: selected,
+                        checked_epoch: rollover_epoch,
+                    },
+                    (continuation, rollover_controls),
+                    model_queue_wait_timeout(),
+                )
+                .unwrap();
+            let prepared = continuation
+                .complete_rollover_round_pending(&mut engine, diagnostic, rollover_controls)
+                .unwrap();
+            let completed = finish_model_rollover_round(&mut engine, prepared);
+            assert_eq!(completed.outcome.completed_round(), 0);
+            assert!(completed
+                .outcome
+                .members()
+                .iter()
+                .all(|member| member.accepted_draft_tokens() == accepted));
+            let snapshot = rollover.snapshot();
+            assert_eq!(
+                (snapshot.submits, snapshot.waits, snapshot.recycles),
+                (1, 1, 1)
+            );
+            assert_eq!(snapshot.readbacks, 1);
+            assert_eq!(snapshot.releases, 1);
+        }
+    }
+
+    #[test]
+    fn hostile_same_shape_deadlines_close_exact_phase_custody() {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+        let cases = [
+            (Boundary::BeforeQueueSubmit, 0, 0, 0),
+            (Boundary::AfterQueueSubmit, 1, 1, 0),
+            (Boundary::BeforeCompletionWait, 1, 1, 0),
+            (Boundary::AfterCompletionWait, 1, 1, 0),
+            (Boundary::BeforeReadback, 1, 1, 0),
+            (Boundary::AfterReadback, 1, 1, 1),
+        ];
+        for (expired_at, submits, waits, readbacks) in cases {
+            let queue = ModelQueueV1::new([None], [model_members(1, 1, None)]);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let result = execute_round_core_with_post_submit_and_deadline::<
+                ModelRearmedQueueEffectsV1,
+                _,
+                _,
+                core::convert::Infallible,
+                _,
+                1,
+            >(
+                &mut engine,
+                ModelPreparedQueueV1::new(queue.clone()),
+                "same-shape-custody",
+                model_queue_wait_timeout(),
+                || Ok(()),
+                |boundary, timeout| {
+                    if boundary == expired_at {
+                        None
+                    } else {
+                        Some(timeout)
+                    }
+                },
+            );
+            let (stage, disposition) = result.unwrap_err();
+            assert_eq!(
+                stage,
+                M1AuthenticatedSpeculativePhysicalRoundStageV1::Deadline
+            );
+            assert!(matches!(
+                disposition,
+                M1AuthenticatedSpeculativeFailureDispositionV1::Released(_)
+            ));
+            assert!(engine.is_faulted());
+            let snapshot = queue.snapshot();
+            assert_eq!(snapshot.phase, ModelQueuePhaseV1::Destroyed);
+            assert_eq!(snapshot.submits, submits);
+            assert_eq!(snapshot.waits, waits);
+            assert_eq!(snapshot.readbacks, readbacks);
+            assert_eq!(snapshot.destroys, 1);
+        }
+    }
+
+    #[test]
+    fn first_rollover_settlement_deadlines_destroy_exactly_once() {
+        use crate::authenticated_resident_session::M1AuthenticatedResidentDeadlineBoundaryV1 as Boundary;
+
+        for boundary in [Boundary::BeforeSettlement, Boundary::AfterSettlement] {
+            let mut destroys = 0;
+            let disposition = close_deadline_phase(boundary, |retained| {
+                assert_eq!(retained, boundary);
+                destroys += 1;
+                released_disposition((retained, "model native release"))
+            });
+            assert_eq!(destroys, 1);
+            assert!(disposition.queue_released());
+        }
+
+        let mut destroys = 0;
+        let disposition = close_deadline_phase(Boundary::AfterSettlement, |retained| {
+            destroys += 1;
+            quarantined_disposition((retained, "model native destruction failure"))
+        });
+        assert_eq!(destroys, 1);
+        assert!(!disposition.queue_released());
+
+        let source = include_str!("authenticated_speculative_executor.rs");
+        let body = source
+            .split("impl M1AuthenticatedSpeculativeRolloverPublishedV1")
+            .nth(1)
+            .and_then(|tail| tail.split("/// Round-zero completion failure stage").next())
+            .unwrap();
+        assert!(body.contains("M1NativeRearmedQueueEffectsV1::close_diagnostic"));
+        assert!(body.contains(".close_for_resident(engine)"));
+        assert_eq!(body.matches("close_deadline_phase").count(), 2);
+    }
+
+    #[test]
+    fn hostile_same_shape_deadline_guards_each_settlement_effect() {
+        let source = include_str!("authenticated_speculative_executor.rs");
+        let body = source
+            .split("fn complete_authenticated_rearmed_speculative_round_prepared_with_deadline")
+            .nth(1)
+            .and_then(|tail| {
+                tail.split("impl M1AuthenticatedSpeculativeRolloverContinuationV1")
+                    .next()
+            })
+            .expect("deadline-bound same-shape settlement is present");
+        let mut tail = body;
+        for needle in [
+            "Boundary::BeforeSettlement",
+            "readback.complete",
+            "Boundary::AfterSettlement",
+            "Boundary::BeforeSettlement",
+            "physical.release_completed()",
+            "Boundary::AfterSettlement",
+        ] {
+            let position = tail
+                .find(needle)
+                .unwrap_or_else(|| panic!("missing hostile same-shape settlement guard {needle}"));
+            tail = &tail[position + needle.len()..];
+        }
+    }
+
+    #[test]
+    fn rollover_orchestration_stops_and_cancels_every_s8_lane() {
+        use crate::{
+            M1SpeculativeCancellationReasonV1, M1SpeculativeMemberStatusV1,
+            M1SpeculativeTerminalReasonV1,
+        };
+
+        let selected = selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
+        for stop_lane in 0..8 {
+            let cancel_lane = (stop_lane + 1) % 8;
+            let epoch = CompletionEpoch::new(51 + u64::try_from(stop_lane).unwrap());
+            let coordinator = model_coordinator(selected, 8);
+            let controls = coordinator
+                .active_roster()
+                .iter()
+                .enumerate()
+                .map(|(lane, request)| {
+                    if lane == cancel_lane {
+                        M1SpeculativeMemberControlV1::cancelling(
+                            *request,
+                            M1SpeculativeCancellationReasonV1::Deadline,
+                        )
+                    } else {
+                        M1SpeculativeMemberControlV1::continuing(*request)
+                    }
+                })
+                .collect::<Vec<_>>();
+            let (continuation, physical) = model_rollover_halves(coordinator, epoch);
+            let queue = ModelQueueV1::new([None], [model_members(8, 2, Some(stop_lane))]);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (diagnostic, (continuation, controls)) =
+                execute_round_core::<ModelRolloverQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelRolloverPreparedQueueV1 {
+                        queue: ModelPreparedQueueV1::new(queue.clone()),
+                        physical,
+                        checked_selection: selected,
+                        checked_epoch: epoch,
+                    },
+                    (continuation, controls),
+                    model_queue_wait_timeout(),
+                )
+                .unwrap();
+            let prepared = continuation
+                .complete_rollover_round_pending(&mut engine, diagnostic, controls)
+                .unwrap();
+            let completed = finish_model_rollover_round(&mut engine, prepared);
+            assert_eq!(
+                completed.outcome.members()[stop_lane].status(),
+                M1SpeculativeMemberStatusV1::Completed(M1SpeculativeTerminalReasonV1::StopToken {
+                    token: 999,
+                })
+            );
+            assert_eq!(
+                completed.outcome.members()[cancel_lane].status(),
+                M1SpeculativeMemberStatusV1::Cancelled(M1SpeculativeCancellationReasonV1::Deadline)
+            );
+            assert_eq!(completed.outcome.next_active_roster().len(), 6);
+            assert!(!engine.is_faulted());
+            let snapshot = queue.snapshot();
+            assert_eq!(snapshot.submits, 1);
+            assert_eq!(snapshot.waits, 1);
+            assert_eq!(snapshot.recycles, 1);
+            assert_eq!(snapshot.readbacks, 1);
+            assert_eq!(snapshot.releases, 1);
+            assert_eq!(snapshot.destroys, 0);
+        }
+    }
+
+    #[test]
+    fn model_currentness_and_readback_failures_close_once_without_resubmit() {
+        for failure in [
+            ModelQueueFailureV1::CurrentnessReleased,
+            ModelQueueFailureV1::CurrentnessQuarantined,
+        ] {
+            let queue = ModelQueueV1::new([Some(failure)], []);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (_stage, disposition) = execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                &mut engine,
+                ModelPreparedQueueV1::new(queue.clone()),
+                "retained logical",
+                model_queue_wait_timeout(),
+            )
+            .unwrap_err();
+            assert!(engine.is_faulted());
+            assert_eq!(queue.snapshot().submits, 0);
+            assert_eq!(queue.snapshot().destroys, 1);
+            assert_eq!(
+                matches!(
+                    disposition,
+                    M1AuthenticatedSpeculativeFailureDispositionV1::Released(_)
+                ),
+                failure == ModelQueueFailureV1::CurrentnessReleased
+            );
+        }
+
+        for failure in [
+            ModelQueueFailureV1::ReadbackReleased,
+            ModelQueueFailureV1::ReadbackQuarantined,
+        ] {
+            let queue = ModelQueueV1::new([Some(failure)], [model_members(1, 0, None)]);
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (stage, disposition) =
+                execute_initial_round_core::<ModelInitialQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    "retained bootstrap",
+                    model_queue_wait_timeout(),
+                )
+                .unwrap_err();
+            assert_eq!(
+                stage,
+                M1AuthenticatedSpeculativeBootstrapRoundStageV1::CompletionObservation
+            );
+            assert!(engine.is_faulted());
+            assert_eq!(queue.snapshot().submits, 1);
+            assert_eq!(queue.snapshot().destroys, 1);
+            assert_eq!(
+                matches!(
+                    disposition,
+                    M1AuthenticatedSpeculativeFailureDispositionV1::Released(_)
+                ),
+                failure == ModelQueueFailureV1::ReadbackReleased
+            );
+        }
+
+        let queue = ModelQueueV1::new(
+            [Some(ModelQueueFailureV1::Wait)],
+            [model_members(1, 0, None)],
+        );
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let (stage, disposition) = execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+            &mut engine,
+            ModelPreparedQueueV1::new(queue.clone()),
+            "published logical custody",
+            model_queue_wait_timeout(),
+        )
+        .unwrap_err();
+        assert_eq!(stage, M1AuthenticatedSpeculativePhysicalRoundStageV1::Wait);
+        assert!(matches!(
+            disposition,
+            M1AuthenticatedSpeculativeFailureDispositionV1::Quarantined(_)
+        ));
+        assert!(engine.is_faulted());
+        assert_eq!(queue.snapshot().submits, 1);
+        assert_eq!(queue.snapshot().destroys, 0);
+    }
+
+    #[test]
+    fn model_s8_stops_and_cancels_every_live_lane_after_a_repeat() {
+        use crate::{
+            M1SpeculativeCancellationReasonV1, M1SpeculativeMemberStatusV1,
+            M1SpeculativeTerminalReasonV1,
+        };
+
+        for stop_lane in 0..8 {
+            let cancel_lane = (stop_lane + 1) % 8;
+            let selected = selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
+            let queue = ModelQueueV1::new(
+                [None, None],
+                [
+                    model_members(8, 1, None),
+                    model_members(8, 2, Some(stop_lane)),
+                ],
+            );
+            let coordinator = model_coordinator(selected, 8);
+            let lineage = model_lineage(&coordinator);
+            let roster = coordinator.active_roster();
+            let binding = coordinator
+                .bind_round(0, CompletionEpoch::new(40), &roster)
+                .unwrap();
+            let controls = roster
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect::<Vec<_>>();
+            let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_initial_round_core::<ModelInitialQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    (coordinator, binding, controls, lineage),
+                    model_queue_wait_timeout(),
+                )
+                .unwrap();
+            let prepared = prepare_coordinator_round_core(
+                &mut engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .unwrap();
+            let first = finish_model_round(&mut engine, prepared);
+            let coordinator = first.coordinator;
+            let lineage = first.lineage;
+            let roster = coordinator.active_roster();
+            let binding = coordinator
+                .bind_round(1, CompletionEpoch::new(41), &roster)
+                .unwrap();
+            let controls = roster
+                .iter()
+                .enumerate()
+                .map(|(lane, request)| {
+                    if lane == cancel_lane {
+                        M1SpeculativeMemberControlV1::cancelling(
+                            *request,
+                            M1SpeculativeCancellationReasonV1::Deadline,
+                        )
+                    } else {
+                        M1SpeculativeMemberControlV1::continuing(*request)
+                    }
+                })
+                .collect::<Vec<_>>();
+            let (diagnostic, (coordinator, binding, controls, lineage)) =
+                execute_round_core::<ModelRearmedQueueEffectsV1, _, 1>(
+                    &mut engine,
+                    ModelPreparedQueueV1::new(queue.clone()),
+                    (coordinator, binding, controls, lineage),
+                    model_queue_wait_timeout(),
+                )
+                .unwrap();
+            let prepared = prepare_coordinator_round_core(
+                &mut engine,
+                coordinator,
+                binding,
+                diagnostic,
+                controls,
+                lineage,
+            )
+            .unwrap();
+            let second = finish_model_round(&mut engine, prepared);
+            assert_eq!(
+                second.outcome.members()[stop_lane].status(),
+                M1SpeculativeMemberStatusV1::Completed(M1SpeculativeTerminalReasonV1::StopToken {
+                    token: 999
+                })
+            );
+            assert_eq!(
+                second.outcome.members()[cancel_lane].status(),
+                M1SpeculativeMemberStatusV1::Cancelled(M1SpeculativeCancellationReasonV1::Deadline)
+            );
+            assert_eq!(second.outcome.next_active_roster().len(), 6);
+            assert_eq!(queue.snapshot().submits, 2);
+            assert!(!engine.is_faulted());
+        }
+    }
+
+    fn validated_role_inputs(
+        selection: Qwen3PlanSelection,
+        requests: &[RequestId],
+        epoch: CompletionEpoch,
+        anchors: &[ferric_spec::TokenId],
+        committed: &[u32],
+        future_override: Option<(usize, usize, ferric_spec::TokenId)>,
+    ) -> ValidatedM1StepInputs {
+        assert_eq!(requests.len(), anchors.len());
+        assert_eq!(requests.len(), committed.len());
+        let dimensions = selection
+            .bucket
+            .dimensions(selection.role, selection.mode)
+            .expect("test selection must be finite");
+        let capacity = dimensions.sequences as usize;
+        let width = dimensions.active_tokens as usize;
+        let mut lanes = Vec::with_capacity(capacity);
+        let mut tokens = vec![0; capacity * width];
+        let mut positions = vec![0; capacity * width];
+        let mut active_lengths = vec![0; capacity];
+        let mut context_lengths = vec![0; capacity];
+        for lane in 0..capacity {
+            lanes.push(
+                requests.get(lane).copied().map(|request| {
+                    StepPlan::new(request, epoch, Identity::new([73; 32]), selection)
+                }),
+            );
+        }
+        for lane in 0..requests.len() {
+            let row_start = lane * width;
+            tokens[row_start] = anchors[lane];
+            for column in 0..width {
+                positions[row_start + column] =
+                    committed[lane] + u32::try_from(column).expect("finite row width fits u32");
+            }
+            active_lengths[lane] = dimensions.active_tokens;
+            context_lengths[lane] = committed[lane];
+        }
+        if let Some((lane, column, token)) = future_override {
+            tokens[lane * width + column] = token;
+        }
+        match validate_m1_step_inputs(M1StepInputCandidate::new(
+            selection,
+            lanes,
+            tokens,
+            positions,
+            active_lengths,
+            context_lengths,
+        )) {
+            M1StepInputValidationOutcome::Validated(inputs) => inputs,
+            M1StepInputValidationOutcome::Rejected(failure) => {
+                panic!("structural test input rejected: {:?}", failure.error())
+            }
+        }
+    }
+
+    #[test]
+    fn authenticated_tail_round_inputs_select_post_detach_page_materialization() {
+        let request = RequestId::new(0, 1);
+        let epoch = CompletionEpoch::new(3);
+        let target = selection(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let draft = Qwen3PlanSelection {
+            role: Qwen3ModelRole::Draft06B,
+            mode: Qwen3ExecutionMode::Decode,
+            bucket: Qwen3PlanBucket::DecodeS1C8192,
+        };
+        let draft_inputs = validated_role_inputs(draft, &[request], epoch, &[71], &[129], None);
+        let target_inputs = validated_role_inputs(target, &[request], epoch, &[71], &[129], None);
+        let workspace = |selection, identity_byte| {
+            let requirements = m1_step_workspace_requirements(selection)
+                .expect("exact speculative workspace requirements exist");
+            let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+                selection,
+                DeclaredM1StepWorkspaceAllocation::new(
+                    Identity::new([identity_byte; 32]),
+                    requirements.allocation_byte_len(),
+                    requirements.allocation_alignment(),
+                ),
+                requirements.ranges().to_vec().into_boxed_slice(),
+            ));
+            match plan_addressless_m1_step_workspace(selection, available) {
+                M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+                M1StepWorkspacePlanOutcome::Rejected(_) => {
+                    panic!("exact speculative workspace plan rejected")
+                }
+            }
+        };
+        let inputs = M1AuthenticatedSpeculativePhysicalRoundInputsV1::with_authenticated_tail_pages(
+            draft_inputs,
+            target_inputs,
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace(draft, 31),
+                workspace(target, 32),
+            ),
+            M1FullStepWorkspacePlans::speculative_round(
+                workspace(draft, 31),
+                workspace(target, 32),
+            ),
+            vec![M1SpeculativeMemberControlV1::continuing(request)],
+        );
+        assert!(matches!(
+            inputs.kv,
+            M1AuthenticatedSpeculativePhysicalRoundKvInputsV1::AuthenticatedTail { .. }
+        ));
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn speculative_kv_inputs(
+        target_selection: Qwen3PlanSelection,
+        draft_selection: Qwen3PlanSelection,
+        requests: &[RequestId],
+        epoch: CompletionEpoch,
+        draft_anchors: &[ferric_spec::TokenId],
+        target_anchors: &[ferric_spec::TokenId],
+        draft_committed: &[u32],
+        target_committed: &[u32],
+        future_override: Option<(usize, usize, ferric_spec::TokenId)>,
+    ) -> M1LongLivedQueueRearmKvInputsV1 {
+        M1LongLivedQueueRearmKvInputsV1::speculative_round(
+            validated_role_inputs(
+                draft_selection,
+                requests,
+                epoch,
+                draft_anchors,
+                draft_committed,
+                None,
+            ),
+            validated_role_inputs(
+                target_selection,
+                requests,
+                epoch,
+                target_anchors,
+                target_committed,
+                future_override,
+            ),
+            (0..requests.len()).map(|_| Vec::new()).collect(),
+            (0..requests.len()).map(|_| Vec::new()).collect(),
+        )
+    }
+
+    fn coordinator_for_members(
+        selection: Qwen3PlanSelection,
+        requests: &[RequestId],
+        anchors: &[ferric_spec::TokenId],
+        target_committed: &[u32],
+        draft_committed: &[u32],
+    ) -> crate::M1SpeculativeGenerationLoopV1 {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap();
+        let seeds: Vec<_> = requests
+            .iter()
+            .copied()
+            .zip(anchors.iter().copied())
+            .zip(target_committed.iter().copied())
+            .zip(draft_committed.iter().copied())
+            .map(|(((request, anchor), target), draft)| {
+                crate::M1SpeculativeMemberSeedV1::new(request, anchor, target, draft, policy)
+            })
+            .collect();
+        crate::M1SpeculativeGenerationLoopV1::new(selection, &seeds).unwrap()
+    }
+
+    fn causal_round_zero_fixture(
+        selected: Qwen3PlanSelection,
+        seeds: &[M1SpeculativeMemberSeedV1],
+    ) -> (
+        M1SpeculativeGenerationLoopV1,
+        M1AuthenticatedSpeculativePhysicalLineageWitnessV1,
+        M1AuthenticatedSpeculativeCausalLineageV1,
+    ) {
+        let mut coordinator = M1SpeculativeGenerationLoopV1::new(selected, seeds).unwrap();
+        let initial_seeds = coordinator.bootstrap_seed_snapshot().unwrap();
+        let identity = M1AuthenticatedSpeculativeLineageIdentityV1::fresh().unwrap();
+        let physical = M1AuthenticatedSpeculativePhysicalLineageWitnessV1 {
+            identity,
+            coordinator_identity: coordinator.identity(),
+            selection: selected,
+            round: 0,
+            epoch: CompletionEpoch::new(7),
+            initial_seeds: initial_seeds.clone(),
+        };
+        let generated: Vec<_> = initial_seeds
+            .iter()
+            .map(|seed| (seed.request(), 0))
+            .collect();
+        let mut lineage = M1AuthenticatedSpeculativeCausalLineageV1 {
+            logical: M1AuthenticatedSpeculativeLogicalLineageWitnessV1 { identity },
+            coordinator_identity: coordinator.identity(),
+            selection: selected,
+            initial_seeds,
+            generated: generated.into_boxed_slice(),
+            completed_rounds: 0,
+            last_epoch: CompletionEpoch::new(7),
+            draft_catchup: None,
+            restoration: None,
+            prior_windows: Vec::new(),
+        };
+        let _ = coordinator
+            .commit_test_causal_round(CompletionEpoch::new(7))
+            .unwrap();
+        assert!(refresh_causal_generated_counts(
+            &mut lineage,
+            &coordinator,
+            CompletionEpoch::new(7),
+        ));
+        (coordinator, physical, lineage)
+    }
+
+    #[test]
+    fn production_input_binding_rejects_hostile_role_rows_before_detach() {
+        let engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let target = selection(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let draft = speculative_draft_selection(target).unwrap();
+        let epoch = CompletionEpoch::new(7);
+        let requests = [RequestId::new(0, 1)];
+        let anchors = [70];
+        let target_committed = [10];
+        let draft_committed = [11];
+        let coordinator = coordinator_for_members(
+            target,
+            &requests,
+            &anchors,
+            &target_committed,
+            &draft_committed,
+        );
+        let binding = coordinator.bind_round(0, epoch, &requests).unwrap();
+        let exact = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            epoch,
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &target_committed,
+            None,
+        );
+        assert!(speculative_round_inputs_match_binding(&exact, &binding));
+
+        let independent_target_anchor = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            epoch,
+            &anchors,
+            &[71],
+            &draft_committed,
+            &target_committed,
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &independent_target_anchor,
+            &binding,
+        ));
+        let nonzero_future = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            epoch,
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &target_committed,
+            Some((0, 1, 72)),
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &nonzero_future,
+            &binding,
+        ));
+        let wrong_cursor_and_position = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            epoch,
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &[12],
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &wrong_cursor_and_position,
+            &binding,
+        ));
+        let wrong_epoch = speculative_kv_inputs(
+            target,
+            draft,
+            &requests,
+            CompletionEpoch::new(8),
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &target_committed,
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &wrong_epoch,
+            &binding,
+        ));
+        let wrong_target = selection(Qwen3PlanBucket::SpeculativeS1K8C8192);
+        let wrong_selection = speculative_kv_inputs(
+            wrong_target,
+            speculative_draft_selection(wrong_target).unwrap(),
+            &requests,
+            epoch,
+            &anchors,
+            &anchors,
+            &draft_committed,
+            &target_committed,
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(
+            &wrong_selection,
+            &binding,
+        ));
+        // These predicates execute before queue detachment or any engine call.
+        assert!(!engine.is_faulted());
+    }
+
+    #[test]
+    fn production_input_binding_rejects_s8_lane_swap_before_detach() {
+        let engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let target = selection(Qwen3PlanBucket::SpeculativeS8K4C8192);
+        let draft = speculative_draft_selection(target).unwrap();
+        let epoch = CompletionEpoch::new(9);
+        let requests = [RequestId::new(0, 1), RequestId::new(1, 1)];
+        let anchors = [70, 80];
+        let target_committed = [10, 20];
+        let draft_committed = [11, 21];
+        let coordinator = coordinator_for_members(
+            target,
+            &requests,
+            &anchors,
+            &target_committed,
+            &draft_committed,
+        );
+        let binding = coordinator.bind_round(0, epoch, &requests).unwrap();
+        let swapped = speculative_kv_inputs(
+            target,
+            draft,
+            &[requests[1], requests[0]],
+            epoch,
+            &[anchors[1], anchors[0]],
+            &[anchors[1], anchors[0]],
+            &[draft_committed[1], draft_committed[0]],
+            &[target_committed[1], target_committed[0]],
+            None,
+        );
+        assert!(!speculative_round_inputs_match_binding(&swapped, &binding,));
+        assert!(!engine.is_faulted());
+    }
+
+    #[test]
+    fn causal_witness_joins_fresh_spec_zero_and_repeated_spec_one() {
+        let seeds = [M1SpeculativeMemberSeedV1::new(
+            RequestId::new(0, 1),
+            70,
+            10,
+            10,
+            crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap(),
+        )];
+        let (mut coordinator, physical, mut lineage) =
+            causal_round_zero_fixture(selection(Qwen3PlanBucket::SpeculativeS1K4C8192), &seeds);
+        assert!(validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+
+        let _ = coordinator
+            .commit_test_causal_round(CompletionEpoch::new(8))
+            .unwrap();
+        assert!(refresh_causal_generated_counts(
+            &mut lineage,
+            &coordinator,
+            CompletionEpoch::new(8),
+        ));
+        assert!(validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(8),
+            1,
+        ));
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            1,
+        ));
+    }
+
+    #[test]
+    fn causal_witness_rejects_fresh_coordinator_policy_and_generated_splices() {
+        let seeds = [M1SpeculativeMemberSeedV1::new(
+            RequestId::new(0, 1),
+            70,
+            10,
+            10,
+            crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap(),
+        )];
+        let (coordinator, physical, mut lineage) =
+            causal_round_zero_fixture(selection(Qwen3PlanBucket::SpeculativeS1K4C8192), &seeds);
+        let mut fresh = M1SpeculativeGenerationLoopV1::new(lineage.selection, &seeds).unwrap();
+        let _ = fresh
+            .commit_test_causal_round(CompletionEpoch::new(7))
+            .unwrap();
+        assert!(!validate_causal_lineage_join(
+            &fresh,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+
+        lineage.initial_seeds[0] = M1SpeculativeMemberSeedV1::new(
+            RequestId::new(0, 1),
+            70,
+            10,
+            10,
+            crate::M1SpeculativeGenerationPolicyV1::new(32, &[998]).unwrap(),
+        );
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+        lineage.initial_seeds[0] = seeds[0];
+        lineage.generated[0].1 += 1;
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+    }
+
+    #[test]
+    fn causal_witness_rejects_reorder_epoch_and_history_splices() {
+        let policy = crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap();
+        let seeds = [
+            M1SpeculativeMemberSeedV1::new(RequestId::new(0, 1), 70, 10, 10, policy),
+            M1SpeculativeMemberSeedV1::new(RequestId::new(1, 1), 80, 20, 20, policy),
+        ];
+        let (coordinator, physical, mut lineage) =
+            causal_round_zero_fixture(selection(Qwen3PlanBucket::SpeculativeS8K4C8192), &seeds);
+        lineage.generated.swap(0, 1);
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            0,
+        ));
+        lineage.generated.swap(0, 1);
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(8),
+            0,
+        ));
+        assert!(!validate_causal_lineage_join(
+            &coordinator,
+            &physical,
+            &lineage,
+            CompletionEpoch::new(7),
+            1,
+        ));
+    }
+
+    #[test]
+    fn public_coordinator_profiles_repeat_then_stop_and_cancel_all_live_lanes() {
+        use crate::speculative_generation_loop::CheckedMemberObservationV1;
+        use crate::{
+            CheckedCompletionSemantics, M1SpeculativeCancellationReasonV1,
+            M1SpeculativeMemberStatusV1, M1SpeculativeTerminalReasonV1, M1SpeculativeTokenBlockV1,
+        };
+
+        let cases = [
+            (Qwen3PlanBucket::SpeculativeS1K4C8192, 1_usize),
+            (Qwen3PlanBucket::SpeculativeS8K4C8192, 8),
+            (Qwen3PlanBucket::SpeculativeS1K8C8192, 1),
+            (Qwen3PlanBucket::SpeculativeS1K16C8192, 1),
+        ];
+        for (bucket, member_count) in cases {
+            let target = selection(bucket);
+            let policy = crate::M1SpeculativeGenerationPolicyV1::new(32, &[999]).unwrap();
+            let seeds: Vec<_> = (0..member_count)
+                .map(|lane| {
+                    crate::M1SpeculativeMemberSeedV1::new(
+                        RequestId::new(u32::try_from(lane).unwrap(), 1),
+                        70 + u32::try_from(lane).unwrap(),
+                        10,
+                        10,
+                        policy,
+                    )
+                })
+                .collect();
+            let mut coordinator = M1SpeculativeGenerationLoopV1::new(target, &seeds).unwrap();
+            let roster = coordinator.active_roster();
+            assert_eq!(roster.len(), member_count);
+
+            let first = coordinator
+                .bind_round(0, CompletionEpoch::new(40), &roster)
+                .unwrap();
+            let first_observations: Vec<_> = roster
+                .iter()
+                .copied()
+                .map(|request| CheckedMemberObservationV1 {
+                    request,
+                    semantics: CheckedCompletionSemantics::Speculative {
+                        accepted_draft_tokens: 0,
+                        correction_or_bonus: 777,
+                    },
+                    emitted: M1SpeculativeTokenBlockV1::from_slice(&[777]).unwrap(),
+                })
+                .collect();
+            let first_controls: Vec<_> = roster
+                .iter()
+                .copied()
+                .map(M1SpeculativeMemberControlV1::continuing)
+                .collect();
+            let first = coordinator
+                .preflight_observed_round(
+                    first,
+                    target,
+                    CompletionEpoch::new(40),
+                    &first_observations,
+                    &first_controls,
+                )
+                .unwrap();
+            let first = coordinator.commit_preflighted_round(first).unwrap();
+            assert_eq!(first.next_active_roster(), roster.as_slice());
+
+            let second_roster = coordinator.active_roster();
+            let second = coordinator
+                .bind_round(1, CompletionEpoch::new(41), &second_roster)
+                .unwrap();
+            let second_observations: Vec<_> = second_roster
+                .iter()
+                .enumerate()
+                .map(|(lane, request)| {
+                    let token = if lane == 0 { 999 } else { 778 };
+                    CheckedMemberObservationV1 {
+                        request: *request,
+                        semantics: CheckedCompletionSemantics::Speculative {
+                            accepted_draft_tokens: 0,
+                            correction_or_bonus: token,
+                        },
+                        emitted: M1SpeculativeTokenBlockV1::from_slice(&[token]).unwrap(),
+                    }
+                })
+                .collect();
+            let second_controls: Vec<_> = second_roster
+                .iter()
+                .enumerate()
+                .map(|(lane, request)| {
+                    if member_count == 8 && lane == 1 {
+                        M1SpeculativeMemberControlV1::cancelling(
+                            *request,
+                            M1SpeculativeCancellationReasonV1::Deadline,
+                        )
+                    } else {
+                        M1SpeculativeMemberControlV1::continuing(*request)
+                    }
+                })
+                .collect();
+            let second = coordinator
+                .preflight_observed_round(
+                    second,
+                    target,
+                    CompletionEpoch::new(41),
+                    &second_observations,
+                    &second_controls,
+                )
+                .unwrap();
+            let second = coordinator.commit_preflighted_round(second).unwrap();
+            assert_eq!(
+                second.members()[0].status(),
+                M1SpeculativeMemberStatusV1::Completed(M1SpeculativeTerminalReasonV1::StopToken {
+                    token: 999
+                })
+            );
+            if member_count == 8 {
+                assert_eq!(
+                    second.members()[1].status(),
+                    M1SpeculativeMemberStatusV1::Cancelled(
+                        M1SpeculativeCancellationReasonV1::Deadline
+                    )
+                );
+                assert_eq!(second.next_active_roster().len(), 6);
+            } else {
+                assert!(second.next_active_roster().is_empty());
+            }
+        }
+    }
+
+    #[test]
+    fn constructor_header_rejects_wrong_coordinator_queue_epoch_and_round() {
+        let selected = selection(Qwen3PlanBucket::SpeculativeS1K4C8192);
+        let first = coordinator(selected);
+        let other = coordinator(selected);
+        let request = RequestId::new(0, 1);
+        let active = [request];
+        let coherent = || M1AuthenticatedSpeculativeAssociationHeaderV1 {
+            coordinator_identity: first.identity(),
+            prior_identity: first.identity(),
+            selection: selected,
+            prior_selection: selected,
+            checked_selection: selected,
+            queue_selection: selected,
+            queue_shape: M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            coordinator_last_epoch: Some(CompletionEpoch::new(7)),
+            prior_epoch: CompletionEpoch::new(7),
+            checked_epoch: CompletionEpoch::new(7),
+            coordinator_next_round: 2,
+            prior_round: 1,
+            active: &active,
+            prior_active: &active,
+            released_active: &active,
+        };
+        assert_eq!(validate_prior_association_header(&coherent()), Ok(()));
+
+        let mut hostile = coherent();
+        hostile.prior_identity = other.identity();
+        assert_eq!(
+            validate_prior_association_header(&hostile),
+            Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::CoordinatorIdentity),
+        );
+        let mut hostile = coherent();
+        hostile.queue_shape = M1PhysicalFixedBatchShapeV1::SpeculativeK8;
+        assert_eq!(
+            validate_prior_association_header(&hostile),
+            Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::QueueShape),
+        );
+        let mut hostile = coherent();
+        hostile.checked_epoch = CompletionEpoch::new(8);
+        assert_eq!(
+            validate_prior_association_header(&hostile),
+            Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorEpoch),
+        );
+        let mut hostile = coherent();
+        hostile.coordinator_next_round = 3;
+        assert_eq!(
+            validate_prior_association_header(&hostile),
+            Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorRound),
+        );
+        let mut hostile = coherent();
+        hostile.queue_selection = selection(Qwen3PlanBucket::SpeculativeS1K8C8192);
+        assert_eq!(
+            validate_prior_association_header(&hostile),
+            Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::Selection),
+        );
+        let wrong_roster = [RequestId::new(1, 1)];
+        let mut hostile = coherent();
+        hostile.released_active = &wrong_roster;
+        assert_eq!(
+            validate_prior_association_header(&hostile),
+            Err(M1AuthenticatedSpeculativeExecutorInitErrorV1::PriorRoster),
+        );
+    }
+
+    #[test]
+    fn terminal_quarantine_cleanup_faults_engine_and_preserves_concrete_source() {
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        assert!(!engine.is_faulted());
+        let cleanup = terminal_quarantine(
+            &mut engine,
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
+            M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Coordinator(
+                crate::M1SpeculativeGenerationLoopErrorV1::NoActiveMembers,
+            ),
+            ("retained logical lineage", 2_u64),
+        )
+        .unwrap()
+        .unwrap_err();
+        assert!(engine.is_faulted());
+        assert_eq!(
+            cleanup.stage(),
+            M1AuthenticatedSpeculativePhysicalRoundStageV1::CoordinatorPreflight,
+        );
+        assert!(cleanup.retains_logical_custody());
+        assert!(matches!(
+            cleanup.source(),
+            M1AuthenticatedSpeculativePhysicalRoundTeardownFailureSourceV1::TerminalQuarantine(
+                M1AuthenticatedSpeculativePhysicalRoundTerminalSourceV1::Coordinator(
+                    crate::M1SpeculativeGenerationLoopErrorV1::NoActiveMembers,
+                ),
+            ),
+        ));
+    }
+
+    #[test]
+    fn public_failure_dispositions_redact_all_retained_authority() {
+        let released = M1AuthenticatedSpeculativeCleanReleaseV1 {
+            retained: Box::new("secret released authority"),
+        };
+        assert!(released.queue_released());
+        assert!(released.engine_quarantined());
+        assert!(released.retains_custody());
+        let released_debug = format!("{released:?}");
+        assert!(!released_debug.contains("secret released authority"));
+
+        let quarantined = M1AuthenticatedSpeculativeTerminalQuarantineV1 {
+            retained: Box::new("secret quarantined authority"),
+        };
+        assert!(quarantined.engine_quarantined());
+        assert!(quarantined.retains_custody());
+        let quarantined_debug = format!("{quarantined:?}");
+        assert!(!quarantined_debug.contains("secret quarantined authority"));
+    }
+
+    #[test]
+    fn authenticated_tail_pages_use_binding_width_only_after_detach() {
+        let source = include_str!("authenticated_speculative_executor.rs");
+        let start = source
+            .find("fn execute_round_pending_with_post_submit_and_deadline")
+            .unwrap();
+        let body = &source[start..];
+        let schedule = body.find("released.schedule_next_exact").unwrap();
+        let materialize = body
+            .find("materialize_m1_authenticated_speculative_round_tail_pages_v1")
+            .unwrap();
+        let reserve = body
+            .find("reserve_m1_authenticated_long_lived_queue_rearm_kv_v1")
+            .unwrap();
+        assert!(schedule < materialize && materialize < reserve);
+        let call = &body[materialize..reserve];
+        assert!(call.contains("u32::from(binding.shape().draft_tokens())"));
+        assert!(!call.contains("queue.shape()"));
+        assert!(!call.contains(".unwrap()"));
+        assert!(!call.contains(".expect("));
+    }
+}

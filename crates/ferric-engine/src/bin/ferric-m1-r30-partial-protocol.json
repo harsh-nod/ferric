@@ -1,0 +1,56 @@
+{
+  "authority": "ferric-m1-r30-partial-protocol-only",
+  "bundle_files": [
+    "capture.json",
+    "protocol.json"
+  ],
+  "case": "cancellation",
+  "fixed_workload": {
+    "active_length": 128,
+    "case": "target-prefill-s1-t128-retirement-before-observation",
+    "completion_wait_policy": {
+      "id": "ferric-m1-completion-progress-wait-v2",
+      "max_consecutive_scans_without_progress": 8192,
+      "minimum_pending_scan_pause_micros": 10000,
+      "timeout_basis": "paced-completion-signal-scans",
+      "total_scan_bound_rule": "(packet-count+1)*max-consecutive-scans-without-progress"
+    },
+    "context_length": 0,
+    "format": "FERRIC-M1-R30-CANCELLATION-WORKLOAD-V5",
+    "input_bytes": 512,
+    "input_token": 1,
+    "input_token_count": 128,
+    "lane_count": 1,
+    "selection": "target-prefill-s1-t128"
+  },
+  "format": "FERRIC-M1-R30-PARTIAL-PROTOCOL-V5",
+  "hardware_claim": "none",
+  "lifecycle": [
+    "queue-published",
+    "scheduler-retirement-requested",
+    "precompletion-reclaim-rejected",
+    "queue-completion-wait-satisfied",
+    "signals-recycled",
+    "physical-completion-readback-observed",
+    "semantic-completion-joined",
+    "exact-completion-settled",
+    "retired-pages-released",
+    "queue-released"
+  ],
+  "milestone": "M1",
+  "nonclaim": "Partial fixed-workload physical cancellation capture only. Scheduler retirement before completion observation is not GPU work preemption. This protocol makes no hardware claim, does not establish canary integrity, exhaustion handling, rollback refinement, injected device-fault coverage, required external evidence, independent validation, hardware correctness, or close m1.r30.",
+  "obligation_id": "m1.r30",
+  "required_complete_case_roster": [
+    "canary",
+    "cancellation",
+    "exhaustion",
+    "fault-injection",
+    "rollback"
+  ],
+  "retirement_semantics": {
+    "device_preemption": false,
+    "operation": "scheduler-retirement-before-positive-physical-completion-observation"
+  },
+  "status": "partial-non-evidence",
+  "target": "gfx942:xnack-"
+}

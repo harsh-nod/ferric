@@ -1,0 +1,853 @@
+--- a/crates/cargo-fe2o3/tests/worker_v3_load_envelope_v2.rs
++++ b/crates/cargo-fe2o3/tests/worker_v3_load_envelope_v2.rs
+@@ -4,14 +4,20 @@
+ ))]
+
+ use std::fs::{self, File, OpenOptions};
+-use std::io::Write;
++use std::io::{Read, Seek, SeekFrom, Write};
+ use std::os::unix::fs::PermissionsExt;
++use std::os::unix::io::AsRawFd;
+
+-use ed25519_dalek::SigningKey;
++use ed25519_dalek::{Signer, SigningKey};
+ use fe2o3_artifact_transaction::{
+     CompilerModuleHandoffSlotV3, InertCompilerExecutionSubjectV1, RetainedDurableDirectoryV1,
+     retire_worker_v3_publication_intent_after_load_readiness_v1,
+ };
++use fe2o3_external_anchor_protocol::{
++    AnchorPositionV1, AnchorTransitionReceiptV1, AnchoredStateV1, CallerNonceV1,
++    HashChainHeadV1, PinnedAnchorKeyV1, UnsignedAnchorObservationV1,
++};
++use fe2o3_host::WorkerV3SafetyPropertiesV1;
+ use fe2o3_runtime_protocol::{
+     COMPILER_EXECUTION_RECEIPT_CARRIAGE_BYTES_V1, CompilerExecutionAttestationChallengeV1,
+     CompilerExecutionAttestationReceiptV1, CompilerExecutionAttestationRequestV1,
+@@ -21,10 +27,29 @@
+     MAX_WORKER_V3_LOAD_ENVELOPE_BYTES_V2, MAX_WORKER_V3_LOAD_ENVELOPE_REPLAY_BYTES_V2,
+     WORKER_V3_LOAD_ENVELOPE_MAGIC_V2, WorkerV3LoadEnvelopeBindingFieldV2,
+     WorkerV3LoadEnvelopeCodecBudgetV2, WorkerV3LoadEnvelopeErrorV1, WorkerV3LoadEnvelopeErrorV2,
++    CompilerExecutionCurrentRecordAttestationV3, CompilerExecutionCurrentRecordVerificationV3,
++    CompilerExecutionExternalAnchorTransactionV1, RecoveredWorkerV3LoadEnvelopeV2,
+     WorkerV3LoadEnvelopeV2, WorkerV3LoadEnvelopeWireV1, WorkerV3LoadEnvelopeWireV2,
+     recover_worker_v3_load_envelope_from_retained_directory_v2, recover_worker_v3_load_envelope_v1,
+     recover_worker_v3_load_envelope_v2,
+ };
++use ferric_qwen3_all_kernels_worker_v3_promotion_prerequisite_v1::{
++    M1AllKernelsPromotionBindingFieldV1, M1AllKernelsPromotionExternalInputsV1,
++    M1AllKernelsPromotionPrerequisiteErrorV1,
++    collect_m1_all_kernels_promotion_prerequisite_v1,
++};
++use ferric_qwen3_all_kernels_worker_v3_source_pin_v1::extract_m1_aggregate_source_pin_v1;
++use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_receipt::{
++    M1AllKernelsProtectedReceiptCompilerClaimsV1, M1AllKernelsProtectedReceiptEntryV1,
++    M1AllKernelsProtectedReceiptRequestClaimsV1, M1AllKernelsProtectedReceiptSourcePinV1,
++    M1AllKernelsProtectedVerifierReceiptV1, M1AllKernelsProtectedVerifierTrustPolicyV1,
++    M1AllKernelsUnsignedProtectedVerifierReceiptV1,
++};
++use ferric_qwen3_all_kernels_worker_v3_verifier_v1::protected_verifier_service::{
++    M1AllKernelsProtectedVerifierServiceEntryV1,
++    M1AllKernelsProtectedVerifierServiceRequestV1,
++};
++use sha2::{Digest, Sha256};
+
+ #[path = "fixtures/worker_v3_hsaco_admission.rs"]
+ mod worker_v3_fixture;
+@@ -62,6 +87,797 @@
+     CompilerExecutionReceiptCarriageV1::new(policy, request, publication, acknowledgment).unwrap()
+ }
+
++struct CollectorMaterial {
++    trust_policy: M1AllKernelsProtectedVerifierTrustPolicyV1,
++    service_request: M1AllKernelsProtectedVerifierServiceRequestV1,
++    compiler_policy: CompilerExecutionIssuerPolicyV1,
++    receipt: M1AllKernelsProtectedVerifierReceiptV1,
++    current_verification: CompilerExecutionCurrentRecordVerificationV3,
++    current_attestation: CompilerExecutionCurrentRecordAttestationV3,
++    challenge: [u8; 32],
++}
++
++impl CollectorMaterial {
++    fn external(&self) -> M1AllKernelsPromotionExternalInputsV1<'_> {
++        M1AllKernelsPromotionExternalInputsV1::new(
++            self.receipt.encode_canonical(),
++            &self.trust_policy,
++            &self.service_request,
++            &self.compiler_policy,
++            self.challenge,
++            self.current_verification.canonical_bytes(),
++            self.current_attestation.canonical_bytes(),
++        )
++        .unwrap()
++    }
++}
++
++fn current_records(
++    carriage: &CompilerExecutionReceiptCarriageV1,
++    challenge: [u8; 32],
++) -> (
++    CompilerExecutionCurrentRecordVerificationV3,
++    CompilerExecutionCurrentRecordAttestationV3,
++) {
++    let signing_key = SigningKey::from_bytes(&[0x61; 32]);
++    let anchor_signing_key = SigningKey::from_bytes(&[0x62; 32]);
++    assert_eq!(carriage.policy().verifying_key(), signing_key.verifying_key().as_bytes());
++    assert_eq!(
++        carriage.policy().external_anchor_verifying_key(),
++        anchor_signing_key.verifying_key().as_bytes()
++    );
++    let transaction = CompilerExecutionExternalAnchorTransactionV1::new(
++        carriage.policy().clone(),
++        carriage.request().clone(),
++        carriage.publication().clone(),
++    )
++    .unwrap();
++    let anchor_key =
++        PinnedAnchorKeyV1::from_bytes(anchor_signing_key.verifying_key().to_bytes()).unwrap();
++    let pending = AnchoredStateV1::from_local_state(0, HashChainHeadV1::from_bytes([0; 32]))
++        .prepare(transaction.external_anchor_digest(), &anchor_key)
++        .unwrap()
++        .begin_advance(CallerNonceV1::from_bytes([0x67; 32]), &anchor_key)
++        .unwrap();
++    let unsigned =
++        UnsignedAnchorObservationV1::from_challenge(pending.challenge(), AnchorPositionV1::Proposed);
++    let signature = anchor_signing_key.sign(&unsigned.signing_bytes()).to_bytes();
++    let commit_receipt = AnchorTransitionReceiptV1::new(
++        pending.challenge().clone(),
++        &unsigned.attach_signature(signature),
++        &anchor_key,
++    )
++    .unwrap();
++    let currentness_challenge =
++        CompilerExecutionCurrentRecordVerificationV3::external_anchor_currentness_challenge(
++            carriage,
++            &commit_receipt,
++            challenge,
++        )
++        .unwrap();
++    let unsigned = UnsignedAnchorObservationV1::from_challenge(
++        &currentness_challenge,
++        AnchorPositionV1::Proposed,
++    );
++    let signature = anchor_signing_key.sign(&unsigned.signing_bytes()).to_bytes();
++    let currentness_receipt = AnchorTransitionReceiptV1::new(
++        currentness_challenge,
++        &unsigned.attach_signature(signature),
++        &anchor_key,
++    )
++    .unwrap();
++    let verification = CompilerExecutionCurrentRecordVerificationV3::new(
++        carriage,
++        commit_receipt,
++        currentness_receipt,
++        challenge,
++        [0x91; 32],
++        [0x92; 32],
++    )
++    .unwrap();
++    let attestation = CompilerExecutionCurrentRecordAttestationV3::issue(
++        carriage.policy(),
++        carriage,
++        verification.clone(),
++        challenge,
++        &signing_key,
++    )
++    .unwrap();
++    (verification, attestation)
++}
++
++fn hostile_identity(mut exact: [u8; 32]) -> [u8; 32] {
++    exact[0] ^= 1;
++    exact
++}
++
++fn binding_identity(
++    mutation: Option<M1AllKernelsPromotionBindingFieldV1>,
++    field: M1AllKernelsPromotionBindingFieldV1,
++    exact: [u8; 32],
++) -> [u8; 32] {
++    if mutation == Some(field) {
++        hostile_identity(exact)
++    } else {
++        exact
++    }
++}
++
++fn collector_material_with_binding_mutation(
++    recovered: &RecoveredWorkerV3LoadEnvelopeV2,
++    mutation: Option<M1AllKernelsPromotionBindingFieldV1>,
++) -> CollectorMaterial {
++    let challenge = [0x73; 32];
++    let carriage = recovered.wire().compiler_execution_receipt();
++    let (current_verification, current_attestation) = current_records(carriage, challenge);
++    let source_pin = extract_m1_aggregate_source_pin_v1(
++        recovered.canonical_evidence_view().exact_canonical_bytes(),
++    )
++    .unwrap()
++    .source_pin();
++    let source_pin = M1AllKernelsProtectedReceiptSourcePinV1::new(
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::SourcePin,
++            source_pin.compiler_module_sha256(),
++        ),
++        source_pin.compiler_module_length(),
++        source_pin.compiler_handoff_sha256(),
++        source_pin.compiler_handoff_length(),
++        source_pin.symbol_manifest_sha256(),
++        source_pin.symbol_manifest_length(),
++    )
++    .unwrap();
++    let artifact = recovered.exact_artifact_bytes();
++    let request_claims = M1AllKernelsProtectedReceiptRequestClaimsV1::new(
++        [0x31; 32],
++        [0x32; 32],
++        [0x33; 32],
++        [0x34; 32],
++        source_pin,
++        [0x35; 32],
++        [0x36; 32],
++        [0x37; 32],
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::FinalizedHsacoSha256,
++            Sha256::digest(artifact).into(),
++        ),
++        if mutation == Some(M1AllKernelsPromotionBindingFieldV1::FinalizedHsacoLength) {
++            artifact.len() as u64 + 1
++        } else {
++            artifact.len() as u64
++        },
++    )
++    .unwrap();
++    let subject = recovered
++        .wire()
++        .reconstructed_compiler_execution_subject_v1()
++        .unwrap();
++    let compiler_claims = M1AllKernelsProtectedReceiptCompilerClaimsV1::new(
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerSubject,
++            *subject.identity().sha256(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerCarriage,
++            *carriage.identity().as_bytes(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerPolicy,
++            *carriage.policy().identity().as_bytes(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerIssuerJournal,
++            carriage.publication().issuer_journal_identity(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerOccurrence,
++            carriage.publication().compiler_occurrence_identity(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerReceipt,
++            *carriage.publication().receipt_identity().as_bytes(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerPublication,
++            *carriage.publication().identity().as_bytes(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerAcknowledgment,
++            *carriage.acknowledgment().identity().as_bytes(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerWorkerLedger,
++            carriage.acknowledgment().worker_ledger_record_identity(),
++        ),
++        if mutation == Some(M1AllKernelsPromotionBindingFieldV1::CompilerSequence) {
++            carriage.acknowledgment().sequence() + 1
++        } else {
++            carriage.acknowledgment().sequence()
++        },
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerPriorRollbackAnchor,
++            carriage.publication().receipt().prior_rollback_anchor(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CompilerCurrentRollbackAnchor,
++            carriage.acknowledgment().current_rollback_anchor(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CurrentVerificationIdentity,
++            *current_verification.identity().as_bytes(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::CurrentAttestationIdentity,
++            *current_attestation.identity().as_bytes(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::ProtectedPolicyVerification,
++            current_verification.protected_policy_verification_identity(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::ProtectedWorkerLedgerVerification,
++            current_verification.protected_worker_ledger_verification_identity(),
++        ),
++        binding_identity(
++            mutation,
++            M1AllKernelsPromotionBindingFieldV1::ExternalRollbackVerification,
++            current_verification.external_rollback_verification_identity(),
++        ),
++    )
++    .unwrap();
++    let entries = core::array::from_fn(|index| {
++        let seed = index as u8;
++        M1AllKernelsProtectedReceiptEntryV1::new(
++            index as u16,
++            [0x40 + seed; 32],
++            [0x50 + seed; 32],
++            [0x60 + (seed % 3); 32],
++            [0x80 + seed; 32],
++            [0xa0 + seed; 32],
++            [0xc0 + seed; 32],
++            WorkerV3SafetyPropertiesV1::required(),
++        )
++        .unwrap()
++    });
++    let signing_key = SigningKey::from_bytes(&[0x21; 32]);
++    let trust_policy = M1AllKernelsProtectedVerifierTrustPolicyV1::new(
++        signing_key.verifying_key().to_bytes(),
++        [0xe1; 32],
++        [0xe2; 32],
++    )
++    .unwrap();
++    let unsigned = M1AllKernelsUnsignedProtectedVerifierReceiptV1::new(
++        trust_policy.identity(),
++        request_claims,
++        compiler_claims,
++        [0xe1; 32],
++        [0xe2; 32],
++        [0xe3; 32],
++        entries,
++    )
++    .unwrap();
++    let signature = signing_key.sign(&unsigned.signing_bytes()).to_bytes();
++    let receipt = unsigned.attach_signature(signature);
++    let service_entries = core::array::from_fn(|index| {
++        M1AllKernelsProtectedVerifierServiceEntryV1::from_receipt_entry(&receipt.entries()[index])
++    });
++    let service_request = M1AllKernelsProtectedVerifierServiceRequestV1::new(
++        trust_policy.identity(),
++        *receipt.request_claims(),
++        *receipt.compiler_claims(),
++        service_entries,
++    )
++    .unwrap();
++    CollectorMaterial {
++        trust_policy,
++        service_request,
++        compiler_policy: carriage.policy().clone(),
++        receipt,
++        current_verification,
++        current_attestation,
++        challenge,
++    }
++}
++
++fn collector_material(recovered: &RecoveredWorkerV3LoadEnvelopeV2) -> CollectorMaterial {
++    collector_material_with_binding_mutation(recovered, None)
++}
++
++fn substituted_service_request(
++    material: &CollectorMaterial,
++) -> M1AllKernelsProtectedVerifierServiceRequestV1 {
++    let receipt = &material.receipt;
++    let claims = receipt.request_claims();
++    let changed = M1AllKernelsProtectedReceiptRequestClaimsV1::new(
++        [0x39; 32],
++        claims.roster_identity(),
++        claims.host_lineage_identity(),
++        claims.finalizer_derivation_sha256(),
++        claims.source_pin(),
++        claims.capsule_sha256(),
++        claims.formal_memory_receipt_sha256(),
++        claims.proof_binding_receipt_sha256(),
++        claims.finalized_hsaco_sha256(),
++        claims.finalized_hsaco_length(),
++    )
++    .unwrap();
++    let entries = core::array::from_fn(|index| {
++        M1AllKernelsProtectedVerifierServiceEntryV1::from_receipt_entry(&receipt.entries()[index])
++    });
++    M1AllKernelsProtectedVerifierServiceRequestV1::new(
++        material.trust_policy.identity(),
++        changed,
++        *receipt.compiler_claims(),
++        entries,
++    )
++    .unwrap()
++}
++
++#[test]
++fn ferric_all12_collector_accepts_exact_live_inputs_and_rejects_hostile_state() {
++    let worker_v3_fixture::PublishedWorkerV3Fixture {
++        directory,
++        producer,
++        attempt,
++        published,
++    } = worker_v3_fixture::published_ferric_all12_worker_v3_fixture();
++    let subject = published.compiler_execution_subject_v1().unwrap();
++    let envelope = WorkerV3LoadEnvelopeV2::from_published_hsaco_v1(
++        published,
++        carriage_for_subject(&subject, 0x61),
++    )
++    .unwrap();
++    let intent = envelope
++        .wire()
++        .replay()
++        .publication_intent_record()
++        .identity();
++    let readiness = envelope
++        .persist_durable_replay_custody_v2(&directory.0)
++        .unwrap();
++    retire_worker_v3_publication_intent_after_load_readiness_v1(
++        &directory.0,
++        &producer,
++        attempt,
++        intent,
++        readiness.receipt(),
++    )
++    .unwrap();
++    drop(envelope);
++    fs::set_permissions(&directory.0, fs::Permissions::from_mode(0o700)).unwrap();
++    let retained =
++        RetainedDurableDirectoryV1::admit_service_owned(File::open(&directory.0).unwrap().into())
++            .unwrap();
++    let recovered =
++        recover_worker_v3_load_envelope_from_retained_directory_v2(&retained, attempt).unwrap();
++    let material = collector_material(&recovered);
++    drop(recovered);
++
++    let prerequisite = collect_m1_all_kernels_promotion_prerequisite_v1(
++        &retained,
++        attempt,
++        &material.external(),
++    )
++    .unwrap();
++    assert!(!prerequisite.is_current());
++    assert!(!prerequisite.grants_publication_authority());
++    assert!(!prerequisite.grants_load_authority());
++    assert!(!prerequisite.grants_launch_authority());
++    assert!(prerequisite.requires_external_promotion_service());
++    let debug = format!("{prerequisite:?}");
++    assert!(debug.contains("holds_current_publication_lock: true"));
++    assert!(!debug.contains(&"73".repeat(32)));
++    let cooperative_lock = File::open(&directory.0).unwrap();
++    assert_eq!(
++        unsafe { libc::flock(cooperative_lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
++        -1,
++        "the live collector owner must retain the cooperative publication lock"
++    );
++    let handoff = prerequisite
++        .revalidate_and_seal_for_external_promotion_v1()
++        .unwrap();
++    assert!(!handoff.is_current());
++    assert!(!handoff.grants_publication_authority());
++    assert!(!handoff.grants_load_authority());
++    assert!(!handoff.grants_launch_authority());
++    assert_eq!(
++        unsafe { libc::flock(cooperative_lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
++        -1,
++        "the sealed external handoff must retain the cooperative publication lock"
++    );
++    drop(handoff);
++    assert_eq!(
++        unsafe { libc::flock(cooperative_lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) },
++        0,
++        "dropping the handoff must release its cooperative lock"
++    );
++    assert_eq!(unsafe { libc::flock(cooperative_lock.as_raw_fd(), libc::LOCK_UN) }, 0);
++
++    // This collector only correlates a caller challenge. Durable replay consumption belongs to
++    // the external promotion service, so the same valid material is accepted again after drop.
++    drop(
++        collect_m1_all_kernels_promotion_prerequisite_v1(
++            &retained,
++            attempt,
++            &material.external(),
++        )
++        .unwrap(),
++    );
++
++    let substituted_request = substituted_service_request(&material);
++    let substituted = M1AllKernelsPromotionExternalInputsV1::new(
++        material.receipt.encode_canonical(),
++        &material.trust_policy,
++        &substituted_request,
++        &material.compiler_policy,
++        material.challenge,
++        material.current_verification.canonical_bytes(),
++        material.current_attestation.canonical_bytes(),
++    )
++    .unwrap();
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(&retained, attempt, &substituted),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::Binding(
++            M1AllKernelsPromotionBindingFieldV1::ProtectedServiceRequest
++        ))
++    ));
++
++    let recovered =
++        recover_worker_v3_load_envelope_from_retained_directory_v2(&retained, attempt).unwrap();
++    for field in [
++        M1AllKernelsPromotionBindingFieldV1::SourcePin,
++        M1AllKernelsPromotionBindingFieldV1::FinalizedHsacoSha256,
++        M1AllKernelsPromotionBindingFieldV1::FinalizedHsacoLength,
++        M1AllKernelsPromotionBindingFieldV1::CompilerSubject,
++        M1AllKernelsPromotionBindingFieldV1::CompilerCarriage,
++        M1AllKernelsPromotionBindingFieldV1::CompilerPolicy,
++        M1AllKernelsPromotionBindingFieldV1::CompilerIssuerJournal,
++        M1AllKernelsPromotionBindingFieldV1::CompilerOccurrence,
++        M1AllKernelsPromotionBindingFieldV1::CompilerReceipt,
++        M1AllKernelsPromotionBindingFieldV1::CompilerPublication,
++        M1AllKernelsPromotionBindingFieldV1::CompilerAcknowledgment,
++        M1AllKernelsPromotionBindingFieldV1::CompilerWorkerLedger,
++        M1AllKernelsPromotionBindingFieldV1::CompilerSequence,
++        M1AllKernelsPromotionBindingFieldV1::CompilerPriorRollbackAnchor,
++        M1AllKernelsPromotionBindingFieldV1::CompilerCurrentRollbackAnchor,
++        M1AllKernelsPromotionBindingFieldV1::CurrentVerificationIdentity,
++        M1AllKernelsPromotionBindingFieldV1::CurrentAttestationIdentity,
++        M1AllKernelsPromotionBindingFieldV1::ProtectedPolicyVerification,
++        M1AllKernelsPromotionBindingFieldV1::ProtectedWorkerLedgerVerification,
++        M1AllKernelsPromotionBindingFieldV1::ExternalRollbackVerification,
++    ] {
++        let hostile = collector_material_with_binding_mutation(&recovered, Some(field));
++        assert!(matches!(
++            collect_m1_all_kernels_promotion_prerequisite_v1(
++                &retained,
++                attempt,
++                &hostile.external(),
++            ),
++            Err(M1AllKernelsPromotionPrerequisiteErrorV1::Binding(actual)) if actual == field
++        ));
++    }
++
++    let other_policy = carriage_for_subject(
++        &recovered
++            .wire()
++            .reconstructed_compiler_execution_subject_v1()
++            .unwrap(),
++        0x63,
++    )
++    .policy()
++    .clone();
++    let wrong_policy = M1AllKernelsPromotionExternalInputsV1::new(
++        material.receipt.encode_canonical(),
++        &material.trust_policy,
++        &material.service_request,
++        &other_policy,
++        material.challenge,
++        material.current_verification.canonical_bytes(),
++        material.current_attestation.canonical_bytes(),
++    )
++    .unwrap();
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(&retained, attempt, &wrong_policy),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::Binding(
++            M1AllKernelsPromotionBindingFieldV1::CompilerIssuerPolicy
++        ))
++    ));
++
++    let (substituted_verification, _) =
++        current_records(recovered.wire().compiler_execution_receipt(), [0x74; 32]);
++    let wrong_verification = M1AllKernelsPromotionExternalInputsV1::new(
++        material.receipt.encode_canonical(),
++        &material.trust_policy,
++        &material.service_request,
++        &material.compiler_policy,
++        material.challenge,
++        substituted_verification.canonical_bytes(),
++        material.current_attestation.canonical_bytes(),
++    )
++    .unwrap();
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(&retained, attempt, &wrong_verification),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::Binding(
++            M1AllKernelsPromotionBindingFieldV1::CurrentVerification
++        ))
++    ));
++    drop(recovered);
++
++    let wrong_challenge = M1AllKernelsPromotionExternalInputsV1::new(
++        material.receipt.encode_canonical(),
++        &material.trust_policy,
++        &material.service_request,
++        &material.compiler_policy,
++        [0x74; 32],
++        material.current_verification.canonical_bytes(),
++        material.current_attestation.canonical_bytes(),
++    )
++    .unwrap();
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(&retained, attempt, &wrong_challenge),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::CurrentAttestation(_))
++    ));
++
++    let mut bad_signature = material.receipt.encode_canonical().to_vec();
++    *bad_signature.last_mut().unwrap() ^= 1;
++    let bad_signature = M1AllKernelsPromotionExternalInputsV1::new(
++        &bad_signature,
++        &material.trust_policy,
++        &material.service_request,
++        &material.compiler_policy,
++        material.challenge,
++        material.current_verification.canonical_bytes(),
++        material.current_attestation.canonical_bytes(),
++    )
++    .unwrap();
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(&retained, attempt, &bad_signature),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::ProtectedReceipt(_))
++    ));
++
++    let malformed_receipt = M1AllKernelsPromotionExternalInputsV1::new(
++        &[1],
++        &material.trust_policy,
++        &material.service_request,
++        &material.compiler_policy,
++        material.challenge,
++        material.current_verification.canonical_bytes(),
++        material.current_attestation.canonical_bytes(),
++    )
++    .unwrap();
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(&retained, attempt, &malformed_receipt),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::ProtectedReceipt(_))
++    ));
++
++    let malformed_verification = M1AllKernelsPromotionExternalInputsV1::new(
++        material.receipt.encode_canonical(),
++        &material.trust_policy,
++        &material.service_request,
++        &material.compiler_policy,
++        material.challenge,
++        &[1],
++        material.current_attestation.canonical_bytes(),
++    )
++    .unwrap();
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(
++            &retained,
++            attempt,
++            &malformed_verification,
++        ),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::CurrentVerification(_))
++    ));
++
++    let malformed_attestation = M1AllKernelsPromotionExternalInputsV1::new(
++        material.receipt.encode_canonical(),
++        &material.trust_policy,
++        &material.service_request,
++        &material.compiler_policy,
++        material.challenge,
++        material.current_verification.canonical_bytes(),
++        &[1],
++    )
++    .unwrap();
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(
++            &retained,
++            attempt,
++            &malformed_attestation,
++        ),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::CurrentAttestation(_))
++    ));
++
++    let artifact_path = fs::read_dir(&directory.0)
++        .unwrap()
++        .map(Result::unwrap)
++        .map(|entry| entry.path())
++        .find(|path| {
++            path.file_name()
++                .and_then(|name| name.to_str())
++                .is_some_and(|name| name.starts_with(".fe2o3-link-artifact-v1-"))
++        })
++        .unwrap();
++    fs::set_permissions(&artifact_path, fs::Permissions::from_mode(0o600)).unwrap();
++    let mut artifact = OpenOptions::new()
++        .read(true)
++        .write(true)
++        .open(&artifact_path)
++        .unwrap();
++    let mut first = [0_u8; 1];
++    artifact.read_exact(&mut first).unwrap();
++    artifact.seek(SeekFrom::Start(0)).unwrap();
++    artifact.write_all(&[first[0] ^ 1]).unwrap();
++    artifact.sync_all().unwrap();
++    drop(artifact);
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(
++            &retained,
++            attempt,
++            &material.external(),
++        ),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::Recovery(_))
++    ));
++
++    let worker_v3_fixture::PublishedWorkerV3Fixture {
++        directory: stale_directory,
++        producer: stale_producer,
++        attempt: stale_attempt,
++        published: stale_published,
++    } = worker_v3_fixture::published_ferric_all12_worker_v3_fixture();
++    let stale_subject = stale_published.compiler_execution_subject_v1().unwrap();
++    let stale_envelope = WorkerV3LoadEnvelopeV2::from_published_hsaco_v1(
++        stale_published,
++        carriage_for_subject(&stale_subject, 0x61),
++    )
++    .unwrap();
++    let stale_intent = stale_envelope
++        .wire()
++        .replay()
++        .publication_intent_record()
++        .identity();
++    let stale_readiness = stale_envelope
++        .persist_durable_replay_custody_v2(&stale_directory.0)
++        .unwrap();
++    retire_worker_v3_publication_intent_after_load_readiness_v1(
++        &stale_directory.0,
++        &stale_producer,
++        stale_attempt,
++        stale_intent,
++        stale_readiness.receipt(),
++    )
++    .unwrap();
++    drop(stale_envelope);
++    fs::set_permissions(
++        &stale_directory.0,
++        fs::Permissions::from_mode(0o700),
++    )
++    .unwrap();
++    let stale_retained = RetainedDurableDirectoryV1::admit_service_owned(
++        File::open(&stale_directory.0).unwrap().into(),
++    )
++    .unwrap();
++    let stale_recovered = recover_worker_v3_load_envelope_from_retained_directory_v2(
++        &stale_retained,
++        stale_attempt,
++    )
++    .unwrap();
++    let stale_material = collector_material(&stale_recovered);
++    drop(stale_recovered);
++
++    let second = worker_v3_fixture::publish_ferric_all12_worker_v3_fixture_in_directory(
++        &stale_directory,
++        0x62,
++    );
++    drop(second.published);
++    assert!(matches!(
++        collect_m1_all_kernels_promotion_prerequisite_v1(
++            &stale_retained,
++            stale_attempt,
++            &stale_material.external(),
++        ),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::Recovery(_))
++    ));
++
++    let worker_v3_fixture::PublishedWorkerV3Fixture {
++        directory: handoff_directory,
++        producer: handoff_producer,
++        attempt: handoff_attempt,
++        published: handoff_published,
++    } = worker_v3_fixture::published_ferric_all12_worker_v3_fixture();
++    let handoff_subject = handoff_published.compiler_execution_subject_v1().unwrap();
++    let handoff_envelope = WorkerV3LoadEnvelopeV2::from_published_hsaco_v1(
++        handoff_published,
++        carriage_for_subject(&handoff_subject, 0x61),
++    )
++    .unwrap();
++    let handoff_intent = handoff_envelope
++        .wire()
++        .replay()
++        .publication_intent_record()
++        .identity();
++    let handoff_readiness = handoff_envelope
++        .persist_durable_replay_custody_v2(&handoff_directory.0)
++        .unwrap();
++    retire_worker_v3_publication_intent_after_load_readiness_v1(
++        &handoff_directory.0,
++        &handoff_producer,
++        handoff_attempt,
++        handoff_intent,
++        handoff_readiness.receipt(),
++    )
++    .unwrap();
++    drop(handoff_envelope);
++    fs::set_permissions(
++        &handoff_directory.0,
++        fs::Permissions::from_mode(0o700),
++    )
++    .unwrap();
++    let handoff_retained = RetainedDurableDirectoryV1::admit_service_owned(
++        File::open(&handoff_directory.0).unwrap().into(),
++    )
++    .unwrap();
++    let handoff_recovered = recover_worker_v3_load_envelope_from_retained_directory_v2(
++        &handoff_retained,
++        handoff_attempt,
++    )
++    .unwrap();
++    let handoff_material = collector_material(&handoff_recovered);
++    drop(handoff_recovered);
++    let prerequisite = collect_m1_all_kernels_promotion_prerequisite_v1(
++        &handoff_retained,
++        handoff_attempt,
++        &handoff_material.external(),
++    )
++    .unwrap();
++    let record_path = fs::read_dir(&handoff_directory.0)
++        .unwrap()
++        .map(Result::unwrap)
++        .map(|entry| entry.path())
++        .find(|path| {
++            path.file_name()
++                .and_then(|name| name.to_str())
++                .is_some_and(|name| {
++                    name.starts_with(".fe2o3-link-publication-v1-")
++                        && name.ends_with(".record")
++                })
++        })
++        .unwrap();
++    fs::set_permissions(&record_path, fs::Permissions::from_mode(0o600)).unwrap();
++    let mut record = OpenOptions::new()
++        .read(true)
++        .write(true)
++        .open(&record_path)
++        .unwrap();
++    let mut first = [0_u8; 1];
++    record.read_exact(&mut first).unwrap();
++    record.seek(SeekFrom::Start(0)).unwrap();
++    record.write_all(&[first[0] ^ 1]).unwrap();
++    record.sync_all().unwrap();
++    drop(record);
++    assert!(matches!(
++        prerequisite.revalidate_and_seal_for_external_promotion_v1(),
++        Err(M1AllKernelsPromotionPrerequisiteErrorV1::DurableLink(_))
++    ));
++}
++
+ fn assert_complete_subject_association(
+     expected: &InertCompilerExecutionSubjectV1,
+     actual: &InertCompilerExecutionSubjectV1,

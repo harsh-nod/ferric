@@ -1,0 +1,84 @@
+{
+  "schema": "FerricWholeTokenHarnessIntegrationV1",
+  "date": "2026-10-05",
+  "change_id": "v14-owned-teardown-finite-roster-a005",
+  "status": "cpu_qualified_integrated_native_pending",
+  "shared_ferric_path": "adapters/m1-engineering-execution-v1/tools/whole_token_benchmark_v1",
+  "integration": {
+    "existing_preimages_matched": 16,
+    "changed_existing_files": 8,
+    "new_files": 2,
+    "qualified_postimages_byte_equal": 18,
+    "unrelated_dirty_changes_preserved": true,
+    "local_builds_or_tests_run": false,
+    "ferric_changes_pushed": false
+  },
+  "qualified_archive": {
+    "name": "campaign-harness-a005.tar.gz",
+    "sha256": "16a0ab2d69899afb38bd8d22d273f3c2fae6d30c6978ca3be06442877c2ab625",
+    "regular_files": 18
+  },
+  "qualified_sources": {
+    "launch_contract.py": "529ec2da97c92fda9f29377011bd05f7c7dbfee0a47ed8e998614ad1c5a80e0f",
+    "run_stage.py": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "test_native_launch.py": "54bcbd006ff21267f4befdb77dc74459f0fb62a52c9e2ba5d8242af0c0374f36",
+    "measurement/native_lifecycle.py": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "measurement/test_native_lifecycle.py": "73c96e5624b7aab39da1dc66d1a113ec516fc68cc4b7ddf17cf81fc6fab50bfc",
+    "measurement/gpu_activity.py": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "measurement/test_gpu_activity.py": "397038b2b050c60b1a4a935a3f416f3d1af6847de045ef659972f7d316fbd5bd",
+    "measurement/native_token_cell.py": "c465f6d12c5231c81720bef44cda1b366889c279954a4e12a5cbea2ae3e387ac",
+    "measurement/native_campaign_replay.py": "5e28a27f352d39a96441ea8dfa2dad390357e5d4fd54bb9639c7a8c82617bad8",
+    "measurement/test_native_token_cell.py": "382cabf7764e15898fbd4dbb14043f7a4dae651e3cd80577ddf2faf31dc8c062"
+  },
+  "cpu_qualification": {
+    "host": "mi300x",
+    "profile": "FerricCpuFourCore28GiBBuildV1",
+    "teardown_fixtures_passed": 29,
+    "real_cpu_only_subprocess_fixtures_included": 3,
+    "scanner_fixtures_passed": 101,
+    "combined_measurement_tests_passed": 213,
+    "launcher_tests_passed": 28,
+    "portable_binding_fixtures_passed": 12,
+    "actual_retained_bundle_binding_passed": true,
+    "all_phases_status_zero_clean_and_reaped": true,
+    "measurement_result_sha256": "a091119d54a934d0107f510330b4451cf51fc89c21f18d057266edca789c59ff",
+    "launcher_result_sha256": "b5c378ecea3e78037a7101dea5c98e651e9443c0d5dc9209637b23c0721fc1ec",
+    "binding_result_sha256": "41d9c8cc73f5b0a4a0b09c1952d7d30d3d065dc1247cd16eb6726ba0a7baf3bb"
+  },
+  "sampling_policy": {
+    "schema": "FerricDeviceDescriptorSampleV2",
+    "policy": "initial-plus-one-birth-frontier-v1",
+    "coverage": "declared roster over interval; late births retained but not scanned",
+    "paired_sysfs_and_fuser_endpoints_required": true,
+    "positive_active_owned_device_attribution_required": true,
+    "owned_terminal_identity_recheck_required": true,
+    "continuous_isolation_or_atomic_host_coverage_claimed": false,
+    "root_disk_floor_bytes": 68719476736,
+    "original_cpu_memory_time_and_stage_guards_preserved": true
+  },
+  "frozen_v14_campaign": {
+    "core_revision": "eded9474bff22aeb8a942061f3e956c234a0ce7f",
+    "worker_sha256": "1b99c4de7aaad458774b18b62b5175543e880a08e64b15efc72b43dd96aca108",
+    "A": "ordered64-groups-v1; original retained controller",
+    "B": "native-whole-program-v1; original retained controller",
+    "binaries_and_images_replaced_by_v15": false,
+    "a004_evidence": "whole-token-v14-native-attempt-a004.json",
+    "a004_counter_pair_passed": true,
+    "a004_accepted_latency_cells": 0,
+    "failed_cleanup_receipt_preserved": true
+  },
+  "current_shared_ferric_source": {
+    "wire_revision": "cea62c79d1622ca5fa53a727611a102e067c4ea2",
+    "v15_counted_encoding_integrated": true,
+    "qualified_source_hashes_rechecked": true,
+    "publication_record": "counted-encoding-v15-publication.json",
+    "same_core_old_encode_native_control_built": true,
+    "future_v15_comparison": "native backend on both arms; old encode/discard versus counted validation"
+  },
+  "ttft_gain_percent": null,
+  "tpot_gain_percent": null,
+  "finite_output_rate_gain_percent": null,
+  "native_performance_qualified": false,
+  "default_promoted": false,
+  "note": "This source/CPU integration checkpoint does not update historical hash-linked entries, convert failed native receipts into passes, or claim a GPU speedup. Fresh native execution is owned by the integration lead."
+}

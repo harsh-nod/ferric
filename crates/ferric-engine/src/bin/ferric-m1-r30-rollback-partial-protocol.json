@@ -1,0 +1,33 @@
+{
+  "authority": "ferric-m1-r30-rollback-partial-protocol-only",
+  "bundle_files": [
+    "capture.json",
+    "protocol.json"
+  ],
+  "case": "rollback-strict-prefix-s1-k4-c8192",
+  "format": "FERRIC-M1-R30-ROLLBACK-PARTIAL-PROTOCOL-V1",
+  "lifecycle": [
+    "pre-completion-kv-projection-captured",
+    "queue-completed",
+    "compact-readback-observed",
+    "draft-choices-readback-observed",
+    "target-choices-readback-observed",
+    "strict-maximal-prefix-checked",
+    "engine-completion-settled",
+    "post-completion-pre-release-kv-projection-captured",
+    "zero-retired-page-return-accounted",
+    "queue-destroyed"
+  ],
+  "milestone": "M1",
+  "nonclaim": "Partial physical S1/K4 strict-prefix rollback protocol only. It covers only rollback among the five required m1.r30 cases and grants no physical page or subpage return/reuse authority, evidence authority, hardware correctness, performance, qualification, or m1.r30/M1 closure.",
+  "obligation_id": "m1.r30",
+  "required_complete_case_roster": [
+    "canary",
+    "cancellation",
+    "exhaustion",
+    "fault-injection",
+    "rollback"
+  ],
+  "status": "partial-non-evidence",
+  "target": "gfx942:xnack-"
+}

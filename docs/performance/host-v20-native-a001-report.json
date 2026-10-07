@@ -1,0 +1,308 @@
+{
+  "accepted": true,
+  "batches": 135,
+  "cell_custody": {
+    "completion_sha256": "49649f0e4f10164731188242122247bd5e2135827310dbe407b0151fdca21948",
+    "outer_sha256": "1be192b45bd3e7a31a93da6ab603b8eb0da34d39cba811d75089f8856787c7fc",
+    "plan": {
+      "path": "/dev/shm/ferric-v20-host-dcf3454-a001/plan.json",
+      "sha256": "38b59a4bf7823e1d619ea91e0ee17cd6966f04e1b66a504fe8c2f3a135ad553a"
+    },
+    "process_endpoints_sha256": "699a24ead2b75df8d5123f16059fece97c55a88dff7bbf3c7eb81c2fd17ca0ce",
+    "result_sha256": "1edb79e9a94c758201a2ecb970e6aff85332bb149bfc25c2c6be491605de8c59"
+  },
+  "cpu_cost_by_cell": {
+    "counter-A": {
+      "clock_ticks_per_second": 100,
+      "output_tokens": 128,
+      "roles": {
+        "controller": {
+          "cpu_seconds": 0.09,
+          "cpu_seconds_per_token": 0.000703125,
+          "observed_interval_seconds": 8.074047065,
+          "system_seconds": 0.01,
+          "system_ticks": 1,
+          "user_seconds": 0.08,
+          "user_ticks": 8
+        },
+        "worker": {
+          "cpu_seconds": 0.27,
+          "cpu_seconds_per_token": 0.002109375,
+          "observed_interval_seconds": 8.074048405,
+          "system_seconds": 0.14,
+          "system_ticks": 14,
+          "user_seconds": 0.13,
+          "user_ticks": 13
+        }
+      },
+      "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+    }
+  },
+  "default_promotion_allowed": false,
+  "dispatches": 87711,
+  "exact_output_tokens_checked": 128,
+  "host_diagnostic": {
+    "delta": {
+      "dispatches": 82804,
+      "executions": 127,
+      "final_waits": 127,
+      "kernarg_initialized_bytes": 27815032,
+      "publications": 127,
+      "retirement_signals": 82804,
+      "staging_ns": 1837532
+    },
+    "end": {
+      "authority": "none",
+      "backend": "native-whole-program-v1",
+      "counters": {
+        "dispatches": 82804,
+        "executions": 127,
+        "final_waits": 127,
+        "kernarg_initialized_bytes": 27815032,
+        "publications": 127,
+        "retirement_signals": 82804,
+        "staging_ns": 1837532
+      },
+      "device_unique_id": 16366993098680759275,
+      "kernarg_bytes_scope": "initialized stores; baseline includes slot clear and exact copy",
+      "latency_sample_admitted": false,
+      "live_profile": "prefill16-decode-native-whole-token-program-counters-v1",
+      "ordinal": 1,
+      "performance_qualified": false,
+      "phase": "before_close",
+      "process_id": 990358,
+      "runtime_profiling": true,
+      "schema": "FerricTokenProgramCountersV1",
+      "scope": "successful token executions only; excludes registration, ordinary prefill and readback",
+      "staging_scope": "host staging wall time; not GPU time",
+      "worker_entry": "--diagnostic-token-program-native-v1"
+    },
+    "host_breakdown": {
+      "authority": "none",
+      "backend": "native-whole-program-v1",
+      "boundary": "each decode program: after registration/before first execute to idle before release",
+      "caller_planning": {
+        "calls": 127,
+        "cold_calls": 1,
+        "cold_ns": 544731,
+        "warm_ns": 44933168
+      },
+      "cold_planning_definition": "no program registered when planning starts; not registration duration",
+      "counter_semantics": "host-wall; not GPU-only",
+      "device_unique_id": 16366993098680759275,
+      "driver_graph_reconstruction_unchanged": true,
+      "full_response_scope": "all decoded wire response fields retained; not raw framing bytes",
+      "latency_sample_admitted": false,
+      "overlap_warning": "command/currentness/read/write counters overlap other scopes; do not add them to the component sum",
+      "performance_qualified": false,
+      "planner_scope": "full graph plan, immutable clone/mask and counted validation; excludes graph construction, resident equality, registration and IPC",
+      "process_id": 990358,
+      "residual_scope": "roundtrip minus disjoint runtime prepare/staging/publish/wait timers; includes untimed runtime validation/materialization, IPC and scheduling; not GPU time",
+      "roundtrip_scope": "sum of Execute send start through validated aggregate completion; excludes between-token work",
+      "runtime_validation_unchanged": true,
+      "schema": "FerricTokenHostBreakdownV1",
+      "snapshot_accounting": "general command deltas include the starting PerformanceSnapshot and exclude the ending one; counter-query/currentness work is instrumented and overlaps the span",
+      "spans": [
+        {
+          "caller_execute_roundtrip_ns": 6355202904,
+          "caller_roundtrip_residual_ns": 49692414,
+          "decode_span_wall_ns": 7334627467,
+          "dispatches": 82804,
+          "end_completed_packets": 87711,
+          "executions": 127,
+          "full_decoded_end_responses": [
+            {
+              "counters": {
+                "command_ns": 14982622791,
+                "commands": 32572,
+                "completion_polls": 70873,
+                "dispatch_prepare_ns": 24091496,
+                "dispatch_publish_ns": 7457351,
+                "dispatch_wait_ns": 7023184485,
+                "dispatches": 87711,
+                "full_currentness_checks": 1589,
+                "full_currentness_ns": 2995785171,
+                "kernel_admission_ns": 8171853,
+                "kernel_admissions": 27,
+                "operational_currentness_checks": 70644,
+                "operational_currentness_ns": 773345714,
+                "read_bytes": 512,
+                "read_ns": 2682150,
+                "reads": 128,
+                "write_bytes": 31518320120,
+                "write_ns": 1454111922,
+                "writes": 30949
+              },
+              "op": "performance_snapshot"
+            },
+            {
+              "backend": "native-whole-program-v1",
+              "counters": {
+                "dispatches": 82804,
+                "executions": 127,
+                "final_waits": 127,
+                "kernarg_initialized_bytes": 27815032,
+                "publications": 127,
+                "retirement_signals": 82804,
+                "staging_ns": 1837532
+              },
+              "op": "token_program_snapshot_v1"
+            }
+          ],
+          "full_decoded_start_responses": [
+            {
+              "counters": {
+                "command_ns": 8630070643,
+                "commands": 31686,
+                "completion_polls": 7981,
+                "dispatch_prepare_ns": 1927630,
+                "dispatch_publish_ns": 5334941,
+                "dispatch_wait_ns": 743797803,
+                "dispatches": 4907,
+                "full_currentness_checks": 1585,
+                "full_currentness_ns": 2989056797,
+                "kernel_admission_ns": 8171853,
+                "kernel_admissions": 27,
+                "operational_currentness_checks": 67224,
+                "operational_currentness_ns": 740656689,
+                "read_bytes": 4,
+                "read_ns": 20120,
+                "reads": 1,
+                "write_bytes": 31517996552,
+                "write_ns": 1442326886,
+                "writes": 30319
+              },
+              "op": "performance_snapshot"
+            },
+            {
+              "backend": "native-whole-program-v1",
+              "counters": {
+                "dispatches": 0,
+                "executions": 0,
+                "final_waits": 0,
+                "kernarg_initialized_bytes": 0,
+                "publications": 0,
+                "retirement_signals": 0,
+                "staging_ns": 0
+              },
+              "op": "token_program_snapshot_v1"
+            }
+          ],
+          "ordinal": 0,
+          "performance_delta": {
+            "command_ns": 6352552148,
+            "commands": 886,
+            "completion_polls": 62892,
+            "dispatch_prepare_ns": 22163866,
+            "dispatch_publish_ns": 2122410,
+            "dispatch_wait_ns": 6279386682,
+            "dispatches": 82804,
+            "full_currentness_checks": 4,
+            "full_currentness_ns": 6728374,
+            "kernel_admission_ns": 0,
+            "kernel_admissions": 0,
+            "operational_currentness_checks": 3420,
+            "operational_currentness_ns": 32689025,
+            "read_bytes": 508,
+            "read_ns": 2662030,
+            "reads": 127,
+            "write_bytes": 323568,
+            "write_ns": 11785036,
+            "writes": 630
+          },
+          "program": 1,
+          "queue_epoch": 0,
+          "runtime_component_sum_ns": 6305510490,
+          "start_completed_packets": 4907,
+          "token_delta": {
+            "dispatches": 82804,
+            "executions": 127,
+            "final_waits": 127,
+            "kernarg_initialized_bytes": 27815032,
+            "publications": 127,
+            "retirement_signals": 82804,
+            "staging_ns": 1837532
+          }
+        }
+      ]
+    },
+    "host_summary": {
+      "cold_planning_ms": 0.544731,
+      "component_ms_per_execute": {
+        "dispatch_prepare_ns": 0.17451862992125985,
+        "dispatch_publish_ns": 0.016711889763779526,
+        "dispatch_wait_ns": 49.44398962204724,
+        "staging_ns": 0.014468755905511811
+      },
+      "components_ns": {
+        "dispatch_prepare_ns": 22163866,
+        "dispatch_publish_ns": 2122410,
+        "dispatch_wait_ns": 6279386682,
+        "staging_ns": 1837532
+      },
+      "decode_span_ms_per_execute": 57.752972181102365,
+      "execute_roundtrip_ms_per_execute": 50.0409677480315,
+      "executions": 127,
+      "scope": "instrumented host-wall diagnostics; not GPU-only time or benchmark TPOT",
+      "signed_residual_ms_per_execute": 0.3912788503937008,
+      "warm_planning_ms_per_call": 0.35661244444444445
+    },
+    "latency_admitted": false,
+    "mechanism_qualified": true,
+    "start": {
+      "authority": "none",
+      "backend": "native-whole-program-v1",
+      "counters": {
+        "dispatches": 0,
+        "executions": 0,
+        "final_waits": 0,
+        "kernarg_initialized_bytes": 0,
+        "publications": 0,
+        "retirement_signals": 0,
+        "staging_ns": 0
+      },
+      "device_unique_id": 16366993098680759275,
+      "kernarg_bytes_scope": "initialized stores; baseline includes slot clear and exact copy",
+      "latency_sample_admitted": false,
+      "live_profile": "prefill16-decode-native-whole-token-program-counters-v1",
+      "ordinal": 0,
+      "performance_qualified": false,
+      "phase": "worker_start",
+      "process_id": 990358,
+      "runtime_profiling": true,
+      "schema": "FerricTokenProgramCountersV1",
+      "scope": "successful token executions only; excludes registration, ordinary prefill and readback",
+      "staging_scope": "host staging wall time; not GPU time",
+      "worker_entry": "--diagnostic-token-program-native-v1"
+    }
+  },
+  "instrumented_ingress": {
+    "finite_output_tokens_per_second": 17.55542031207198,
+    "latency_admitted": false,
+    "requests": [
+      {
+        "completed_ns": 8090372085,
+        "output_tokens": 128,
+        "started_ns": 799176675,
+        "tpot_ms": 50.819119,
+        "ttft_ms": 837.167279
+      }
+    ],
+    "scope": "instrumented native ingress diagnostics; not a benchmark",
+    "warmups_excluded": 0,
+    "window_ns": 7291195410
+  },
+  "latency_admitted": false,
+  "model_identity": {
+    "model_bundle_id": "6dfba0acd1c00ce13cec7b5eebb180691bdb8855a7eee89876df2a0a12a2802b",
+    "target_model_id": "f18fc461576d1a3053a19aba5946ef7b3b45aaf7cbb45d77f5c276f18567224a"
+  },
+  "performance_qualified": false,
+  "raw_sha256": {
+    "stderr.raw": "85cc52847227edcc14aa92789ea6259f91c81cdd12e5c19cf2a14ac5abe3a655",
+    "stdin.raw": "b322f6d91c67fd5b8eaa1163764b4d4328c88296aab570ddc4117f0db9b8ba3b",
+    "stdout.raw": "1a01c1f9961119cbeda275524219c6cdf622ef8395a9e6c0670852a3ef49ed9b"
+  },
+  "schema": "FerricHostBreakdownDiagnosticReportV1",
+  "scope": "one instrumented native request; host-wall attribution only"
+}

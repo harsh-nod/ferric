@@ -1,0 +1,112 @@
+{
+  "schema": "FerricNativeCampaignObservationV1",
+  "date": "2026-10-05",
+  "attempt": "a005",
+  "status": "completed-not-promotable",
+  "evaluation_status": "inconclusive",
+  "runtime_pin": "eded9474bff22aeb8a942061f3e956c234a0ce7f",
+  "latest_source_or_v15_claim": false,
+  "latency_admitted": true,
+  "default_promotion": false,
+  "fresh_vendor_comparison": false,
+  "serving_qualified": false,
+  "m1_open_gates": 33,
+  "workload": {
+    "model": "Qwen/Qwen3-8B",
+    "host": "mi350",
+    "tensor_parallel": 1,
+    "concurrency": 1,
+    "input_tokens": 128,
+    "output_tokens": 128,
+    "context_tokens": 8192,
+    "prefix_caching": false,
+    "speculation": false,
+    "greedy": true,
+    "kernel_images_changed": false
+  },
+  "cohort": {
+    "completed_cells": 14,
+    "all_cell_statuses": 0,
+    "raw_replay_status": 0,
+    "counter_cells": 2,
+    "latency_cells": 12,
+    "abba_blocks": 3,
+    "warmups_per_latency_cell": 2,
+    "measured_requests_per_latency_cell": 4,
+    "measured_requests_per_arm": 24,
+    "exact_output_tokens_including_counters_and_warmups": 9472,
+    "all_token_ids_and_streamed_bytes_match": true,
+    "all_teardowns_clean": true,
+    "later_ssh_disconnect": "after completed cohort at 21:20 UTC, not a failed cell"
+  },
+  "report": {
+    "path": "whole-token-v14-native-a005-report.json",
+    "sha256": "9895ecd618810dd4fe3884faa2debaef14152dc6b8bf4a54440cd3cdb7a2e880",
+    "local_custody_verified": true,
+    "canonical_comparison_plan_sha256": "a9537c108c2b028bb5611856086a8a4bbd3686aea5a09485cbcff47d076b54f1"
+  },
+  "full_stage_archive": {
+    "expected_sha256": "1c82dd9f151d402a277b6d40e7cbb52177b01eade8b9d74e8c7d838362f93114",
+    "local_custody_verified": true,
+    "archive_bytes": 72947665,
+    "archive_entries": 2771,
+    "embedded_plan_sha256": "48455b9e9e012ab8964715e0f48d605965f12e37a6ab0cef53eca0424c6da397",
+    "embedded_report_sha256": "9895ecd618810dd4fe3884faa2debaef14152dc6b8bf4a54440cd3cdb7a2e880",
+    "remote_stage_removed": false,
+    "status": "transfer-and-root-custody-verification-complete"
+  },
+  "arms": {
+    "A": {
+      "backend": "ordered64-groups-v1",
+      "median_ttft_ms": 820.787174,
+      "median_tpot_ms": 50.13429,
+      "mean_ttft_ms": 870.3799387083334,
+      "mean_tpot_ms": 51.072782875,
+      "p95_ttft_ms": 1070.40794035,
+      "p95_tpot_ms": 55.3326314,
+      "finite_output_tokens_per_second": 17.398367049357677
+    },
+    "B": {
+      "backend": "native-whole-program-v1",
+      "median_ttft_ms": 872.554286,
+      "median_tpot_ms": 53.245459,
+      "mean_ttft_ms": 905.4450984166667,
+      "mean_tpot_ms": 52.581720041666664,
+      "p95_ttft_ms": 1113.8559166499997,
+      "p95_tpot_ms": 55.14408665,
+      "finite_output_tokens_per_second": 16.878285120693334
+    }
+  },
+  "gains_percent": {
+    "median_tpot": -6.205670809340269,
+    "median_ttft": -6.307007911407747,
+    "p95_ttft": -4.059011023945991,
+    "finite_output_rate": -2.989257136539969
+  },
+  "promotion": {
+    "faster_adjacent_pairs": 2,
+    "required_faster_adjacent_pairs": 5,
+    "median_tpot_gain": false,
+    "faster_pairs": false,
+    "positive_both_orders": false,
+    "regression_limits": false,
+    "decision": "default-off; retain all slower clean cells"
+  },
+  "cpu_cost": {
+    "output_tokens_per_arm": 4608,
+    "A_controller_seconds": 4.53,
+    "A_worker_seconds": 21.24,
+    "B_controller_seconds": 4.22,
+    "B_worker_seconds": 15.44,
+    "A_total_ms_per_output_token": 5.592447917,
+    "B_total_ms_per_output_token": 4.266493056,
+    "scope": "All latency-cell requests including prefill and excluded warmups; excludes setup/teardown; not decode-only or GPU time"
+  },
+  "limitations": [
+    "Native ingress event timing, not HTTP latency or calibrated GPU time",
+    "Finite measured-window rate, not sustained loaded serving throughput",
+    "Engineering promotion gates, not statistical proof",
+    "Mechanism and CPU reductions do not establish a critical-path latency gain",
+    "V13 vendor result and failed a001-a004 attempts remain historical and unchanged"
+  ]
+}

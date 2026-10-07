@@ -16,7 +16,8 @@ every implementation on the final production path.
 1. There is one implementation path. Unsupported behavior fails closed.
 2. Model-specific kernels and inference code are owned by Ferric. Missing
    reusable compiler, runtime, or KFD capabilities are implemented in fe2o3
-   rather than hidden behind a Ferric abstraction.
+   and consumed through its public APIs rather than hidden behind a Ferric
+   abstraction.
 3. A proof applies only through the last boundary it covers. Hashes, machine
    inspection, and hardware tests do not imply semantic refinement.
 4. Correctness and performance evidence remain independent and identity-bound.
@@ -50,7 +51,8 @@ mutations.
 ## M1: Qwen3 Speculative Inference On One gfx942
 
 Goal: Qwen3-8B target inference with a pinned Qwen3-0.6B draft model on one
-`gfx942`, using only the final Ferric/fe2o3 path.
+`gfx942`, using Ferric-owned model kernels over the reusable fe2o3
+compiler/runtime path.
 
 Declared first envelope:
 
@@ -73,7 +75,7 @@ fallbacks:          none
 - [ ] Stream and authenticate prepacked weight sections.
 - [ ] Generate a model/target-specific Rust runner and complete plan identity.
 
-### fe2o3 Kernel Families
+### Ferric Kernel Families
 
 - [ ] Parameterized BF16/FP32 GEMM and GEMV.
 - [ ] RMSNorm and residual fusion.
@@ -109,7 +111,7 @@ fallbacks:          none
 
 - [ ] Differential target-only logits and tokens over declared buckets.
 - [ ] Canary, cancellation, exhaustion, rollback, and fault-injection suites.
-- [ ] Core kernels meet the fe2o3 D10 baseline gates.
+- [ ] Ferric core kernels meet the D10 baseline gates through the pinned fe2o3 toolchain.
 - [ ] Speculation beats Ferric target-only execution on an eligible holdout.
 - [ ] Ferric is compared against pinned, tuned vLLM and SGLang baselines.
 
@@ -149,7 +151,7 @@ until replaced or covered by a stronger validator.
 - [ ] General top-k routing, capacity, stable permutation, and inverse mapping.
 - [ ] Grouped expert GEMM and weighted combine.
 - [ ] Expert placement, all-to-all, and expert-parallel refinement.
-- [ ] FP8 and FP4 numerical contracts and qualified fe2o3 kernels.
+- [ ] FP8 and FP4 numerical contracts and qualified Ferric-owned kernels.
 - [ ] DeepSeek-V4 CSA/HCA attention semantics and kernels.
 - [ ] Manifold-constrained hyper-connection semantics and kernels.
 - [ ] DeepSeek-V4-Flash target-only inference on eight `gfx942` devices.

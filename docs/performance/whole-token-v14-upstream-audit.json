@@ -1,0 +1,26 @@
+{
+  "schema": "FerricV14UpstreamSourceAuditV1",
+  "observed_utc": "2026-10-05T18:59:20Z",
+  "qualified_revision": "eded9474bff22aeb8a942061f3e956c234a0ce7f",
+  "observed_main": "bee71f6b4aaa507a5bcefcf23d5bcd562ee145cd",
+  "changed_paths": [
+    "crates/fe2o3-compiler-execution-client/src/child_channel.rs",
+    "crates/fe2o3-compiler-execution-client/tests/child_channel.rs"
+  ],
+  "equal_git_objects": {
+    "Cargo.lock": "7fe50aa0e04b2f50f2ed8f2d8bc6b4e9838c95fc",
+    "Cargo.toml": "7a698197fcd677985af3288763aca0d2047ca44b",
+    "crates/fe2o3-amd-target": "dce4498f37d999352f0466dd64ffa4e71407b735",
+    "crates/fe2o3-amdhsa-loader": "af97f0ddeee43ad5cddd61907b71c76eaa02d7c1",
+    "crates/fe2o3-aql": "8743a5418a5b664072331872545cce7307b98d46",
+    "crates/fe2o3-drm-uapi": "c7ff772f5f86f1930591f94c8b70f5b17ee8b6d8",
+    "crates/fe2o3-hsaco": "6428c575ffeb7b34827c398e8bc96a3e6e5e2a72",
+    "crates/fe2o3-kfd-uapi": "2c43e886665f96532ef6152e5956c85fcc61cdf2",
+    "crates/fe2o3-kfd": "4a6f5a57cf1439a80cc1a9e2ad30c75a1265f9b0",
+    "crates/fe2o3-runtime-model": "f906c6f12d67ec0da809e779cfedcb4b5951894a",
+    "crates/fe2o3-target-spec": "01ab39423bf26ea5bb3cf6e8ae48b334f98d6c81"
+  },
+  "scope": "Read-only source identity audit, not a rebuild or binary-equivalence claim.",
+  "decision": "Keep the exact eded9474 worker, current-wire pin and source archives for V14. Do not relabel them as built from bee71f6b.",
+  "new_speedup_claimed": false
+}

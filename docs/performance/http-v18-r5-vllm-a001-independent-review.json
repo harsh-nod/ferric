@@ -1,0 +1,82 @@
+{
+  "schema": "FerricNativeHttpIndependentReviewV1",
+  "framework": "vllm",
+  "revision": "R5",
+  "archive": {
+    "path": "v18-http-vllm-r5-complete-a001.tar.gz",
+    "sha256": "e1e84a467d5ceec01a6b44556ff523408cbfae05196b04da58ca05a9fc368b40",
+    "bytes": 905760
+  },
+  "member_hashes": {
+    "outer-receipt.json": "3bac5dbb62d888d14db34088ecb34c871def24952fad3f587a11c97c34f47461",
+    "receipt.json": "70f80000f83ce38dc3cc9d8933476702c0353568a9ceaac77d2a8ec83e2dc907",
+    "identity.json": "39db6f12f7ebde26d133893e8f5e42204fbf268369f7d57d021fceff3807635e",
+    "timed-raw.json": "669e76da57d8597c3549c1b17ada0986317b25efc12342e24ce7eaf0023b35c5",
+    "diagnostic-before.json": "5a7219d31b9e3c06070d22ac3b4c6a3b5ba2ea15c75122cdeeb7420257dee237",
+    "diagnostic-after.json": "253d2081edf53fae3a3af856505d7e3a73bbd026cd464a3fb98efbed886b0994",
+    "frozen-plan.json": "4fb3ae96df3761125286547c27f117db284984ac2a9fcf0ea67cbbe180cf6156",
+    "container-shutdown.json": "8438e813e3715f17748c649f3df886f499e14f7c3711ba07e9d373b8e82dbe35",
+    "container-retirement.json": "35b4672895ec0ab2f1262de89b3a11e6b7f069477a91de55088aea87edf67a4f",
+    "cache-retirement.json": "ce5c8d4c5276e38442ff669bfef82a085f5e25c5071f35c66fa7f950ca07b4d5",
+    "runtime-dtype/vllm-82.json": "2800ce1f0e1c8a1bc80415c1f77e33a089ce0c92573f29aede5fcf8cff3173a0"
+  },
+  "independently_recomputed": {
+    "raw_checks_pass": true,
+    "ttft_ms": {
+      "mean": 20.099114166666673,
+      "median": 20.180312,
+      "p95": 21.13801655,
+      "p99": 21.9381606
+    },
+    "tpot_ms": {
+      "mean": 4.397367508136482,
+      "median": 4.3970911496062985,
+      "p95": 4.407671905511811,
+      "p99": 4.4107872362204725
+    },
+    "window_sum_s": 17.366027086,
+    "finite_output_rate": 221.12138723402657
+  },
+  "warmups_excluded": 10,
+  "measured_requests": 30,
+  "untimed_exact_id_diagnostics": 2,
+  "timed_token_ids_available": false,
+  "timed_utf8_usage_and_timestamps_exact": true,
+  "window_boundaries_and_rates_exact": true,
+  "normal_owned_wrapper_exit_and_clean_container_shutdown": true,
+  "outer_term_or_kill_sent": false,
+  "container_normal_stop_sent": true,
+  "outer_to_inner_and_identity_bindings_match": true,
+  "gpu_samples": {
+    "count": 31,
+    "phases": {
+      "active": 9,
+      "startup": 20,
+      "preflight": 1,
+      "postflight": 1
+    },
+    "all_accepted": true,
+    "all_same_endpoint_owners": true,
+    "all_root_visible": true,
+    "all_foreign_empty": true,
+    "all_scan_complete_accepted": true,
+    "all_active_positive": true,
+    "active_host_fuser_all_empty": true,
+    "all_reconciliation_bounds": true,
+    "total_departure_proofs": 0,
+    "scanner": "53aa4382f264037b24413c9ef8c10197d184a4a9137f1463385d93663d19e449",
+    "max_accepted_interval_ms": 850.397678,
+    "startup_refused_attempts_retained": 1,
+    "startup_reconciled_init_births": 1,
+    "proven_child_exit_reconciliations": 0
+  },
+  "scope": [
+    "TP1/C1, 128 prompt and 128 output tokens, greedy, prefix caching and speculation off; BF16 decoder with configured FP32 head computation.",
+    "vLLM 0.28.0 pinned image; post-load resident LM-head weight remains BF16, configured head computation is FP32.",
+    "Finite closed-loop HTTP windows including drain; not steady-state throughput.",
+    "SSE-derived TTFT/TPOT, not token ITL; timed vLLM responses retain UTF-8 and usage, token-ID parity is limited to untimed before/after diagnostics.",
+    "Finite descriptor samples and paired external endpoints, not continuous isolation. Active descriptor ownership was positive despite empty host fuser.",
+    "Clock, power, temperature and throttle equivalence are not established.",
+    "No matched Ferric R5 ratio until its same-plan result is retained and independently reviewed."
+  ]
+}

@@ -1,0 +1,265 @@
+//! Source-level policy checks for the protected-verifier service boundary.
+
+const PROTOCOL_SOURCE: &str = include_str!("../src/protected_verifier_service.rs");
+const CLIENT_SOURCE: &str = include_str!("../src/protected_verifier_client.rs");
+const TEST_SUPPORT_SOURCE: &str = include_str!("../src/protected_verifier_test_support.rs");
+const BACKEND_SOURCE: &str = include_str!("../src/lib.rs");
+const MANIFEST: &str = include_str!("../Cargo.toml");
+const README: &str = include_str!("../README.md");
+const TEST_BOUNDARY: &str = "#[cfg(test)]\nmod tests {";
+
+fn production_before_tests(source: &'static str) -> &'static str {
+    source
+        .split_once(TEST_BOUNDARY)
+        .map_or(source, |(production, tests)| {
+            assert!(!tests.trim().is_empty());
+            production
+        })
+}
+
+#[test]
+fn packets_are_fixed_binary_bounded_and_domain_separated() {
+    let protocol = production_before_tests(PROTOCOL_SOURCE);
+    for required in [
+        "const HEADER_BYTES: usize = 24;",
+        "const TARGET_BLOCK_BYTES: usize = 24;",
+        "const REQUEST_CLAIMS_BYTES: usize = 384;",
+        "const COMPILER_CLAIMS_BYTES: usize = 520;",
+        "const ENTRY_COORDINATES_BYTES: usize = 104;",
+        "const REQUEST_MAGIC: [u8; 8] = *b\"FRW3VSQ1\";",
+        "const RESPONSE_MAGIC: [u8; 8] = *b\"FRW3VSP1\";",
+        "SERVICE-REQUEST/V1\\0",
+        "SERVICE-RESPONSE/V1\\0",
+        "const TARGET: &[u8] = b\"gfx942:xnack-\";",
+        "const CODE_OBJECT_VERSION: u16 = 6;",
+        "const _: [(); 2_304]",
+        "const _: [(); 3_768]",
+        "M1_ALL_KERNELS_PROTECTED_RECEIPT_BYTES_V1",
+        "decoded.canonical_bytes != bytes",
+        "#![forbid(unsafe_code)]",
+        "This V1 transports coordinates, not their evidence payloads.",
+        "must already hold, or authentically reacquire",
+        "verify those payloads rather than sign a hash echo",
+        "atomically",
+        "protected live current-ledger state shared across instances and restarts",
+    ] {
+        assert!(
+            protocol.contains(required),
+            "missing protocol rule: {required}"
+        );
+    }
+    for forbidden in [
+        "serde",
+        "serde_json",
+        "http",
+        "std::env",
+        "std::fs",
+        "std::net",
+        "std::process",
+        "Path",
+        "unsafe {",
+    ] {
+        assert!(
+            !protocol.contains(forbidden),
+            "protocol contains forbidden surface {forbidden}",
+        );
+    }
+}
+
+#[test]
+fn request_and_response_bind_every_caller_known_axis() {
+    let protocol = production_before_tests(PROTOCOL_SOURCE);
+    for coordinate in [
+        "trust_policy_identity",
+        "expected_sequence",
+        "expected_current_rollback_anchor",
+        "challenge_identity",
+        "roster_identity",
+        "host_lineage_identity",
+        "finalizer_derivation_sha256",
+        "compiler_module_sha256",
+        "compiler_module_length",
+        "compiler_handoff_sha256",
+        "compiler_handoff_length",
+        "symbol_manifest_sha256",
+        "symbol_manifest_length",
+        "capsule_sha256",
+        "formal_memory_receipt_sha256",
+        "proof_binding_receipt_sha256",
+        "finalized_hsaco_sha256",
+        "finalized_hsaco_length",
+        "subject_sha256",
+        "carriage_sha256",
+        "policy_sha256",
+        "issuer_journal_sha256",
+        "compiler_occurrence_sha256",
+        "receipt_sha256",
+        "publication_sha256",
+        "acknowledgment_sha256",
+        "worker_ledger_record_sha256",
+        "prior_rollback_anchor",
+        "current_rollback_anchor",
+        "current_record_verification_sha256",
+        "current_record_attestation_sha256",
+        "protected_policy_verification_sha256",
+        "protected_worker_ledger_verification_sha256",
+        "external_rollback_verification_sha256",
+        "lineage_identity",
+        "marker_binding_identity",
+        "generated_host_contract_identity",
+    ] {
+        assert!(
+            protocol.contains(coordinate),
+            "protocol omits coordinate {coordinate}",
+        );
+    }
+    for binding in [
+        "expected_sequence != compiler_claims.sequence()",
+        "expected_current_rollback_anchor != compiler_claims.current_rollback_anchor()",
+        "receipt.trust_policy_identity() == self.trust_policy_identity",
+        "receipt.request_claims() == &self.request_claims",
+        "receipt.compiler_claims() == &self.compiler_claims",
+        "expected.matches_receipt(actual)",
+        "self.request_identity == request.identity",
+        "request.matches_receipt(&self.receipt)",
+    ] {
+        assert!(
+            protocol.contains(binding),
+            "missing cross-binding: {binding}"
+        );
+    }
+}
+
+#[test]
+fn client_pins_peer_and_rejects_ambiguous_transport() {
+    let client = production_before_tests(CLIENT_SOURCE);
+    for required in [
+        "SOCK_SEQPACKET",
+        "SO_PEERCRED",
+        "FD_CLOEXEC",
+        "MSG_DONTWAIT | libc::MSG_NOSIGNAL",
+        "MSG_DONTWAIT | libc::MSG_CMSG_CLOEXEC",
+        "header.msg_flags & libc::MSG_CTRUNC",
+        "header.msg_flags & libc::MSG_TRUNC",
+        "header.msg_controllen != 0",
+        "received != bytes.len()",
+        "current.pid != expected_pid",
+        "credentials.uid == client_uid",
+        "wait_for_peer(peer, libc::POLLOUT, deadline)",
+        "wait_for_peer(peer, libc::POLLIN, deadline)",
+        ".authenticate_canonical(receipt.encode_canonical())",
+        "require_deadline(self.deadline)?",
+        "if !response.matches_request(request)",
+        "into_peer(self) -> OwnedFd",
+        "not replay across new",
+        "locally retained request, evidence-custody, and audit owners",
+        "M1AllKernelsProtectedVerifierClientV2",
+        "WorkerV3VerificationClientV2::admit_until(peer, deadline)",
+        "pub fn admit_connected_path(",
+        "admit_connected_path_inner::<true>(",
+        "admit_common_credentials::<REQUIRE_DISTINCT_UID>(",
+        "WorkerV3VerificationClientV2::admit_connected_path_until(",
+        "M1AllKernelsProtectedVerifierConnectedPathAdmissionFailureV2",
+        "failure.into_peer()",
+        "debug_assert_eq!(inner.deadline(), deadline)",
+        "WorkerV3VerificationPayloadSnapshotsV1::admit(&request, descriptors)",
+        "WorkerV3VerificationTerminalDispositionV2::ApplicationResponse",
+        "authenticate_application_response_until_v1(",
+        "require_v2_deadline(deadline)?",
+        "TerminalRejected",
+    ] {
+        assert!(client.contains(required), "missing client rule: {required}");
+    }
+    for forbidden in [
+        "std::env",
+        "std::fs",
+        "std::net",
+        "std::process",
+        "UnixStream::connect",
+        "TcpStream",
+        "SigningKey",
+        "VerifyingKey",
+        "impl Default",
+        "option_env!",
+        "env!",
+        "WorkerV3VerificationClientV2::admit(peer, timeout)",
+        "std::os::unix::net",
+        "std::os::unix::process",
+        "SocketAddrUnix::new",
+        "socket_with(",
+        "connect(",
+    ] {
+        assert!(
+            !client.contains(forbidden),
+            "client production source contains forbidden surface {forbidden}",
+        );
+    }
+}
+
+#[test]
+fn configured_backend_owns_reviewed_client_while_default_stays_fail_closed() {
+    let backend = production_before_tests(BACKEND_SOURCE);
+    for required in [
+        "M1AllKernelsProtectedVerifierClientV2",
+        "M1AllKernelsProtectedVerifierBeginChallengeV2",
+        "M1AllKernelsProtectedVerifierServiceRequestV1",
+        "M1AllKernelsProtectedVerifierTrustPolicyV1",
+        "InheritedWorkerV3CompilerCurrentRecordAuditorV1",
+        ".audit_roster_with_challenge(request, compiler_challenge)",
+        ".submit_current_record(",
+        "bound_service_request.canonical_bytes() == service_request.canonical_bytes()",
+        "WorkerV3ProtectedRosterVerificationEvidenceV1::new",
+    ] {
+        assert!(
+            backend.contains(required),
+            "configured backend omits reviewed binder surface {required}",
+        );
+    }
+    assert!(backend.contains("Err(missing_protected_verification_receipt_v1())"));
+    assert!(backend.contains("Self::reject_missing_protected_receipt("));
+    assert!(!TEST_SUPPORT_SOURCE.trim().is_empty());
+    assert!(TEST_SUPPORT_SOURCE.contains("SigningKey"));
+    assert!(!production_before_tests(CLIENT_SOURCE).contains("SigningKey"));
+    assert!(!production_before_tests(PROTOCOL_SOURCE).contains("SigningKey"));
+}
+
+#[test]
+fn dependency_and_documentation_boundaries_are_explicit() {
+    assert!(MANIFEST.contains("libc = \"=0.2.189\""));
+    assert!(MANIFEST.contains("rustix = { version = \"=1.1.4\", features = [\"fs\"] }"));
+    for forbidden in ["serde =", "serde_json =", "reqwest =", "hyper ="] {
+        assert!(
+            !MANIFEST.contains(forbidden),
+            "unexpected dependency {forbidden}"
+        );
+    }
+    let normalized = README.split_whitespace().collect::<Vec<_>>().join(" ");
+    for statement in [
+        "request is exactly 2,304 bytes",
+        "response is exactly 3,768 bytes",
+        "fixed-width binary packets",
+        "caller-provisioned trust policy",
+        "unsafe constructor",
+        "dedicated non-root credentials",
+        "service pathname is explicitly supplied by the caller",
+        "performs no discovery, socket creation, or `connect`",
+        "Both admission failures retain the exact caller-owned endpoint",
+        "WorkerV3VerificationClientV2::admit_connected_path_until",
+        "generic V2 now transports immutable envelope and HSACO snapshots",
+        "does **not** directly cover the generic Begin request identity or reservation identity",
+        "transports immutable envelope and HSACO snapshots plus the complete current-record arrays",
+        "remaining semantic/proof inputs",
+        "atomically consume each challenge",
+        "protected live current-ledger state shared across service instances and durable across restarts",
+        "Neither constructor discovers an endpoint, reads an environment setting, loads a key, opens `CURRENT`, or manufactures a receipt",
+        "always returns `MissingProtectedVerificationReceipt`",
+        "maps all 12 signed proof-to-executable, Rust type-layout, Rust effect",
+        "Signing caller-supplied hash echoes does not satisfy",
+        "grants no publication, load, launch, or inference authority by itself",
+    ] {
+        assert!(
+            normalized.contains(statement),
+            "README is missing `{statement}`"
+        );
+    }
+}

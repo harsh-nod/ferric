@@ -1,0 +1,2350 @@
+//! Ordered production inputs for the dynamic M1 physical-serving adapter.
+//!
+//! The adapter advances scheduler authority before asking for physical inputs.
+//! This provider therefore admits an exact, move-only generation queue up
+//! front, rejects a wrong next phase or batch binding without dequeueing it,
+//! and retains every subsequently consumed owner in terminal phase custody.
+//! Completion semantics are never derived from compact completion bytes: the
+//! provider attaches the independent direct or finite-speculative allocation
+//! required by the selected serving plan.
+
+use core::fmt;
+use std::collections::{TryReserveError, VecDeque};
+
+use fe2o3_kfd::GFX942_MAX_FIXED_DISPATCH_DATA_V1;
+use ferric_spec::{
+    completion::CompletionEpoch, Qwen3ExecutionMode, Qwen3PlanBucket, Qwen3PlanSelection,
+    RequestId, TokenId, ValidatedM1StepInputs,
+};
+
+use crate::{
+    prepare_m1_finite_speculative_queue_rollover_v1, prepare_m1_long_lived_queue_rearm_v1,
+    reserve_m1_finite_speculative_queue_rollover_kv_v1, reserve_m1_long_lived_queue_rearm_kv_v1,
+    ActiveDeviceKvCache, Engine, LogicalRunnerDeclaration,
+    M1FiniteSpeculativeQueueRolloverKvInputsV1, M1FullStepKvWorkspaceTablesV1,
+    M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans, M1LongLivedQueueRearmKvInputsV1,
+    M1PartitionedModelMemoryKvPoolV1, M1PhysicalFixedBatchShapeV1, M1PhysicalRunnerRecipeOutcomeV1,
+    M1PhysicalRunnerV1, M1ScheduledDispatchV1, M1ScheduledFiniteSpeculativeQueueRolloverV1,
+    M1ScheduledLongLivedQueueRearmV1, M1ServingBatchPlanV1, M1ServingPhysicalInputProviderV1,
+    M1ServingPlanV1, M1ServingPreparedFiniteSpeculativeRolloverV1,
+    M1ServingPreparedFirstPublicationV1, M1ServingPreparedSameShapeRearmV1,
+    M1ServingPreparedSemanticEvidenceV1, M1StepDispatchIntent,
+};
+
+const M1_MODEL_ALLOCATION_COUNT_V1: usize = 4;
+const M1_PAIRED_WORKSPACE_ALLOCATION_COUNT_V1: usize = 2;
+const M1_TARGET_ONLY_WORKSPACE_ALLOCATION_COUNT_V1: usize = 1;
+const M1_SPECULATIVE_WORKSPACE_ALLOCATION_COUNT_V1: usize = 2;
+const M1_COMPACT_OUTPUT_ALLOCATION_COUNT_V1: usize = 1;
+const M1_DIRECT_DIAGNOSTIC_ALLOCATION_COUNT_V1: usize = 1;
+const M1_SPECULATIVE_DIAGNOSTIC_ALLOCATION_COUNT_V1: usize = 2;
+const M1_EXACT_SUCCESSOR_OUTPUT_ALLOCATION_COUNT_V1: usize = 3;
+
+/// Exact operation for which one queued physical input is valid.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1ServingQueuedGenerationPhaseV1 {
+    FirstPublication,
+    SameShapeRearm,
+    /// Finite-speculative rollover; retains its original public name.
+    S1K4Rollover,
+    /// All-terminal finite-speculative to paired-prefill native rollover.
+    PairedPrefillNewWindow,
+}
+
+/// Read-only rejection of a bounded first-publication work binding.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1ServingFirstPublicationWorkMatchErrorV1 {
+    QueueEmpty,
+    QueuePhase,
+    Plan,
+    Roster,
+    PromptRoster,
+    WorkspaceKind,
+    WorkspaceSelection,
+    SelectedRoster,
+    Device,
+    InputLaneCount,
+    InputRequest { lane: usize },
+    InputEpoch { lane: usize },
+    InputActiveLength { lane: usize },
+    InputContextLength { lane: usize },
+    InputToken { lane: usize, column: usize },
+    InputPosition { lane: usize, column: usize },
+}
+
+/// Immutable registry binding carried beside every move-only physical input.
+#[must_use = "generation binding must remain paired with its physical inputs"]
+#[derive(Debug, Eq, PartialEq)]
+pub struct M1ServingQueuedGenerationBindingV1 {
+    plan: M1ServingPlanV1,
+    requests: Box<[RequestId]>,
+    epoch: CompletionEpoch,
+}
+
+impl M1ServingQueuedGenerationBindingV1 {
+    /// Binds an input to one exact plan, ordered request roster, and epoch.
+    pub fn new(plan: M1ServingPlanV1, requests: Box<[RequestId]>, epoch: CompletionEpoch) -> Self {
+        Self {
+            plan,
+            requests,
+            epoch,
+        }
+    }
+
+    #[must_use]
+    pub const fn plan(&self) -> M1ServingPlanV1 {
+        self.plan
+    }
+
+    #[must_use]
+    pub fn requests(&self) -> &[RequestId] {
+        &self.requests
+    }
+
+    #[must_use]
+    pub const fn epoch(&self) -> CompletionEpoch {
+        self.epoch
+    }
+
+    fn matches(
+        &self,
+        plan: M1ServingPlanV1,
+        requests: &[RequestId],
+        epoch: CompletionEpoch,
+    ) -> bool {
+        self.plan == plan && self.epoch == epoch && self.requests.as_ref() == requests
+    }
+}
+
+/// First-generation owners queued before exact scheduler dispatch.
+#[must_use = "first-publication inputs own linear memory, KV, and cache custody"]
+#[derive(Debug)]
+pub struct M1ServingQueuedFirstPublicationV1 {
+    binding: M1ServingQueuedGenerationBindingV1,
+    finite_speculative_successor: Option<M1ServingPlanV1>,
+    memory: M1PartitionedModelMemoryKvPoolV1,
+    tables: M1FullStepKvWorkspaceTablesV1,
+    preparation_plans: M1FullStepWorkspacePlans,
+    recipe_plans: M1FullStepWorkspacePlans,
+    selected: Vec<ActiveDeviceKvCache>,
+}
+
+impl M1ServingQueuedFirstPublicationV1 {
+    /// Joins already-reserved first-generation KV tables and active caches to
+    /// two independently constructed copies of the exact workspace plans.
+    /// One plan set is consumed by recipe derivation and one by image creation.
+    pub const fn new(
+        binding: M1ServingQueuedGenerationBindingV1,
+        memory: M1PartitionedModelMemoryKvPoolV1,
+        tables: M1FullStepKvWorkspaceTablesV1,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+        selected: Vec<ActiveDeviceKvCache>,
+    ) -> Self {
+        Self {
+            binding,
+            finite_speculative_successor: None,
+            memory,
+            tables,
+            preparation_plans,
+            recipe_plans,
+            selected,
+        }
+    }
+
+    /// Joins first-publication owners to one exact future finite successor.
+    ///
+    /// The provider validates the complete predecessor/successor transition
+    /// before dequeueing this owner or allocating any workspace or output.
+    pub const fn new_with_finite_speculative_successor(
+        binding: M1ServingQueuedGenerationBindingV1,
+        finite_speculative_successor: M1ServingPlanV1,
+        memory: M1PartitionedModelMemoryKvPoolV1,
+        tables: M1FullStepKvWorkspaceTablesV1,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+        selected: Vec<ActiveDeviceKvCache>,
+    ) -> Self {
+        Self {
+            binding,
+            finite_speculative_successor: Some(finite_speculative_successor),
+            memory,
+            tables,
+            preparation_plans,
+            recipe_plans,
+            selected,
+        }
+    }
+
+    #[must_use = "the exact queued binding remains attached to first-publication inputs"]
+    pub const fn binding(&self) -> &M1ServingQueuedGenerationBindingV1 {
+        &self.binding
+    }
+}
+
+/// Same-shape continuation owners queued before the predecessor is detached.
+#[must_use = "same-shape inputs own linear KV page leases and workspace plans"]
+#[derive(Debug)]
+pub struct M1ServingQueuedSameShapeRearmV1 {
+    binding: M1ServingQueuedGenerationBindingV1,
+    kv_inputs: M1LongLivedQueueRearmKvInputsV1,
+    preparation_plans: M1FullStepWorkspacePlans,
+    recipe_plans: M1FullStepWorkspacePlans,
+}
+
+pub(crate) struct M1ServingCommittedSpeculativeMemberBindingV1 {
+    pub(crate) request: RequestId,
+    pub(crate) epoch: CompletionEpoch,
+    pub(crate) anchor: ferric_spec::TokenId,
+    pub(crate) target_committed: u32,
+    pub(crate) draft_committed: u32,
+}
+
+impl M1ServingQueuedSameShapeRearmV1 {
+    pub const fn new(
+        binding: M1ServingQueuedGenerationBindingV1,
+        kv_inputs: M1LongLivedQueueRearmKvInputsV1,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+    ) -> Self {
+        Self {
+            binding,
+            kv_inputs,
+            preparation_plans,
+            recipe_plans,
+        }
+    }
+
+    #[must_use = "the exact queued binding remains attached to same-shape inputs"]
+    pub const fn binding(&self) -> &M1ServingQueuedGenerationBindingV1 {
+        &self.binding
+    }
+
+    pub(crate) fn matches_committed_speculative_member(
+        &self,
+        lane: usize,
+        expected_live_lanes: usize,
+        member: &M1ServingCommittedSpeculativeMemberBindingV1,
+    ) -> bool {
+        if member.draft_committed != member.target_committed {
+            return false;
+        }
+        let M1LongLivedQueueRearmKvInputsV1::SpeculativeRound {
+            draft_decode,
+            target_speculative,
+            ..
+        } = &self.kv_inputs
+        else {
+            return false;
+        };
+        let target_width = target_speculative.dimensions().active_tokens as usize;
+        let Some(target_row_start) = lane.checked_mul(target_width) else {
+            return false;
+        };
+        let Some(target_row_end) = target_row_start.checked_add(target_width) else {
+            return false;
+        };
+        let Some(target_future_start) = target_row_start.checked_add(1) else {
+            return false;
+        };
+        speculative_role_input_matches(
+            draft_decode,
+            self.binding.plan().draft(),
+            lane,
+            expected_live_lanes,
+            member,
+            member.draft_committed,
+        ) && speculative_role_input_matches(
+            target_speculative,
+            self.binding.plan().target(),
+            lane,
+            expected_live_lanes,
+            member,
+            member.target_committed,
+        ) && target_speculative
+            .token_ids()
+            .get(target_future_start..target_row_end)
+            .is_some_and(|future| future.iter().all(|token| *token == 0))
+    }
+}
+
+fn speculative_role_input_matches(
+    input: &ferric_spec::ValidatedM1StepInputs,
+    selection: ferric_spec::Qwen3PlanSelection,
+    lane: usize,
+    expected_live_lanes: usize,
+    member: &M1ServingCommittedSpeculativeMemberBindingV1,
+    committed: u32,
+) -> bool {
+    let Some(plan) = input.lanes().get(lane).and_then(Option::as_ref) else {
+        return false;
+    };
+    let width = input.dimensions().active_tokens as usize;
+    let Some(row_start) = lane.checked_mul(width) else {
+        return false;
+    };
+    input.selection() == selection
+        && input.live_lane_count() as usize == expected_live_lanes
+        && plan.selection() == selection
+        && plan.request() == member.request
+        && plan.completion_epoch() == member.epoch
+        && input.token_ids().get(row_start) == Some(&member.anchor)
+        && input.position_ids().get(row_start) == Some(&committed)
+        && input.active_lengths().get(lane) == Some(&input.dimensions().active_tokens)
+        && input.context_lengths().get(lane) == Some(&committed)
+}
+
+/// Exact paired-prefill to finite-speculative successor owners queued before detachment.
+#[must_use = "rollover inputs own linear KV page leases and workspace plans"]
+#[derive(Debug)]
+pub struct M1ServingQueuedFiniteSpeculativeRolloverV1 {
+    binding: M1ServingQueuedGenerationBindingV1,
+    kv_inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
+    preparation_plans: M1FullStepWorkspacePlans,
+    recipe_plans: M1FullStepWorkspacePlans,
+}
+
+impl M1ServingQueuedFiniteSpeculativeRolloverV1 {
+    pub const fn new(
+        binding: M1ServingQueuedGenerationBindingV1,
+        kv_inputs: M1FiniteSpeculativeQueueRolloverKvInputsV1,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+    ) -> Self {
+        Self {
+            binding,
+            kv_inputs,
+            preparation_plans,
+            recipe_plans,
+        }
+    }
+
+    #[must_use = "the exact queued binding remains attached to rollover inputs"]
+    pub const fn binding(&self) -> &M1ServingQueuedGenerationBindingV1 {
+        &self.binding
+    }
+
+    /// Whether draft decode and target verification share this first token.
+    #[must_use]
+    pub fn matches_anchor(&self, anchor: ferric_spec::TokenId) -> bool {
+        self.binding.requests().len() == 1 && self.kv_inputs.matches_anchor(anchor)
+    }
+
+    /// Whether every draft and target lane starts from the corresponding
+    /// checked paired-prefill token in exact scheduler order.
+    #[must_use]
+    pub fn matches_anchors(&self, anchors: &[ferric_spec::TokenId]) -> bool {
+        anchors.len() == self.binding.requests().len() && self.kv_inputs.matches_anchors(anchors)
+    }
+
+    /// Whether one exact draft and target lane starts from `anchor`.
+    #[must_use]
+    pub fn matches_anchor_at(&self, lane: usize, anchor: ferric_spec::TokenId) -> bool {
+        lane < self.binding.requests().len() && self.kv_inputs.matches_anchor_at(lane, anchor)
+    }
+}
+
+/// Source-compatible name for the original one-lane S1/K4 rollover owner.
+pub type M1ServingQueuedS1K4RolloverV1 = M1ServingQueuedFiniteSpeculativeRolloverV1;
+
+/// Fresh paired-prefill inputs for an all-terminal physical new window.
+///
+/// Model memory and the KV page ledger remain in the predecessor queue. This
+/// owner deliberately carries only validated request inputs and two independent
+/// workspace-plan copies; the detached-queue transaction mints fresh caches
+/// from the retained Ferric ledger after its irreversible commit boundary.
+#[must_use = "new-window inputs must remain paired with their exact generation binding"]
+#[derive(Debug)]
+pub struct M1ServingQueuedPairedPrefillNewWindowV1 {
+    binding: M1ServingQueuedGenerationBindingV1,
+    draft_prefill: ValidatedM1StepInputs,
+    target_prefill: ValidatedM1StepInputs,
+    preparation_plans: M1FullStepWorkspacePlans,
+    recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
+}
+
+impl M1ServingQueuedPairedPrefillNewWindowV1 {
+    pub const fn new(
+        binding: M1ServingQueuedGenerationBindingV1,
+        draft_prefill: ValidatedM1StepInputs,
+        target_prefill: ValidatedM1StepInputs,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: M1FullStepWorkspacePlans,
+    ) -> Self {
+        Self {
+            binding,
+            draft_prefill,
+            target_prefill,
+            preparation_plans,
+            recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1::plans(recipe_plans),
+        }
+    }
+
+    pub(crate) const fn new_with_recipe_input(
+        binding: M1ServingQueuedGenerationBindingV1,
+        draft_prefill: ValidatedM1StepInputs,
+        target_prefill: ValidatedM1StepInputs,
+        preparation_plans: M1FullStepWorkspacePlans,
+        recipe_plans: crate::runner::M1PhysicalRunnerRecipeInputV1,
+    ) -> Self {
+        Self {
+            binding,
+            draft_prefill,
+            target_prefill,
+            preparation_plans,
+            recipe_plans,
+        }
+    }
+
+    #[must_use = "the exact queued binding remains attached to new-window inputs"]
+    pub const fn binding(&self) -> &M1ServingQueuedGenerationBindingV1 {
+        &self.binding
+    }
+
+    pub(crate) const fn draft_prefill(&self) -> &ValidatedM1StepInputs {
+        &self.draft_prefill
+    }
+
+    pub(crate) const fn target_prefill(&self) -> &ValidatedM1StepInputs {
+        &self.target_prefill
+    }
+
+    #[must_use]
+    pub(crate) fn physical_inputs_match(&self, batch: &M1ServingBatchPlanV1) -> bool {
+        let requests = self.binding.requests();
+        self.binding
+            .matches(batch.plan(), batch.requests(), batch.epoch())
+            && batch.plan().shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+            && self.preparation_plans.kind() == M1FullStepWorkspaceInputKind::PairedPrefill
+            && self
+                .recipe_plans
+                .workspace_plans()
+                .is_some_and(|plans| plans.kind() == M1FullStepWorkspaceInputKind::PairedPrefill)
+            && prefill_new_window_role_matches(
+                &self.draft_prefill,
+                batch.plan().draft(),
+                requests,
+                batch.epoch(),
+            )
+            && prefill_new_window_role_matches(
+                &self.target_prefill,
+                batch.plan().target(),
+                requests,
+                batch.epoch(),
+            )
+            && paired_prefill_new_window_rows_match(&self.draft_prefill, &self.target_prefill)
+    }
+
+    pub(crate) fn logical_runner_plan_identities_match(
+        &self,
+        runner: &LogicalRunnerDeclaration,
+    ) -> bool {
+        [&self.draft_prefill, &self.target_prefill]
+            .into_iter()
+            .all(|inputs| {
+                let Ok(published) = runner.plan(inputs.selection()) else {
+                    return false;
+                };
+                let Ok(live) = usize::try_from(inputs.live_lane_count()) else {
+                    return false;
+                };
+                inputs
+                    .lanes()
+                    .iter()
+                    .take(live)
+                    .all(|plan| plan.is_some_and(|plan| plan.plan_id() == &published.plan_id))
+            })
+    }
+
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        M1ServingQueuedGenerationBindingV1,
+        ValidatedM1StepInputs,
+        ValidatedM1StepInputs,
+        M1FullStepWorkspacePlans,
+        crate::runner::M1PhysicalRunnerRecipeInputV1,
+    ) {
+        (
+            self.binding,
+            self.draft_prefill,
+            self.target_prefill,
+            self.preparation_plans,
+            self.recipe_plans,
+        )
+    }
+}
+
+fn paired_prefill_new_window_rows_match(
+    draft: &ValidatedM1StepInputs,
+    target: &ValidatedM1StepInputs,
+) -> bool {
+    let Ok(live) = usize::try_from(draft.live_lane_count()) else {
+        return false;
+    };
+    if target.live_lane_count() as usize != live {
+        return false;
+    }
+    let draft_width = draft.dimensions().active_tokens as usize;
+    let target_width = target.dimensions().active_tokens as usize;
+    for lane in 0..live {
+        let active = draft.active_lengths()[lane];
+        if target.active_lengths()[lane] != active {
+            return false;
+        }
+        for column in 0..active as usize {
+            let Some(draft_index) = lane
+                .checked_mul(draft_width)
+                .and_then(|start| start.checked_add(column))
+            else {
+                return false;
+            };
+            let Some(target_index) = lane
+                .checked_mul(target_width)
+                .and_then(|start| start.checked_add(column))
+            else {
+                return false;
+            };
+            if draft.token_ids().get(draft_index) != target.token_ids().get(target_index)
+                || draft.position_ids().get(draft_index) != target.position_ids().get(target_index)
+            {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+fn prefill_new_window_role_matches(
+    inputs: &ValidatedM1StepInputs,
+    selection: ferric_spec::Qwen3PlanSelection,
+    requests: &[RequestId],
+    epoch: CompletionEpoch,
+) -> bool {
+    let Ok(live) = usize::try_from(inputs.live_lane_count()) else {
+        return false;
+    };
+    live == requests.len()
+        && inputs.selection() == selection
+        && inputs
+            .lanes()
+            .iter()
+            .take(live)
+            .zip(requests)
+            .all(|(plan, request)| {
+                plan.is_some_and(|plan| {
+                    plan.request() == *request
+                        && plan.selection() == selection
+                        && plan.completion_epoch() == epoch
+                })
+            })
+        && inputs
+            .active_lengths()
+            .iter()
+            .take(live)
+            .all(|active| *active != 0)
+        && inputs
+            .context_lengths()
+            .iter()
+            .take(live)
+            .all(|context| *context == 0)
+}
+
+/// One move-only physical generation in exact serving order.
+#[must_use = "queued generation inputs must be consumed in serving order"]
+#[derive(Debug)]
+pub enum M1ServingQueuedGenerationInputV1 {
+    FirstPublication(Box<M1ServingQueuedFirstPublicationV1>),
+    SameShapeRearm(Box<M1ServingQueuedSameShapeRearmV1>),
+    /// Finite-speculative rollover; retains its original public variant name.
+    S1K4Rollover(Box<M1ServingQueuedS1K4RolloverV1>),
+    PairedPrefillNewWindow(Box<M1ServingQueuedPairedPrefillNewWindowV1>),
+}
+
+impl M1ServingQueuedGenerationInputV1 {
+    /// Boxes one first-publication owner before it enters the fallible queue.
+    pub fn first_publication(input: M1ServingQueuedFirstPublicationV1) -> Self {
+        Self::FirstPublication(Box::new(input))
+    }
+
+    /// Boxes one same-shape rearm owner before it enters the fallible queue.
+    pub fn same_shape_rearm(input: M1ServingQueuedSameShapeRearmV1) -> Self {
+        Self::SameShapeRearm(Box::new(input))
+    }
+
+    /// Boxes one finite-speculative rollover owner before it enters the queue.
+    pub fn finite_speculative_rollover(input: M1ServingQueuedFiniteSpeculativeRolloverV1) -> Self {
+        Self::S1K4Rollover(Box::new(input))
+    }
+
+    /// Boxes one S1/K4 rollover owner before it enters the fallible queue.
+    pub fn s1_k4_rollover(input: M1ServingQueuedS1K4RolloverV1) -> Self {
+        Self::S1K4Rollover(Box::new(input))
+    }
+
+    /// Boxes one fresh paired-prefill new-window owner.
+    pub fn paired_prefill_new_window(input: M1ServingQueuedPairedPrefillNewWindowV1) -> Self {
+        Self::PairedPrefillNewWindow(Box::new(input))
+    }
+
+    #[must_use]
+    pub const fn phase(&self) -> M1ServingQueuedGenerationPhaseV1 {
+        match self {
+            Self::FirstPublication(_) => M1ServingQueuedGenerationPhaseV1::FirstPublication,
+            Self::SameShapeRearm(_) => M1ServingQueuedGenerationPhaseV1::SameShapeRearm,
+            Self::S1K4Rollover(_) => M1ServingQueuedGenerationPhaseV1::S1K4Rollover,
+            Self::PairedPrefillNewWindow(_) => {
+                M1ServingQueuedGenerationPhaseV1::PairedPrefillNewWindow
+            }
+        }
+    }
+
+    #[must_use = "the exact queued binding remains attached to physical inputs"]
+    pub const fn binding(&self) -> &M1ServingQueuedGenerationBindingV1 {
+        match self {
+            Self::FirstPublication(input) => input.binding(),
+            Self::SameShapeRearm(input) => input.binding(),
+            Self::S1K4Rollover(input) => input.binding(),
+            Self::PairedPrefillNewWindow(input) => input.binding(),
+        }
+    }
+}
+
+/// Fallible queue growth failure retaining the rejected generation input.
+#[must_use = "enqueue failure retains the unqueued physical input"]
+#[derive(Debug)]
+pub struct M1ServingPhysicalInputEnqueueFailureV1 {
+    source: TryReserveError,
+    input: M1ServingQueuedGenerationInputV1,
+}
+
+impl M1ServingPhysicalInputEnqueueFailureV1 {
+    #[must_use]
+    pub const fn source(&self) -> &TryReserveError {
+        &self.source
+    }
+
+    #[must_use = "the rejected generation input remains linear"]
+    pub fn into_input(self) -> M1ServingQueuedGenerationInputV1 {
+        self.input
+    }
+}
+
+/// Stable preparation phase for a terminal provider rejection.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1ServingPhysicalInputPreparationPhaseV1 {
+    QueueSelection,
+    BatchBinding,
+    PhysicalInputPreflight,
+    RecipeDerivation,
+    FirstWorkspacePreparation,
+    FirstWorkspaceAllocation,
+    S1K4OutputReservation,
+    FiniteSpeculativeOutputReservation,
+    CompletionOutputAllocation,
+    SemanticEvidenceAllocation,
+    PrepublicationAllocationRoster,
+    SameShapeKvReservation,
+    SameShapeWorkspacePreparation,
+    S1K4KvReservation,
+    S1K4WorkspacePreparation,
+}
+
+/// Stable reason accompanying exact retained failure custody.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum M1ServingPhysicalInputPreparationErrorV1 {
+    QueueEmpty {
+        expected: M1ServingQueuedGenerationPhaseV1,
+    },
+    QueuePhaseMismatch {
+        expected: M1ServingQueuedGenerationPhaseV1,
+        actual: M1ServingQueuedGenerationPhaseV1,
+    },
+    BatchBindingMismatch,
+    WorkspaceKindMismatch,
+    SelectedRosterMismatch,
+    DeviceMismatch,
+    UnsupportedPlanShape,
+    FiniteSpeculativeSuccessorUnbound,
+    FiniteSpeculativeSuccessorBindingMismatch,
+    UnexpectedFiniteSpeculativeSuccessorBinding,
+    FixedDispatchDataRosterMismatch {
+        expected: usize,
+        actual: usize,
+        maximum: usize,
+    },
+    LowerRejected,
+}
+
+#[derive(Debug)]
+struct OpaqueM1ServingPhysicalInputCustodyV1(Box<dyn fmt::Debug>);
+
+/// Terminal provider failure retaining all owners consumed after scheduling.
+#[must_use = "provider failure custody must remain retained for teardown"]
+#[derive(Debug)]
+pub struct M1ServingPhysicalInputPreparationFailureV1 {
+    phase: M1ServingPhysicalInputPreparationPhaseV1,
+    error: M1ServingPhysicalInputPreparationErrorV1,
+    retained: OpaqueM1ServingPhysicalInputCustodyV1,
+}
+
+impl M1ServingPhysicalInputPreparationFailureV1 {
+    #[must_use]
+    pub const fn phase(&self) -> M1ServingPhysicalInputPreparationPhaseV1 {
+        self.phase
+    }
+
+    #[must_use]
+    pub const fn error(&self) -> M1ServingPhysicalInputPreparationErrorV1 {
+        self.error
+    }
+
+    #[must_use]
+    pub fn retains_custody(&self) -> bool {
+        let _ = &self.retained.0;
+        true
+    }
+
+    /// Provider preparation starts only after exact scheduling, so every
+    /// rejection is conservatively terminal for the in-flight adapter.
+    #[must_use]
+    pub const fn is_terminal(&self) -> bool {
+        true
+    }
+}
+
+fn preparation_failure(
+    phase: M1ServingPhysicalInputPreparationPhaseV1,
+    error: M1ServingPhysicalInputPreparationErrorV1,
+    retained: impl fmt::Debug + 'static,
+) -> M1ServingPhysicalInputPreparationFailureV1 {
+    M1ServingPhysicalInputPreparationFailureV1 {
+        phase,
+        error,
+        retained: OpaqueM1ServingPhysicalInputCustodyV1(Box::new(retained)),
+    }
+}
+
+/// Concrete ordered physical-input provider for production M1 serving.
+#[must_use = "queued physical inputs and linear owners must remain retained"]
+#[derive(Debug, Default)]
+pub struct M1QueuedServingPhysicalInputProviderV1 {
+    pending: VecDeque<M1ServingQueuedGenerationInputV1>,
+}
+
+impl M1QueuedServingPhysicalInputProviderV1 {
+    #[must_use = "the provider owns every queued linear physical input"]
+    pub const fn new() -> Self {
+        Self {
+            pending: VecDeque::new(),
+        }
+    }
+
+    /// Installs an already-ordered finite generation program.
+    #[must_use = "queued physical inputs remain linear"]
+    pub fn from_ordered_inputs(inputs: Vec<M1ServingQueuedGenerationInputV1>) -> Self {
+        Self {
+            pending: VecDeque::from(inputs),
+        }
+    }
+
+    /// Appends one physical generation without losing it on host allocation failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns the rejected input and allocation diagnostic unchanged.
+    pub fn try_enqueue(
+        &mut self,
+        input: M1ServingQueuedGenerationInputV1,
+    ) -> Result<(), M1ServingPhysicalInputEnqueueFailureV1> {
+        if let Err(source) = self.pending.try_reserve(1) {
+            return Err(M1ServingPhysicalInputEnqueueFailureV1 { source, input });
+        }
+        self.pending.push_back(input);
+        Ok(())
+    }
+
+    /// Appends one typed finite-speculative rollover for the validated adapter.
+    ///
+    /// # Errors
+    ///
+    /// Returns the allocation diagnostic and unchanged typed input.
+    pub(crate) fn try_enqueue_finite_speculative_rollover(
+        &mut self,
+        input: Box<M1ServingQueuedFiniteSpeculativeRolloverV1>,
+    ) -> Result<
+        (),
+        (
+            TryReserveError,
+            Box<M1ServingQueuedFiniteSpeculativeRolloverV1>,
+        ),
+    > {
+        if let Err(source) = self.pending.try_reserve(1) {
+            return Err((source, input));
+        }
+        self.pending
+            .push_back(M1ServingQueuedGenerationInputV1::S1K4Rollover(input));
+        Ok(())
+    }
+
+    /// Appends one finite-speculative same-shape rearm for the serving adapter.
+    ///
+    /// # Errors
+    ///
+    /// Returns the allocation diagnostic and unchanged pre-boxed input.
+    pub(crate) fn try_enqueue_speculative_rearm(
+        &mut self,
+        input: Box<M1ServingQueuedSameShapeRearmV1>,
+    ) -> Result<(), (TryReserveError, Box<M1ServingQueuedSameShapeRearmV1>)> {
+        if let Err(source) = self.pending.try_reserve(1) {
+            return Err((source, input));
+        }
+        self.pending
+            .push_back(M1ServingQueuedGenerationInputV1::SameShapeRearm(input));
+        Ok(())
+    }
+
+    pub(crate) fn preflight_paired_prefill_new_window(&self, batch: &M1ServingBatchPlanV1) -> bool {
+        self.paired_prefill_new_window_input(batch).is_some()
+    }
+
+    pub(crate) fn paired_prefill_new_window_input(
+        &self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Option<&M1ServingQueuedPairedPrefillNewWindowV1> {
+        match self.pending.front() {
+            Some(M1ServingQueuedGenerationInputV1::PairedPrefillNewWindow(input))
+                if input.physical_inputs_match(batch) =>
+            {
+                Some(input)
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn take_paired_prefill_new_window(
+        &mut self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Option<Box<M1ServingQueuedPairedPrefillNewWindowV1>> {
+        if !self.preflight_paired_prefill_new_window(batch) {
+            return None;
+        }
+        match self.pending.pop_front() {
+            Some(M1ServingQueuedGenerationInputV1::PairedPrefillNewWindow(input)) => Some(input),
+            _ => unreachable!("new-window queue phase was preflighted before dequeue"),
+        }
+    }
+
+    #[must_use]
+    pub fn pending_generation_count(&self) -> usize {
+        self.pending.len()
+    }
+
+    #[must_use]
+    pub fn next_generation_phase(&self) -> Option<M1ServingQueuedGenerationPhaseV1> {
+        self.pending
+            .front()
+            .map(M1ServingQueuedGenerationInputV1::phase)
+    }
+
+    /// Preflights the queued first publication against exact pretokenized work.
+    ///
+    /// This read-only check does not expose or move allocation, page, cache, or
+    /// workspace authority. The later physical preparation repeats its own
+    /// scheduler-epoch and custody checks before dequeuing the generation.
+    ///
+    /// # Errors
+    ///
+    /// Rejects an absent or wrong-phase first generation, any plan or ordered
+    /// roster substitution, or any workspace lane whose prompt differs.
+    pub fn preflight_first_publication_work(
+        &self,
+        plan: M1ServingPlanV1,
+        requests: &[RequestId],
+        prompt_tokens: &[&[TokenId]],
+    ) -> Result<(), M1ServingFirstPublicationWorkMatchErrorV1> {
+        let Some(front) = self.pending.front() else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::QueueEmpty);
+        };
+        let M1ServingQueuedGenerationInputV1::FirstPublication(input) = front else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::QueuePhase);
+        };
+        preflight_first_binding(&input.binding, plan, requests, prompt_tokens)?;
+        let expected_kind = workspace_kind(plan);
+        if input.tables.kind() != expected_kind
+            || input.preparation_plans.kind() != expected_kind
+            || input.recipe_plans.kind() != expected_kind
+        {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::WorkspaceKind);
+        }
+        if input.selected.len() != requests.len()
+            || input
+                .selected
+                .iter()
+                .zip(requests)
+                .any(|(cache, request)| cache.projection().request != *request)
+        {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::SelectedRoster);
+        }
+        let device = input.memory.device();
+        if input
+            .selected
+            .iter()
+            .any(|cache| cache.projection().device != device)
+        {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::Device);
+        }
+        let M1FullStepKvWorkspaceTablesV1::PairedPrefill { draft, target } = &input.tables else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::WorkspaceKind);
+        };
+        if draft.selection() != plan.draft() || target.selection() != plan.target() {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::WorkspaceSelection);
+        }
+        preflight_prompt_rows(
+            draft.inputs(),
+            plan.draft(),
+            input.binding.epoch(),
+            requests,
+            prompt_tokens,
+        )?;
+        preflight_prompt_rows(
+            target.inputs(),
+            plan.target(),
+            input.binding.epoch(),
+            requests,
+            prompt_tokens,
+        )
+    }
+
+    /// Recovers every generation that has not been consumed by preparation.
+    #[must_use = "pending physical generations remain linear"]
+    pub fn into_pending_inputs(self) -> VecDeque<M1ServingQueuedGenerationInputV1> {
+        self.pending
+    }
+}
+
+fn preflight_first_binding(
+    binding: &M1ServingQueuedGenerationBindingV1,
+    plan: M1ServingPlanV1,
+    requests: &[RequestId],
+    prompt_tokens: &[&[TokenId]],
+) -> Result<(), M1ServingFirstPublicationWorkMatchErrorV1> {
+    if requests.len() != prompt_tokens.len() {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::PromptRoster);
+    }
+    if binding.plan() != plan {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::Plan);
+    }
+    if binding.requests() != requests {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::Roster);
+    }
+    Ok(())
+}
+
+fn preflight_prompt_rows(
+    inputs: &ValidatedM1StepInputs,
+    selection: ferric_spec::Qwen3PlanSelection,
+    epoch: CompletionEpoch,
+    requests: &[RequestId],
+    prompt_tokens: &[&[TokenId]],
+) -> Result<(), M1ServingFirstPublicationWorkMatchErrorV1> {
+    if inputs.selection() != selection {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::WorkspaceSelection);
+    }
+    if inputs.live_lane_count() as usize != requests.len() {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputLaneCount);
+    }
+    let width = inputs.dimensions().active_tokens as usize;
+    for (lane, (request, prompt)) in requests.iter().zip(prompt_tokens).enumerate() {
+        let Some(plan) = inputs.lanes()[lane].as_ref() else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputRequest { lane });
+        };
+        if plan.request() != *request || plan.selection() != selection {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputRequest { lane });
+        }
+        if plan.completion_epoch() != epoch {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputEpoch { lane });
+        }
+        if inputs.active_lengths()[lane] as usize != prompt.len() {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputActiveLength { lane });
+        }
+        if inputs.context_lengths()[lane] != 0 {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputContextLength { lane });
+        }
+        let Some(row_start) = lane.checked_mul(width) else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputLaneCount);
+        };
+        let Some(row_end) = row_start.checked_add(width) else {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputLaneCount);
+        };
+        preflight_prompt_row(
+            lane,
+            inputs.token_ids().get(row_start..row_end),
+            inputs.position_ids().get(row_start..row_end),
+            prompt,
+        )?;
+    }
+    Ok(())
+}
+
+fn preflight_prompt_row(
+    lane: usize,
+    tokens: Option<&[TokenId]>,
+    positions: Option<&[u32]>,
+    prompt: &[TokenId],
+) -> Result<(), M1ServingFirstPublicationWorkMatchErrorV1> {
+    let (Some(tokens), Some(positions)) = (tokens, positions) else {
+        return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputLaneCount);
+    };
+    for (column, expected) in prompt.iter().copied().enumerate() {
+        if tokens.get(column) != Some(&expected) {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputToken { lane, column });
+        }
+        if positions.get(column).copied() != u32::try_from(column).ok() {
+            return Err(M1ServingFirstPublicationWorkMatchErrorV1::InputPosition { lane, column });
+        }
+    }
+    Ok(())
+}
+
+fn workspace_kind(plan: M1ServingPlanV1) -> M1FullStepWorkspaceInputKind {
+    match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => M1FullStepWorkspaceInputKind::PairedPrefill,
+        M1PhysicalFixedBatchShapeV1::TargetOnly => M1FullStepWorkspaceInputKind::TargetOnly,
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => M1FullStepWorkspaceInputKind::DraftCatchup,
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1FullStepWorkspaceInputKind::SpeculativeRound
+        }
+    }
+}
+
+fn dispatch_intent(plan: M1ServingPlanV1) -> M1StepDispatchIntent {
+    match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => {
+            M1StepDispatchIntent::PairedPrefill(plan.target())
+        }
+        M1PhysicalFixedBatchShapeV1::TargetOnly => M1StepDispatchIntent::TargetOnly(plan.target()),
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            M1StepDispatchIntent::DraftCatchup(plan.target())
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1StepDispatchIntent::SpeculativeRound(plan.target())
+        }
+    }
+}
+
+fn semantic_evidence(plan: M1ServingPlanV1) -> M1ServingPreparedSemanticEvidenceV1 {
+    match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            unreachable!("maintenance is not an admitted standalone serving plan")
+        }
+        M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::TargetOnly => {
+            M1ServingPreparedSemanticEvidenceV1::Direct
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4
+        }
+    }
+}
+
+fn scheduled_roster_matches(
+    scheduled: &M1ScheduledDispatchV1,
+    requests: &[RequestId],
+    epoch: CompletionEpoch,
+) -> bool {
+    scheduled.epoch() == epoch
+        && scheduled.member_count() == requests.len()
+        && requests
+            .iter()
+            .copied()
+            .enumerate()
+            .all(|(index, request)| scheduled.member(index) == Some(request))
+}
+
+fn exact_batch_binding_matches(
+    binding: &M1ServingQueuedGenerationBindingV1,
+    batch: &M1ServingBatchPlanV1,
+    scheduled: &M1ScheduledDispatchV1,
+) -> bool {
+    binding.matches(batch.plan(), batch.requests(), batch.epoch())
+        && scheduled_roster_matches(scheduled, batch.requests(), batch.epoch())
+}
+
+fn first_physical_preflight(
+    input: &M1ServingQueuedFirstPublicationV1,
+    batch: &M1ServingBatchPlanV1,
+) -> Result<Option<Qwen3PlanSelection>, M1ServingPhysicalInputPreparationErrorV1> {
+    let expected_kind = workspace_kind(batch.plan());
+    if input.tables.kind() != expected_kind
+        || input.preparation_plans.kind() != expected_kind
+        || input.recipe_plans.kind() != expected_kind
+    {
+        return Err(M1ServingPhysicalInputPreparationErrorV1::WorkspaceKindMismatch);
+    }
+    if input.selected.len() != batch.requests().len()
+        || input
+            .selected
+            .iter()
+            .zip(batch.requests().iter().copied())
+            .any(|(cache, request)| cache.projection().request != request)
+    {
+        return Err(M1ServingPhysicalInputPreparationErrorV1::SelectedRosterMismatch);
+    }
+    let device = input.memory.device();
+    if input
+        .selected
+        .iter()
+        .any(|cache| cache.projection().device != device)
+    {
+        return Err(M1ServingPhysicalInputPreparationErrorV1::DeviceMismatch);
+    }
+    exact_finite_speculative_successor(batch.plan(), input.finite_speculative_successor)
+}
+
+fn exact_finite_speculative_successor(
+    predecessor: M1ServingPlanV1,
+    successor: Option<M1ServingPlanV1>,
+) -> Result<Option<Qwen3PlanSelection>, M1ServingPhysicalInputPreparationErrorV1> {
+    match (is_finite_rollover_source_plan(predecessor), successor) {
+        (false, None) => Ok(None),
+        (true, None) => {
+            Err(M1ServingPhysicalInputPreparationErrorV1::FiniteSpeculativeSuccessorUnbound)
+        }
+        (true, Some(successor))
+            if is_admitted_finite_speculative_plan(successor)
+                && crate::m1_serving_registry::admit_m1_production_rollover_transition_v1(
+                    predecessor,
+                    successor,
+                )
+                .is_some() =>
+        {
+            Ok(Some(successor.target()))
+        }
+        (true, Some(_)) => {
+            Err(M1ServingPhysicalInputPreparationErrorV1::FiniteSpeculativeSuccessorBindingMismatch)
+        }
+        (false, Some(_)) => Err(
+            M1ServingPhysicalInputPreparationErrorV1::UnexpectedFiniteSpeculativeSuccessorBinding,
+        ),
+    }
+}
+
+fn expected_first_publication_allocation_count(
+    plan: M1ServingPlanV1,
+    finite_speculative_successor: Option<Qwen3PlanSelection>,
+) -> usize {
+    let workspace_allocations = match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            unreachable!("maintenance is not an admitted first-publication plan")
+        }
+        M1PhysicalFixedBatchShapeV1::PairedPrefill => M1_PAIRED_WORKSPACE_ALLOCATION_COUNT_V1,
+        M1PhysicalFixedBatchShapeV1::TargetOnly => M1_TARGET_ONLY_WORKSPACE_ALLOCATION_COUNT_V1,
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1_SPECULATIVE_WORKSPACE_ALLOCATION_COUNT_V1
+        }
+    };
+    let diagnostic_allocations = match plan.shape() {
+        M1PhysicalFixedBatchShapeV1::DraftCatchup => {
+            unreachable!("maintenance is not an admitted first-publication plan")
+        }
+        M1PhysicalFixedBatchShapeV1::PairedPrefill | M1PhysicalFixedBatchShapeV1::TargetOnly => {
+            M1_DIRECT_DIAGNOSTIC_ALLOCATION_COUNT_V1
+        }
+        M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK8
+        | M1PhysicalFixedBatchShapeV1::SpeculativeK16 => {
+            M1_SPECULATIVE_DIAGNOSTIC_ALLOCATION_COUNT_V1
+        }
+    };
+    M1_MODEL_ALLOCATION_COUNT_V1
+        + workspace_allocations
+        + M1_COMPACT_OUTPUT_ALLOCATION_COUNT_V1
+        + diagnostic_allocations
+        + finite_speculative_successor.map_or(0, |_| M1_EXACT_SUCCESSOR_OUTPUT_ALLOCATION_COUNT_V1)
+}
+
+fn continuation_physical_preflight(
+    preparation_plans: &M1FullStepWorkspacePlans,
+    recipe_plans: &M1FullStepWorkspacePlans,
+    batch: &M1ServingBatchPlanV1,
+) -> Result<(), M1ServingPhysicalInputPreparationErrorV1> {
+    let expected_kind = workspace_kind(batch.plan());
+    if preparation_plans.kind() == expected_kind && recipe_plans.kind() == expected_kind {
+        Ok(())
+    } else {
+        Err(M1ServingPhysicalInputPreparationErrorV1::WorkspaceKindMismatch)
+    }
+}
+
+fn is_admitted_finite_speculative_plan(plan: M1ServingPlanV1) -> bool {
+    if plan.mode() != Qwen3ExecutionMode::Speculative
+        || plan.draft().mode != Qwen3ExecutionMode::Decode
+    {
+        return false;
+    }
+    matches!(
+        (
+            plan.shape(),
+            plan.sequence_capacity(),
+            plan.target().bucket,
+            plan.draft().bucket,
+        ),
+        (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            1,
+            Qwen3PlanBucket::SpeculativeS1K4C8192,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ) | (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK4,
+            8,
+            Qwen3PlanBucket::SpeculativeS8K4C8192,
+            Qwen3PlanBucket::DecodeS8C8192,
+        ) | (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK8,
+            1,
+            Qwen3PlanBucket::SpeculativeS1K8C8192,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ) | (
+            M1PhysicalFixedBatchShapeV1::SpeculativeK16,
+            1,
+            Qwen3PlanBucket::SpeculativeS1K16C8192,
+            Qwen3PlanBucket::DecodeS1C8192,
+        )
+    )
+}
+
+fn is_finite_rollover_source_plan(plan: M1ServingPlanV1) -> bool {
+    plan.shape() == M1PhysicalFixedBatchShapeV1::PairedPrefill
+        && plan.mode() == Qwen3ExecutionMode::Prefill
+        && matches!(
+            plan.target().bucket,
+            Qwen3PlanBucket::PrefillS1T128 | Qwen3PlanBucket::PrefillS8T128
+        )
+}
+
+fn is_exact_s1_k4_plan(plan: M1ServingPlanV1) -> bool {
+    plan.shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
+        && plan.sequence_capacity() == 1
+        && plan.target().bucket == Qwen3PlanBucket::SpeculativeS1K4C8192
+        && plan.draft().bucket == Qwen3PlanBucket::DecodeS1C8192
+}
+
+fn prepare_queued_finite_speculative_rollover<const C: usize>(
+    provider: &mut M1QueuedServingPhysicalInputProviderV1,
+    runner: &M1PhysicalRunnerV1,
+    engine: &mut Engine<C>,
+    batch: &M1ServingBatchPlanV1,
+    scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
+) -> Result<M1ServingPreparedFiniteSpeculativeRolloverV1, M1ServingPhysicalInputPreparationFailureV1>
+{
+    let expected = M1ServingQueuedGenerationPhaseV1::S1K4Rollover;
+    let Some(front) = provider.pending.front() else {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
+            M1ServingPhysicalInputPreparationErrorV1::QueueEmpty { expected },
+            scheduled,
+        ));
+    };
+    if front.phase() != expected {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
+            M1ServingPhysicalInputPreparationErrorV1::QueuePhaseMismatch {
+                expected,
+                actual: front.phase(),
+            },
+            scheduled,
+        ));
+    }
+    if !exact_batch_binding_matches(front.binding(), batch, scheduled.scheduled_dispatch())
+        || scheduled.next_plan() != batch.plan()
+    {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::BatchBinding,
+            M1ServingPhysicalInputPreparationErrorV1::BatchBindingMismatch,
+            scheduled,
+        ));
+    }
+    let M1ServingQueuedGenerationInputV1::S1K4Rollover(front) = front else {
+        unreachable!("phase checked above")
+    };
+    if !is_admitted_finite_speculative_plan(batch.plan()) {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
+            M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape,
+            scheduled,
+        ));
+    }
+    if let Err(error) =
+        continuation_physical_preflight(&front.preparation_plans, &front.recipe_plans, batch)
+    {
+        return Err(preparation_failure(
+            M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
+            error,
+            scheduled,
+        ));
+    }
+
+    let Some(M1ServingQueuedGenerationInputV1::S1K4Rollover(input)) = provider.pending.pop_front()
+    else {
+        unreachable!("front variant checked before dequeue")
+    };
+    let M1ServingQueuedFiniteSpeculativeRolloverV1 {
+        binding,
+        kv_inputs,
+        preparation_plans,
+        recipe_plans,
+    } = *input;
+    let recipe = match runner.derive_step_recipe(
+        M1StepDispatchIntent::SpeculativeRound(binding.plan().target()),
+        recipe_plans,
+    ) {
+        M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+        M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
+                M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                (binding, kv_inputs, preparation_plans, scheduled, failure),
+            ));
+        }
+    };
+    let reserved =
+        match reserve_m1_finite_speculative_queue_rollover_kv_v1(engine, scheduled, kv_inputs) {
+            Ok(reserved) => reserved,
+            Err(failure) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::S1K4KvReservation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (binding, preparation_plans, recipe, failure),
+                ));
+            }
+        };
+    let prepared = match prepare_m1_finite_speculative_queue_rollover_v1(
+        engine,
+        reserved,
+        runner.logical_runner(),
+        preparation_plans,
+    ) {
+        Ok(prepared) => prepared,
+        Err(failure) => {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::S1K4WorkspacePreparation,
+                M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                (binding, recipe, failure),
+            ));
+        }
+    };
+    Ok(M1ServingPreparedFiniteSpeculativeRolloverV1::new(
+        prepared,
+        recipe,
+        M1ServingPreparedSemanticEvidenceV1::SpeculativeK4,
+    ))
+}
+
+impl<const C: usize> M1ServingPhysicalInputProviderV1<C>
+    for M1QueuedServingPhysicalInputProviderV1
+{
+    type Failure = M1ServingPhysicalInputPreparationFailureV1;
+
+    fn supports_wider_finite_speculative_rollover(&self) -> bool {
+        true
+    }
+
+    fn preflight_paired_prefill_new_window(&self, batch: &M1ServingBatchPlanV1) -> bool {
+        M1QueuedServingPhysicalInputProviderV1::preflight_paired_prefill_new_window(self, batch)
+    }
+
+    fn paired_prefill_new_window_input(
+        &self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Option<&M1ServingQueuedPairedPrefillNewWindowV1> {
+        M1QueuedServingPhysicalInputProviderV1::paired_prefill_new_window_input(self, batch)
+    }
+
+    fn take_paired_prefill_new_window(
+        &mut self,
+        batch: &M1ServingBatchPlanV1,
+    ) -> Option<Box<M1ServingQueuedPairedPrefillNewWindowV1>> {
+        M1QueuedServingPhysicalInputProviderV1::take_paired_prefill_new_window(self, batch)
+    }
+
+    fn prepare_first_publication(
+        &mut self,
+        runner: &M1PhysicalRunnerV1,
+        _engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        scheduled: M1ScheduledDispatchV1,
+    ) -> Result<M1ServingPreparedFirstPublicationV1, Self::Failure> {
+        let expected = M1ServingQueuedGenerationPhaseV1::FirstPublication;
+        let Some(front) = self.pending.front() else {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
+                M1ServingPhysicalInputPreparationErrorV1::QueueEmpty { expected },
+                scheduled,
+            ));
+        };
+        if front.phase() != expected {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
+                M1ServingPhysicalInputPreparationErrorV1::QueuePhaseMismatch {
+                    expected,
+                    actual: front.phase(),
+                },
+                scheduled,
+            ));
+        }
+        if !exact_batch_binding_matches(front.binding(), batch, &scheduled) {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::BatchBinding,
+                M1ServingPhysicalInputPreparationErrorV1::BatchBindingMismatch,
+                scheduled,
+            ));
+        }
+        let M1ServingQueuedGenerationInputV1::FirstPublication(front) = front else {
+            unreachable!("phase checked above")
+        };
+        let finite_speculative_successor = match first_physical_preflight(front, batch) {
+            Ok(successor) => successor,
+            Err(error) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
+                    error,
+                    scheduled,
+                ));
+            }
+        };
+
+        let Some(M1ServingQueuedGenerationInputV1::FirstPublication(input)) =
+            self.pending.pop_front()
+        else {
+            unreachable!("front variant checked before dequeue")
+        };
+        let M1ServingQueuedFirstPublicationV1 {
+            binding,
+            finite_speculative_successor: bound_finite_speculative_successor,
+            memory,
+            tables,
+            preparation_plans,
+            recipe_plans,
+            selected,
+        } = *input;
+        let intent = dispatch_intent(binding.plan());
+        let recipe = match runner.derive_step_recipe(intent, recipe_plans) {
+            M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+            M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (
+                        binding,
+                        bound_finite_speculative_successor,
+                        memory,
+                        tables,
+                        preparation_plans,
+                        selected,
+                        scheduled,
+                        failure,
+                    ),
+                ));
+            }
+        };
+        let prepared =
+            match runner.prepare_scheduled_workspaces(scheduled, preparation_plans, tables) {
+                Ok(prepared) => prepared,
+                Err(failure) => {
+                    return Err(preparation_failure(
+                        M1ServingPhysicalInputPreparationPhaseV1::FirstWorkspacePreparation,
+                        M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                        (
+                            binding,
+                            bound_finite_speculative_successor,
+                            memory,
+                            selected,
+                            recipe,
+                            failure,
+                        ),
+                    ));
+                }
+            };
+        let mut allocated = match runner.allocate_scheduled_workspaces(memory, prepared) {
+            Ok(allocated) => allocated,
+            Err(failure) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::FirstWorkspaceAllocation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (
+                        binding,
+                        bound_finite_speculative_successor,
+                        selected,
+                        recipe,
+                        failure,
+                    ),
+                ));
+            }
+        };
+        if let Some(successor) = finite_speculative_successor {
+            if let Err(failure) = allocated.reserve_finite_speculative_rollover_output(successor) {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::FiniteSpeculativeOutputReservation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (
+                        binding,
+                        bound_finite_speculative_successor,
+                        allocated,
+                        selected,
+                        recipe,
+                        failure,
+                    ),
+                ));
+            }
+        }
+        let completion_output = match allocated.allocate_completion_output(binding.plan().target())
+        {
+            Ok(completion_output) => completion_output,
+            Err(failure) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::CompletionOutputAllocation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (
+                        binding,
+                        bound_finite_speculative_successor,
+                        allocated,
+                        selected,
+                        recipe,
+                        failure,
+                    ),
+                ));
+            }
+        };
+        let semantic_evidence = semantic_evidence(binding.plan());
+        let completion_output = match semantic_evidence {
+            M1ServingPreparedSemanticEvidenceV1::Direct => {
+                match allocated.enable_direct_diagnostic_choices_capture(completion_output) {
+                    Ok(completion_output) => completion_output,
+                    Err(failure) => {
+                        return Err(preparation_failure(
+                            M1ServingPhysicalInputPreparationPhaseV1::SemanticEvidenceAllocation,
+                            M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                            (
+                                binding,
+                                bound_finite_speculative_successor,
+                                allocated,
+                                selected,
+                                recipe,
+                                failure,
+                            ),
+                        ));
+                    }
+                }
+            }
+            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4
+                if binding.plan().shape() == M1PhysicalFixedBatchShapeV1::SpeculativeK4
+                    && binding.plan().sequence_capacity() == 1
+                    && binding.plan().target().bucket
+                        == ferric_spec::Qwen3PlanBucket::SpeculativeS1K4C8192 =>
+            {
+                match allocated.enable_speculative_k4_diagnostic_choices_capture(completion_output)
+                {
+                    Ok(completion_output) => completion_output,
+                    Err(failure) => {
+                        return Err(preparation_failure(
+                            M1ServingPhysicalInputPreparationPhaseV1::SemanticEvidenceAllocation,
+                            M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                            (
+                                binding,
+                                bound_finite_speculative_successor,
+                                allocated,
+                                selected,
+                                recipe,
+                                failure,
+                            ),
+                        ));
+                    }
+                }
+            }
+            M1ServingPreparedSemanticEvidenceV1::SpeculativeK4 => {
+                match allocated.enable_speculative_diagnostic_choices_capture(completion_output) {
+                    Ok(completion_output) => completion_output,
+                    Err(failure) => {
+                        return Err(preparation_failure(
+                            M1ServingPhysicalInputPreparationPhaseV1::SemanticEvidenceAllocation,
+                            M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                            (
+                                binding,
+                                bound_finite_speculative_successor,
+                                allocated,
+                                selected,
+                                recipe,
+                                failure,
+                            ),
+                        ));
+                    }
+                }
+            }
+        };
+        let actual = allocated.partitioned_memory().retained_allocation_count();
+        let expected = expected_first_publication_allocation_count(
+            binding.plan(),
+            finite_speculative_successor,
+        );
+        if actual != expected || actual > GFX942_MAX_FIXED_DISPATCH_DATA_V1 {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::PrepublicationAllocationRoster,
+                M1ServingPhysicalInputPreparationErrorV1::FixedDispatchDataRosterMismatch {
+                    expected,
+                    actual,
+                    maximum: GFX942_MAX_FIXED_DISPATCH_DATA_V1,
+                },
+                (
+                    binding,
+                    bound_finite_speculative_successor,
+                    allocated,
+                    selected,
+                    recipe,
+                    completion_output,
+                ),
+            ));
+        }
+        Ok(M1ServingPreparedFirstPublicationV1::new(
+            allocated,
+            recipe,
+            completion_output,
+            selected,
+            semantic_evidence,
+        ))
+    }
+
+    fn prepare_same_shape_rearm(
+        &mut self,
+        runner: &M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        scheduled: M1ScheduledLongLivedQueueRearmV1,
+    ) -> Result<M1ServingPreparedSameShapeRearmV1, Self::Failure> {
+        let expected = M1ServingQueuedGenerationPhaseV1::SameShapeRearm;
+        let Some(front) = self.pending.front() else {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
+                M1ServingPhysicalInputPreparationErrorV1::QueueEmpty { expected },
+                scheduled,
+            ));
+        };
+        if front.phase() != expected {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::QueueSelection,
+                M1ServingPhysicalInputPreparationErrorV1::QueuePhaseMismatch {
+                    expected,
+                    actual: front.phase(),
+                },
+                scheduled,
+            ));
+        }
+        if !exact_batch_binding_matches(front.binding(), batch, scheduled.scheduled_dispatch()) {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::BatchBinding,
+                M1ServingPhysicalInputPreparationErrorV1::BatchBindingMismatch,
+                scheduled,
+            ));
+        }
+        let M1ServingQueuedGenerationInputV1::SameShapeRearm(front) = front else {
+            unreachable!("phase checked above")
+        };
+        if let Err(error) =
+            continuation_physical_preflight(&front.preparation_plans, &front.recipe_plans, batch)
+        {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
+                error,
+                scheduled,
+            ));
+        }
+
+        let Some(M1ServingQueuedGenerationInputV1::SameShapeRearm(input)) =
+            self.pending.pop_front()
+        else {
+            unreachable!("front variant checked before dequeue")
+        };
+        let M1ServingQueuedSameShapeRearmV1 {
+            binding,
+            kv_inputs,
+            preparation_plans,
+            recipe_plans,
+        } = *input;
+        let intent = dispatch_intent(binding.plan());
+        let recipe = match runner.derive_step_recipe(intent, recipe_plans) {
+            M1PhysicalRunnerRecipeOutcomeV1::Prepared(recipe) => recipe,
+            M1PhysicalRunnerRecipeOutcomeV1::Rejected(failure) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::RecipeDerivation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (binding, kv_inputs, preparation_plans, scheduled, failure),
+                ));
+            }
+        };
+        let reserved = match reserve_m1_long_lived_queue_rearm_kv_v1(engine, scheduled, kv_inputs) {
+            Ok(reserved) => reserved,
+            Err(failure) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::SameShapeKvReservation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (binding, preparation_plans, recipe, failure),
+                ));
+            }
+        };
+        let prepared = match prepare_m1_long_lived_queue_rearm_v1(
+            engine,
+            reserved,
+            runner.logical_runner(),
+            preparation_plans,
+        ) {
+            Ok(prepared) => prepared,
+            Err(failure) => {
+                return Err(preparation_failure(
+                    M1ServingPhysicalInputPreparationPhaseV1::SameShapeWorkspacePreparation,
+                    M1ServingPhysicalInputPreparationErrorV1::LowerRejected,
+                    (binding, recipe, failure),
+                ));
+            }
+        };
+        let semantic_evidence = semantic_evidence(binding.plan());
+        Ok(M1ServingPreparedSameShapeRearmV1::new(
+            prepared,
+            recipe,
+            semantic_evidence,
+        ))
+    }
+
+    fn prepare_s1_k4_rollover(
+        &mut self,
+        runner: &M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
+    ) -> Result<M1ServingPreparedFiniteSpeculativeRolloverV1, Self::Failure> {
+        if !is_exact_s1_k4_plan(batch.plan()) {
+            return Err(preparation_failure(
+                M1ServingPhysicalInputPreparationPhaseV1::PhysicalInputPreflight,
+                M1ServingPhysicalInputPreparationErrorV1::UnsupportedPlanShape,
+                scheduled,
+            ));
+        }
+        prepare_queued_finite_speculative_rollover(self, runner, engine, batch, scheduled)
+    }
+
+    fn prepare_finite_speculative_rollover(
+        &mut self,
+        runner: &M1PhysicalRunnerV1,
+        engine: &mut Engine<C>,
+        batch: &M1ServingBatchPlanV1,
+        scheduled: M1ScheduledFiniteSpeculativeQueueRolloverV1,
+    ) -> Result<M1ServingPreparedFiniteSpeculativeRolloverV1, Self::Failure> {
+        prepare_queued_finite_speculative_rollover(self, runner, engine, batch, scheduled)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ferric_build::{
+        generate_qwen3_gfx942_runner_declaration, m1_step_workspace_requirements,
+        plan_addressless_m1_step_workspace, publish_qwen3_gfx942_runner_declaration,
+        qwen3_runner_closure_test_fixture, AvailableM1StepWorkspace,
+        DeclaredM1StepWorkspaceAllocation, M1StepWorkspaceDeclaration, M1StepWorkspacePlanOutcome,
+    };
+    use ferric_spec::{
+        completion::CompletionEpoch, validate_m1_step_inputs, Identity, M1StepInputCandidate,
+        M1StepInputValidationOutcome, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
+        Qwen3PlanSelection, RequestId, StepPlan, TokenId, ValidatedM1StepInputs,
+    };
+
+    use super::{
+        dispatch_intent, exact_finite_speculative_successor,
+        expected_first_publication_allocation_count, is_admitted_finite_speculative_plan,
+        is_exact_s1_k4_plan, is_finite_rollover_source_plan, preflight_first_binding,
+        preflight_prompt_row, preflight_prompt_rows, semantic_evidence, workspace_kind,
+        M1QueuedServingPhysicalInputProviderV1, M1ServingFirstPublicationWorkMatchErrorV1,
+        M1ServingPhysicalInputPreparationErrorV1, M1ServingQueuedGenerationBindingV1,
+        M1ServingQueuedGenerationInputV1, M1ServingQueuedGenerationPhaseV1,
+        M1ServingQueuedPairedPrefillNewWindowV1, GFX942_MAX_FIXED_DISPATCH_DATA_V1,
+    };
+    use crate::{
+        LogicalRunnerDeclaration, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
+        M1PhysicalFixedBatchShapeV1, M1ServingBatchPlanV1, M1ServingPlanV1,
+        M1ServingPreparedSemanticEvidenceV1, M1ServingRegistryV1, M1StepDispatchIntent,
+    };
+
+    fn selection(
+        role: Qwen3ModelRole,
+        mode: Qwen3ExecutionMode,
+        bucket: Qwen3PlanBucket,
+    ) -> Qwen3PlanSelection {
+        Qwen3PlanSelection { role, mode, bucket }
+    }
+
+    fn serving_plan(
+        target_mode: Qwen3ExecutionMode,
+        target_bucket: Qwen3PlanBucket,
+        draft_mode: Qwen3ExecutionMode,
+        draft_bucket: Qwen3PlanBucket,
+    ) -> M1ServingPlanV1 {
+        M1ServingPlanV1::new(
+            selection(Qwen3ModelRole::Target8B, target_mode, target_bucket),
+            selection(Qwen3ModelRole::Draft06B, draft_mode, draft_bucket),
+        )
+        .expect("test plan must be valid")
+    }
+
+    fn prefill_inputs(
+        request: RequestId,
+        tokens: &[u32],
+        role: Qwen3ModelRole,
+    ) -> ValidatedM1StepInputs {
+        let selected = selection(
+            role,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let plan = StepPlan::new(
+            request,
+            CompletionEpoch::new(1),
+            Identity::new([7; 32]),
+            selected,
+        );
+        let mut row = vec![0; 128];
+        row[..tokens.len()].copy_from_slice(tokens);
+        let mut positions = vec![0; 128];
+        for (position, value) in positions.iter_mut().take(tokens.len()).enumerate() {
+            *value = u32::try_from(position).expect("test position fits u32");
+        }
+        let candidate = M1StepInputCandidate::new(
+            selected,
+            vec![Some(plan)],
+            row,
+            positions,
+            vec![u32::try_from(tokens.len()).expect("test token count fits u32")],
+            vec![0],
+        );
+        match validate_m1_step_inputs(candidate) {
+            M1StepInputValidationOutcome::Validated(inputs) => inputs,
+            M1StepInputValidationOutcome::Rejected(failure) => {
+                panic!("test prompt inputs rejected: {:?}", failure.error())
+            }
+        }
+    }
+
+    fn workspace_plan(
+        selection: Qwen3PlanSelection,
+        identity_byte: u8,
+    ) -> ferric_build::AddresslessM1StepWorkspacePlan {
+        let requirements = m1_step_workspace_requirements(selection)
+            .expect("canonical selection has workspace requirements");
+        let available = AvailableM1StepWorkspace::new(M1StepWorkspaceDeclaration::new(
+            selection,
+            DeclaredM1StepWorkspaceAllocation::new(
+                Identity::new([identity_byte; 32]),
+                requirements.allocation_byte_len(),
+                requirements.allocation_alignment(),
+            ),
+            requirements.ranges().to_vec().into_boxed_slice(),
+        ));
+        match plan_addressless_m1_step_workspace(selection, available) {
+            M1StepWorkspacePlanOutcome::Planned(plan) => plan,
+            M1StepWorkspacePlanOutcome::Rejected(_) => panic!("test workspace rejected"),
+        }
+    }
+
+    fn paired_prefill_batch(request: RequestId) -> M1ServingBatchPlanV1 {
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let mut registry = M1ServingRegistryV1::<8>::new().expect("construct test registry");
+        registry
+            .admit(request, plan)
+            .expect("admit paired-prefill request");
+        registry
+            .plan_next()
+            .expect("plan test roster")
+            .expect("paired-prefill roster is ready")
+    }
+
+    fn paired_prefill_new_window_input(
+        batch: &M1ServingBatchPlanV1,
+    ) -> M1ServingQueuedPairedPrefillNewWindowV1 {
+        paired_prefill_new_window_input_with_prompts(batch, &[11, 12, 13], &[11, 12, 13])
+    }
+
+    fn paired_prefill_new_window_input_with_prompts(
+        batch: &M1ServingBatchPlanV1,
+        draft_prompt: &[TokenId],
+        target_prompt: &[TokenId],
+    ) -> M1ServingQueuedPairedPrefillNewWindowV1 {
+        let [request] = batch.requests() else {
+            panic!("test batch must contain one request")
+        };
+        let preparation_plans = M1FullStepWorkspacePlans::paired_prefill(
+            workspace_plan(batch.plan().draft(), 81),
+            workspace_plan(batch.plan().target(), 82),
+        );
+        let recipe_plans = M1FullStepWorkspacePlans::paired_prefill(
+            workspace_plan(batch.plan().draft(), 81),
+            workspace_plan(batch.plan().target(), 82),
+        );
+        M1ServingQueuedPairedPrefillNewWindowV1::new(
+            M1ServingQueuedGenerationBindingV1::new(
+                batch.plan(),
+                vec![*request].into_boxed_slice(),
+                batch.epoch(),
+            ),
+            prefill_inputs(*request, draft_prompt, Qwen3ModelRole::Draft06B),
+            prefill_inputs(*request, target_prompt, Qwen3ModelRole::Target8B),
+            preparation_plans,
+            recipe_plans,
+        )
+    }
+
+    #[test]
+    fn exact_binding_rejects_plan_epoch_roster_and_order_drift() {
+        let selected_plan = serving_plan(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let requests = [RequestId::new(7, 1), RequestId::new(9, 2)];
+        let epoch = CompletionEpoch::new(11);
+        let binding =
+            M1ServingQueuedGenerationBindingV1::new(selected_plan, Box::new(requests), epoch);
+
+        assert!(binding.matches(selected_plan, &requests, epoch));
+        assert!(!binding.matches(selected_plan, &[requests[1], requests[0]], epoch));
+        assert!(!binding.matches(selected_plan, &requests, CompletionEpoch::new(12)));
+        let other = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        assert!(!binding.matches(other, &requests, epoch));
+    }
+
+    #[test]
+    fn first_publication_work_match_rejects_plan_roster_and_token_substitution() {
+        let plan = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let request = RequestId::new(7, 1);
+        let binding = M1ServingQueuedGenerationBindingV1::new(
+            plan,
+            vec![request].into_boxed_slice(),
+            CompletionEpoch::new(1),
+        );
+        let prompt = [11, 12, 13];
+        assert_eq!(
+            preflight_first_binding(&binding, plan, &[request], &[&prompt]),
+            Ok(())
+        );
+        let other_plan = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+        );
+        assert_eq!(
+            preflight_first_binding(&binding, other_plan, &[request], &[&prompt]),
+            Err(M1ServingFirstPublicationWorkMatchErrorV1::Plan)
+        );
+        assert_eq!(
+            preflight_first_binding(&binding, plan, &[RequestId::new(8, 1)], &[&prompt],),
+            Err(M1ServingFirstPublicationWorkMatchErrorV1::Roster)
+        );
+
+        for role in [Qwen3ModelRole::Draft06B, Qwen3ModelRole::Target8B] {
+            let selected = selection(
+                role,
+                Qwen3ExecutionMode::Prefill,
+                Qwen3PlanBucket::PrefillS1T128,
+            );
+            let inputs = prefill_inputs(request, &prompt, role);
+            assert_eq!(
+                preflight_prompt_rows(
+                    &inputs,
+                    selected,
+                    CompletionEpoch::new(1),
+                    &[request],
+                    &[&prompt],
+                ),
+                Ok(())
+            );
+            assert_eq!(
+                preflight_prompt_rows(
+                    &inputs,
+                    selected,
+                    CompletionEpoch::new(2),
+                    &[request],
+                    &[&prompt],
+                ),
+                Err(M1ServingFirstPublicationWorkMatchErrorV1::InputEpoch { lane: 0 })
+            );
+            assert_eq!(
+                preflight_prompt_rows(
+                    &inputs,
+                    selected,
+                    CompletionEpoch::new(1),
+                    &[request],
+                    &[&[11, 99, 13]],
+                ),
+                Err(M1ServingFirstPublicationWorkMatchErrorV1::InputToken { lane: 0, column: 1 })
+            );
+            assert_eq!(
+                preflight_prompt_rows(
+                    &inputs,
+                    selected,
+                    CompletionEpoch::new(1),
+                    &[RequestId::new(8, 1)],
+                    &[&prompt],
+                ),
+                Err(M1ServingFirstPublicationWorkMatchErrorV1::InputRequest { lane: 0 })
+            );
+        }
+        assert_eq!(
+            preflight_prompt_row(0, Some(&prompt), Some(&[0, 2, 2]), &prompt),
+            Err(M1ServingFirstPublicationWorkMatchErrorV1::InputPosition { lane: 0, column: 1 })
+        );
+    }
+
+    #[test]
+    fn admitted_shapes_select_exact_recipe_workspace_and_evidence_contracts() {
+        let paired = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let direct = serving_plan(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        assert_eq!(paired.shape(), M1PhysicalFixedBatchShapeV1::PairedPrefill);
+        assert_eq!(
+            workspace_kind(paired),
+            M1FullStepWorkspaceInputKind::PairedPrefill
+        );
+        assert_eq!(
+            dispatch_intent(paired),
+            M1StepDispatchIntent::PairedPrefill(paired.target())
+        );
+        assert!(matches!(
+            semantic_evidence(paired),
+            M1ServingPreparedSemanticEvidenceV1::Direct
+        ));
+        assert!(is_finite_rollover_source_plan(paired));
+
+        let paired_s8 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+        );
+        assert!(is_finite_rollover_source_plan(paired_s8));
+        let long_prefill = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+        );
+        assert!(!is_finite_rollover_source_plan(long_prefill));
+
+        assert_eq!(
+            workspace_kind(direct),
+            M1FullStepWorkspaceInputKind::TargetOnly
+        );
+        assert_eq!(
+            dispatch_intent(direct),
+            M1StepDispatchIntent::TargetOnly(direct.target())
+        );
+        assert!(matches!(
+            semantic_evidence(direct),
+            M1ServingPreparedSemanticEvidenceV1::Direct
+        ));
+
+        for (target_bucket, draft_bucket) in [
+            (
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            (
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+        ] {
+            let speculative = serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                target_bucket,
+                Qwen3ExecutionMode::Decode,
+                draft_bucket,
+            );
+            assert_eq!(
+                workspace_kind(speculative),
+                M1FullStepWorkspaceInputKind::SpeculativeRound
+            );
+            assert_eq!(
+                dispatch_intent(speculative),
+                M1StepDispatchIntent::SpeculativeRound(speculative.target())
+            );
+            assert!(matches!(
+                semantic_evidence(speculative),
+                M1ServingPreparedSemanticEvidenceV1::SpeculativeK4
+            ));
+            assert!(is_admitted_finite_speculative_plan(speculative));
+            assert_eq!(
+                is_exact_s1_k4_plan(speculative),
+                target_bucket == Qwen3PlanBucket::SpeculativeS1K4C8192
+            );
+        }
+        assert!(!is_admitted_finite_speculative_plan(direct));
+    }
+
+    #[test]
+    fn exact_finite_successor_binding_accepts_only_admitted_predecessor_pairs() {
+        let paired_s1 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let paired_s8 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+        );
+        let finite = [
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+        ];
+
+        for successor in &finite[..3] {
+            assert_eq!(
+                exact_finite_speculative_successor(paired_s1, Some(*successor)),
+                Ok(Some(successor.target()))
+            );
+        }
+        assert_eq!(
+            exact_finite_speculative_successor(paired_s8, Some(finite[3])),
+            Ok(Some(finite[3].target()))
+        );
+        for (predecessor, successor) in [(paired_s1, finite[3]), (paired_s8, finite[0])] {
+            assert_eq!(
+                exact_finite_speculative_successor(predecessor, Some(successor)),
+                Err(M1ServingPhysicalInputPreparationErrorV1::FiniteSpeculativeSuccessorBindingMismatch)
+            );
+        }
+        assert_eq!(
+            exact_finite_speculative_successor(paired_s1, None),
+            Err(M1ServingPhysicalInputPreparationErrorV1::FiniteSpeculativeSuccessorUnbound)
+        );
+        assert_eq!(
+            exact_finite_speculative_successor(finite[0], Some(finite[0])),
+            Err(M1ServingPhysicalInputPreparationErrorV1::UnexpectedFiniteSpeculativeSuccessorBinding)
+        );
+        assert_eq!(
+            exact_finite_speculative_successor(finite[0], None),
+            Ok(None)
+        );
+    }
+
+    #[test]
+    fn admitted_first_publication_allocation_rosters_are_exact_and_bounded() {
+        let paired_s1 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T128,
+        );
+        let paired_s8 = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS8T128,
+        );
+        let long_prefill = serving_plan(
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+            Qwen3ExecutionMode::Prefill,
+            Qwen3PlanBucket::PrefillS1T512,
+        );
+        let direct = serving_plan(
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS8C8192,
+        );
+        let finite = [
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K4C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K8C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS1K16C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS1C8192,
+            ),
+            serving_plan(
+                Qwen3ExecutionMode::Speculative,
+                Qwen3PlanBucket::SpeculativeS8K4C8192,
+                Qwen3ExecutionMode::Decode,
+                Qwen3PlanBucket::DecodeS8C8192,
+            ),
+        ];
+
+        for (predecessor, successor) in [
+            (paired_s1, finite[0]),
+            (paired_s1, finite[1]),
+            (paired_s1, finite[2]),
+            (paired_s8, finite[3]),
+        ] {
+            assert_eq!(
+                expected_first_publication_allocation_count(predecessor, Some(successor.target())),
+                11
+            );
+        }
+        assert_eq!(
+            expected_first_publication_allocation_count(long_prefill, None),
+            8
+        );
+        assert_eq!(expected_first_publication_allocation_count(direct, None), 7);
+        for speculative in finite {
+            assert_eq!(
+                expected_first_publication_allocation_count(speculative, None),
+                9
+            );
+        }
+        for count in [7, 8, 9, 11] {
+            assert!(count <= GFX942_MAX_FIXED_DISPATCH_DATA_V1);
+        }
+    }
+
+    #[test]
+    fn empty_provider_reports_no_pending_generation() {
+        let provider = M1QueuedServingPhysicalInputProviderV1::new();
+
+        assert_eq!(provider.pending_generation_count(), 0);
+        assert_eq!(provider.next_generation_phase(), None);
+        assert!(provider.into_pending_inputs().is_empty());
+    }
+
+    #[test]
+    fn rejected_new_window_preflight_leaves_exact_provider_entry_dequeueable() {
+        let request = RequestId::new(0, 1);
+        let substituted = RequestId::new(1, 1);
+        let batch = paired_prefill_batch(request);
+        let wrong_batch = paired_prefill_batch(substituted);
+        let input = paired_prefill_new_window_input(&batch);
+        let mut provider = M1QueuedServingPhysicalInputProviderV1::from_ordered_inputs(vec![
+            M1ServingQueuedGenerationInputV1::paired_prefill_new_window(input),
+        ]);
+
+        assert!(!provider.preflight_paired_prefill_new_window(&wrong_batch));
+        assert!(provider
+            .paired_prefill_new_window_input(&wrong_batch)
+            .is_none());
+        assert!(provider
+            .take_paired_prefill_new_window(&wrong_batch)
+            .is_none());
+        assert_eq!(provider.pending_generation_count(), 1);
+        assert_eq!(
+            provider.next_generation_phase(),
+            Some(M1ServingQueuedGenerationPhaseV1::PairedPrefillNewWindow)
+        );
+
+        let retained = provider
+            .paired_prefill_new_window_input(&batch)
+            .expect("rejected borrowed preflight must leave exact input in place");
+        assert!(retained
+            .binding()
+            .matches(batch.plan(), batch.requests(), batch.epoch()));
+        assert!(provider.take_paired_prefill_new_window(&batch).is_some());
+        assert_eq!(provider.pending_generation_count(), 0);
+    }
+
+    #[test]
+    fn new_window_preflight_rejects_cross_role_prompt_drift() {
+        let request = RequestId::new(0, 1);
+        let batch = paired_prefill_batch(request);
+        let token_drift =
+            paired_prefill_new_window_input_with_prompts(&batch, &[11, 12, 13], &[11, 99, 13]);
+        assert!(!token_drift.physical_inputs_match(&batch));
+
+        let length_drift =
+            paired_prefill_new_window_input_with_prompts(&batch, &[11, 12, 13], &[11, 12]);
+        assert!(!length_drift.physical_inputs_match(&batch));
+    }
+
+    #[test]
+    fn new_window_preflight_rejects_foreign_runner_plan_identity() {
+        let request = RequestId::new(0, 1);
+        let batch = paired_prefill_batch(request);
+        let input = paired_prefill_new_window_input(&batch);
+        let generated =
+            generate_qwen3_gfx942_runner_declaration(qwen3_runner_closure_test_fixture())
+                .expect("generate fixture runner declaration");
+        let published = publish_qwen3_gfx942_runner_declaration(generated)
+            .expect("publish fixture runner declaration");
+        let runner = LogicalRunnerDeclaration::from_published(published);
+
+        assert!(!input.logical_runner_plan_identities_match(&runner));
+    }
+}

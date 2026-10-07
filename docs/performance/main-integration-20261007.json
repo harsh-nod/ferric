@@ -1,0 +1,296 @@
+{
+  "base_main": "5d3d93d3e7f08645273d274bc35efbc79133e686",
+  "checks": {
+    "clippy": {
+      "argv": [
+        "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+        "--features",
+        "c1-token-program",
+        "--lib",
+        "--bin",
+        "ferric-qwen3-prefill-width-native-live",
+        "--bin",
+        "ferric-qwen3-prefill-width-native-counters",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "outer_sha256": "16a4a908222fa5392c4d20fad90accb7ab141bf6518f3d17c2fb4d63061435b4",
+      "passed": true,
+      "stderr_sha256": "a13b485501ed43bcfcdca6a735e900cc6204acc036c88952b93a4697b70561e5",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "counters": {
+      "argv": [
+        "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+        "--features",
+        "c1-token-program",
+        "--bin",
+        "ferric-qwen3-prefill-width-native-counters",
+        "--",
+        "--test-threads=1"
+      ],
+      "outer_sha256": "0bc6cdaf8720975a1d2793a5fd06a6e42efc899666dca553ad2d4ab03f004d2c",
+      "passed": true,
+      "stderr_sha256": "502ef792a3c998c9d57fcd8581d6cee9a3760ab46af0d5b00d4c4bae17017f81",
+      "stdout_sha256": "7267384dbb5bfc88eb96f93fc7c67727876c39ec7eebd9ad9e0f8d2f108390f3",
+      "tests_ignored": 18,
+      "tests_passed": 156
+    },
+    "default": {
+      "argv": [
+        "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+        "check",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "outer_sha256": "5f471b2cd3b377bac57156f02358894fac6e72b0b078d174ce2f14607451babb",
+      "passed": true,
+      "stderr_sha256": "6bafe3f8ab9dfa29ef4200de7436da21e18e63ad51b574b6e3ee5369933e3b33",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "down-contract": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-v",
+        "-s",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/tools/native_down_benchmark_v1",
+        "-p",
+        "test_*.py"
+      ],
+      "outer_sha256": "10f11e906072f5df0cf0536d68e0008b6cb58942400feb6cc6477eadff047736",
+      "passed": true,
+      "stderr_sha256": "8b475704bf92a14d449f41c74137c84d5736c8053447fa1fd6311346b2bbd3d1",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tests_ignored": 0,
+      "tests_passed": 128
+    },
+    "down-measurement": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-v",
+        "-s",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/tools/native_down_benchmark_v1/measurement",
+        "-p",
+        "test_*.py"
+      ],
+      "outer_sha256": "da4422b89a12d3d3dfea8d2c418e12983efa245e8356a97edc500ae85736fc87",
+      "passed": true,
+      "stderr_sha256": "19bdd6d57b9da906dcb5f01aaa26b669e94ac00d45d55b0f3ae4f570f8d286b2",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tests_ignored": 0,
+      "tests_passed": 227
+    },
+    "gate-up-measurement": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-v",
+        "-s",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/tools/native_gate_up_benchmark_v1/measurement",
+        "-p",
+        "test_*.py"
+      ],
+      "outer_sha256": "c1760cc8a9b323b162085926fd50316d524175b1bdf82e25b8e8460e28931a3b",
+      "passed": true,
+      "stderr_sha256": "e9fcacdcb0330328751e7fe4aa55e99ec43b1b369ad134eedfd2f3eeef121d8d",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tests_ignored": 0,
+      "tests_passed": 227
+    },
+    "http": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-v",
+        "-s",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/tools/matched_native_http_v1",
+        "-p",
+        "test_*.py"
+      ],
+      "outer_sha256": "2a9961619a46c310a564623f7dc1155947b86f9adf2b56f96bd15abd0fc1ac46",
+      "passed": true,
+      "stderr_sha256": "049da069a3cb8d8f0359c60ee3c25f3fff93a041677a1cae14eb995eebc28947",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tests_ignored": 0,
+      "tests_passed": 302
+    },
+    "library-splitk": {
+      "argv": [
+        "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+        "--features",
+        "c1-token-program",
+        "--lib",
+        "splitk",
+        "--",
+        "--test-threads=1"
+      ],
+      "outer_sha256": "b760a67aa9fe9d38920339417fa87f7d34d807b01a4f69f40f7cf0849670b6a7",
+      "passed": true,
+      "stderr_sha256": "af8d6761952a1be284def86b873b25f03f1cad9b2b7acb05e5815fc1a67d113a",
+      "stdout_sha256": "63aa5d35fb03b9c178fbf7c6fe72670206a9e42ccb421a8b5feaa10cbb937d92",
+      "tests_ignored": 1,
+      "tests_passed": 10
+    },
+    "live": {
+      "argv": [
+        "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+        "--features",
+        "c1-token-program",
+        "--bin",
+        "ferric-qwen3-prefill-width-native-live",
+        "--",
+        "--test-threads=1"
+      ],
+      "outer_sha256": "9a147626f5cebd96cb2ccc27ed3bff7884faa20016d9c2cfdab4a4637c197bcd",
+      "passed": true,
+      "stderr_sha256": "2cca9311dafa541a4ba66a11e7bf0d82399fb3f3b480507afba0238bcdc9aa94",
+      "stdout_sha256": "1cd797ccbde78761ee3abc05fed6140aa73094cf48c93346d5f7c30301e73c1e",
+      "tests_ignored": 18,
+      "tests_passed": 156
+    },
+    "policy": {
+      "argv": [
+        "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+        "--no-default-features",
+        "--test",
+        "source_policy",
+        "--",
+        "--test-threads=1"
+      ],
+      "outer_sha256": "b2d05f6e878ccd9e97028f93123f0eee87c863fa1eedc7f06fc024f5f81d485c",
+      "passed": true,
+      "stderr_sha256": "82296227f9ae6b2b035b1337af2aacfc37b7e4c73f5ad15eaa9b1669ae1bfe6a",
+      "stdout_sha256": "40bde65a3c64acd83bfab1771cc1ed6052016f94110cd4b1fb1eab7a9574d244",
+      "tests_ignored": 0,
+      "tests_passed": 58
+    },
+    "restore": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/experiments/native-gate-up-a009/restore.py",
+        "--repository",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source",
+        "--output",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/restored-gate-up"
+      ],
+      "outer_sha256": "3fed421d75af734b90f3981ce0cf061a8bc6e93caee5eec65863562c5a0c489f",
+      "passed": true,
+      "restored_source_files": 1441,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "12dcb2f4ce6327ae979a6d52913082064b96e3b32d069392f095f62d653dbf79"
+    },
+    "site": {
+      "argv": [
+        "/usr/bin/node",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/site/validate.mjs"
+      ],
+      "outer_sha256": "c820a1205afaa5a503aec0852376d17f28d6a16c366982b895d1956fd933b530",
+      "passed": true,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "464fbea632c783cb7a9c04d94d34dddc2e0267a74f204265d6988a3a37c15175"
+    },
+    "union": {
+      "argv": [
+        "/tmp/ferric-v16-emitter-b95a642-r1/client-toolchain/bin/cargo",
+        "check",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/tmp/ferric-v16-emitter-b95a642-r1/main-integration-20261007/source/adapters/m1-engineering-execution-v1/Cargo.toml",
+        "--features",
+        "c1-token-program,model-timestamps",
+        "--lib",
+        "--bin",
+        "ferric-qwen3-prefill-width-native-live",
+        "--bin",
+        "ferric-qwen3-prefill-width-native-counters"
+      ],
+      "outer_sha256": "025fc02245019b50331b5f841345b458f9328742da26bcc4f3eeefa4714f6726",
+      "passed": true,
+      "stderr_sha256": "05de6ccbf07391afab2a17462cb2d181ffa159f0313b650a8811f4543238768a",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "cleanup": "Remote evidence retained; stage retirement requires all-user non-use visibility, unavailable without sudo. No other job or worktree modified.",
+  "date": "2026-10-07",
+  "defaults_changed": false,
+  "engineering_parent": "255fc7861e116f0fc4f2cdf32d82a7ee5a99e7a1",
+  "evidence_archive_sha256": "a4fc1583809a2118e693e2a4def960a9d6904a9835a1bd83f915a102a47748ec",
+  "evidence_files": 131,
+  "final_tree_delta_from_tested_tree": "Progress ledger and this validation report only; executable, test, kernel, harness and site sources unchanged.",
+  "local_or_github_builds": false,
+  "native_runtime_pin": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+  "new_verus_qualification": false,
+  "not_completed": {
+    "browser_render_validation": "Not rerun; cached browser dependencies unavailable on this host. Site structured-data validation passed.",
+    "full_adapter_library_suite": "Stopped deliberately after 4 minutes; expensive recording-model fixtures. Status143, child reaped, cleanup_ok=false; detached cleanup not established. No full-suite pass claimed.",
+    "full_workspace_tests": "Not rerun for this publication.",
+    "gate_up_full_binding_replay": "Original fixture custody points at superseded shared release paths; historical source/qualification preserved, 227 measurement fixtures rerun.",
+    "new_gpu_or_matched_vendor_comparison": "Not run. Existing measurements retain original scopes."
+  },
+  "pages_deployment_changed": false,
+  "performance_promotion": false,
+  "production_qualification": false,
+  "publication_target": "main",
+  "remote_host": "mi300x-2",
+  "retained_failed_attempts": {
+    "broad_library": 143,
+    "clippy_planning_envelope": 1
+  },
+  "schema": "FerricMainIntegrationPublicationV1",
+  "tested_tree": "ca44da366db43f2fc140b1b3afd1acb4c0a4e333",
+  "tests_ignored": 37,
+  "tests_passed": 1264,
+  "upstream_main_observed": "870762d4b0921c4937c8bfc175201b96fac346c3",
+  "upstream_runtime_equivalence_claimed": false
+}

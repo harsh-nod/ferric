@@ -1,0 +1,9 @@
+error[E0451]: fields `role` and `bytes` of struct `Qwen3ExpectedEmbeddingWeightIdentityV1` are private
+ --> tests/ui/gemm_token_embedding_weight_identity_fields_are_private.rs:5:9
+  |
+4 |     let _ = Qwen3ExpectedEmbeddingWeightIdentityV1 {
+  |             -------------------------------------- in this type
+5 |         role: Qwen3GemmModelRoleV1::Target8B,
+  |         ^^^^ private field
+6 |         bytes: [7; 32],
+  |         ^^^^^ private field

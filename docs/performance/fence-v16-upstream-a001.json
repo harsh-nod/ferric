@@ -1,0 +1,24 @@
+{
+  "schema": "FerricUpstreamSourceClosureObservationV1",
+  "observed_utc": "2026-10-05T22:59:52Z",
+  "repository": "harsh-nod/fe2o3",
+  "transport": "SSH git fetch; HTTPS certificate verification failed and was not bypassed",
+  "published_worker_revision": "dcf345452a3368399ae65d4b3bcbedb6a2a1b0b0",
+  "observed_main": "ba3505190979cee63cb0f61f05c1eabde0dd1b87",
+  "intervening_commits": [
+    {
+      "revision": "ba3505190979cee63cb0f61f05c1eabde0dd1b87",
+      "subject": "Add disabled paired CPU and wave debugger completion package",
+      "changed_paths_scope": ["docs", "tools/rocgdb-one-stop-native-adapters-v1"]
+    }
+  ],
+  "identical_git_objects_at_both_revisions": {
+    "crates": "71f5c4880991b186cd8febe3d774e9041ac6ae16",
+    "Cargo.toml": "7a698197fcd677985af3288763aca0d2047ca44b",
+    "Cargo.lock": "7fe50aa0e04b2f50f2ed8f2d8bc6b4e9838c95fc"
+  },
+  "worker_sha256": "472f44807517152c8026b752c23781fd5e4283670e7c3015fa8a13acb304450c",
+  "binary_relabelled": false,
+  "build_or_native_qualification": false,
+  "scope": "Git source-object equivalence, not a rebuild or new measurement"
+}

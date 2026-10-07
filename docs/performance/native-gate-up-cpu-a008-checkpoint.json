@@ -1,0 +1,74 @@
+{
+  "schema": "FerricNativeGateUpCpuCheckpointR2",
+  "date": "2026-10-06",
+  "status": "cpu-qualified-proposal-native-model-measurement-pending",
+  "integrated_into_default": false,
+  "source_archive_sha256": "e28741808803fd07eb0add31673cf1773924c982593a034e8ea5b08fd99aeaa6",
+  "source_manifest_sha256": "24731ee0970da66598b476201d3dffb8e22cccb4c7ffe31825fa66abab78ad61",
+  "source_preparation_sha256": "d30dfeac73ea363fd2ba24a161007160adfd4c2923577834e5828a6239f1c3fc",
+  "current_wire_revision_tested": "55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9",
+  "upstream_main_observed": "10fc5f45a315094f1c44cbab251d390f00e957f5",
+  "latest_runtime_migration": "in-progress; existing evidence is not relabeled as the new revision",
+  "cpu_host": "mi300x-2",
+  "cpu_profile": "FerricCpuFourCore42GiBEmitterV1",
+  "source_files": 1441,
+  "overlay_files": 26,
+  "focused_tests": {
+    "library": {"passed": 11, "ignored": 1},
+    "worker": {"passed": 6, "ignored": 0},
+    "profile": {"passed": 4, "ignored": 1},
+    "source_policy": {"passed": 58, "ignored": 0}
+  },
+  "complete_entrypoint_suites": {
+    "live": {"passed": 156, "ignored": 18},
+    "counters": {"passed": 156, "ignored": 18},
+    "note": "Shared controller code appears in both entrypoints; these are not 312 distinct behaviors."
+  },
+  "separately_invoked_actual_input_tests": [
+    "actual two-root image admission",
+    "control652 driver capture",
+    "candidate724 driver capture",
+    "control652 actual-image ABI packing",
+    "candidate724 actual-image ABI packing",
+    "actual image and compiler roster opened for both selections"
+  ],
+  "strict_clippy": "passed for library and both entrypoints",
+  "default_all_targets": "passed",
+  "token_program_and_timestamps_feature_union": "passed",
+  "release_binaries": {
+    "live": "2411e19f951b6821cce0fc5dec99f661fe20b6debfc6c637e4ccf332f30fd1eb",
+    "counters": "39db008270805881b43ef19f4dc389fbf8c1675e266d02721ce1a43fba54f10f"
+  },
+  "compiler_roster_sha256": "54f6c32544669ad4407643e12eb6c22efc0a24967f20ea2d695e24f46488e379",
+  "graphs": {
+    "control": "3df9f1a8e4db8f618e2f6c65c5868ea72b6d91605d2ea899d1ab70fc94075057",
+    "candidate": "81089c41901ba372220ccde0c6402f4b299be8be994df3e4db7b2d45bd5826b1",
+    "weights": "synthetic capacity-only fixtures, not real model weights"
+  },
+  "retention": {
+    "archive_sha256": "d65da45d5c1feaa3cf1f3c5d9a1c96a8030ec78333ae336939202ca999b89edb",
+    "receipt_sha256": "1c61db9d77dcde08a6f7767842a70749286b3ef86bdbe51a576177389afddd2c",
+    "archive_bytes": 52956134,
+    "members": 1605,
+    "all_members_verified_remotely_and_locally": true,
+    "includes": "complete formatted source, six compiled ELFs, input archives/helpers and all eighteen phase inner/outer records"
+  },
+  "measurement_harness": {
+    "status": "contract and replay fixtures passed; launch binding remains disabled",
+    "manifest_sha256": "74287e20314b0dd9ce6037d86c3092c3a3727f47153b8c49f232cf844e7759a3",
+    "contract_tests": 47,
+    "measurement_tests": 227,
+    "primary_metric": "TPOT",
+    "same_prefill_rows": 32,
+    "same_loaded_images": 10,
+    "same_scratch_bytes": 196608,
+    "candidate_decode_dispatches": 724,
+    "control_decode_dispatches": 652,
+    "failed_a001_fixture_expectations_retained": true
+  },
+  "native_model_parity": false,
+  "model_ttft_tpot_measured": false,
+  "vendor_comparison_performed": false,
+  "performance_qualified": false,
+  "serving_qualified": false
+}

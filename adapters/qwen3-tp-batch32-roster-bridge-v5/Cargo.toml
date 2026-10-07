@@ -1,0 +1,20 @@
+[package]
+name = "ferric-qwen3-tp-batch32-roster-bridge-v5"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+[workspace]
+
+[dependencies]
+
+[build-dependencies]
+ferric-qwen3-tp-batch32-kernels-device-v5 = { path = "../../device/qwen3-tp-batch32-kernels-v5", version = "=0.1.0", default-features = false, features = ["gfx950", "mfma"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }

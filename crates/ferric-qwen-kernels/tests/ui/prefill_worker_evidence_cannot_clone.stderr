@@ -1,0 +1,11 @@
+error[E0277]: the trait bound `InertQwen3PrefillWorkerEvidenceV1: Clone` is not satisfied
+ --> tests/ui/prefill_worker_evidence_cannot_clone.rs:6:21
+  |
+6 |     require_clone::<InertQwen3PrefillWorkerEvidenceV1>();
+  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Clone` is not implemented for `InertQwen3PrefillWorkerEvidenceV1`
+  |
+note: required by a bound in `require_clone`
+ --> tests/ui/prefill_worker_evidence_cannot_clone.rs:3:21
+  |
+3 | fn require_clone<T: Clone>() {}
+  |                     ^^^^^ required by this bound in `require_clone`

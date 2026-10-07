@@ -1,0 +1,66 @@
+{
+  "schema": "FerricCurrentRuntimeCpuCheckpointR1",
+  "date": "2026-10-06",
+  "revision": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+  "published_to": "harsh-nod/fe2o3 main",
+  "parent": "32197b13c1d9d2a0d11e1d664a3a0cdc2473ead8",
+  "change": "One behavior-preserving optional invocation-axis condition rewrite in fe2o3-kfd; fixes newly introduced strict-Clippy failure.",
+  "publication": {
+    "rebased_on_observed_main": true,
+    "exact_tested_commit_preserved": true,
+    "force_update": false,
+    "skip_ci_in_commit_message": true,
+    "github_actions_runs_observed": 0,
+    "temporary_local_worktree_removed": true
+  },
+  "qualification_scope": "Exact nine-crate runtime closure with projected workspace membership; not the full compiler.",
+  "later_upstream_audit": {
+    "observed_main": "4b55998ed4ee8aefa38511607db745957bc7fccd",
+    "observed_main_commit_time_utc": "2026-10-06T18:17:49Z",
+    "runtime_crates_byte_identical": 9,
+    "runtime_crate_files_byte_identical": 775,
+    "runtime_transitive_lock_records_unchanged": 43,
+    "root_cargo_toml_unchanged": true,
+    "worker_relabelled_or_rebuilt": false,
+    "whole_compiler_equivalence": false,
+    "compiler_delta": "Newer private-scalar uniformity propagation and expanded-source accounting are outside the runtime closure. Guarded-load lowering remains unchanged from da6b; AMDGCN lowering is unchanged since 42acca. Historical HSACO producer identities remain unchanged."
+  },
+  "cpu_host": "mi300x-2",
+  "latest_native_down_audit": {
+    "observed_main": "d95ad106b5016f7f60c86827ebd896cdafe6c497",
+    "comparison_revisions": ["166670ab776a37159feb1d760cbb9dafe2ddc817", "da6b561c5a3f12acc5b0e6da74c808273e728710"],
+    "runtime_crates_byte_identical": 9,
+    "runtime_crate_files_byte_identical": 775,
+    "runtime_transitive_lock_records_unchanged": 43,
+    "root_cargo_toml_unchanged": true,
+    "runtime_file_roster_sha256": "271421c1ba21cc7c2346b2845960ce493c474a634fe0fcededbad9d59c12593e",
+    "worker_relabelled_or_rebuilt": false,
+    "whole_compiler_equivalence": false,
+    "dirty_worktree_or_index_modified": false
+  },
+  "cpu_profile": "FerricCpuFourCore42GiBEmitterV1",
+  "engineering_library": {"passed": 748, "ignored": 3},
+  "worker_tests": {"passed": 9, "ignored": 0},
+  "default_library": {"passed": 477, "ignored": 1},
+  "strict_clippy": "passed",
+  "changed_file_rustfmt_check": "passed",
+  "release_worker": {
+    "sha256": "74d764e8797ba0413e38b762765d07faf74aa6a0af5daf60c0a1a56adc64f20a",
+    "bytes": 2093512
+  },
+  "source_archive_sha256": "f44d31f140938f918f159f47fb6c81975063c34526221029a4bc1ff10c72a462",
+  "source_manifest_sha256": "7556969848bba4bfb13e14bc1b2d56882dbd46e48e3f95adc381cbf675890c8a",
+  "retention": {
+    "archive_sha256": "87b448325b368491a11f050ebcf8a29af73b9a1c78862a6568b35bb827ff1145",
+    "receipt_sha256": "4825716210008dad68766d975263c50cdc792b7d34c792fe362c271af22eed41",
+    "members": 834,
+    "source_files": 778,
+    "exact_published_crate_files": 775,
+    "independent_byte_audit": "passed"
+  },
+  "ferric_client_refresh": "Separate a009 proposal passes fresh focused/full controller, actual-input, feature, lint and release checks. Existing a008-r2 evidence remains pinned to 55c. Native measurement remains pending.",
+  "native_executed": false,
+  "performance_change_measured": false,
+  "compiler_qualified": false,
+  "serving_qualified": false
+}

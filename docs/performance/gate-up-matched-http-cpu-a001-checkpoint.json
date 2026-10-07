@@ -1,0 +1,31 @@
+{
+  "schema": "FerricGateUpMatchedHttpCpuCheckpointA001",
+  "date": "2026-10-06",
+  "status": "cpu-qualified-and-imported-native-paired-consistency-gate-not-met",
+  "adapter": "GateUpDa6b",
+  "native_checkpoint": "native-gate-up-harness-a008-checkpoint.json",
+  "runtime_commit": "da6b561c5a3f12acc5b0e6da74c808273e728710",
+  "cpu_host": "mi300x-2",
+  "cpu_profile": "FerricCpuFourCore42GiBEmitterV1",
+  "source_files": 34,
+  "tests_passed": 290,
+  "source_archive_sha256": "8b1cf94e107e20d67dbeb387749f23a850c43accf7eee4878e3cf30a8c9a5ca7",
+  "fixture_outer_sha256": "594ed582a28c3ac9827aeddcaf7fa0708112024f2acf7e789edee6154dd76500",
+  "fixture_stderr_sha256": "e76772624a9bf8e0ee7e19d1d604b7cea90130e2bee6128f38818ac99d78781e",
+  "cpu_qualification_sha256": "b09ea98be6d7ed3d3558a6aae7cf1905c10667020d94cec35621fe69b72eb41c",
+  "transport": {
+    "archive_sha256": "ad3f577f5e760828e0167d353a0c69a1058265b62664651c6939cd452fafc291",
+    "archive_bytes": 326876,
+    "roster_sha256": "3d8130907bf806279398378c962c423993d0a40d83bf0d185e549d7b326154da",
+    "portable_cpu_sha256": "d979b4f1017d5c5a3d1ca1803372e61125ec5a0ca5a6f62203e30358c15224e5",
+    "files": 47,
+    "all_members_independently_verified": true,
+    "mi350_cpu_import_accepted": true,
+    "import_receipt_sha256": "06782794c85c7ada1ed4e661bbfa93af79a11b41b8a2606fdc4907ba20f2184f"
+  },
+  "comparison_client_server_observer_and_vendor_settings_changed": false,
+  "actual_native_selection_admitted": false,
+  "servers_launched": false,
+  "vendor_comparison_measured": false,
+  "default_promoted": false
+}

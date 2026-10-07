@@ -1,0 +1,27 @@
+warning: unreachable expression
+ --> tests/ui/rmsnorm_prepared_fields_are_private.rs:9:19
+  |
+8 |         source_identity: todo!(),
+  |                          ------- any code following this expression is unreachable
+9 |         assembly: todo!(),
+  |                   ^^^^^^^ unreachable expression
+  |
+  = note: `#[warn(unreachable_code)]` (part of `#[warn(unused)]`) on by default
+
+error[E0451]: fields `catalog`, `source_identity`, `assembly`, `compiler_handoff_identity`, `manifest_identity` and `compiler_handoff` of struct `PreparedQwen3RmsNormKernelV1` are private
+  --> tests/ui/rmsnorm_prepared_fields_are_private.rs:7:9
+   |
+ 6 |     PreparedQwen3RmsNormKernelV1 {
+   |     ---------------------------- in this type
+ 7 |         catalog,
+   |         ^^^^^^^ private field
+ 8 |         source_identity: todo!(),
+   |         ^^^^^^^^^^^^^^^ private field
+ 9 |         assembly: todo!(),
+   |         ^^^^^^^^ private field
+10 |         compiler_handoff_identity: todo!(),
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^ private field
+11 |         manifest_identity: todo!(),
+   |         ^^^^^^^^^^^^^^^^^ private field
+12 |         compiler_handoff: todo!(),
+   |         ^^^^^^^^^^^^^^^^ private field

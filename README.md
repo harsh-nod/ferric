@@ -8,7 +8,8 @@ Ferric has one production path:
 ```text
 authenticated model bundle
   -> verified algorithm and execution plan
-  -> proof-bound fe2o3 kernels
+  -> Ferric-owned proof-bound model kernels
+  -> reusable fe2o3 compiler and runtime
   -> generated Rust runner
   -> reviewed direct HSA command batches
 ```
@@ -26,19 +27,33 @@ implements:
 - exact completion authority and retirement-before-reuse transitions;
 - a fixed-capacity generational paged-KV ownership model;
 - atomic KV commit, rollback, sealed-prefix sharing, and copy-on-write transitions;
+- strict pinned Qwen3 configuration and tokenizer-metadata admission;
+- bounded streaming authentication and semantic admission of the exact shared tokenizer;
+- bounded deterministic UTF-8 encode and exact byte decode through that tokenizer authority;
+- bounded streaming authentication of the exact pinned Qwen3 safetensors files;
+- a fixed-width canonical record for the exact admitted deployment identities;
+- all 22 exact sequential target/draft B3 plans and their finite K1-K7 structural profiles;
+- byte-reproducible compiled Qwen3/gfx942 runner declarations for all 10,648 typed operations;
+- linear logical publication of those retained declarations into engine custody;
 - direct pinned-Verus proofs of the executable M0 state machines;
 - identity-bound fe2o3 M0 property records with actual-body mutation evidence;
 - structural invariant validation and hostile stale-handle tests;
+- one aggregate device package containing all 12 attributed M1 kernel roots,
+  with a path-independent compiler-derived host binding;
 - one production-compiled Qwen3 SwiGLU kernel with an independently inspected
   `gfx942:xnack-` COV6 HSACO and durable Worker V3 load-envelope custody; and
 - the roadmap, assurance policy, feature ledger, and performance protocol.
 
 Ferric does **not** currently load a model, dispatch the production HSACO,
-execute Qwen, or make a verified-inference or performance claim. The first of
-seven M1 kernel families has crossed production compilation and publication;
-the production verifier, generated runner, remaining kernels, model bundle,
-hardware qualification, and end-to-end inference path remain open. Unsupported
-stages fail closed rather than selecting another implementation.
+execute Qwen, or make a verified-inference or performance claim. All 12 kernel
+source roots are consolidated into the aggregate device package, but source
+presence and compiler binding grant no artifact, verifier, load, or launch
+authority. Only K6 SwiGLU has a historical protected artifact, and that
+artifact does not authorize the current aggregate source. The protected
+verifier, executable generated runner, current aggregate artifact, hardware
+qualification, performance qualification, and end-to-end inference path
+remain open. All 33 M1 roadmap requirements remain open. Unsupported stages
+fail closed rather than selecting another implementation.
 
 ## First Product Milestone
 
@@ -54,6 +69,7 @@ scheduling:         continuous batching
 decoding:           greedy, then exact finite-distribution sampling
 runtime:            direct HSA command batches
 kernels:            Ferric-owned, compiled by fe2o3
+compiler/runtime:   reusable fe2o3 APIs
 ```
 
 See [the roadmap](docs/ROADMAP.md), [assurance policy](docs/ASSURANCE.md),

@@ -1,0 +1,53 @@
+{
+  "schema": "FerricWholeTokenNativeObservationV1",
+  "date": "2026-10-05",
+  "host": "mi350",
+  "stage": "/dev/shm/ferric-v14-native-40695ec-a004",
+  "plan_sha256": "8fb13d71e079f51e6d809d29f8d0603af961d04fb9dbbc6449fd836c069fc713",
+  "archive": "products/perf-v14-20261005/native-a004-partial.tar.gz",
+  "archive_sha256": "6a2f521482c113ee1dcb9325cb8ccb3ff82e6f8976e85c4cb6f97fcd28aefb41",
+  "status": "mechanism_passed_latency_incomplete",
+  "counter_cells": {
+    "counter-A": {
+      "accepted": true,
+      "exact_output_tokens_checked": 128,
+      "executions": 127,
+      "dispatches": 82804,
+      "retirement_signals": 82804,
+      "publications": 1397,
+      "final_waits": 1397,
+      "kernarg_initialized_bytes": 5454457976,
+      "host_staging_ns": 91417611
+    },
+    "counter-B": {
+      "accepted": true,
+      "exact_output_tokens_checked": 128,
+      "executions": 127,
+      "dispatches": 82804,
+      "retirement_signals": 82804,
+      "publications": 127,
+      "final_waits": 127,
+      "kernarg_initialized_bytes": 27815032,
+      "host_staging_ns": 1734822
+    }
+  },
+  "counter_scope": "Successful token executions only; registration, ordinary prefill and readback excluded. Instrumented host staging is not GPU time or admitted model latency.",
+  "latency_failure": {
+    "cell": "block1-A1",
+    "status": 125,
+    "reason": "Process-monitoring census and credential changes caused refusal during startup.",
+    "child_reaped": true,
+    "cleanup_ok": false,
+    "controller_survived_wrapper_teardown": true,
+    "controller_pid": 3310586,
+    "worker_pid": 3323897,
+    "later_identity_check": "Both processes absent; fuser reported no KFD users. No manual signals sent.",
+    "failed_receipt_preserved": true
+  },
+  "accepted_latency_cells": 0,
+  "ttft_ms": null,
+  "tpot_ms": null,
+  "throughput_tokens_per_second": null,
+  "default_promoted": false,
+  "vllm_comparison": "not run"
+}

@@ -1,0 +1,29 @@
+error[E0451]: field `catalog` of struct `PreparedQwen3PagedDecodeKernelV1` is private
+ --> tests/ui/paged_decode_custody_fields_are_private.rs:8:44
+  |
+8 |     let PreparedQwen3PagedDecodeKernelV1 { catalog, .. } = value;
+  |                                            ^^^^^^^ private field
+
+error[E0451]: field `prepared` of struct `InertQwen3PagedDecodeWorkerRequestV1` is private
+  --> tests/ui/paged_decode_custody_fields_are_private.rs:13:48
+   |
+13 |     let InertQwen3PagedDecodeWorkerRequestV1 { prepared } = value;
+   |                                                ^^^^^^^^ private field
+
+error[E0451]: field `worker` of struct `InertQwen3PagedDecodeWorkerEvidenceV1` is private
+  --> tests/ui/paged_decode_custody_fields_are_private.rs:18:49
+   |
+18 |     let InertQwen3PagedDecodeWorkerEvidenceV1 { worker, .. } = value;
+   |                                                 ^^^^^^ private field
+
+error[E0451]: field `loader_plan` of struct `InspectedQwen3PagedDecodeKernelV1` is private
+  --> tests/ui/paged_decode_custody_fields_are_private.rs:23:45
+   |
+23 |     let InspectedQwen3PagedDecodeKernelV1 { loader_plan, .. } = value;
+   |                                             ^^^^^^^^^^^ private field
+
+error[E0451]: field `profile` of struct `CheckedQwen3PagedDecodeLaunchV1` is private
+  --> tests/ui/paged_decode_custody_fields_are_private.rs:28:43
+   |
+28 |     let CheckedQwen3PagedDecodeLaunchV1 { profile, .. } = value;
+   |                                           ^^^^^^^ private field

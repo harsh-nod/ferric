@@ -7,7 +7,1460 @@ checked performance observations live in
 real browser checks. Run all checks on the designated remote build host, not
 locally, and remove the private stage after archiving evidence.
 
-## September 15 Resident And Host Checkpoint
+## October 5 V17 Source Update
+
+The current source leads with independently replayed V17 a004: median native
+TTFT 868.156454 -> 772.931099 ms, a 10.9687% improvement. Median TPOT changes
+53.210963 -> 53.192764 ms (0.0342%, essentially unchanged). Three ABBA blocks
+provide 24 measured requests per arm; all 14 cells close cleanly and all 9,472
+output IDs and decoded bytes match, including warmups and counter requests.
+All six TTFT pairs and both order medians improve; preregistered gates pass.
+
+This qualifies only the within-native prefill scheduling comparison. It is
+not default promotion, a vendor win, an ordered64 comparison or a formal proof.
+The same dcf worker and unchanged images retain ordinary fences and 652-command
+decode; only B uses 613-command prefill with 216 updates. V16's sub-threshold
+fence result, V20's host-wait/non-GPU attribution, V14's regression, all failed
+attempts and historical V13 HTTP limitations remain visible and separate.
+
+The full archive SHA256 is
+`ba3c28709dd76a55a4b700a314f39c152fac9c8a15b37d2196825f015a5ea05d`;
+report SHA256 is `465a6c6e31867ea78420a78b4225e90acea0c1abfc6babaa338f82cfbc8e65cf`.
+Exact-content, mutation-rejection and browser assertions are updated. Remote
+validation, artifact staging and publication are pending for this source;
+no local build/test or new publication is claimed below.
+
+## October 5 Completed V14 Published Update
+
+The source now leads with completed a005's regression: median TTFT
+820.787174 -> 872.554286 ms and TPOT 50.134290 -> 53.245459 ms. All 14 cells
+and raw replay pass with 9,472 exact output tokens/bytes; all four promotion
+checks fail and native whole-token submission remains default-off. The same
+dated update preserves V13's historical HTTP/vendor values and all failed
+attempts. It does not turn V15/V16 CPU work into a measured model gain.
+The complete 72,947,665-byte native archive is now retained and hash-verified
+locally at SHA256 `1c82dd9f151d402a277b6d40e7cbb52177b01eade8b9d74e8c7d838362f93114`;
+that custody update does not change the failed performance gates.
+
+The completed-a005 update is live at https://harsh-nod.github.io/ferric/ from
+`pages/prebuilt` commit `e8ee496860e8bec6aaa4378fdd64162165be951f`, tree
+`54fd1134d8a0e63061abfb42a4b1a98cb4bbd715`. Remote G28 validation passed
+all eight viewport widths, and remote staging produced exactly seven files,
+884,717 bytes. Earlier retries exposed stale pending-V14 test expectations;
+both failed receipts remain retained, and only those fixtures were corrected.
+Final source archive SHA256 is
+`ec661f221d10e58f5ab79e28fe49407df732f4ce70d36a6e929e144b0ce6eaa1`.
+
+Deploy-only workflow run `37388966508` succeeded at 2026-10-05 23:32:05 UTC,
+job `112029215352`, deployment `6871790021`, artifact `11380630307` with digest
+`7030345bd7f76333010760529dccd5fa3caadb3c6b3f3a8018b59319c81adb07`.
+All seven canonical live files were fetched over certificate-verified HTTPS
+and match the admitted per-file inventory exactly. No project compilation/test
+ran on GitHub, and no build/test ran locally. Environment protections and exact
+branch allowances are unchanged. The temporary publication worktree is removed.
+The subsequent fence campaign is not included or claimed by this snapshot.
+
+Publication used authenticated GitHub API blobs/tree/commit plus a fast-forward-
+only ref update after local HTTPS Git failed certificate validation and the
+available SSH push identity was denied. TLS checks, credentials, branch policy
+and repository config were not weakened. The API tree matches the locally
+reviewed tree exactly; only commit metadata changed its SHA. Prior publication
+and validation records below remain historical and unchanged.
+
+## Earlier October 5 Published Checkpoint
+
+The current section now leads with the historical V13 matched HTTP result:
+Ferric TTFT/TPOT 827.434/59.780 ms versus vLLM 19.671/4.245 ms. It explicitly
+separates that result from V14's CPU-qualified, default-off runtime change.
+At this frozen content checkpoint, the first two V14 native attempts remained
+failed with no completed request or latency result; it does not describe later
+campaign attempts. Remote static/browser validation passed at eight viewport
+widths. The exact seven-file, 883,012-byte artifact is now live at
+https://harsh-nod.github.io/ferric/ through deploy-only `pages/prebuilt` commit
+`aefbc883c64b98ff8799a47f6502d2e32dd9e006`. Earlier checkpoint text and benchmark
+identities are preserved, not relabeled.
+
+Workflow run `37367180352`, attempt 2, succeeded at 2026-10-05 20:38:53 UTC:
+job `111962071617`, deployment `6868780513`, artifact `11370531090` with digest
+`9e74d34f614028155bffa80c87fd01854d3571e281c9992b27eb13900c006985`.
+Attempt 1 failed because GitHub never acquired a hosted runner; its empty step
+list and failure receipts remain retained. No project compilation or test ran
+on GitHub. Environment protections and the exact `main`/`pages/prebuilt`
+allowances are unchanged, and the temporary publication worktree was removed.
+
+All seven canonical served files match the remotely validated SHA256 inventory:
+
+| Path | SHA256 |
+| --- | --- |
+| `app.js` | `e0eb7a3a9d34cc3e5ad660deb8cce3f218ef1e25bfc9070f44f96e563dc0753e` |
+| `assets/architecture.svg` | `07291c88f57be83ac12bccc73876fb67158ed96ca8efc2e5717d50d98ad9cb69` |
+| `assets/mark.svg` | `5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809` |
+| `data/performance.js` | `05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f` |
+| `data/project.js` | `a0dfeeaa6e5afb1bb7309bf7369c0afe82b95c63e11b512479a752662bfb0f4e` |
+| `index.html` | `9a54f6060c0a204ad4826cf066dbf26a9d2f15868cdcbd00c334618f55835571` |
+| `styles.css` | `41921ee0f120656ab2b13075077948324e6c56d124497886169dbd20d51fdc58` |
+
+Verified response bodies and API receipts are retained in the campaign's
+`products/perf-v14-20261005/site-oct05-publication-a001/`; the validation
+inventory SHA256 is `0786b58f25cce863dea262fe1341bfa55c925359fc563b1c9d32c6730ed2537c`.
+HTTPS verification ran from mi300x with normal certificate validation after
+local curl could not establish the issuer chain. No TLS check was bypassed.
+This README-only custody update changes no public artifact and triggers no
+new deployment.
+
+## September 29 Fixed Safe Screen
+
+This additive source checkpoint is not yet remotely validated or published.
+It preserves all prior HTML/JavaScript benchmark records and their original
+producer and qualification boundaries, including September 26 HTTP data.
+The project update date becomes September 29; earlier checkpoint labels remain.
+
+On one MI350X on mi350-2, fixed-safe R3 completes 36 cells: ten finite cases in
+each of two activation epochs, followed by 16 A/B/B/A timing cells. All seven
+full-buffer/guard records pass, with clean unsignaled teardown. Each timing
+cell has a fresh worker, two excluded warmup groups and 32 measured groups;
+the 512 inner samples are not 512 independent worker repetitions. Prepacking
+and uploads are excluded. Both arms retain compiler/SDK `1a5999f6` plus the
+same capture patch and the historical `5e2`/`dd6` runtime.
+
+| Pairs/Group | Epoch | Order | Baseline (us/Pair) | R3 (us/Pair) | Improvement |
+| ---: | ---: | --- | ---: | ---: | ---: |
+| 1 | 0 | AB | 624.215 | 623.537 | +0.1086% |
+| 1 | 0 | BA | 624.504 | 624.165 | +0.0543% |
+| 1 | 1 | AB | 626.242 | 625.710 | +0.0851% |
+| 1 | 1 | BA | 623.300 | 625.341 | -0.3275% |
+| 5 | 0 | AB | 217.030 | 217.230 | -0.0920% |
+| 5 | 0 | BA | 218.166 | 218.418 | -0.1153% |
+| 5 | 1 | AB | 218.988 | 219.872 | -0.4037% |
+| 5 | 1 | BA | 206.882 | 217.991 | -5.3698% |
+
+These are instrumented controller-wall microseconds per cache-hot gate/up pair,
+not GPU time, model TTFT/TPOT or serving throughput. Positive improvement means
+lower candidate latency. R3 has no useful measured gain and is not promoted;
+the final faster baseline is retained, not excluded or pooled away. Independent
+data-only review matches all 36 retained results, 512 samples, raw protocol
+counter snapshots and eight comparison calculations. Result archive SHA256 is
+`ceed68468e5b30e30dc64fa89b9cdf79cc3cc421b9703fe5141a8a8bf352a5c0`.
+
+Each 32-group cell records 321 operational-currentness checks. Their overlapping
+host scope records about 384-387 us/pair for one pair per group and 77-79 for five,
+with zero measured transfers or kernel admissions. Token programs are already
+integrated and measured on historical `807f0`: ordinary/token TPOT is
+60.702/55.296 ms in AB and 54.161/55.297 ms in BA, with no repeatable gain.
+Latest source review indicates the same minimum ten currentness checks per
+backend group for token and matched ordered64 paths, plus five outer token
+checks; these are source counts, not measured token counters. Latest-client
+qualification and measured group utilization/batching analysis are the next
+priorities, not a proven GPU bottleneck or guaranteed currentness reduction.
+Counter scopes must not be added or subtracted to infer GPU duration.
+
+Separate R4 passes 36 CPU tests per feature mode, strict Clippy, 16 native-harness
+and 11 launcher fixtures. Emission a002 succeeds with captured ISA/ELF metadata;
+static review accepts the finite-only diagnostic, with no completed native
+R3-versus-R4 result recorded here. Separately built
+core worker `4fb8ae50` passes 106 library and six CLI tests. Latest client source
+and wire migration remain CPU-unqualified, its lock is not regenerated, and
+full-model qualification remains pending. No new HTTP/vendor result, default
+promotion, rejection/trap qualification or M1 gate closure follows.
+
+Source validators bind every new paragraph, all eight rows and five evidence
+identities, including the negative final comparison. Browser checks verify the
+expanded table/identities and add desktop/mobile evidence screenshots. The new
+checks have not run locally; remote structural and browser qualification is
+required before the unchanged seven-file artifact can be considered for the
+existing deploy-only `pages/prebuilt` publication path.
+
+## September 24: Packed Screen And Runtime Publication
+
+This source-only checkpoint replaces only the superseded packed summary and
+adds bounded runtime/client status. The site remains unvalidated and
+unpublished until fresh remote static/browser checks, screenshot review and
+the separately admitted seven-file Pages artifact. Historical failed attempts
+and all earlier model/vendor measurements remain unchanged evidence.
+
+The fresh packed campaign passes all 33 cells: one exhaustive 65,536-pattern
+packing cell, 16 finite-parity cells and 16 timing cells. Each of four separate
+cohorts uses ABBA worker order, two excluded warmup groups and 32 measured groups
+per worker. Each arm has two independent workers per cohort; inner groups are
+not independent worker repetitions. The baseline uses two dispatches per pair;
+the candidate includes activation packing and two consumers, three dispatches.
+Host weight preparation and uploads are outside the timed interval.
+
+| Pairs Per Group | Queue Epoch | Baseline Wall Per Pair (us) | Packed Wall Per Pair (us) | Candidate/Baseline |
+| --- | --- | ---: | ---: | ---: |
+| 1 | 0 | 449.406 | 269.547 | 0.599785 |
+| 1 | 1 | 457.662 | 273.077 | 0.596679 |
+| 5 | 0 | 263.116 | 150.925 | 0.573607 |
+| 5 | 1 | 263.212 | 152.711 | 0.580181 |
+
+Ratios use sums of raw measured controller-wall samples within each cohort,
+not averaged cell ratios or pooled cohorts. The observed 40.0% to 42.6%
+reduction is a 1.67 to 1.74x baseline/candidate ratio for this cache-hot
+12288x4096 synthetic gate/up pair only. It is not GPU time, TTFT, TPOT,
+throughput, a model gain, statistical significance or a vendor comparison.
+The packed worker is still historical 5e2/dd6 with compiler/SDK 413, not the
+new runtime. Numerical-trap/model gates and all 33 M1 gates remain open.
+
+The separate wait smoke passes both arms, 210 dependent packets and 528
+guarded readbacks per arm; the active policy completes six groups without
+fallback. Token native uses its own later worker and passes 195 dependent
+packets across reuse/release/rollover, with exact default and late-pointer
+fatal rejections. Negative exits are unforced/reaped but not clean_exit true.
+The late failure does not directly prove zero GPU publication. Neither smoke
+is a timing comparison or full Ferric-client/model execution.
+
+The initial client R3 CPU suite passes 561 tests (463 library, 98 binary),
+including the lowercase fixed-width SHA256 golden method. All 22 ignores and
+one pre-existing library exclusion remain disclosed. Positive actual-image/ABI
+checks and the full public-Git feature matrix remained open at that earlier R3
+checkpoint.
+The offline SDK migration passes independent audit, changing only the new
+alias and its nine package identities while preserving all Rust source and
+historical dependency pins. Preparation custody SHA256 is
+74aeeb96d28b5b2f1f8ed2c4f2751f9784538d7572c1444d0d77de321fdb07af.
+The historical public-Git R8 token feature family passes checking, strict Clippy and
+release tests across all six selected targets. Its default feature family
+fails compilation: a `cfg!` condition still type-checks the unavailable
+`Split8V21` variant. R9 uses true `#[cfg]` guards: its token and default feature
+families pass checking, strict Clippy and release tests. TP production checking
+passes, but strict Clippy fails on `unused_self` in two ordered helpers when
+`c1-ordered64` is off. No remaining family ran in that historical R9 attempt.
+R9 partial custody is retained as
+`ferric-token-client-matrix-r9-partial-custody-a001.tar.gz`, 40,101,917 bytes,
+SHA256 `fe1a1cbbf26bccd423e0f7267179eed8f58fcc342c905d42a03e6b9b0a9c050c`.
+That is failed-attempt/partial-pass custody, not a completed feature matrix.
+
+Historical R10's diagnostic-first preflight completes all seven production checks, all
+passing. Strict Clippy passes token, default, TP and ordered configurations.
+The timestamp-enabled model configuration fails three test-only
+`bool_to_int_with_if` locations; union and token-union also fail
+`cast_possible_truncation` at `src/tp_execution/batched/tests/c1_ordered64.rs:257`.
+There are four distinct test-only locations across two files, not only three.
+The zero-error gate fails cleanly, and no expensive full-test phases run in
+R10. Its partial custody is
+`ferric-token-client-matrix-r10-partial-custody-a001.tar.gz`, 9,146,610 bytes,
+SHA256 `acb27ba0d68a6c8c3d49f236faf27d847503af4675a9c661b3e3464e7a34b204`.
+R11 repairs those four test-only lint locations. All seven production-check
+and strict-Clippy pairs pass: 14 commands. The attempt intentionally stops
+before the diagnostic aggregate gate and full suites after the source-policy
+exact-text assertion is found to omit the actual closure braces. These passing
+diagnostic commands do not constitute full feature-matrix qualification.
+Actual R11 partial custody is retained as
+`ferric-token-client-matrix-r11-partial-custody-a001.tar.gz`, 9,128,961 bytes,
+SHA256 `0d67a6d403f11205e4a2625d7960e5a011b00e4920325af0757d484a1a98385d`.
+R12 changes only the two braces in that policy assertion and adds an early
+gate for the existing 52 source-policy tests, not 52 new tests. All seven
+production-check/strict-Clippy pairs pass again, 14 commands, and the diagnostic
+aggregate gate passes. The early policy gate also passes all 52 existing tests.
+All seven R12 feature families and 32 test ELFs pass, totaling 5,168 passing
+test executions, not 5,168 unique tests. The family counts retain 278
+hardware/authored ignores and seven feature-family instances of the existing
+library exclusion. Both 52-test source-policy gates pass, as do all 10
+actual-image checks and the ABI producer. Those separately counted gates do
+not turn the family execution count into a unique-test total.
+
+The R12 actual ABI consumer fails after its slot checks: it expects 2,279
+pointer fixups but observes 2,569. Independent analysis resolves the stale
+test-count assertion: 2,569 total equals 2,279 nonempty plus 290 required
+zero-extent RMSNorm fixups, two for each of 73 wave RMSNorm and 72 Qwen RMSNorm
+dispatches. Zero-extent descriptors still require their pointer fixups. The
+R13 repair is limited to the token-worker test file, not production code;
+R12's failed gate is not retroactively relabeled as passed. Its controller
+build, final qualification collection and integration were not reached.
+All 21 attempted R12 phase guards report clean, reaped, unsignaled process
+cleanup; cleanup is not a pass for the failed ABI-consumer phase.
+
+Full partial-attempt custody is retained as
+`ferric-token-client-matrix-r12-partial-custody-a001.tar.gz`, 159,755,835 bytes,
+SHA256 `c20f53144a687ebef14d3df9bc38e116d5c0b06ae161f69f2a19b76af383da33`.
+This is failure/partial-pass custody, not a completed 23-phase qualification.
+Historical failed attempts, including test-only LowerHex R2, stay failed.
+
+The focused R13 continuation passes 17 phases: actual preparation, nine recipe
+fixtures, all 14 production-check/strict-Clippy commands and their aggregate,
+five fresh token-binary suites, both 52-test policy gates, 10 actual-image
+checks and the actual ABI producer/consumer. The whole 1,321-file source
+inventory is 169,637 bytes, SHA256
+`66fa120349f824279ca6dde3c6679a2018369a72a2d467b11ac7660e715e8d96`.
+The sole formatted test file is 33,057 bytes, SHA256
+`057d459793d834971bce7724ead0e383fae36a91d1980506015c8e90e4d92d0d`;
+the other 1,320 source files are unchanged. These two identities are distinct.
+Exactly five token-binary test targets are rebuilt, while 27 unaffected R12
+target cells retain explicit inherited source, ELF and outcome identities.
+Actual compiler dependencies establish the five-target closure, and all 18
+generated compiler inputs outside the source inventory are guarded against
+content, path or mode drift. This is not 32 freshly rebuilt targets, a global
+source-equivalence claim or a production-code repair.
+
+The R13 release-controller Cargo command succeeds in 47.63 seconds. Its
+retention phase then fails because the generic file binder rejects Cargo's
+two hardlinked output aliases; that failed guard remains failed. R14 performs
+no Rust change or rebuild. Its six recipe fixtures, exact two-alias independent
+controller copy and final collection all pass, with three clean phase guards.
+Both independently retained controllers remain unexecuted. The final V4
+receipt explicitly joins R12 inherited targets, R13 fresh tests/builds and
+R14 controller retention. Its 5,168 execution passes, 278 ignores and seven
+instances of the existing library exclusion are not a unique-test count.
+
+Final custody `ferric-token-client-matrix-r14-final-custody-a001.tar.gz` is
+14,129,621 bytes, SHA256
+`6cd9ddc4863658850bbfeef2407efa05c6d0c9fbc7c28f60935fbf8cccbbd2ef`.
+The 60,059-byte V4 receipt has SHA256
+`c5a377f797da4f4449534d94b08ae72982526fd50ff4c0a950387a92c9b89c41`.
+Independent final CPU audit is retained in
+`perf-v8-r14-final-v4-independent-audit-r1.md`, SHA256
+`7c8e14c28017bb01e5e4fc4b6ebd796884caa1775f7d40eaa0a75cc5223051b2`.
+
+Root then integrates exactly 21 qualified postimages into the local Ferric
+checkout with the 652-packet client opt-in still default-off. Postcheck verifies
+every owned byte/mode, preserves 1,311 unrelated paths and leaves HEAD unchanged.
+Its 5,179-byte receipt is
+`ferric-token-client-integration-r9-postapply-a001.json`, SHA256
+`6a3791dd35c0cbae38adcba255774390966e3a5e3f95d47320d77f035e94cd35`.
+This is exact-807 CPU qualification and local source integration, not native
+execution, full-model parity, serving qualification, a default promotion or a
+new model/vendor score. R5's 24-method native-harness fixture qualification
+still awaits explicit CPU approval; its actual-input candidates grant no
+authority and its execution pins and owner remain unset. No local project
+execution or site QA/publication accompanies this source update.
+
+Core commit 807f0bef70da75c81e56de6eb4fd6e9c1f78e5e2 is actually published on
+fe2o3 main atop 2af with [skip ci], by a non-force push. Its 16 source files are
+the exact retained formatted runtime bytes. Runtime dependency inputs match
+qualified b7d; the historical CPU/native receipts are not relabeled as builds
+of the new commit, and no whole-compiler qualification follows. A retained
+22:25:10 UTC observation reports zero Actions runs, not a promise about future
+activity. Ferric SDK pinning/qualification is separate from core publication.
+
+The previous retained main observation is
+`d6b5887f55a4b7592b6905f4415ec88b544a0191` at
+`2026-09-25T04:48:38.528937+00:00`. All 896 mapped files and 762 complete runtime
+closure paths matched published 807 at that historical checkpoint. Its retained
+record is
+`perf-v8-runtime-currentness-d6b5-r1.json`, SHA256
+`f25c1389de7ab60cc9ef56c21329df2d716a02183744b70ea493a3f86c37d19b`.
+
+The historical retained main observation is
+`89c8c8992e8ec51f4db5d9fb6a0725e3a5a9f4e6` at
+`2026-09-25T05:32:19.541314+00:00`. All nine runtime trees and their 762 closure
+paths were equal to published 807 by mode, Git blob and recomputed SHA256.
+Only 894 of the broader 896 mapped files were equal: `Cargo.lock` and
+`crates/fe2o3-artifacts/Cargo.toml` differ. The new artifact/descriptor API is
+outside the nine-crate runtime closure; existing loader and runtime dependency
+edges are unchanged. The retained review record is
+`perf-v8-runtime-currentness-89c8-r1.json`, SHA256
+`c6c31d236ba8fd5d234b6d66a0e67ee4422f445c1b41378be0391f0962cb28b5`.
+That historical source equivalence was not a rebuild or latest-compiler
+qualification and does not extend to newer main.
+
+Latest observed main is `fd1b32e8d36f72a2d478424471287d322a05506e` at
+`2026-09-25T06:20:26.539571+00:00`. Eight of nine runtime trees remain identical
+to 807, but KFD changes. Of the old 762 runtime paths, 759 are identical and
+three modified; two added paths make 764 current paths, with no deletion.
+The broader comparison has 891 of 896 paths equal: the prior lock/artifacts
+manifest differences plus three KFD files. Runtime source equivalence no longer
+holds. The new conditional gfx942 direct-dispatch path leaves the existing
+gfx950 worker, token-program, ordered-batch and wait source files unchanged;
+this does not imply newly linked binary or timing equivalence. Runtime manifests,
+features and dependency edges are unchanged. The retained source-only record is
+`perf-v8-runtime-currentness-fd1b-r1.json`, 8,665 bytes, SHA256
+`3a2c767bc3fce525e6ffbb5884d6e3550e6f5307f32f4eac106716cb4c8970d5`.
+The integrated client remains CPU-qualified against exact 807, not fd1b.
+Adoption needs a separately pinned SDK snapshot, fresh lock/package identities,
+remote rebuilds, client/worker gates and bounded native correctness. Latest
+compiler or new image qualification remains separate. Historical binaries and
+evidence retain their original identities.
+
+Public evidence disclosure binds packed report 7e3e71e0..., wait report 592d5b1b...,
+token report 77b77a30... and initial client archive b59a5339..., each with its full
+SHA256. Complete protocols, binaries, source inventories and failed attempts
+remain outside the public artifact. No model/vendor score changes: the last
+matched HTTP series still has Ferric 15.100 to 18.157 times slower than vLLM.
+
+Exact source assertions and negative mutations bind the mixed-generation
+seven-family/32-target CPU receipt, 5,168 execution passes rather than unique
+tests, retained ignore/exclusion counts, five fresh versus 27 inherited targets,
+dependency/generated-input checks, and the test-only repair. They distinguish
+2,279 nonempty from 2,569 total fixups and the required 290 empty RMSNorm fixups.
+They preserve the failed R13 retention guard, successful no-rebuild R14 copy/
+collection, 21 locally integrated default-off postimages and pending R5 fixture
+authorization, native/model outcomes and vendor comparison. They also scope
+89c8 historically, bind fd1b's changed runtime closure and deny latest-runtime,
+latest-compiler or historical-binary relabeling. Earlier failed receipts remain
+historical and separate; the four existing public evidence identities are
+unchanged, and no complete R12 qualification is claimed.
+Render assertions retain existing views and add
+desktop/mobile runtime-token-v8-progress and client-token-v8-progress captures:
+88 main images plus the unchanged 63 supplementary images, 151 total. Full
+claims and caveats must fit their focused captures on both viewports; no
+screenshot result is claimed before remote execution. Existing CSS, JavaScript
+rendering, project/performance data and all unrelated draft changes are intact.
+A fresh source-bound QA successor must replace the prior 84-main/147-total
+bindings; never mutate or rerun that frozen historical recipe against new bytes.
+
+## September 23-24: Native Screens And Attribution
+
+The new progress block keeps the prefill improvement and decode regression
+together. It does not alter any J1/J2 or HTTP/vendor data. In four fresh native
+Qwen3-8B TP1/C1 starts on mi350, all 2,048 output IDs and decoded bytes match.
+Each start excludes one warmup and measures three 128/128-token requests;
+context8192, BF16 with explicit FP32 head, prefix caching and speculation off.
+Both arms use chunk32, the same controller, actual dd6 worker built at 5e2,
+nine images, V19 decode, split8 and ordered64. Only baseline V5 prefill append
+versus two V27 page copies changes. This is not chunk16 versus chunk32.
+
+| Native start | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline AB | 2041.379 | 65.646 | 12.332303 |
+| Two-page copy AB | 565.331 | 70.619 | 13.424622 |
+| Two-page copy BA | 597.046 | 66.836 | 14.086379 |
+| Baseline BA | 1954.125 | 61.811 | 13.054065 |
+
+Candidate TTFT is 72.306% lower in AB and 69.447% lower in BA; TPOT is
+7.575% higher in AB and 8.130% higher in BA. Finite-window ingress output
+rate is 8.857% and 7.908% higher, respectively. Orders are separate, with no
+pooling, stable-gain, HTTP, sustained-throughput or vendor-win claim.
+Controller exits and all_workers_exited metadata are accepted. Reserved inner
+group cleanup retains TERM/KILL flags; only the outer supervisor is unsignaled.
+Do not transfer the isolated parity worker's unsignaled-exit claim to these arms.
+
+Report `products/ferric-opt-v5-v25.2IGl9SCl/prefill32-results/report.json`:
+`5ef8c2f2e5a313e16c69401a72f633b9539afcee285d407fe94b65843693bfdc`.
+Its `launch-supervisor.json`:
+`3443cba3e4030e19900e50d4e0875c14eb1a53a6cd3ade10c33503787a56853f`.
+
+The separate isolated native prerequisite passes 20 two-half/rotation byte
+and guard parity cells with clean unsignaled worker/outer exits. It is not
+full-model or timing evidence. Its report SHA256 is
+`d8a5df743cd9d30ca714d02e8aa7a24774b36067bda80afbbe3c633deb825508`;
+supervisor SHA256 is
+`3a381a2e184f9f9a1295984821da2f7882b235969732ee453bcf7d3c3397c277`.
+Raw native/build evidence stays outside the public seven-file artifact.
+
+The separate opt-in packet-tick diagnostic now has accepted CPU qualification:
+all eleven gates and 2,585 passing Rust executions, with 137 existing ignored
+executions and one documented library exclusion in each of three feature
+suites. Its mixed-generation CPU receipt is
+`92606ee41b9bbfda016136ce99d769ad0098004fdd0597952b329c63d33b3a96`.
+The R4 measurement harness passes all 31 fixtures, with receipt
+`f7e5a0c7953d5bca656abee1dcfeae8256b215db6fa8bf4ef54321a7830c177b`.
+Earlier failed preparation, build and fixture records stay historical; they
+are not overwritten or relabeled as these accepted successors.
+
+The native diagnostic matches all 128 output IDs and decoded bytes and records
+87,711 packets in 135 batches. Independent raw-interval and custody reviews
+pass; the complete archive SHA256 is
+`aae4f2542809942a30f3fd4087dade8f521a908f7690ad11af8611a4c558c9a7`.
+These are uncalibrated packet intervals, not nanoseconds, shader-only time,
+additive time shares or a speedup. No new vendor comparison is established.
+
+The first packed gate/up native attempt is an independently audited retained
+failure. Its accepted prefix checks all 65,536 packing patterns and 16
+finite-parity cells. A foreign load generator restarts during the first timing
+cell's warmup validation, before any measured interval. The unchanged guard
+fails closed while inspecting a root-owned KFD process, sends TERM only to its
+owned runner, reaps it and retains status 125 with `cleanup_ok: false`.
+The load generator's supervisor is not signaled. Zero timing intervals are
+retained; the prefix is not full-campaign acceptance, numerical-trap
+qualification, model inference or performance evidence.
+
+Failed native archive SHA256:
+`966737386790c6c996687c2248900c5d9767d8b5e14d3f87f38aa4a13712e47c`.
+Its report SHA256 is
+`0417f06c0979d632c67115ab82db1f639194b2d4bcb10711b24f74443239995b`;
+outer supervisor SHA256 is
+`c183366d923aa6a6a741cd422ea1015774084b26e6ce85328294183dbe215f1d`.
+The source-only failure audit is
+`perf-v7-packed-gate-up-native-failure-ZAKjrVaQ-audit-r1.md` in the private
+V6 evidence store's proposals directory. The existing object store is retained
+separately. No raw protocols or private source enter the public artifact.
+
+The campaign used compiler/SDK
+`413ba987b8878f53e13127fdb53f9e1495ab93b3` and the actual 5e2/dd6 worker.
+`perf-v7-latest-main-091-impact-r1.md` observes upstream
+`091856733e7053f9f50b7b205f85d4654d467e65` on September 24 UTC, not a new
+build or qualification. Compiler/SDK surfaces and fe2o3-kfd changed; the old
+nine-runtime-tree equality does not extend to this snapshot. Coordinated
+compiler, SDK and native-worker refresh and fresh qualification are required.
+The historical binaries are not latest-qualified. Core/runtime ownership
+stays in fe2o3; workload kernels and inference stay in Ferric.
+No vLLM win is claimed. Defaults and all 33 open M1 gates remain unchanged.
+
+The four changed site files are index.html, validate.mjs, render-validate.mjs
+and this README. New exact source assertions and mutation cases bind the
+regressions, accepted attribution, interrupted campaign, zero timing,
+currentness limits and four existing prefill evidence identities. Exact claim
+checks reject altered packing/parity/packet counts, calibrated-tick claims,
+clean-stop claims, historical-binary relabeling, premature qualification and
+vendor/default/gate promotion. Browser assertions retain all previous views
+and add desktop/mobile `packed-gate-up-v7-progress` captures, each containing
+the full failure and currentness limits. Main coverage becomes 84 images;
+the existing 63 supplemental views stay unchanged, for 147 total.
+
+Root can reuse the mechanics of the existing private
+`perf-v7-september23-site-qa-r1` recipe on the designated remote build host:
+serial guarded preparation, package/source checks, eight named viewports,
+the 320..1440 width sweep, captures and seven-file artifact preparation.
+That frozen recipe binds older source and 82-main/145-total images; it must
+not run against this update or have its historical receipts overwritten.
+A fresh reviewed source freeze and successor bindings must include the two
+new capture names, 84 main and 147 total images, with unchanged resource and
+publication guards. No new QA infrastructure is required.
+
+This current four-file update is source-only, unvalidated and unpublished.
+All new checks and capture assertions are authored but unexecuted. Fresh
+remote QA, full actual screenshot review and the separately admitted static
+publication still gate deployment. No local build, test, import or browser
+execution, remote execution, or publication is claimed here.
+
+## September 22: Two Ordered64 KV-Copy Native Screens
+
+The newest progress paragraph and `#kv-copy-v7-title` retain both independent
+accepted native campaigns, J1 and J2, in separate tables. No sample is pooled,
+replaced or dropped. J2 has an independent retained-artifact audit. This
+four-file proposal is source-only and has not been built, tested, rendered or
+deployed; fresh approved remote QA and screenshot review still gate publication.
+
+Qwen3-8B on mi350, TP1/C1, sequential 128-input/128-output requests, context8192,
+BF16 checkpoint with explicit FP32 head, prefix caching and speculation off.
+Each campaign has four fresh starts in baseline-AB/candidate-AB/candidate-BA/
+baseline-BA order. Each start excludes one warmup and measures three requests:
+eight starts, 24 measured requests and eight excluded warmups across the two
+campaigns. Both retain the same controller, actual dd6 worker built from 5e2
+and nine images. Only baseline versus `parallel-c1-v19` KV append differs;
+ordered64, parallel-prefill16-v27, split8-v21 and baseline partial GEMV are fixed.
+
+### Campaign J1: first screen
+
+| Native start | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline AB | 807.243 | 64.455 | 14.232567 |
+| KV copy AB | 809.845 | 52.820 | 17.024785 |
+| KV copy BA | 827.309 | 52.755 | 17.003771 |
+| Baseline BA | 807.647 | 63.878 | 14.348660 |
+
+### Campaign J2: independent repeat
+
+| Native start | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline AB | 944.284 | 77.743 | 11.831300 |
+| KV copy AB | 858.399 | 59.668 | 15.171775 |
+| KV copy BA | 852.170 | 59.939 | 15.121163 |
+| Baseline BA | 892.749 | 71.798 | 12.785176 |
+
+J1 candidate TPOT is 18.051% lower in AB and 17.413% lower in BA; finite-window
+ingress output rate is 19.619% and 18.504% higher. TTFT is 0.322% and 2.435%
+higher, respectively. The first campaign's BA TTFT regression is retained.
+
+J2 candidate TPOT is 23.250% lower in AB and 16.516% lower in BA; finite-window
+ingress output rate is 28.234% and 18.271% higher. TTFT is 9.095% and 4.545%
+lower, respectively. Absolute timings drift between campaigns: baseline TPOT
+is 63.878 to 64.455 ms in J1 versus 71.798 to 77.743 ms in J2; candidate TPOT
+is 52.755 to 52.820 ms in J1 versus 59.668 to 59.939 ms in J2.
+
+These are separately retained orders and rounded descriptive measurements,
+not pooled results, confidence bounds, a stable gain, sustained throughput,
+GPU time or HTTP latency. No new vendor comparison, vLLM/SGLang win, TP8 or
+speculative-decoding result, serving qualification or default change follows.
+All 33 M1 gates remain open. The prior HTTP/vLLM tables and evidence are unchanged.
+
+All 32 requests, including eight excluded warmups, match all 4,096 output IDs
+and decoded bytes; each retains 135 batches and 87,711 packets. All eight
+controller starts exit 0; the worker closure metadata separately confirms
+`all_workers_exited`. Reserved inner process groups are absent after cleanup,
+with TERM/KILL flags retained as sent. Both outer supervisors exit 0 without
+TERM/KILL. Controller exit status is not a per-worker exit-code receipt, and
+outer signal-free completion is not signal-free inner teardown.
+
+J1 evidence remains under `products/ferric-opt-v5-v25.QyQQf25M`; J2 is under
+`products/ferric-opt-v5-v25.pzJnxacO`. Both use `kv-copy-results/report.json`
+and `launch-supervisor.json`. Their exact report/supervisor identities are:
+
+- J1 KV-copy native report SHA-256: `ce74369df5b5ed52721f2ad043d1e0828060494bd7bfebf6da7fa5de9359bb68`.
+- J1 KV-copy supervisor SHA-256: `9ed41c54a927adc53426342f3b3563703138a4507c152dc33772903f675caeee`.
+- J2 KV-copy native report SHA-256: `55c1455bea17de55ca52aaaaa1ceb5b8bbe8f2d230f3c79ad423c4a0c22d6634`.
+- J2 KV-copy supervisor SHA-256: `7a02e34c290c21cd932debb61bd37baf3e3c93bad8e34e69ab14a58e38b05479`.
+
+The retained J2 archive `products/v7-kv-native-r2.tar.gz` has SHA-256
+`f7d16934c7de2b346c1a14a1df2ac8664176e51276559510085c8eebd5bfb6c3`.
+Raw model/native/build evidence stays outside the public artifact.
+
+Focused source assertions and mutations pin both tables, all eight starts,
+24 displayed metrics, per-order percentage changes, all four evidence hashes,
+coverage totals, timing drift, exact cleanup claims and historical separation.
+The existing HTTP/diagnostic progress paragraph remains
+`#september22-http-progress` with its previous checks. Browser assertions check
+exact values/claims, evidence disclosure, cell clipping and horizontal scrolling
+across the existing viewport matrix. Five existing KV screenshot names are
+retained; both complete tables must fit in each table capture, including both
+right-scrolled mobile tables, and all four evidence identities must fit in each
+evidence capture. These are authored checks, not screenshot or pass claims.
+
+## September 22: Complete HTTP Series and Separate Diagnostic
+
+The separate sections `#matched-ordered64-http-title` and
+`#v7-host-diagnostic-title` precede the retained historical campaigns. The
+source is [M1 team progress](../docs/M1_TEAM_PROGRESS.md); raw evidence stays
+outside the public static artifact.
+
+| Accepted pair | Ferric mean TPOT (ms) | vLLM mean TPOT (ms) | Ferric / vLLM |
+| --- | ---: | ---: | ---: |
+| 1 | 63.833 | 4.228 | 15.100 |
+| 2 | 79.535 | 4.380 | 18.157 |
+| 3 | 67.801 | 4.394 | 15.432 |
+
+All six starts and three alternating paired replays pass. Ferric remains
+slower in every pair. The 16.229x mean paired ratio is neither pooled latency
+nor a confidence bound. This is Qwen3-8B, mi350, TP1/C1, 128/128, context8192,
+BF16 checkpoint with explicit FP32 head, prefix caching and speculation off.
+The completed series does not repair or relabel the earlier rejected R3 series.
+Series SHA256: `579c4abeda3f56ca2a77ec1e1f63d37c0961cec92381f90da6a368d79ab3a3ec`.
+
+The separate V7 single-cold native diagnostic matches all 128 output IDs and
+decoded bytes, with 135 batches, 87,711 dispatches and clean exit. Instrumented
+TTFT is 818.53 ms and TPOT is 64.64 ms. Mean decode batch wall is 64.626 ms:
+worker publication/completion is 58.473 ms (90.48%), controller packing
+0.171 ms (0.265%). Worker duration excludes preparation/staging and includes
+GPU work, polling and fences; it is not GPU time. Phase scopes overlap, and
+all 127 decode batches, including seven slower final batches, remain included.
+Report SHA256: `3ddeaf566cffd14d4503a5078de7f87d6a99c0da4227ffd9cf25606f622998fe`.
+
+No speedup, vendor win, stable-tail or sustained-throughput qualification is
+claimed. Defaults and all 33 open M1 gates are unchanged. The earlier readiness
+dataset retains its own date; this new checkpoint is explicitly September 22.
+
+This four-file update is source-only pending fresh remote QA and publication.
+Source assertions and mutation cases bind all table values, interval boundaries,
+evidence identities and historical separation. Browser assertions cover exact
+rows, scope, evidence disclosure and clipping/scrolling across existing viewports.
+The screenshot harness adds seven focused views: comparison and diagnostic on
+desktop/mobile, mobile table scrolled right, and evidence on desktop/mobile.
+No local test, build, render, deployment or new M1 gate pass is claimed.
+
+## Earlier Ordered64 Native Screen: HTTP Unchanged at That Checkpoint
+
+The completed native AB/BA screen is separate from the matched HTTP scoreboard
+and the earlier Partial GEMV R4 no-gain result. The workload is Qwen3-8B on
+mi350, TP1/C1, sequential 128-input/128-output requests. Each of four starts
+excludes one warmup and measures three requests. AB runs baseline then candidate;
+BA reverses that order. Do not pool the orders or use this screen as a vendor win.
+
+| Native start | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline AB | 1024.554916 | 94.799826 | 9.797235 |
+| Candidate AB | 858.870490 | 70.714876 | 13.007960 |
+| Candidate BA | 865.604204 | 70.180564 | 13.089270 |
+| Baseline BA | 876.261260 | 80.273610 | 11.561235 |
+
+Candidate/baseline TPOT ratios are 0.745939 in AB and 0.874267 in BA, or
+25.4061% and 12.5733% lower. TTFT ratios are 0.838286 and 0.987838;
+output-rate ratios are 1.327717 and 1.132169. These are finite-window native
+ingress rates, not shader timing, confidence intervals, a stable gain or
+sustained throughput. A separate matched HTTP test is justified, but no new
+HTTP result, vLLM win, SGLang comparison, TP8 gain or speculative-decoding gain
+is established. Defaults and the existing roughly 16-times-vLLM-TPOT matched
+HTTP scoreboard remain unchanged. All 33 M1 gates remain open.
+
+Both arms use the same controller, dd6 worker built from 5e2 and eight images.
+Only packed16 versus packed64 ordered submission changes. The existing
+parallel-prefill16-v27 and split8-v21 paths remain enabled, and partial GEMV is
+off in both arms. The baseline profile retains its historical
+`prefill16-decode-partial-gemv-v28-live-v1` name despite GEMV being off; the
+candidate is `prefill16-decode-ordered64-v29-live-v1`.
+
+The actual CPU qualification is mixed provenance: 17 original R3 one-core
+gates, all selected at a001, plus the successful new four-core controller
+build at a002. It is not 18 fresh R3 or four-core gates. The controller's
+opt-in runtime dependency is pinned to 13e; the worker remains built from
+5e2. No failed earlier build receipt is relabeled as a pass.
+
+All 16 requests match all 2,048 reference output IDs and decoded bytes. The
+outer supervisor exits 0 without TERM or KILL. All four arms record
+`cleanup_ok: true`, owned group absent and exit 0, **with both TERM and KILL
+flags retained as sent**. Do not describe arm teardown as signal-free.
+Output parity is not independent source-to-binary authentication, protected
+proof or serving qualification. The report retains `performance_qualified`,
+`http`, `vendor_comparison` and `sustained` as false.
+
+The actual retained evidence is under
+`products/ordered64-four-core-native-mi350-r1/ferric-opt-v5-v25.v1fakSWO`:
+
+- `v25-native-results/report.json` SHA-256:
+  `cbef8172a332d0d3086889f8ac5cab4b1f913114a4c37535bcf23b062c812015`.
+- `launch-supervisor.json` SHA-256:
+  `e2e234a94971f996b4f4bb1167ed80664ee1362c45a7d091a816b6d3ce2d7617`.
+
+The new progress and performance sections are
+`#ordered64-native-progress` and `#native-ordered64-four-core-results`.
+Source checks bind the four ordered rows, all 12 metrics, six ratios, both
+evidence identities, workload, mixed provenance, teardown and nonpromotion
+claims. Focused mutations reject changed metrics, ratios, hashes, missing or
+reordered arms and overstated scope. Render checks require exact values,
+text fitting, horizontal scrolling when needed and visible evidence
+disclosure. The old `#ordered64-progress` remains explicitly historical and
+synthetic-only, with its original 251-packet/594-check boundary.
+
+This update is source-only until a fresh remote source/render/build QA run
+accepts these exact files. No new screenshot, rendered-site hash, deployment
+receipt or public result is claimed here. The existing QA and publication
+records below remain historical; a source-bound successor must retain their
+existing coverage and add focused ordered64 captures before publication.
+Raw native/build evidence stays outside the public static artifact.
+
+## Partial GEMV R4: No Demonstrated Gain
+
+The source now records the completed native AB/BA screen separately from the
+unchanged matched HTTP scoreboard and older native campaigns. All four starts
+pass all 2,048 output IDs and decoded bytes. Each start excludes one warmup and
+measures three requests; AB runs baseline then candidate, and BA reverses that
+order. The same eight images are admitted in both modes. Only one-row
+attention-output/down partial GEMV changes; grouping and reduction order remain.
+
+| Native start | Mean TTFT (ms) | Mean TPOT (ms) | Finite-window output tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline AB | 877.878138 | 79.613330 | 11.647774 |
+| Candidate AB | 945.068094 | 82.110499 | 11.253843 |
+| Candidate BA | 1040.976727 | 91.870497 | 10.071339 |
+| Baseline BA | 885.450433 | 91.893385 | 10.194000 |
+
+Candidate/baseline TPOT ratios are 1.031366 and 0.999751, while TTFT ratios are
+1.076537 and 1.175647. No gain is demonstrated: no HTTP promotion or default
+change follows. Orders are not pooled or cherry-picked. These native ingress
+measurements are neither vendor results nor sustained throughput. The matched
+HTTP pairs still show roughly 16 times vLLM's TPOT; no SGLang, TP8 or speculative
+gain is established. All 33 M1 gates remain open.
+
+Report SHA256: `2d5c5846318a93fd888cf35e27cd87f9d53914976bb8371bc1a4e3f92a4d05a4`.
+Clean supervisor SHA256: `ff36b8b0e62cd722cfc3c8b2acb091bee8283952d7e859bf082af8af92bf2ae0`.
+The retained supervisor completed without signals and no KFD owners remained.
+Output parity does not confer source authentication, proof or serving authority.
+
+This four-file source update has not been built, tested, rendered or deployed.
+Existing static checks now bind every row, scope statement and digest, with
+mutation checks; existing browser checks cover exact cells, disclosure hashes
+and table clipping/scrolling. The old V22 HTTP section boundary stops before the
+new native section, preserving the historical table's independent assertions.
+Use a fresh successor of `site-http-r3-qa-r1` with a newly hashed 34-file source
+snapshot and fresh source/review/capture/artifact paths. Preserve its guards,
+offline tools, 64 main screenshots and existing 49 supplemental captures; add
+focused R4 table, mobile left/right, outcome and evidence-disclosure captures.
+Only actual remote QA, retained PNG inspection and the separate publication
+helper can establish a published update. No future QA or artifact hash is stated.
+
+## HTTP R3: Two Pairs, Rejected Series
+
+The HTTP scoreboard records accepted individual Pair1 and Pair2 ahead of the
+unchanged historical V22 table. The original three-pair campaign is rejected
+and incomplete, not an accepted multi-start comparison. No aggregate or
+replacement run is presented. This source and the native R6 update still need
+fresh remote QA and publication; neither has been locally built or tested.
+
+| Pair and engine | Mean TTFT (ms) | Mean TPOT (ms) | Finite measured-span output tokens/s |
+| --- | ---: | ---: | ---: |
+| Pair1: Ferric composed | 810.928 | 69.587 | 13.265065 |
+| Pair1: vLLM 0.28.0 | 20.148 | 4.367 | 222.524242 |
+| Pair2: Ferric composed | 811.404 | 69.186 | 13.335104 |
+| Pair2: vLLM 0.28.0 | 18.835 | 4.350 | 223.905213 |
+
+Pair1 order is Ferric then vLLM; Pair2 reverses the order. Each start has ten
+excluded warmups, thirty measured 128/128 requests and two untimed diagnostics.
+All measured requests pass in the accepted pairs. Ferric TPOT is 15.93x and
+15.91x vLLM, and TTFT 40.25x and 43.08x, respectively. These are per-pair ratios,
+not pooled observations, confidence intervals, stable-tail estimates or a win.
+
+Pair3 Ferric failed sampled KFD ownership after a foreign process appeared.
+Its timing was not admitted and an owned command required forced cleanup;
+cleanup completed. Pair3 vLLM was never started. The original manifest still declares all three pairs.
+The actual aggregator returned `rejected-series`, `accepted:false`,
+`competitiveness_accepted:false` and `framework_win_claim:false`, with the
+third summary missing and aggregate spread null. No splice, replacement,
+completed-series, equal-p99-SLO, sustained or release qualification is claimed.
+
+TTFT remains client-send to first nonempty text; TPOT is the first-to-last
+text span/127, not true token ITL. Rate is 3,840 output tokens divided by the
+complete measured span, including gaps/drain and excluding warmups/diagnostics.
+For each accepted start Ferric compares all 42 full token-ID/decoded-byte
+outputs; vLLM exact IDs are checked only in two untimed diagnostics and its 40
+timed requests match text/usage. 500 ms ownership sampling is not continuous
+isolation proof. The hardware/profile is Qwen3-8B, mi350 GPU 0, TP1/C1, 8192
+context, BF16 decoder/FP32 head, greedy fixed length, cache/speculation off.
+This is not a stock BF16-head, TP8, SGLang or speculative-decoding comparison.
+
+Ferric enables packed16-v22, split8-v21 and parallel-prefill16-v27 in the
+Composition R6 controller, using the rebuilt 5e2/dd6 worker and seven images.
+HTTP instrumentation is off. Model/image receipts are replayed, not independently
+rehashed or source-to-binary authenticated. Historical/native differences do
+not isolate individual optimization gains. The public page publishes only
+curated facts and identities, not private source, raw records or host paths.
+
+| Identity | SHA-256 |
+| --- | --- |
+| Pair1 replay | `d3fa11cce07e0181e155498b72191a47e88a3240abf8cd840dbd5c075c5e788e` |
+| Pair2 replay | `e74214f1923eac3bbda26ae13acdaae0d0a2d1011ec3aa3cfce52338d5da4c97` |
+| Rejected series | `962bce221f76fee67bb40a71bd9e0302095eba742f60885ef0b6cd1fc2e03159` |
+| Pair3 rejection | `c8a69e6f21cc9fe08d161617ef4a100630bc32674270d6634bb49bf60e4bbe11` |
+| Original manifest | `1753e5cb0fd40b7f4b6dcedef54d8dfa506915de26e317515e93c3354a5d17ee` |
+| Shared plan | `981c0991d88692b36d53df47866b0292c16f843d281ffbbe74fdfc7c701b5e04` |
+
+Source/render checks pin all 12 displayed values, both orders, all 6 identities,
+the rejection/cleanup semantics and qualification boundaries. Mutations are
+section-scoped, including the preserved V22 table, so earlier duplicate text
+cannot divert a negative test. Remote exhaustive browser QA must inspect
+desktop/mobile tables, horizontal scroll, incomplete-series text, timing
+semantics and expanded identities. Use fresh QA/artifact/publication names and
+actual source hashes; retain prior receipts unchanged. The seven public files
+and static-only `pages/prebuilt` workflow policy remain unchanged.
+
+## Composition R6 Native Milestone
+
+This source update adds the accepted four-arm native prefill/decode composition
+after the new HTTP R3 pairs and unchanged historical V22 table. Its native
+measurements are separate from HTTP. No site QA, artifact, publication,
+sustained throughput or vendor-win result is claimed by the update.
+
+| Native arm | Mean TTFT (ms) | Mean TPOT (ms) | Measured-ingress output tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline | 2430.855653 | 93.406125 | 8.954908643 |
+| Decode only | 2365.162141 | 76.228505 | 10.625352362 |
+| Prefill only | 1021.103724 | 93.120622 | 9.962451944 |
+| Prefill + decode | 855.944209 | 85.379419 | 10.940545624 |
+
+Relative to the same-run baseline, combined TTFT is 64.7884% lower, TPOT is
+8.5933% lower and the finite-window rate is 22.1737% higher. Combined TPOT is
+also **12.0046% higher than decode-only in this cohort**. Repeated runs are
+needed to determine whether that difference persists; no stable composition
+penalty, causal explanation or multiplied historical gain is inferred. The fixed order is baseline, decode-only,
+prefill-only, combined; one excluded warmup and three measured requests per
+arm. All 16 requests match 2,048 output IDs and decoded bytes. Each arm uses
+the same controller, fresh rebuilt 5e2/dd6 worker and seven fixed images,
+with instrumentation off. The historical f68 results remain separate.
+
+Report SHA256: `dbf5e34ea6466d84211c85b778fe668d046c5de931491c32b1f4a8118498bcd6`.
+Archive SHA256: `eb1f97196a736c2b9512a12c966a8ddb25d5aa3f09153ead95489dcf70ef564c`.
+These are public identity strings only; no private source, raw traces, model
+files, native archives or local paths are published by this site change.
+
+All arms retain 135 batches/request. Baseline/prefill-only use 83,139 packets;
+decode-only/combined use 87,711. Group counts are expected source schedules,
+not observed counters. Inner owned cleanup used TERM/KILL, while the outer
+supervisor passed cleanly without signals. Native ingress TTFT/TPOT and the
+384-token measured-window rates exclude warmups and include gaps; they are not
+HTTP or shader timings. V21's unverified OCML premise, name-string bridge
+limitations, unchanged defaults and open M1 gates remain explicit.
+
+Model R8 is recorded as separate instrumentation parity: four cold requests,
+512 matched output IDs/decoded bytes, 166,278 raw records and 20,478 groups.
+The same rebuilt worker serves ordinary and diagnostic controls. Raw ticks
+are not nanoseconds, additive shader durations or a performance/proof result.
+
+Fresh remote structural and exhaustive browser QA remain mandatory. The new
+checks pin all 12 metrics, four hashes, arm ordering, counter scope, the cohort-only
+decode comparison and qualification limits. Section-scoped mutation tests include
+earlier duplicate text, avoiding the historical global-replacement failure.
+Review desktop/mobile screenshots of the new table, cohort-comparison/scope paragraphs
+and expanded evidence, while preserving the HTTP-first captures. Use a fresh
+source/QA/artifact campaign and the existing approved static-only pages branch;
+do not reuse an older QA receipt, change workflow protections, add dependencies,
+build locally or trigger GitHub-hosted build/test.
+
+## Historical V28 Native Screening
+
+This source-only update adds the accepted V28 R4 full-model native A/B separately
+from the unchanged historical V22 / vLLM HTTP pair. HTTP R3 now comes first. No new site QA,
+artifact, publication or matched vendor result is claimed by this patch.
+
+| Native arm | Mean TTFT (ms) | Mean TPOT (ms) | Measured-ingress output tokens/s |
+| --- | ---: | ---: | ---: |
+| Baseline | 2312.563649 | 85.149690 | 9.750891 |
+| Parallel prefill copy | 808.974061 | 85.154418 | 11.011655 |
+
+TTFT is 65.0183% lower; TPOT is effectively unchanged. All eight requests match
+all 1,024 output IDs and decoded bytes. This is one excluded warmup plus three
+measured requests per arm, fixed baseline then candidate order, same V28 binary,
+historical f68 worker and six images. Both arms retain 135 batches and 83,139
+packets per request. V27 substitutes 288 prefill append roots; V22 packing and
+V25 split attention are absent. The independent decode-composition gain cannot
+be multiplied into these values. The accepted Composition R6 comparison above
+measures the combined candidate separately.
+
+The report SHA256 is
+`fd58ba7aa82f7bc7a18868e9837bf0de2929910ef519d74b8302a0b2d68ead17`;
+the retained native archive is
+`039561bd6c792e3e57c7685a65c27e787905aa7f8579850254852f7c17e6fee5`.
+Owned inner teardown used TERM/KILL; the outer supervisor exited cleanly without
+signals. The earlier staging-path failure remains excluded, not rehabilitated.
+Controller-ingress timings are not HTTP or GPU durations. The finite rate uses
+384 measured output tokens over the complete ingress window, including gaps and
+excluding warmup. No stable gain, confidence interval, tail, latest-runtime,
+TP8, speculative, serving or protected qualification follows.
+The 5a/d10 SDK name-string bridge is engineering custody, not independent
+source-to-binary authentication.
+
+The unchanged historical V22 HTTP result remains 2329.922/83.598 ms TTFT/TPOT for Ferric
+and 18.636/4.252 ms for vLLM 0.28.0, with 9.885898/228.904359 output tokens/s.
+Its 19.66-fold TPOT and 125.02-fold TTFT gap is not reduced by inference from the
+native result. No SGLang comparison has been added.
+
+Exact-value source mutations and rendered table/claim/geometry assertions cover
+the new section. Run the existing complete remote structural and exhaustive
+Chromium QA, and review new desktop/mobile screenshots of the V28 table,
+limitations and expanded evidence disclosure. Preserve the HTTP-first captures.
+Use a fresh source/artifact/publication campaign; prior tested snapshots and
+receipts are immutable. The seven-file public roster and static-only
+`pages/prebuilt` workflow policy remain unchanged. No local or GitHub-hosted
+build/test is permitted, and no workflow/environment protection is modified.
+
+## Earlier V22 Matched HTTP Pair
+
+The new source records the accepted V2 HTTP pair and paired replay, separately
+from the preserved historical V17 HTTP and V22 native observations:
+
+| Engine | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric V22 packed | 2329.922 | 83.598 | 9.885898 |
+| vLLM 0.28.0 | 18.636 | 4.252 | 228.904359 |
+
+Ferric remains 19.66 times higher in TPOT and 125.02 times higher in TTFT.
+This is not a win. The exact summary SHA256 is
+`0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07`.
+The same SSE client, Qwen3-8B BF16 decoder / FP32 head, TP1/C1, context 8192,
+128/128 tokens, cache/speculation off, ten warmups, thirty measured requests
+and two untimed diagnostics apply. Both engines pass correctness, sampled
+ownership and owned cleanup. The common 500 ms census records no observed
+contamination; it is not continuous isolation proof. Earlier rejected attempts
+remain excluded, not rehabilitated by this later pair.
+
+TTFT is client-send to first nonempty text; TPOT is first-to-last text / 127,
+not true token ITL. Rate is 3,840 tokens / full measured span including gaps/drain,
+excluding warmup/diagnostics, not sustained goodput. Cohort order is vLLM then
+Ferric, one start each; no confidence interval, stable-tail, stock BF16-head,
+TP8, speculative-decoding or SGLang claim. Ferric IDs match all 42 requests;
+vLLM IDs match two untimed diagnostics and all 40 timed text/usage checks pass.
+Retained model/image receipts are replayed, not independently rehashed here.
+The controller uses packed16-v22 with historical f68/5ed3840a and five images;
+newer source changes do not relabel those products. Cross-campaign differences
+against the old 114.619/4.232 ms pair do not isolate packet-packing causality.
+
+The new source and claim/render assertions await fresh remote QA/build using
+only cached dependencies/browser and the unchanged OCML-accounting guard.
+Expected scope remains eight viewports, widths 320..1440, 64 compact screenshots
+and seven public files. No new site build, artifact or publication is claimed
+by this source update; old published artifacts and failures remain unchanged.
+
+## September 18 Matched Optimization V5 Publication
+
+The additive V5 content in `index.html` records completion of the first
+sequential Ferric V17 combined / vLLM HTTP pair on mi350. Both retained raw
+receipts and independent paired replay pass; the replay checker passes eight
+CPU tests on mi300x-2. The initial finite-cohort table is:
+
+| Engine | Mean TTFT (ms) | Mean TPOT (ms) | Output tokens/s |
+| --- | ---: | ---: | ---: |
+| Ferric V17 combined | 2555.823 | 114.619 | 7.479295 |
+| vLLM 0.28.0 | 19.909 | 4.232 | 229.358430 |
+
+Ferric has 27.08 times the mean TPOT and 128.37 times the mean TTFT in this cell.
+This is a loss, not a performance win. Paired summary SHA256:
+`11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9`.
+
+The common cell is Qwen3-8B, TP1/C1, 128 input and 128 output tokens, context
+8192, BF16 decoder with the FP32 output-head profile, speculation and prefix
+caching off, the same SSE client, ten excluded warmups, thirty measured requests
+and two untimed output diagnostics per engine. The baseline retains private
+Ferric `1fc45a52` and runtime `5ed3840a`; subsequent compiler adoption does not
+relabel those products or the unchanged kernel images. This is an initial
+finite cohort, not sustained serving, TP8, SGLang or a performance-win claim.
+Cohorts run vLLM then Ferric with one server start each. TTFT uses client send
+to first nonempty text; TPOT divides first-to-last text time by 127, not true
+token ITL. Rate is 3,840 tokens over the full measured window including gaps
+and drain. Ferric token IDs match all 42 requests; vLLM token IDs match two
+untimed diagnostics and its 40 timed requests match decoded text and usage.
+Cleanup and GPU idle postflight pass for both. Retained model/image hash
+receipts are compared, not a fresh independent model-file rehash. No confidence
+interval, stable tail or stock BF16-head comparison is claimed.
+
+The separate instrumented runtime-counter diagnostic R2 is accepted: one
+warmup and one diagnostic request, all 256 output IDs matching the unchanged
+reference, 270 batches, 166,278 dispatches, completed execution and successful
+owned cleanup. Controller and worker inherit CPUs 0-255 and nice0; the two
+leader observations are not a scheduling trace or NUMA-placement proof.
+The retained report SHA-256 is
+`01869cfa796365849ef78d950dfef9e22f217996266abcdb8ea08306575c2642`.
+
+Overlapping worker counters record 23.000106146 seconds in dispatch waits,
+1.844776817 seconds in operational currentness and 0.061417113 seconds in full
+currentness, against 24.896958489 seconds of worker command time. These scopes
+must not be added. Wait includes GPU work, polling and scheduling; it is not
+GPU execution time or wholly removable delay. The interval includes warmup
+and snapshot overhead, not measured-only TPOT or an HTTP/competitive result.
+Operation-level isolation and the V19 native comparison are next; these
+counters do not identify currentness alone as the main performance bottleneck.
+
+V19 KV-copy is freshly emitted with fe2o3 `5a503c04`; its device CPU tests pass
+on mi300x-2. The emitted ABI reports Wave64, six VGPRs, zero scratch and zero
+LDS. Additional validation and native control/candidate correctness remain
+pending; no GPU gain or serving qualification is claimed. The runtime
+diagnostic's fresh CPU rerun passes all 14 harness tests with owned cleanup
+confirmed. Its original 13-pass/one-error run is retained; the fake-controller
+fixture collision is corrected and negative assertions reject premature EOF.
+Neither V19 nor the instrumented diagnostic is part of the completed HTTP pair.
+Historical `data/project.js`, `data/performance.js`, producer attribution,
+defaults and all 33 open gates remain unchanged.
+
+This snapshot is published through static-only `pages/prebuilt` commit
+`72b767485d3d50e56892471d7e0017538293232a`, deployment `35411581137`.
+Remote structural/negative checks, widths 320..1440, eight named viewports and
+64 screenshots pass. The seven-file artifact SHA256 is
+`370eb3238d4114279118a713bc7991ac0c1f3bd52d6565c1c428fc714d28aca4`.
+The fetched live index matches the validated artifact. The workflow only
+authenticates and deploys static files; no GitHub build is triggered. Private
+implementation ancestry, team tracker and raw evidence stay out of Pages.
+This published snapshot predates subsequent V19 native results, tracked in
+`docs/M1_MATCHED_OPTIMIZATION_V5.md`; it is not relabelled as that later run.
+
+## Historical September 18 Performance Swarm V4
+
+The retained V4 overview records private Ferric `1fc45a52`, published core runtime
+`5ed3840a`, final-pin CPU validation, and a four-arm native TP1 comparison.
+All 16 requests match the independent 128-output reference. Independent raw
+replay and six mutation/positive tests pass on mi300x-2.
+
+The combined V14/V15 arm records 84.55 ms TPOT and 9.83 tokens/s versus baseline
+135.85 ms and 6.43 tokens/s. These are fixed-order controller-ingress diagnostics
+with one excluded warmup and three measured requests per arm, not HTTP,
+sustained throughput, stable gains or a vendor comparison. Runtime and packing
+changes are common to every arm and have no isolated gain measurement.
+Native archive SHA256:
+`c1cd3b9448e05076cc935801f82ad99b5b48c3d664ad758628860e50b9f953d6`.
+
+The overview's exact text and selected rendered claims are checked, with added
+negative mutations for counts, timings, arm order and scope. Historical
+`performance.js`, kernel producer attribution, defaults and all 33 open gates
+remain unchanged. The new measurement flag applies to this diagnostic, not
+serving or protected qualification. Remote structural/negative checks, every
+width 320..1440, eight named viewports and 64 screenshots pass. The validated
+seven-file artifact (789,721 bytes) is live at
+[harsh-nod.github.io/ferric](https://harsh-nod.github.io/ferric/) through
+static-only commit `329a86b4bab2b7fc4c8585437f395c295c8cbe44` on
+`pages/prebuilt`. Deploy-only workflow `35394680140` succeeds, and all live
+files are byte-equal to the artifact. No local or GitHub build/test ran. The
+temporary publishing worktree is removed after retaining its Git bundle and
+deployment receipt. The older source-bound records below are historical.
+
+## Historical September 16 Combined M5 Host and Proof Draft
+
+This source-only successor starts from Pages source `4c206bfc` and follows
+private tracker `e4e55afb`, retained R5 compiler results and completed compiler
+publication/adoption receipts. It has not run QA or been
+published. Public static-only commit `3e41846e` remains the prior live Pages
+checkpoint; no private implementation history is pushed.
+
+Four additive records precede the retained native/numerical checkpoints:
+
+- `compilerAdoption1fad`: private Ferric `a0cc9929` adopts published `1fadb7e0`
+  across exactly 80 active pin files. The separate R2 passes all 47 phases,
+  with 32 locked graphs, 42 fresh source-gate tests and four actual inventories.
+  The first attempt's revision-only assumption fails; its retained archive is
+  `0b1ebbcd5b41b56434076a9c0adec81ede14abf29be8f4a89443aa606515b530`.
+  The reviewed transition also adds the upstream
+  `native_v12_text_descriptor_replay_v1` test target and `dialect-amdgcn`'s
+  development dependency on `fe2o3-amd-target`. Runtime inventory and the
+  property-binder pin stay unchanged. All 1,148 local source hashes match.
+  R2 archive SHA-256 is
+  `dacf7b109448bbc90d4d8bd5ea30f1eac7f1b0723630b674bb6f7776e5579fc8`.
+  This is source/dependency admission, not engine, proof or GPU validation.
+- `combinedM5Host349`: exact combined source `568882e2`, integrated privately
+  at `6b5322dc`, passes all 21 host phases on compiler `349b2cd0`: 750 engine
+  tests with nine explicit ignores, 22 smoke-bin tests and Python suites of
+  4, 23 and 15 tests. Strict Clippy passes only the engine library and exact
+  smoke binary. Archive SHA-256 is
+  `a8c9d39b1baceaf6c4ba8c776dc36c15c46986cc6a859de59a759d5607e9a066`.
+  No real M5 capture or five-position comparison is claimed.
+- `catchupProof349`: a fresh 14-phase campaign on the same source and compiler
+  rebuilds seven verified dependency exports and verifies the actual production
+  catch-up method: one verified, zero errors, with `--no-cheating` and solver
+  rlimit 116,015. Archive SHA-256 is
+  `6013e24b89fb72ca30b8c654a737a3405c6e5ff59f529bc8a2040b986fedf03c`.
+  The nine negative mutations remain on earlier `a9fad31b` / compiler 111 and
+  have not rerun on compiler 349. Neither campaign proves whole-engine, queue/owner or
+  physical-KV composition.
+- `compilerBoundaryR5`: the eight-file core-only WriteOnly output ABI and
+  trusted Thread-value correction passes 52 selected tests on tree `a29459fd`
+  over `4c298382`. Strict Clippy exits 101 at 17 unchanged parent sites; the
+  whole campaign remains 101, not a compiler/proof pass. The positive extraction
+  reaches the unavailable functional-refinement runtime, not proof admission.
+  R5 archive SHA-256 is
+  `ebe08d207b3eb15aa86c099507724e4377c44a4c302aea27c1187b31c9240a10`.
+  The unchanged implementation is published as `1fadb7e0` after rebase onto
+  `958a80a3`. Separate remote checks preserve 155 normal/build dependency nodes
+  and source/protected bytes; the 52 tests are not relabeled as a rerun on the
+  rebased tree. `[skip ci]` yields zero GitHub workflow/check runs. Ferric's
+  separate dependency-only adoption is recorded above, not inferred from R5.
+
+Earlier source-bound records remain unchanged under explicit historical
+headings. In particular, the retained compiler-111 native 32-token observation and
+prefill errors are not new M5 or compiler-349 GPU evidence. No reviewed numerical
+tolerance, new performance result, serving qualification or gate closure is
+claimed; all 33 M1 gates remain open. Performance data, styles, assets, package
+pins, index date and the seven-file artifact roster are unchanged.
+
+Exact-value, per-field negative and rendered assertions are updated as source
+only; they have not run. After root review, prepare a fresh successor of the
+retained R14 bounded mi300x QA/retention controls in a fresh R15 namespace,
+keeping the exclusive Pages lock, all resource limits, five phases, eight named viewports, exhaustive widths
+320..1440, 64 screenshots and seven-file static artifact. No remote launch or
+deployment is approved by this draft. Wait for CPU 0 release from the compiler
+tool build before any approved QA launch. No local or GitHub build/test is allowed.
+The existing static-only `pages/prebuilt` deployment protections are unchanged.
+
+## Historical September 16 Native, Numerical and Proof Checkpoint
+
+This Pages-only successor starts from source `012d7af8` and follows private
+tracker `f39c23d2`, plus the integration lead's terminal negative-proof report.
+It has not run QA or been published. Static-only public commit `bcc6d1ba`
+remains the live prior checkpoint; no private implementation history is pushed.
+
+Four additive records precede the historical checkpoints:
+
+- `native111`: exact `2bfce38b`/`111722028` completes 32 output tokens over 20
+  speculative rounds, including one completed full-K4-acceptance draft catch-up
+  and a subsequent round. Normal teardown restores the starting allocation.
+  The suffix-filled prompt and excluded prefill anchor remain explicit.
+- `prefill111`: a separate canonical prefill comparison matches one token but
+  has maximum absolute logit error 0.125 and RMSE 0.03982024072957679. Its maximum
+  BF16 ULP distance of 31,373 crosses zero. No reviewed tolerance or numerical
+  pass is claimed. The failed V1-schema wrapper and successful V2 successor
+  are both retained; the comparator reports are byte-identical.
+- `catchupProof111`: separate candidate `a9fad31b` passes 21 selected coordinator
+  tests, strict engine all-target Clippy and a focused production-method Verus
+  proof, one verified and zero errors. All nine implementation mutations fail
+  the selected postconditions, with source restored. This does not prove the
+  whole engine, sealed owner mapping, queue completion or physical KV join,
+  and is not integrated or validated on compiler 349 at this checkpoint.
+- `compiler349`: adoption `803916c4` passes 47 dependency/source-gate phases,
+  including 32 locked graphs, 42 source-gate tests and four inventories. No
+  engine, Verus or GPU result is attributed to that adoption. Observed upstream
+  `45d0bf2e` remains unadopted and unvalidated here.
+
+Exact-value checks, per-field negative mutations and rendered assertions guard
+these source identities, metrics and scope limits. Existing performance data,
+styles, assets, package pins and the seven-file static artifact are unchanged.
+All 33 M1 gates remain open. No new TTFT, TPOT, throughput, competitive ranking
+or serving qualification is claimed.
+
+Reuse the retained R12 five-phase QA and retention controls in a fresh R13
+namespace on mi300x only, under their existing resource limits and exclusive
+Pages lock. Require structural/negative checks, exhaustive widths 320..1440,
+eight selected viewports, 64 screenshots, unchanged source/runtime/browser
+identities and the exact seven-file artifact. Retain and independently verify
+the archive before publication review. Only the approved `pages/prebuilt`
+branch may receive validated static bytes and its deploy-only workflow.
+No local or GitHub build/test and no remote launch before root review.
+
+## Historical September 16 Published Compiler Adoption
+
+This private Pages-only successor starts from prepared source `e04e2247` and
+records exact Ferric adoption commit `2bfce38bd624a3f65b719960ae2ebb5233f772bc`.
+It has not run QA or been published; static-only `60f65896` remains live.
+The complete 20,487,388-byte adoption archive is independently retained at
+SHA-256 `ebbfc150c4811e4f314a81f343977d9eac055e353ffc6c6aa17f2dcec59edd67`;
+all 1,145 integrated source file hashes and the exact tracked roster match.
+
+The current adoption record covers published fe2o3 `111722028`: all 47 remote
+dependency/source-gate phases pass, including 32 locked/offline graphs across
+35 metadata checks, 42 fresh source-gate tests and four actual CLI inventory
+derivations. Three compiler-bearing inventories change only their revision;
+the runtime inventory is unchanged. This is dependency/source adoption, not
+full compiler-tool, engine-suite, Verus, emission or GPU qualification.
+
+Earlier MFMA13 smoke R3/R4 results remain at compiler `8af54567`; the earlier
+publication record's pending-adoption status is explicitly historical. No
+result is relabeled as a new-engine pass on 111. LegacyScalar12 stays default,
+MFMA13 stays opt-in, no new performance result is claimed and all 33 gates stay
+open. Use a fresh R12 successor of the same remote QA/static-only publication
+flow; preserve the unlaunched R11 controls and earlier evidence.
+
+## Historical September 16 MFMA13 Host Checkpoint
+
+This private Pages-only successor starts from source `38e3feb8` and follows
+tracker `4e7e9ef9`. It has not run QA or been published. Static-only public
+`60f65896` remains the live prior checkpoint; no implementation ancestry is
+published.
+
+Private Ferric `f8eed966` adds explicit leading `--mfma13` selection to the
+gfx942 engineering speculative smoke. LegacyScalar12 remains the default;
+one-step and resident reports bind their strategy and exact 12/13 count to the
+admitted artifact. The strict selected opener has no fallback.
+
+Smoke R3 passes 147 tests with two existing hardware ignores, then retains a
+source-policy failure. The test-only follow-up passes 38 policies, four engine
+regressions, three GEMM regressions and strict all-target adapter Clippy. These
+are separate source-bound cohorts, not one green campaign. Earlier parser,
+policy and wrapper failures remain retained.
+
+Ferric remains pinned to `8af54567`. Separately, public fe2o3 `111722028`, rebased
+onto `d6471109`, passes 152 tests with ten existing ignores and scoped strict
+Clippy for the corrected verifier and four fixture targets. Post-push checks
+find zero GitHub workflow/check runs; all builds and tests ran on mi300x.
+This core-only correction is not full compiler qualification or a Ferric repin.
+
+No new GPU result, performance measurement, serving qualification or M1 gate
+closure is claimed. Current emission and the rebuilt GPU retry remain pending;
+all 33 gates stay open. Earlier R9 proof and R6 native records retain their
+original source attribution. Performance data, styles, assets, package pins
+and the static-only publication policy are unchanged.
+
+Reuse the prior R10 remote QA/retention flow in a fresh R11 namespace. Require
+exhaustive browser checks and the closed seven-file prebuilt artifact before
+root review and publication to the user-approved `pages/prebuilt` branch.
+No local or GitHub build/test, and no publication before successful remote QA.
+
+## Historical September 16 Proof and Native Checkpoint
+
+This private Pages-only draft follows tracker `06260001`, based on prior Pages
+source `3c7a4023`, and the separately reported compiler fetch `8af54567`.
+It has not run Pages QA or been published. Static-only `58ebfe67` remains the
+published R4 checkpoint; no private implementation ancestry is published.
+
+R9 on exact proof source `cde4faaa` passes all 14 selected executable bodies:
+nine page-return helpers, four retired-lease accessors and the global-index
+core. Each has successful nonzero solver work. Seven genuine dependency
+exports and prior evidence remain unchanged. This is not outer pool/queue
+composition, negative-mutation coverage or proof of the maintenance checker.
+
+Native R6 on frozen `00ac6a22/4f6` exits 134 at `step draft catchup custody`,
+before submission of the 425 maintenance packets. No successful maintenance
+or complete 32-token continuation is inferred. The selection fix `6c34cbe1`
+preserves completion and ownership guards. Its compiler55-pinned host campaign
+passes 17 phases and 26 distinct tests across 27 executions, including nine
+K4/K8/K16 selection cases, with no failures or ignores. This is focused host
+evidence, not a full-engine, strict-Clippy, Verus or native pass.
+
+The fixed native executable still needs rebuilding and a GPU retry. Latest
+compiler adoption remains pending: the fetched `8af54567`, and earlier `f0b`,
+do not replace the validated `55d9bfe5` pin in these results. MFMA stays opt-in,
+with `LegacyScalar12` the default. No new performance or serving qualification
+is claimed, and all 33 M1 gates remain open.
+
+The additive `integration.latestProgress` record has exact value, claim and
+negative checks. Older R4 and prior records retain their original identities
+and dated pending states under an explicit historical heading. Styling,
+assets, performance values, package pins and deployment policy are unchanged.
+
+Next: use a fresh owned mi300x CPU-only stage and the existing pinned browser
+cache, run `npm ci` and `FERRIC_EXHAUSTIVE_WIDTHS=1 npm test`, then
+`npm run stage -- /private/owned/pages-artifact`. Retain the source, complete raw
+QA logs, viewport screenshots and exact seven-file artifact before review.
+No build, test, browser run or publication is authorized on this local machine
+or GitHub. Only the reviewed prebuilt static files may later enter the isolated
+`pages/prebuilt` publication branch through the existing deploy-only workflow;
+private implementation ancestry, docs, test harness and raw evidence stay private.
+
+## Historical September 15 Sustained-Run Follow-up
+
+The following records retain their earlier source identities and then-pending
+states. They do not supersede the September 16 checkpoint above.
+
+Private integration `9e10cc956e031adc828646272c033aea5b473901`, tree
+`1c3efda960ee4ed947d8a3131582dd6fc5525ea0`, updates 80 dependency, lock, policy
+and inventory files to published compiler `e3c359fb`. The dependency-only
+overlay on `58833759` passes all 42 mi300x phases, including 32 locked/offline
+graphs, a fresh source-gate build and 38 source-gate tests. Package versions
+are unchanged; the M0 property binder keeps its separate `e527` pin.
+The complete 20,176,971-byte archive is retained and independently audited:
+`53d27228aa90f2bd80efeaa79cc23f28746b7a5b5a6b66180011c1412a6ec22f`.
+The reviewed combined inventory has SHA-256
+`9c901826689badc35c7c501f7342602753e85dd3d88b6fb78e4864fdc59fd68d`.
+
+Those receipts validate the `588` dependency overlay, not the newer Rust caller
+or a full `9e` engine run. Integration also includes `8af1e52b`'s contracted
+batch ledger consumer loop; its host, Verus and native validation have not run.
+Earlier source47 host/proof receipts and the frozen `00ac/4f6` native executable
+retain their original identities. No performance result or M1 gate is upgraded.
+
+The current runtime executable is exact `00ac6a22/4f6`, not a newer documentation
+commit. It passes six scoped host phases and an optimized build; its five
+diagnostic tests and 37 adapter policies are distinct from the predecessor
+ba6 full-engine result of 720 passes and nine existing ignores. The earlier
+c5 source coverage is retained as historical; successor inventory remains
+pending and no verified label is upgraded.
+
+The 32-token attempts remain separate negatives: c5 R3 fails page-generation
+bookkeeping, cef R4 aborts at maintenance publication, and diagnostic 00ac R5
+stops before inference on a disappearing KFD PID's process-group observation.
+R5's PID ownership is unknown, not evidence of positive foreign GPU use. Its
+archive `af4f5d9c0c6b44f302f004a72baf49dd4db37c2eefd839dfbb0052b60359d83a`
+and all 27 native payloads are retained. No complete JSON report means no
+inferred rounds, tokens, full acceptance or maintenance success. Fresh versus
+immediate GPU facts remain separate, with cleanup readiness false. The narrowed
+selected-GPU ownership guard passes 25 actual remote mock fixtures, not GPU or
+native validation. Its archive SHA-256 is
+`d248b2bf6ff43146b917d29741bfa47e86545ffb4329ac494ff12a7af061e90f`.
+Native R6 has not run.
+
+Test-only routing candidate `da3b3a1d` adds actual 425-row maintenance and saved
+2,242-row speculative routing coverage, using inert tags without native
+allocation witnesses. Actual remote formatting, metadata, library check and
+the exact one routing test pass; strict Clippy fails on two test-only lints.
+Successor `45a211e5` passes all five remote host phases: formatting, exact 4f6
+metadata, engine library check, the exact one routing test and strict all-target
+Clippy. Before/after source receipts match and the frozen native binary is
+unchanged. The independently hash-checked archive SHA-256 is
+`142083a5b330e88f7f66a6a3f15a29355a8b6a5e97c6922d19addf18cd5c0f4d`.
+Neither candidate changes production behavior or relabels the frozen
+`00ac/4f6` native binary; no new 32-token native result is claimed.
+
+Earlier helper integration `8fa40b3a` passes eight remote host phases, both exact
+regressions, 723 engine tests with nine ignored, and strict engine/spec Clippy.
+The source and frozen native binary checks pass; no native artifact is relabeled.
+
+Published compiler `e3c359fb` is rebased onto observed upstream `2585ce64`,
+with all twelve patches unchanged. R12 completes all 19 mi300x phases: 1,030
+Rust tests passed, zero failed and one existing gfx1151 ignore, plus nine Python
+dependency tests and the CI dispatch harness. The initial inherited-environment
+CI harness failure after six passing phases is retained at SHA-256
+`47740391eff1045047f7fbd243ee6159c312b2e243edd6e8a309f1f24ac63993`.
+Only its `LD_LIBRARY_PATH` environment was corrected for continuation. The R2
+retainer rejected paired `--nocapture` framing; the strict R3 retainer passes
+without rerunning tests. The complete 13,891,856-byte R12 archive has SHA-256
+`e4334c6b7db87c97b494d8c70b0d1d7a8c86c6201b5780f5bbf9e916ac31ba48`;
+it is retained locally and independently SHA-256 checked. Independent archive
+review confirms the source tar commit and current-source Cargo rebuild/reuse
+closure. A normal non-force main push completed. At `2026-09-15T23:48:06Z`,
+GitHub main equals `e3c359fb1bf39ec21c4239ac37ce59b7a3a51db9`, with zero Actions
+runs and zero check runs for that exact commit. No workflow or protection
+settings were changed. No current release tools, emission, strict compiler
+Clippy or native GPU execution is claimed. Ferric's separately validated
+dependency refresh is described above.
+Its tip contains `[skip ci]` under explicit user
+approval, with all builds remaining on mi300x. The prepared 9c2e R11 controls
+were never launched. No earlier host, tool or emission result is relabeled.
+Previous private compiler `12845295` is rebased onto observed upstream `48323569`,
+with all twelve local patches unchanged. All 14 R10 delta host phases pass,
+including actual source-bound artifact freshness and paired BF16 export checks.
+The actual wrapper-PATH LLVM 18.1.3 assembler identity matches before and after.
+Full source and raw results are retained locally and independently SHA-256
+checked at `b3cfc86c7c0c6d7c858b4751d8d0a9197a77cb663c67a46cd028f6ce3e9cfaaa`.
+This does not claim new 128 release tools, emission, strict compiler Clippy,
+GPU execution, a compiler push or a Ferric dependency repin.
+Earlier tested private compiler `86ccc2a5` on observed base `bd4d5f42` passes all 23 R9
+delta host phases, including fresh artifact checks and paired BF16 export.
+Unchanged R9 suites were not rerun in R10. New 86 source-bound tools
+and emission are not claimed. Frozen `e0d108b2` separately passes 42 host phases,
+four tool phases and the thirteen-root `ce2` emission/inspection campaign.
+The 113,192-byte image has 13 entry/descriptor pairs, exact replay and inspected
+BF16 MFMA instructions. Its retained archive SHA-256 is
+`f05db35b45eccd4de06653c97b6a277988447f1f66c8cf6218662787d88fb049`.
+No GPU ran and publication/load/launch grants remain false. These tools and
+emission results are not relabeled as 86, 128 or e3c. The seventeen-phase host result
+remains attached to predecessor `d3a52cd2` on `bf0f4841`.
+
+The historical root-free observation of 19,279,236 KiB was below the unchanged
+23,068,672 KiB floor; it is not a current admission reading. Reviewed archive
+cleanup reclaimed 823,808 KiB without restoring admission. The later
+independently reviewed combined cleanup removed 37,787 listed files and
+reclaimed 3,098,548 KiB, with receipt SHA-256
+`12862dc7365442b9e04ad6a15be556507ae3857da10a14079fa07502d6f14952`.
+Additional cleanup restored resources and remote host/proof work resumed.
+The latest recorded mi300x GPU census reports all eight GPUs at 100% busy, not idle
+admission.
+Separate read-only `mi350-2` inventory finds one physical MI350X/gfx950 GPU,
+not eight; additional render nodes are auxiliary devices. Foreign KFD queues
+prevent idle admission despite zero utilization at that observation. Its kernel
+`5.18.2-mi300-build-140423-ubuntu-22.04+` is not admitted by the current gfx950
+policy; a platform/UAPI review is needed, not just an accepted-string change.
+Exact model/artifact inputs were not found at the known paths. No artifact was
+retargeted or launched there.
+Root free space fluctuates on the shared host, so every new launch still
+requires fresh resource admission; no floor is lowered and no native retry
+success is claimed.
+
+The 5602 compiler fixtures emit two inspected MFMA images, separate from the
+later e0/ce2 aggregate and not a GPU numerical result. The d3 predecessor passed seventeen
+host phases, but its emitter rebuild stopped at the unchanged root-disk floor.
+The earlier 5a689 commit-proof failure and 339c resource stop remain retained;
+the actual R12 commit proof at 339c subsequently fails. Trigger-only successor
+`bd8e22f7` passes the selected commit proof with pinned Verus `b677dd5`, two
+solver queries and zero errors. Its commit-proof archive SHA-256 is
+`2e4c580164958d83fbe92ebdb5ba6fe11f60c7ae3705a8da0fae74ab36f84e7d`.
+All six scoped proof bodies pass: metadata preflight, commit,
+table_contains_index, same_role, RequestId slot and generation, with checked
+query counts 2/2/2/1/1/1, nine total. Actual-runtime mutation campaign R16 exits
+0 with all 24 negative receipts accepted; the complete positive/negative raw
+archive is retained and independently SHA-256 checked:
+`b3c0760fcc2480913b2fdc72cc2167de68f4049dc06f1482974d38a5d94524e8`.
+This is not whole-crate or hardware proof; the full retirement transition and
+native completion/pool composition remain unproved.
+The later selected-page lemma and six actual engine helper bodies at `457ca0aa`
+pass pinned Verus with one query per body and zero errors. Their contracts are
+integrated at `8fa40b3a`; helper negative mutations and caller/whole-roster/native
+composition remain pending. Global-index candidate `79f74a3e` fails R5 parsing
+with exit101 and zero verified queries. Its failed archive is retained.
+Parentheses-only successor `74c52a73` passes R6 for the actual
+`global_page_index_core` exec body: one query, zero errors, rlimit154038.
+Source/dependency/verifier checks and prior-evidence preservation pass. Its exact
+code is integrated at `2aae5839`; its R1 host attempt exits 1 at formatting only,
+for line wraps in two new `assert_eq!` statements. All five source after-checks
+pass, but no completed host validation is claimed. Test-formatting-only successor
+`21818e2a` preserves production bytes equal to proof source `74c52a73`; its host
+R2 passes all eight phases, including both exact regressions, 724 engine tests
+with nine ignored and strict all-target engine/spec Clippy. All six source
+before/after checks match; native/proof identities stay unchanged. Its full
+evidence archive is retained and independently SHA-256 checked at
+`4dc705e003d66605aeb10d823487e90b4735bb8abbcc63409821cf406af70427`.
+The earlier `8fa40b3a` 723-test cohort is not relabeled.
+The full R6 archive is retained and independently SHA-256 checked:
+`311aea52da61ba959640db89afb08a1b00da22f8b91559ef6352e92ca52b8317`.
+R7 completes all seven actual index-body negatives with selected exec
+postcondition failures and nonzero SMT work. Parser, compiler, translation and
+resource failures are not accepted. The full raw archive is retained and
+independently SHA-256 checked at
+`6aed4783947f5556a67f414b7eb563afe366819dc421063022b3e5c7a3d56b28`.
+
+Separate Contracted ledger candidate `efa069bd` passes formatting, metadata,
+engine check, both regressions and 726 engine tests with nine ignored, then
+fails strict engine Clippy on `manual_map`; spec Clippy was not reached.
+The full failure evidence and test executable are retained at checked SHA-256
+`5713237da7943871551c8c1894e820cd45f4ae0170194e445b5ad0b36f64bf99`.
+Successor `47d07cee` preserves the contracts and changes only the optional state
+read to an explicitly bounds-checked slice index. Equivalent behavior and error
+ordering are source-reviewed, and remote formatting matches. Its original R2
+host run is recovered without a rerun and exits 0. All eight host phases pass,
+including both targeted tests, 726 engine tests with nine ignored and strict
+engine/spec Clippy. All 16 source checks pass; source-after equality matches and
+all owned process groups are absent. The earlier SSH transport exit 255 is
+separate from the actual host run's exit 0. Full host-only evidence is retained
+and independently SHA-256 checked at
+`4e49bda4a4fd73e09aec4feedafb57a152bbb567f3cf8c2ce477d5d2706276fd`
+(77,205,056 bytes). R9 completes all nine selected actual helper proofs: each
+reports one verified exec query, zero errors and nonzero SMT work. All 284
+dependency artifacts, source, verifier closure and predecessor evidence remain
+exact. Full R9 proof evidence is retained and independently SHA-256 checked at
+`9edd3b9ecbdb8587a22f2ba26a673b040e624514d9d6c4f56e679baab1aacab8`.
+R10 completes all six actual ledger-body negative checks and exact restorations.
+Final source/dependency/configuration/closure and predecessor preservation
+checks pass. Its 197,607,173-byte full archive is downloaded and SHA-256 checked at
+`6b7e66b6501ee62d3700835d2585cfcaf3928273e249daf03ae1dd2bec0c8170`.
+Independent retained-evidence review is complete with no blockers. The verified
+ledger helpers are integrated at `66e3299300e17a644126458a29e9c0b1a5766ba4`.
+Its `device_cache.rs` is byte-identical to host/proof source `47d07cee`, and the
+only source-tree difference is the tracker. All host and proof receipts remain
+attributed to source47; no integrated-source rerun is claimed.
+Wrapper completion custody and
+cross-call ticket/ledger continuity remain outside these helper contracts.
+All 33 M1 gates remain open and all performance JSON is byte-unchanged.
+
+This private source worktree starts at retained Pages source `4e16c945`.
+No private implementation ancestry or source may enter the publication repo.
+After fresh mi300x QA and artifact review, only the seven admitted static files
+and the deploy-only workflow may enter the isolated `pages/prebuilt` branch.
+GitHub may upload/deploy those prebuilt bytes, but must not build or test them.
+The approved branch allowance and existing main/environment protections remain
+unchanged. No local build, new browser result or deployment is claimed here.
+This source snapshot is frozen for root review. No Pages QA or publication has
+run for it; the host-only archive does not substitute for a proof receipt.
+
+## Earlier September 15 Resident And Host Checkpoint
 
 This public-only checkpoint adds the exact c5/4f6 native guard exit 126, empty
 output and unresolved detected-PID attribution. It records return to the exact
@@ -418,8 +1871,10 @@ When implementation or qualification state changes:
    npm run stage -- /tmp/ferric-pages-artifact
    ```
 
-The deployment workflow requires the exhaustive Chromium sweep in addition to
-the syntax and structured-data checks before publishing. `validate.mjs` rejects schema
+Publication requires the exhaustive Chromium sweep and structural checks on
+mi300x before the deploy-only workflow receives the admitted static bytes.
+GitHub-hosted Node, browser, build and test steps are not permitted by the
+static-only publication policy. `validate.mjs` rejects schema
 drift, stale current-dependency claims, unknown status states, malformed source
 references, duplicate transitions, missing render targets, and missing local
 assets. `render-validate.mjs` checks populated visible output without horizontal

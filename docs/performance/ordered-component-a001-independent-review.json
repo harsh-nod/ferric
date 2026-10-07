@@ -1,0 +1,244 @@
+{
+  "archive_bytes": 1027531,
+  "archive_sha256": "247170789044337fbcf2864d7cc03571c5ed5fe2dcb5127f7d641880d36b4570",
+  "archived_files": 127,
+  "counter_mechanism": [
+    {
+      "arm": "wave",
+      "counter_medians": {
+        "command_ns": 302830.5,
+        "commands": 2.0,
+        "completion_polls": 3.0,
+        "dispatch_prepare_ns": 515.0,
+        "dispatch_publish_ns": 8980.0,
+        "dispatch_wait_ns": 211890.5,
+        "dispatches": 1.0,
+        "full_currentness_checks": 0.0,
+        "full_currentness_ns": 0.0,
+        "kernel_admission_ns": 0.0,
+        "kernel_admissions": 0.0,
+        "operational_currentness_checks": 11.0,
+        "operational_currentness_ns": 97220.0,
+        "read_bytes": 0.0,
+        "read_ns": 0.0,
+        "reads": 0.0,
+        "write_bytes": 0.0,
+        "write_ns": 0.0,
+        "writes": 0.0
+      },
+      "dispatches_per_batch": 1,
+      "samples": 6
+    },
+    {
+      "arm": "mfma",
+      "counter_medians": {
+        "command_ns": 607135.0,
+        "commands": 2.0,
+        "completion_polls": 6.0,
+        "dispatch_prepare_ns": 505.0,
+        "dispatch_publish_ns": 8910.0,
+        "dispatch_wait_ns": 516315.0,
+        "dispatches": 1.0,
+        "full_currentness_checks": 0.0,
+        "full_currentness_ns": 0.0,
+        "kernel_admission_ns": 0.0,
+        "kernel_admissions": 0.0,
+        "operational_currentness_checks": 11.0,
+        "operational_currentness_ns": 96200.0,
+        "read_bytes": 0.0,
+        "read_ns": 0.0,
+        "reads": 0.0,
+        "write_bytes": 0.0,
+        "write_ns": 0.0,
+        "writes": 0.0
+      },
+      "dispatches_per_batch": 1,
+      "samples": 6
+    },
+    {
+      "arm": "splitk",
+      "counter_medians": {
+        "command_ns": 303090.0,
+        "commands": 2.0,
+        "completion_polls": 3.0,
+        "dispatch_prepare_ns": 765.0,
+        "dispatch_publish_ns": 9055.0,
+        "dispatch_wait_ns": 211995.0,
+        "dispatches": 2.0,
+        "full_currentness_checks": 0.0,
+        "full_currentness_ns": 0.0,
+        "kernel_admission_ns": 0.0,
+        "kernel_admissions": 0.0,
+        "operational_currentness_checks": 11.0,
+        "operational_currentness_ns": 96860.0,
+        "read_bytes": 0.0,
+        "read_ns": 0.0,
+        "reads": 0.0,
+        "write_bytes": 0.0,
+        "write_ns": 0.0,
+        "writes": 0.0
+      },
+      "dispatches_per_batch": 2,
+      "samples": 12
+    }
+  ],
+  "counter_scope": "previous snapshot plus batch; overlapping durations must not be summed",
+  "custody_receipt_sha256": "939226feef4825853d9376174f66abb5b971b02334c06bbe7c4938ba79855adf",
+  "custody_verified": true,
+  "fixture": {
+    "k": 12288,
+    "n": 4096,
+    "projection": 2,
+    "rows": 1,
+    "splits": 8
+  },
+  "full_model_correctness_claim": false,
+  "latency_comparisons": [
+    {
+      "control": "wave",
+      "host": {
+        "adjacent_pair_reduction_percent": [
+          27.120268327743172,
+          23.627191531591134,
+          12.646000298591854,
+          24.633998121650738,
+          24.029970490337877,
+          26.873930710008555
+        ],
+        "aggregate_median_reduction_percent": 24.4681144623196,
+        "control_median_ns": 362390.0,
+        "median_pair_reduction_percent": 24.331984305994308,
+        "positive_pairs": 6,
+        "splitk_median_ns": 273720.0
+      },
+      "pairs": 6,
+      "samples_per_arm": 6,
+      "worker": {
+        "adjacent_pair_reduction_percent": [
+          40.637176254870504,
+          39.43721938380554,
+          25.936039094020554,
+          39.40227924645321,
+          39.45102365018391,
+          39.17888790001161
+        ],
+        "aggregate_median_reduction_percent": 39.41976217221211,
+        "control_median_ns": 258170.0,
+        "median_pair_reduction_percent": 39.41974931512938,
+        "positive_pairs": 6,
+        "splitk_median_ns": 156400.0
+      }
+    },
+    {
+      "control": "mfma",
+      "host": {
+        "adjacent_pair_reduction_percent": [
+          58.91841032304315,
+          58.69441400661643,
+          57.93293743626657,
+          58.20707089638958,
+          57.33878391661856,
+          55.56103104114017
+        ],
+        "aggregate_median_reduction_percent": 58.66006983207762,
+        "control_median_ns": 666885.5,
+        "median_pair_reduction_percent": 58.070004166328076,
+        "positive_pairs": 6,
+        "splitk_median_ns": 275690.0
+      },
+      "pairs": 6,
+      "samples_per_arm": 6,
+      "worker": {
+        "adjacent_pair_reduction_percent": [
+          71.99337205573174,
+          72.04911063738393,
+          72.13158598555763,
+          71.82399716251584,
+          70.57411332220492,
+          69.51265930265015
+        ],
+        "aggregate_median_reduction_percent": 71.93436458697282,
+        "control_median_ns": 559545.5,
+        "median_pair_reduction_percent": 71.90868460912378,
+        "positive_pairs": 6,
+        "splitk_median_ns": 157040.0
+      }
+    }
+  ],
+  "model_ttft_or_tpot_claim": false,
+  "modes": {
+    "counters": {
+      "admitted": true,
+      "child_returncode": 0,
+      "clean": true,
+      "dispatch_packets": 44,
+      "errors": [],
+      "kill_sent": false,
+      "ordered_frames": 30,
+      "outer_sha256": "03da5ad96da11249a94d8ba7e60140fa9cf499b11ef9a1a23995ecc8f6f41321",
+      "outer_status": 0,
+      "owned_group_absent": true,
+      "plan_sha256": "20bd28457f3a69a25f3eacc016be98cd09bd89e90f7b59fcc3a3986aec862c2e",
+      "protocol_sha256": "66a963b73d649d6aea704e74cf1117b1ad7ef5c5a833965ba555b56373776504",
+      "quarantined": false,
+      "raw_samples": 30,
+      "reaped": true,
+      "result_sha256": "87e9d8b9804a0d43e405b5891155c29a559d3b8e91b0e238b90e4c29a4c80ca4",
+      "term_sent": false,
+      "verified_reference_samples": 30
+    },
+    "latency": {
+      "admitted": true,
+      "child_returncode": 0,
+      "clean": true,
+      "dispatch_packets": 44,
+      "errors": [],
+      "kill_sent": false,
+      "ordered_frames": 30,
+      "outer_sha256": "d738c3feec3734bce4ee4fc6e394be9f8e27dae1392dbe90e4843a78b76daae6",
+      "outer_status": 0,
+      "owned_group_absent": true,
+      "plan_sha256": "6262aad1861f1f06ea0b5cd4a73c8e821d7d23ef8a901ff7a0d7f6583eda2d31",
+      "protocol_sha256": "3a5becdf63cdd07d578851dafd32d00d6ca4cc5ca92cfcd340392e4cb54f709b",
+      "quarantined": false,
+      "raw_samples": 30,
+      "reaped": true,
+      "result_sha256": "d7f7aeb19140e21d9c915489ed5e198a348dd13b20930d9fab7a4a5c42f45cf5",
+      "term_sent": false,
+      "verified_reference_samples": 30
+    },
+    "ticks": {
+      "admitted": false,
+      "child_returncode": 0,
+      "clean": false,
+      "dispatch_packets": 44,
+      "errors": [
+        "postflight: ValueError: root-disk floor reached"
+      ],
+      "kill_sent": false,
+      "ordered_frames": 30,
+      "outer_sha256": "ccd3fcf30b32435065e2f1cca94ba9f0566f26cb6494077d95f93f55eecf806a",
+      "outer_status": 125,
+      "owned_group_absent": true,
+      "plan_sha256": "c4a1080c785fb562512989fc5d366c25beab4421e29a54a30651a200e93dc21c",
+      "protocol_sha256": "c7f15e67e3d2e0f0339772ba7b8ada86b2b56770326e05ebdc34fb138bb9307d",
+      "quarantined": true,
+      "raw_samples": 30,
+      "reaped": true,
+      "result_sha256": "cf6336110ef90173d9d13f0bc49b467347c730de8774916a2096ce53b62f760b",
+      "term_sent": false,
+      "verified_reference_samples": 30
+    }
+  },
+  "native_default_promotion": false,
+  "other_shapes_or_model_streaming_proven": false,
+  "reference_hashes": {
+    "output": "5eaddb8dfb119e60737997b63937d4fe2edfd4cbca08bcf2ed1b70d1b47390a8",
+    "split_partials": "c0d41b5c6d9f4a284383ff3f1c896d4250455a4365d5bfb3ebf196c83e58ba67",
+    "untouched_partials": "3f2d4db28a65f20104b452d76d08e6bb4fcb8626487add9210e55162d62c37f4"
+  },
+  "schema": "FerricOrderedComponentIndependentReviewV1",
+  "scope": "hot reused-buffer component; ordered synchronous host transport, not GPU-only or model timing",
+  "ticks_scope": "quarantined outer floor failure; no ticks aggregates or calibrated time claim",
+  "worker_scope": "ordered publication/completion/exit fence; excludes prepare/staging; not shader-only"
+}

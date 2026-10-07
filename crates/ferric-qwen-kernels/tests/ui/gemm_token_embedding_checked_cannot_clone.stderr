@@ -1,0 +1,5 @@
+error[E0599]: no method named `clone` found for struct `CheckedQwen3TokenEmbeddingLaunchV1` in the current scope
+ --> tests/ui/gemm_token_embedding_checked_cannot_clone.rs:9:26
+  |
+9 |     let copied = binding.clone();
+  |                          ^^^^^ method not found in `CheckedQwen3TokenEmbeddingLaunchV1`

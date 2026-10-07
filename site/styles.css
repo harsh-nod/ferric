@@ -866,6 +866,11 @@ h3 {
   margin: 16px 0;
 }
 
+#resident-progress > .shell > p,
+[data-resident-progress] > p {
+  overflow-wrap: anywhere;
+}
+
 .observation {
   margin-bottom: 48px;
   padding: 24px;

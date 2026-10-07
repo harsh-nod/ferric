@@ -1,0 +1,34 @@
+{
+  "authority": "ferric-m1-r30-exhaustion-partial-protocol-only",
+  "bundle_files": [
+    "capture.json",
+    "protocol.json"
+  ],
+  "case": "exhaustion-target-kv-p512",
+  "format": "FERRIC-M1-R30-EXHAUSTION-PARTIAL-PROTOCOL-V1",
+  "lifecycle": [
+    "physical-model-memory-initialized",
+    "engine-request-admitted",
+    "exact-target-page-capacity-leased",
+    "occupied-target-page-rejected",
+    "out-of-range-target-page-rejected",
+    "leased-page-identities-revalidated",
+    "unpublished-pages-returned",
+    "page-zero-released-at-next-generation",
+    "reused-page-returned",
+    "engine-request-retired",
+    "engine-request-reclaimed"
+  ],
+  "milestone": "M1",
+  "nonclaim": "Partial physical target-KV ledger saturation protocol only: occupied-slot rejection after all 512 request-local slots are leased is distinct from the static P512 index bound. It grants no kernel-dispatch, queue, device-memory-exhaustion or pressure, canary, fault-injection, evidence, hardware-correctness, performance, qualification, or m1.r30/M1 closure authority.",
+  "obligation_id": "m1.r30",
+  "required_complete_case_roster": [
+    "canary",
+    "cancellation",
+    "exhaustion",
+    "fault-injection",
+    "rollback"
+  ],
+  "status": "partial-non-evidence",
+  "target": "gfx942:xnack-"
+}

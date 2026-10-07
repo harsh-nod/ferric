@@ -1,0 +1,134 @@
+{
+  "schema": "FerricMeasuredSourceOverlayV1",
+  "authority_archive_sha256": "6089abea6ebc3363557c8e5fb8b4e2e488fa49b4f30f99029dfcc16b7c5bddd7",
+  "preimage_archive": "/home/harsh/.codex-tmp/ferric-perf-swarm-v6/products/perf-v14-20261005/native32-measured-overlay-preimage-a001.tar.gz",
+  "preimage_archive_sha256": "9592bc308b5da0432c081416219f7823afeeb30783312e6d564a0baad7d0180a",
+  "file_count": 24,
+  "replacements": 15,
+  "additions": 9,
+  "all_postimages_equal_measured_source": true,
+  "fresh_build_or_test_performed": false,
+  "unrelated_files_changed": false,
+  "rows": [
+    {
+      "path": "Cargo.lock",
+      "before": "2bb47898bc320d151fa6fa24b9dff4af09c89f102293e6271f7ba1ddffda7426",
+      "after": "137f98661f7c5a154ba1d83b6dcab7da51a026dbacb2c24a9bf8a5d0e8a37b93"
+    },
+    {
+      "path": "Cargo.toml",
+      "before": "2d044080c9067e0075da4b93a4eaec1f56fc8a129d458800426f1f8b3cc1c220",
+      "after": "5953b9a99f886e154be6ccaa31c5d4fa59ab398b65d7327db4496baf5444f74b"
+    },
+    {
+      "path": "src/bin/ferric-qwen3-prefill-program-native-v1-counters.rs",
+      "before": "ABSENT",
+      "after": "ca3f14de5941368184203566f7657b871db406d352e8ecd8c9a2e0e1724cf9bd"
+    },
+    {
+      "path": "src/bin/ferric-qwen3-prefill-program-native-v1-live.rs",
+      "before": "ABSENT",
+      "after": "99e26f2b513393b251ef725da3fa2f6be3deac388725a45226f9df35e951e28a"
+    },
+    {
+      "path": "src/bin/ferric-qwen3-prefill-width-native-counters.rs",
+      "before": "ABSENT",
+      "after": "ddc701da3ac1c38fe704fc4825e68a3fb82707974f8f5af02e30d6b91c1ed241"
+    },
+    {
+      "path": "src/bin/ferric-qwen3-prefill-width-native-live.rs",
+      "before": "ABSENT",
+      "after": "ad5645035bad22588171cde85419679b21b81e630b84d4524ab82e3c526582d2"
+    },
+    {
+      "path": "src/bin/native_prefill_width_contract.rs",
+      "before": "ABSENT",
+      "after": "45001040f569f85b582b7d1d674e7281e72eea530a0257621a8c73ba654ab135"
+    },
+    {
+      "path": "src/bin/tp_worker.rs",
+      "before": "533ec5444c15685ef8054ed6a8c603f93885c4f6c5073a84653eb53fc63c8938",
+      "after": "6a8bce8aa8ccf5fea0b146c004b8feede2dffd5eff1f791cca52adc0af5f6084"
+    },
+    {
+      "path": "src/bin/tp_worker_prefill32_actual_tests.rs",
+      "before": "ABSENT",
+      "after": "1c8bb9714f754726c66aa8efb083be9124dce8d1f3d2d35ad71b47ccad44e52e"
+    },
+    {
+      "path": "src/bin/tp_worker_prefill32_lifecycle_tests.rs",
+      "before": "ABSENT",
+      "after": "32feb851e287c8207bae45d6d9d439bfee03305251452e5f99108fb02d7580d1"
+    },
+    {
+      "path": "src/bin/tp_worker_prefill32_program.rs",
+      "before": "ABSENT",
+      "after": "5752ae2da4a6bc6aafd335adfe7ec34963a4ea3e6c530e112125193070d349f0"
+    },
+    {
+      "path": "src/bin/tp_worker_prefill_program.rs",
+      "before": "ABSENT",
+      "after": "119aeb867625a738662ceceb736e98bd68017ed7792750d21a0d9adfd8b1a5f9"
+    },
+    {
+      "path": "src/bin/tp_worker_token_program.rs",
+      "before": "68d43769c30ce1f8cb10fcf91ea9125b235e7e589767b89d7974a3a69290ab1a",
+      "after": "d235c64618e696143d0d41b73d49504bc5937b4ed5afeb904619cda86b75ff93"
+    },
+    {
+      "path": "src/bin/tp_worker_token_program_tests.rs",
+      "before": "5ddf26f0bf4020bd73c85b50e837cc27bdcd314cf7f3404070031ccfa5e0db51",
+      "after": "ce105a2ee5543ab5631551e46bc1025b9d53564d89eec1badc198fe25d080c45"
+    },
+    {
+      "path": "src/bin/wave_target_v17_runner.rs",
+      "before": "e50be2eb60aebdd88adbd9e8f72e4d34470a36e0670da23f88eef6c483816462",
+      "after": "324554cfa3a58f0b66a41190446c8f5135b74fe2f33b1d5a615f9023e8f50db3"
+    },
+    {
+      "path": "src/tp_execution.rs",
+      "before": "717f88cf8d2c9389156f729615194cb1e690b633c488df65abd08a00b5563604",
+      "after": "41fa0817b68535faed600f8ee5918ff6ea141652491f5002826baf4d66658c74"
+    },
+    {
+      "path": "src/tp_execution/batched.rs",
+      "before": "dd7e92bd24500bc8b168df466b569cd943a43c265126bc3f97fbe866ff962c30",
+      "after": "0f0d46bacf9dc0a6adcb9008cf7666a14f2f37b076a9a67542b372db7ea71fd3"
+    },
+    {
+      "path": "src/tp_execution/batched/prefill16_ordered_v1.rs",
+      "before": "771b90c918ffaf4625b6f84c24509aff04c6d1d9fa54b94cf4d3aa5c5b971979",
+      "after": "d43cf27140c06aca9f1138a247ca04b564a2aef4536a88d9eb6aca48f4575a1a"
+    },
+    {
+      "path": "src/tp_execution/batched/prefill32_pages_v1.rs",
+      "before": "33860bb4a5694e6fee88914ddf81e186fa317ce26a6106bed03d6a451113df40",
+      "after": "63bd428962c1cdd48ad00648dd19416124038b908bae1784edf3fdac90c081b8"
+    },
+    {
+      "path": "src/tp_execution/batched/tests.rs",
+      "before": "43d6a0be33d37a1eb299bd4142ad188cf61952f3b11499afd0c0aac9e39ab9d8",
+      "after": "5848daec202e782431b86f31c58d06439627654ded5a4d513fae7cbd0ae093b3"
+    },
+    {
+      "path": "src/tp_execution/batched/tests/token_program_v1.rs",
+      "before": "77d5f58c95e930e24c498887bf22dc09f9b525ca3a2e1f3910eb52ada3b97d12",
+      "after": "5500ae35506af132bf025dccb0015c723b0b14b5b4894edc9c1c128d8a39a61f"
+    },
+    {
+      "path": "src/tp_execution/performance.rs",
+      "before": "12241141ca415e0e927c1c4a0a3fac2f9789b14fe4328d4fea707bb0a8573a4c",
+      "after": "8a6f3ceaee420a1a2d45c4ce58985cf52b29ff0dc4ba102a1d51017d127e0d18"
+    },
+    {
+      "path": "src/tp_execution/reduction.rs",
+      "before": "a21efe7df5cf18f101beb6181a625ed8c52c00a3c4b18cab9355fd171acc916c",
+      "after": "3560a348f399e45cec78af837ce49031ed5b5e558bdf91313daecee7edd27b19"
+    },
+    {
+      "path": "tests/source_policy.rs",
+      "before": "a3eb5b753efd6c2a778bc508f8ecb4006980c3ccaafe23dd610f131568f35634",
+      "after": "5755f34ef02409e0b6de9f8c6d3cc7c0c3a707a084b69b6c927ef97c6915d3a8"
+    }
+  ]
+}

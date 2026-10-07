@@ -228,8 +228,14 @@ printf 'FIXTURE=parser-transition-allocation\nFAIL: verified engine body violate
 printf 'source closure fixture\n' >"$fixture/source.records"
 printf 'PACKAGE=ferric-spec\nfixture proof output\nPACKAGE=ferric-engine\n' \
     >"$fixture/proof.transcript"
-printf 'FERRIC_QUALITY_GATE=fmt:PASS\nFERRIC_QUALITY_GATE=clippy:PASS\nFERRIC_QUALITY_GATE=test-debug:PASS\nFERRIC_QUALITY_GATE=test-release:PASS\ntest transition_paths_preserve_fixed_storage_capacities ... ok\ntest result: ok. 1 passed; 0 failed\n' \
-    >"$fixture/runtime-tests.transcript"
+for gate in fmt clippy clippy-all-features test-debug test-debug-all-features \
+    test-release test-release-all-features source-closure-policy m1-benchmark-policy \
+    m1-reference-policy m1-r29-differential-evidence; do
+    printf 'FERRIC_QUALITY_GATE=%s:BEGIN\nFERRIC_QUALITY_GATE=%s:PASS\n' \
+        "$gate" "$gate"
+done >"$fixture/runtime-tests.transcript"
+printf 'test transition_paths_preserve_fixed_storage_capacities ... ok\ntest result: ok. 1 passed; 0 failed\n' \
+    >>"$fixture/runtime-tests.transcript"
 for tool in cargo-verus verus rust_verify z3; do
     cp /bin/true "$fixture/verus/$tool"
 done
@@ -237,7 +243,9 @@ printf 'ferric spec artifact\n' >"$fixture/artifacts/libferric_spec.rlib"
 printf 'ferric engine artifact\n' >"$fixture/artifacts/libferric_engine.rlib"
 
 evidence_arguments="$fixture $fixture/source.records $fixture/proof.transcript $fixture/proof.counts $fixture/evidence $fixture/verus $source_gate $fixture/artifacts $fixture/runtime-tests.transcript"
-for gate in fmt clippy test-debug test-release; do
+for gate in fmt clippy clippy-all-features test-debug test-debug-all-features \
+    test-release test-release-all-features source-closure-policy m1-benchmark-policy \
+    m1-reference-policy m1-r29-differential-evidence; do
     missing="$fixture/runtime-tests-missing-$gate.transcript"
     missing_index="$fixture/evidence-index-missing-$gate"
     grep -F -v "FERRIC_QUALITY_GATE=$gate:PASS" \

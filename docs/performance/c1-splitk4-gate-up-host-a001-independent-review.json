@@ -1,0 +1,30 @@
+{
+  "schema": "FerricSplitK4GateUpHostIndependentReviewV1",
+  "audit": "PASS",
+  "method": "Read-only local stdlib evidence inspection; no project imports or test execution",
+  "retained_files": 52,
+  "phases": 5,
+  "all_inner_outer_closures_clean": true,
+  "all_pre_post_rosters_match": true,
+  "named_tests_verified": true,
+  "default_tests": 16,
+  "enabled_tests": 17,
+  "failed_ignored_measured_filtered": 0,
+  "strict_clippy_default_enabled": "PASS",
+  "locked_fe2o3_packages": 51,
+  "sdk_commit": "55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9",
+  "source_archive_sha256": "b246b23fc5c1cdc2822c93a3a47a4b7157984c4291cd9f55b0c25bf446ba467d",
+  "helper_sha256": "77a94bb06936711129c0d7768a599ef24041d1b263997141383146de11d8da62",
+  "source_frozen_sha256": "d20b4a72cbd147b18178a51bb0b1c5b3a069677e9aabdedf1d109cafa6f1344f",
+  "formatted_projection_sha256": "3a1d5fc1ee10a2162e45fa80f8278e17cfeca1099f045e21a53eeb064f70231e",
+  "cargo_lock_sha256": "09b83fed10fa66e6a541a9d8ff611a6778da144eff781a95be1723cedd5b9492",
+  "receipt_pairs_inner_outer": {
+    "prepare": ["89f52f8a893997d1af76d0a428d4e3c718bbf849844826d0ebe78c6cc32a8251", "c3c8b8baf3b44c2fcf7b1bbe86c533b292a3f9b9daa8995e11ec085ae48857a9"],
+    "test-default": ["6f2c9dee7a0d99e9a154572fdeb3046b69179d76afccf3730a6dc0abe10773bd", "9ef8b93a4ab97fd61e0d3bef5c3c53966f0e45fe8346a1fe64994f91b272f81c"],
+    "test-enabled": ["a34ceef4babb5ad1174e4ab31b803240a0a8570176aee1f9d970c74f7ee1212b", "ae3f53e83dde9f42cfda6c379de6927fabf12a21b30fa30d420de26ab2460a4b"],
+    "clippy-default": ["24d801305e77f039a9c07aa5ec7f3f7d1660ead97aa15dd1909497ffcbda569b", "898c9b1eb61369508fb4443b10fa9c4e8be09b11848d656d3e1f6cb51bddefd8"],
+    "clippy-enabled": ["17c8ac6587eb01bc1850e066f8ea660887bf23c69a3ad1394925ec911b00ba35", "6e0e95977d73c48b3e9dc0cbbe357b3705cfff91599c94a90b4956f869cbe2ae"]
+  },
+  "native_executed": false,
+  "performance_claim": "none"
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "FerricNativeAttemptObservationV1",
+  "change_id": "v14-native-whole-token-r1",
+  "status": "stopped_during_controller_startup",
+  "host": "smci350-rck-g03-b19-03",
+  "stage": "/dev/shm/ferric-v14-native-40695ec-a002",
+  "plan_sha256": "06b8229ea5ec20dd2568bc8d594aba44e987592d0ade7f0e9d5a02e6594e7d20",
+  "cell_id": "counter-A",
+  "started_utc": "2026-10-05T19:26:45.559743+00:00",
+  "finished_utc": "2026-10-05T19:28:43.913571+00:00",
+  "supervisor_status": 125,
+  "controller_launched": true,
+  "worker_handshake_observed": true,
+  "completed_requests": 0,
+  "output_tokens": 0,
+  "latency_admitted": false,
+  "reason": "Monitor descriptor scans refused live-process FD disappearance and process identity drift. Postflight also failed the unchanged root-space floor.",
+  "continuous_isolation_proven": false,
+  "raw_supervisor_returncode": -9,
+  "raw_supervisor_child_reaped": true,
+  "raw_supervisor_cleanup_ok": false,
+  "raw_supervisor_term_sent": true,
+  "raw_supervisor_kill_sent": true,
+  "subsequent_observation": "No owned stage process or /dev/kfd user was found after termination; this does not change the failed cleanup receipt.",
+  "retained_archive": "products/perf-v14-20261005/native-a002-failed.tar.gz",
+  "retained_archive_sha256": "ce41a0d58bfb6192ad2b381cd25d43f73375d5a5771c0764dbfbe924af3e9d88",
+  "scanner_qualification": {
+    "scanner_sha256": "fe23377d763785d3c14e47ec3e606dfd4a1251a3f0c38d9f2e1310d8a8108f0c",
+    "measurement_tests_passed": 138,
+    "launcher_tests_passed": 18,
+    "policy": "Reconcile fully departed non-allowed PIDs only with repeated absent-directory and pidfd ESRCH evidence."
+  },
+  "storage_recovery_after_failure": {
+    "selected_allocated_bytes": 4082814976,
+    "selected_entries": 544,
+    "root_available_before": 67107848192,
+    "root_available_after": 71190515712,
+    "required_root_available_bytes": 68719476736,
+    "scope": "Only inventoried old .rlib files and two empty incremental directories from one unused Cargo target.",
+    "inventory_sha256": "47180d93c981ad20fd68a143d7fa34917620f4e4e43da2508e21a317c8e9f0d1"
+  },
+  "metrics": {
+    "ttft_ms": null,
+    "tpot_ms": null,
+    "speedup_percent": null
+  },
+  "next_step": "Retain diagnostic-only evidence identifying the exact process churn, test a bounded full-rescan successor, and use a fresh campaign only after resource admission."
+}

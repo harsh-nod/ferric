@@ -1,0 +1,118 @@
+{
+  "schema": "FerricNativeGateUpHarnessCheckpointA008",
+  "date": "2026-10-06",
+  "status": "complete-native-comparison-inconclusive-paired-consistency-failed",
+  "model_checkpoint": "native-gate-up-cpu-a009-checkpoint.json",
+  "source_manifest_sha256": "540918e430661d19ea2e831a1273b8f946f5f1d6bc4aa8993c62856611e2af14",
+  "source_files": 21,
+  "qualifier_sha256": "b91a1ffa8557b72afe886d757c521cfcc47395aa99727cb17b1080695e2cd752",
+  "cpu_host": "mi300x-2",
+  "cpu_profile": "FerricCpuFourCore42GiBEmitterV1",
+  "fix": {
+    "image_directory": "native-inputs/gate-up-splitk4-r1/fe2o3-engineering-v1/df9074bed98ef15d05bdcc23784c5f59c8065d9e1611968aef7e34a0c312328b",
+    "external_roster": "native-inputs/gate-up-splitk4-r1/roster.json",
+    "validation": "Preserve the Rust loader's namespace, recomputed content identity and exact two-file directory roster.",
+    "controller_worker_kernel_bytes_changed": false
+  },
+  "qualification": {
+    "contract_tests_passed": 112,
+    "contract_includes": {"checkpoint_binding": 26, "gate_up_contract": 48, "native_launcher": 38},
+    "separate_binding_tests_passed": 26,
+    "measurement_tests_passed": 227,
+    "actual_checkpoint_validation": {"phases": 24, "custody_files": 42},
+    "all_four_outer_phases": "status 0, reaped, cleanup clean, no signals or errors",
+    "note": "Separate binding tests overlap the contract suite."
+  },
+  "retained_failures": {
+    "native_a001": {
+      "plan_sha256": "1c2ca2b14f338e17f4ccaee2fdfadacd1b86de3c4353994f58b85a5b0ec0294a",
+      "cell_result_sha256": "13a85a966da8e6b27b3987ee0e0ad4ce9db5be517c400a72e7f331d294c409d1",
+      "controller_stderr_sha256": "83f26ecbd4a993557e2f6c59c5cd2721ce49d423643d2065b5855538f0b0f8e4",
+      "failure": "Control controller rejected ContentDirectoryIdentity before Setup; the old three-file image layout would also fail DirectoryRoster.",
+      "requests": 0,
+      "remaining_cells_unlaunched": 13,
+      "retained_file_audit": "351 plan-bound files and all nested stage bindings match retained bytes",
+      "cleanup": "Outer reaped, cleanup clean, unsignaled; inner failure cleanup separately records TERM and KILL."
+    },
+    "cpu_a007": "111 of 112 tests passed; one synthetic receipt still named the old schema. Corrected in a008; failure retained."
+  },
+  "portable_export": {
+    "archive_sha256": "b8b9c38cd705e7b016b70db97924f70d285a2e295bba31ecbef984fb8fe4a68c",
+    "archive_bytes": 53184154,
+    "roster_sha256": "6539331a1d12559b50fc2984ae7bc9d01a3b1de9fc5c6ebeab49144b89202b9c",
+    "build_sha256": "f99747cf2d276ccb7bcc8c42156c227e7394bd99a5470b346f95731cf069ed98",
+    "files": 193,
+    "logical_bytes": 185731798,
+    "all_members_verified": true,
+    "retained_locally": true
+  },
+  "cleanup": {
+    "additional_failed_run_cache_files_removed": 1239,
+    "allocated_bytes_recovered": 4294283264,
+    "inventory_sha256": "149ecca4cbe521119d5e1863b093e26c3f0375e1d7e46181a318964f30b072fa",
+    "receipt_sha256": "f0cc39137edd12f86f513747e1d0587dd40c0ef0d7aef21c70a3aecaaf745e40",
+    "source_models_evidence_executables_preserved": true
+  },
+  "native_a003": {
+    "plan_sha256": "7a615d434fc6b14a95d849786183c10373dc03e3bd221c564e7d7a8184125450",
+    "completed_cells": ["counter-A", "counter-B", "block1-A1"],
+    "failed_cell": "block1-B1",
+    "failure": "Root-disk floor reached during candidate setup; supervisor stopped its owned group, status 125, reaped and cleanup clean.",
+    "completed_requests": 8,
+    "exact_generated_token_ids": 1024,
+    "timing_cells_completed": 1,
+    "native_paired_timing_result": false,
+    "independent_completed_cell_audit": "Exact tokens, UTF8, counters and warmup exclusion verified; no partial gain inferred."
+  },
+  "additional_runway_cleanup_a003": {
+    "failed_build_roots": 14,
+    "cache_files_removed": 5511,
+    "allocated_bytes_recovered": 17536192512,
+    "inventory_sha256": "09fe2f0f5a5d2becbe5212a7b1c9c6b1cdda62664df9287212877555ba1be122",
+    "receipt_sha256": "69e9b1725dba2bfe7128072abfef3fe59e457b4fe1309a06d9090079bd251488",
+    "source_models_evidence_executables_preserved": true,
+    "all_uid_nonuse_verified": true,
+    "root_free_bytes_after": 86358728704
+  },
+  "native_a004": {
+    "plan_sha256": "67bf416039c4062d76e3044137fa77dc2a5d5b1eeed9978c601272479cf5fe3f",
+    "report_sha256": "7968a1ddb16d08adeb6fa3abd3d7996617cfe1f5c28663b670236fcef0a88e8e",
+    "status": "inconclusive",
+    "completed_cells": 14,
+    "total_requests": 74,
+    "timed_requests_per_arm": 24,
+    "exact_generated_token_ids": 9472,
+    "median_tpot_ms": {"control": 51.16525300000001, "candidate": 44.5872775},
+    "median_ttft_ms": {"control": 414.320062, "candidate": 400.4010335},
+    "finite_output_tokens_per_second": {"control": 18.784980784695357, "candidate": 20.333478683393174},
+    "observed_median_tpot_reduction_percent": 12.856333379217356,
+    "observed_median_ttft_reduction_percent": 3.3594869707274766,
+    "positive_pairs": 4,
+    "required_positive_pairs": 5,
+    "block2_pair_tpot_gain_percent": [-6.308345731159393, -6.210157558372886],
+    "interpretation": "Complete replay passes correctness and lifecycle checks, but paired consistency fails. Aggregate point estimates do not establish a reliable gain. No HTTP selection or default promotion.",
+    "independent_raw_audit": "passed-two-independent-reviews",
+    "independent_review": "native-gate-up-a004-independent-review.json",
+    "retained_files": 2905,
+    "retained_logical_bytes": 369045130,
+    "retained_content_roster_sha256": "216493e6642e225d1af7009973d7f71eb8095f8507dda829dc5b85b1a8935329",
+    "controller_worker_kernel_bytes_changed": false
+  },
+  "failed_native_stage_retirement": {
+    "roots": ["/dev/shm/ferric-native-gate-up-a001", "/dev/shm/ferric-native-gate-up-a003"],
+    "files_removed": 1300,
+    "directories_removed": 151,
+    "allocated_bytes_recovered": 514306048,
+    "inventory_sha256": "130dc21c4a4738dc6e53a6bb81d858e0c942b83da3f0b6923cce4a507edcae72",
+    "receipt_sha256": "f487abb6768cb7c5c833e903a5bf284c0219f66e5a6395ab6d23ebff48cd861f",
+    "unlink_journal_sha256": "afe3d4ad997524d5d30b410ae509fe97c621bff4999f00c0c5ea1548fbe3d559",
+    "evidence_retained_locally_before_removal": true,
+    "all_uid_nonuse_verified": true,
+    "a004_models_other_roots_preserved": true
+  },
+  "model_parity_verified": true,
+  "parity_scope": "All 74 fixed-prompt requests in complete a004; not broad model quality qualification.",
+  "full_comparison_measured": true,
+  "performance_qualified": false,
+  "default_promoted": false
+}

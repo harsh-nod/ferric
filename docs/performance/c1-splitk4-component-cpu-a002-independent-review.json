@@ -1,0 +1,55 @@
+{
+  "schema": "FerricSplitK4GateUpComponentCpuIndependentReviewV1",
+  "accepted": true,
+  "scope": "Raw source/archive/receipt and portable artifact audit; no project execution by reviewer",
+  "harness": {
+    "source_archive_sha256": "e8a16f93cdeea9cce5f1110e9bba99045a778f92b7c9a3f603a2e4d7fd0c6d55",
+    "qualifier_sha256": "d29c663d7cea7a119114edbe4e73a73aa926328937c10ece664e3688697a3832",
+    "inner_receipt_sha256": "ab42870606e4e8f2def9caeed9cee3ef46a199c82a673f6c9c4247702ec3f184",
+    "source_files": 28,
+    "tests_passed": 80,
+    "tests_skipped": 0,
+    "test_groups": {
+      "inputs": 14,
+      "driver": 10,
+      "provenance": 5,
+      "bundle": 5,
+      "ordered_dispatch": 24,
+      "supervisor": 22
+    },
+    "source_unchanged": true,
+    "clean_reaped_unsignaled": true,
+    "peak_observed_rss_bytes": 851030016
+  },
+  "actual_binding": {
+    "inner_receipt_sha256": "2d951c15048cc164fb05c7c4efd7b37501ce0f8f7d23fab7a970551703928e05",
+    "outer_receipt_sha256": "dd0354758da0c57fb10c34e1fbc3c6f987d311fd42b9a9661e89b180a47edf3d",
+    "portable_archive_sha256": "b7853b47a184661369b7720a2fd74f395cadadac125a83ccf1d7119b3664069b",
+    "portable_archive_bytes": 29129568,
+    "portable_manifest_sha256": "da74022e3c7791d781de66ba5bf7fd57cbf67b7291b222e76bb8b8e32bc420f3",
+    "native_plan_sha256": "a3291deb45cc84bfb51b14e1df2fe5b0b670591c1f1797398fc31ed69676296e",
+    "regular_files": 98,
+    "logical_bytes": 32912564,
+    "image_evidence_pins": 34,
+    "runtime_evidence_pins": 24,
+    "harness_matches_qualified_source": true,
+    "clean_reaped_unsignaled": true,
+    "growth_bytes": 95199232
+  },
+  "schedule": {
+    "cells": 16,
+    "packets": 24,
+    "packets_per_cell": {"wave": 1, "splitk4": 2},
+    "timed_packets": {"wave": 6, "splitk4": 12},
+    "warmup_packet_frontier": 6,
+    "candidate_order": ["partial", "merge"],
+    "candidate_single_ordered_frame": true,
+    "buffers_guarded": true,
+    "scratch_poisoned_each_cell": true,
+    "output_tail_checked": true
+  },
+  "native_correctness_established": false,
+  "native_performance_established": false,
+  "model_performance_established": false,
+  "default_promotion": false
+}

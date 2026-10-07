@@ -1,0 +1,83 @@
+{
+  "schema": "FerricNativeHttpIndependentReviewV1",
+  "framework": "ferric",
+  "revision": "R3",
+  "archive": {
+    "path": "v18-http-ferric-r3-complete-a001.tar.gz",
+    "sha256": "b060ae521fd6fce3809c9460d850f578ad1c81fa1d906790732fd04a4e340a27",
+    "bytes": 1045661
+  },
+  "member_hashes": {
+    "outer-receipt.json": "a173264fd4d27f06128988c5e2620057d78ec68cd502693226a190b14f72ff49",
+    "receipt.json": "59d0963932e8748767c7dd758d316a27b27ca052dfbf5ce81ac52155dda62cc6",
+    "ferric-teardown.json": "7944d2e67e47a2b7830044fb9d11d410c235279ed2f6091340af8ab5971de973",
+    "ferric-final-events.json": "ba04fd7652cd2724e977549b1431076095799c7e14640570f67f5d40e5375ad6",
+    "http-controller-cleanup.json": "8ace29c5f27791368134e110dd57d1d9cdb2a6f148bbcf6b1756d7d33ca034d8",
+    "diagnostic-after.json": "ad6fd1f921659469d209fffb5c4b2d186280e080d1e331a9a169dc5e66656915",
+    "timed-raw.json": "1a79bf9d264b4a0458f63af8854462c395405ac0ca05749042169ef34e704a6d",
+    "diagnostic-before.json": "de971f894ca837e5fb182fec72db9be2af51d91ab9ab6c3a009c8fa06f211d5c",
+    "identity.json": "9dec2efbb9ea57dd1f286a5de799ca75969fb3471a1f8392dccbbdce271606dd",
+    "frozen-plan.json": "4bbbdf321622a4e8ce8c87a0d75b4cf30ed3e3ccd2f8a9e05a5f9c397330db7b"
+  },
+  "independently_recomputed": {
+    "raw_checks_pass": true,
+    "ttft_ms": {
+      "mean": 787.4839459333332,
+      "median": 776.553537,
+      "p95": 847.1020156000001,
+      "p99": 851.84180513
+    },
+    "tpot_ms": {
+      "mean": 53.312156012598415,
+      "median": 53.20710203937008,
+      "p95": 55.39605617440945,
+      "p99": 56.429726384330706
+    },
+    "finite_output_rate_tokens_s": 16.934200844625828,
+    "windows_sum_s": 226.760036404
+  },
+  "warmups_excluded": 10,
+  "measured_requests": 30,
+  "all_internal_requests_exact": 42,
+  "all_internal_output_tokens_exact": 5376,
+  "streamed_text_usage_and_timestamps_exact": true,
+  "window_boundaries_and_rates_exact": true,
+  "normal_closed_unsignaled_cleanup": true,
+  "outer_to_inner_and_identity_bindings_match": true,
+  "gpu_samples": {
+    "count": 122,
+    "phases": [
+      {
+        "phase": "active",
+        "count": 85
+      },
+      {
+        "phase": "postflight",
+        "count": 1
+      },
+      {
+        "phase": "preflight",
+        "count": 1
+      },
+      {
+        "phase": "startup",
+        "count": 35
+      }
+    ],
+    "all_accepted": true,
+    "all_same_owners": true,
+    "all_root": true,
+    "active_positive": true,
+    "scanners": [
+      "53aa4382f264037b24413c9ef8c10197d184a4a9137f1463385d93663d19e449"
+    ],
+    "max_interval_ms": 830.612474
+  },
+  "scope": [
+    "TP1/C1, 128 prompt and 128 output tokens, greedy; BF16 decoder and FP32 LM head.",
+    "Finite closed-loop HTTP windows including drain; not steady-state throughput.",
+    "SSE-derived TTFT/TPOT, not per-token ITL; final internal token IDs matched all 42 requests.",
+    "Finite descriptor samples with paired endpoints; not continuous GPU isolation.",
+    "No new vendor result or performance-lead claim."
+  ]
+}

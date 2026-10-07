@@ -1,0 +1,15 @@
+{
+  "authority": "ferric-m1-r32-paired-collector-protocol-only",
+  "format": "FERRIC-M1-R32-PAIRED-COLLECTOR-PROTOCOL-V1",
+  "nonclaim": "This command plan freezes one real paired R32 collection invocation. It binds executable bytes, exact environment, per-cell arguments, policy workloads, holdouts, deterministic fallback plan, implementations, and command identities before execution. It does not establish policy fairness, runner correctness, observation truth, hardware correctness, numerical correctness, independent reproduction, performance qualification, or close m1.r32 or M1.",
+  "obligation_id": "m1.r32",
+  "schema": {
+    "commands": "The command plan names one canonical absolute executable path whose held bytes match the policy benchmark executable SHA-256, one canonical absolute working directory, a policy-hashed cleared environment, a bounded timeout, and exact arguments for each cell and engine. Each command identity is recomputed over those bindings.",
+    "execution": "Exactly two cells run in policy order. Each cell runs ten warmup pairs and thirty recorded pairs. The speculative and target-only child commands execute separately and sequentially in the checker-mandated alternating order; no shell command line is evaluated.",
+    "outputs": "Every successful child must emit one bounded canonical command-result document with the exact injected policy, cell, pair, workload, holdout, fallback-plan, implementation, and command identities plus raw counters. Nonzero exit, timeout, stderr, malformed output, failed work, binding drift, or unequal work aborts without an observation document.",
+    "publication": "The collector copies child-reported counters without deriving timings or summaries, constructs the exact existing comparison-observation schema, revalidates it with the existing structural checker, and publishes canonical JSON through descriptor-held no-replace publication.",
+    "stability": "The policy and command-plan descriptors, executable pathname and held descriptor metadata, working directory, and final executable byte identity are revalidated across collection. Reserved FERRIC_M1_R32_ variables cannot be supplied by the external environment."
+  },
+  "status": "collector-protocol",
+  "target": "gfx942:xnack-"
+}

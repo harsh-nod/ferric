@@ -1,0 +1,36 @@
+{
+  "schema": "FerricV17PagesPublicationV1",
+  "site_url": "https://harsh-nod.github.io/ferric/",
+  "branch": "pages/prebuilt",
+  "commit": "82da71be4c4e076bcf4c73c7548f199512a9525c",
+  "tree": "0b6bf8e11a589ff19b13ce64f5454f172cf59e17",
+  "parent": "cd543d658fa73a25cb00c0e9ff67c9d8f92e2549",
+  "deployment_run": 37407557054,
+  "deployment_id": 6874689426,
+  "deployment_completed_utc": "2026-10-06T03:09:03Z",
+  "deployment_status": "success",
+  "artifact_files": 7,
+  "artifact_bytes": 888395,
+  "artifact_manifest_sha256": "8a969fa08faa8be4c08bc99626c74fb447adc38f87ef49f9ad5eebd1cef869fb",
+  "remote_validation_result_sha256": "9c0de6e89585fdc980255e000e13dfe8ac1a90e2ff49ec0309205431702a323e",
+  "validated_viewport_widths": [1440, 1027, 981, 800, 710, 701, 390, 320],
+  "focused_capture_result_sha256": "057b2d55ff04078f696c02b2167407230454b90a5e0fb917a703a33c54a3fd08",
+  "inspected_capture_sha256": {
+    "desktop": "79d85317ff27c4d6aba5bafe566966407580849984bf97111553295407c076f3",
+    "mobile": "b189fe3dfe8987a5ccfe4f65047726a828097c02d9aa14a7bd2e1382f41e1876"
+  },
+  "canonical_served_archive_bytes": 264356,
+  "canonical_served_archive_sha256": "86dd7be92a10984a4245738d2ae28ef676cb0c2e707e157dd2241cb07fb60a61",
+  "all_seven_served_hashes_exact": true,
+  "tls_certificate_verification": true,
+  "force_push": false,
+  "environment_protections_changed": false,
+  "github_build_or_tests": false,
+  "local_build_or_tests": false,
+  "publication_worktree_created": false,
+  "retained_failures": [
+    "First focused capture rejected unsupported WebP output; separate PNG successor passed.",
+    "First API preparation stopped before mutation on stale historical workflow hash; fresh current workflow differs only in four reviewed artifact/provenance lines."
+  ],
+  "scope": "V17 within-native prefill TTFT gain; TPOT essentially unchanged. Not a vendor win, default promotion or new matched HTTP comparison."
+}

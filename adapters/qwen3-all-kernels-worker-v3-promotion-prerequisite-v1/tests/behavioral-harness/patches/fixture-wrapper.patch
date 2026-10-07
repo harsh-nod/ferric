@@ -1,0 +1,11 @@
+--- a/crates/cargo-fe2o3/tests/fixtures/worker_v3_hsaco_admission.rs
++++ b/crates/cargo-fe2o3/tests/fixtures/worker_v3_hsaco_admission.rs
+@@ -8,6 +8,8 @@
+ )]
+ pub(crate) use shared::{
+     PublishedWorkerV3Fixture, TestDirectory, publish_worker_v3_fixture_in_directory,
++    publish_ferric_all12_worker_v3_fixture_in_directory,
++    published_ferric_all12_worker_v3_fixture,
+     published_synthetic_two_kernel_worker_v3_fixture,
+     published_synthetic_two_kernel_worker_v3_fixture_with_llvm_build_identity,
+     published_worker_v3_fixture, published_worker_v3_fixture_with_llvm_build_identity,

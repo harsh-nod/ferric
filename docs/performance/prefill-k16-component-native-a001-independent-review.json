@@ -1,0 +1,53 @@
+{
+  "schema": "FerricK16ComponentIndependentReviewV1",
+  "accepted": true,
+  "archive_sha256": "7e93eb72c6c15e334f69cbc446f8cc68a37f76670433ae35588955431b650689",
+  "receipt_sha256": "f6701dac03fa0f95cc223bcffd94e1ff7b8acf40efcc1907214857b6b1ef7f3c",
+  "plan_sha256": "77f5dfc40d45dc92f1bc01859c7de36f67595d12c97a484832b0edfcfd06a78c",
+  "result_sha256": "f7a44395b9de0c45926f8acea8db1e01dfe2a61deee9c230ae47c0f67491a506",
+  "outer_sha256": "3e93aa7f6bea8b4d0615b997b05e679336220a453df55de4b3ad4e183430b90d",
+  "custody": {
+    "archive_bytes": 58463144,
+    "entries": 171,
+    "regular_files": 142,
+    "logical_bytes": 62726076,
+    "plan_bound_files": 97,
+    "executable_sources": 28,
+    "all_hashes_and_rosters_match": true,
+    "cpu_harness_tests": 76
+  },
+  "native": {
+    "calls": 16,
+    "packets": 16,
+    "warmup_calls": 4,
+    "timed_calls": 12,
+    "timed_calls_per_arm": 6,
+    "protocol_records": 275,
+    "command_response_pairs": 137,
+    "write_payloads_recomputed": 43,
+    "read_payloads_recomputed": 68,
+    "full_output_parity_and_guards_pass": 16,
+    "output_elements_per_call": 393216,
+    "final_queue_epoch": 0,
+    "final_frontier": 16,
+    "clean_reaped_unsignaled": true,
+    "isolation_is_sampled": true
+  },
+  "host_dispatch_wall_ns": {
+    "control_median": 469725.5,
+    "paired_median": 468805.0,
+    "median_gain_percent": 0.19596551603010695,
+    "positive_pairs": 2,
+    "total_pairs": 6
+  },
+  "ordered_worker_elapsed_ns": {
+    "control_median": 361335.0,
+    "paired_median": 360340.5,
+    "median_gain_percent": 0.27522935779816515,
+    "positive_pairs": 4,
+    "total_pairs": 6
+  },
+  "promoted": false,
+  "model_performance_qualified": false,
+  "conclusion": "Full hot dyadic fixture parity passes; latency is effectively flat. No shader-only, model TTFT/TPOT or vendor-win claim."
+}

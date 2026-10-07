@@ -1,0 +1,134 @@
+{
+  "all_archive_files_verified": 2773,
+  "all_clean_reaped_unsignaled": true,
+  "archive_sha256": "524395c7360154a05e16fb286d78fc3c751b262a2b5a0390753857a665aba33d",
+  "arms": {
+    "A": {
+      "finite_output_tokens_per_second": 17.55374851100191,
+      "requests": 24,
+      "tpot_ms": {
+        "mean": 51.35822195833333,
+        "median": 52.9122615,
+        "p95": 53.6510832
+      },
+      "ttft_ms": {
+        "mean": 769.0357820416667,
+        "median": 772.737844,
+        "p95": 825.7326466999999
+      }
+    },
+    "B": {
+      "finite_output_tokens_per_second": 19.45663808934431,
+      "requests": 24,
+      "tpot_ms": {
+        "mean": 48.558929666666664,
+        "median": 47.7865635,
+        "p95": 54.101317599999994
+      },
+      "ttft_ms": {
+        "mean": 411.39301625,
+        "median": 400.6967635,
+        "p95": 486.6543119999999
+      }
+    }
+  },
+  "bound_plan_files_verified": 200,
+  "checks": {
+    "faster_adjacent_pairs": true,
+    "median_ttft_gain": true,
+    "positive_both_orders": true,
+    "regression_limits": true
+  },
+  "completed_cells": 14,
+  "counter_mechanism": {
+    "A": {
+      "dispatches": 87708,
+      "executions": 135,
+      "final_waits": 135,
+      "kernarg_initialized_bytes": 29467192,
+      "publications": 135,
+      "retirement_signals": 87708,
+      "staging_ns": 2329250
+    },
+    "B": {
+      "dispatches": 85400,
+      "executions": 131,
+      "final_waits": 131,
+      "kernarg_initialized_bytes": 28689496,
+      "publications": 131,
+      "retirement_signals": 85400,
+      "staging_ns": 1842660
+    }
+  },
+  "default_promotion": false,
+  "exact_output_token_ids": 9472,
+  "latency_cells": 12,
+  "median_ttft_gain_percent": 48.14583411292072,
+  "native_gate_status": "promotable",
+  "pairs": [
+    {
+      "cells": [
+        "block1-A1",
+        "block1-B1"
+      ],
+      "order": "AB",
+      "ttft_gain_percent": 45.2803494815695
+    },
+    {
+      "cells": [
+        "block1-B2",
+        "block1-A2"
+      ],
+      "order": "BA",
+      "ttft_gain_percent": 40.98551002138263
+    },
+    {
+      "cells": [
+        "block2-A1",
+        "block2-B1"
+      ],
+      "order": "AB",
+      "ttft_gain_percent": 48.399198228762366
+    },
+    {
+      "cells": [
+        "block2-B2",
+        "block2-A2"
+      ],
+      "order": "BA",
+      "ttft_gain_percent": 48.84564248604861
+    },
+    {
+      "cells": [
+        "block3-A1",
+        "block3-B1"
+      ],
+      "order": "AB",
+      "ttft_gain_percent": 48.05968568658702
+    },
+    {
+      "cells": [
+        "block3-B2",
+        "block3-A2"
+      ],
+      "order": "BA",
+      "ttft_gain_percent": 45.394386111143916
+    }
+  ],
+  "plan_sha256": "606f4ef062d400a5f1d4ac3630ddf78a36e6ab2556c37a6e561855a77c619289",
+  "raw_timing_arithmetic_recomputed": true,
+  "receipt_sha256": "08253713ad007e5aa2a28d4aeacb8282d89b24e731de80afb73c923ba7e1154a",
+  "regressions_percent": {
+    "finite_output_rate": -10.840360263505854,
+    "tpot_ms_median": -9.687164854974117,
+    "tpot_ms_p95": 0.8391897668153625,
+    "ttft_ms_p95": -41.06393710544327
+  },
+  "report_sha256": "3b7168cf632793b9ec97fc06b85472d652e46c58d32879ae95cdfbcde147a3dd",
+  "requests_including_warmups_and_counters": 74,
+  "schema": "FerricCompleteNativeWidthIndependentReviewV1",
+  "scope": "native ingress and finite measured windows; not HTTP, calibrated GPU time or steady loaded throughput",
+  "source_pins_verified": 37,
+  "timed_requests": 48,
+  "vendor_comparison_performed": false
+}

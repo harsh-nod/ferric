@@ -18,11 +18,126 @@ function digest(value) {
   assert(!/^0+$/.test(value));
 }
 
+function validateMatchedHttpR6(value) {
+  keys(value, ["date", "measuredRequestsPerEngine", "excludedWarmupsPerEngine",
+    "untimedDiagnosticsPerEngine", "order", "scope", "correctness", "interpretation",
+    "limits", "engines", "pins"]);
+  assert.equal(value.date, "2026-10-06");
+  assert.equal(value.measuredRequestsPerEngine, 30);
+  assert.equal(value.excludedWarmupsPerEngine, 10);
+  assert.equal(value.untimedDiagnosticsPerEngine, 2);
+  assert.deepEqual([...value.order], ["ferric", "vllm"]);
+  for (const text of ["not cross-engine ABBA", "TP1/C1", "128 input and 128 output tokens",
+    "context 8192", "BF16 decoder and configured FP32 head", "Vendor head weights remain BF16",
+    "not true token interarrival or shader durations", "includes drain and is not sustained throughput"]) {
+    assert(value.scope.includes(text), text);
+  }
+  for (const text of ["all 42 requests", "only two untimed diagnostics",
+    "warmup/timed streams retain exact UTF-8 and usage, not token IDs",
+    "normal, unsignaled owned teardown", "do not prove continuous isolation",
+    "clock, power, temperature and throttle equivalence is not established"]) {
+    assert(value.correctness.includes(text), text);
+  }
+  for (const text of ["40.56 times slower on median TTFT", "12.14 times slower on median TPOT",
+    "No vendor win, default promotion, formal proof or stable-tail claim",
+    "standalone V17 native-prefill16", "observer repair is not a speedup", "earlier failures remain failed"]) {
+    assert(value.interpretation.includes(text), text);
+  }
+  keys(value.limits, ["crossEngineAbba", "continuousIsolation", "clockPowerEquivalence",
+    "vendorTimedTokenIdsRetained", "sustainedThroughput", "defaultPromotion", "formalProof"]);
+  Object.values(value.limits).forEach((flag) => assert.equal(flag, false));
+  assert.equal(value.engines.length, 2);
+  const expected = [
+    ["ferric", "Ferric V17 prefill16", 783.7669659999999, 789.9687716000001,
+      53.399712629921254, 54.4087667527559, 16.932224938670075, 226.786498166,
+      "9f9bbfea428513e65db180622b8094625759484ae56ce8be1b01656c65e10880"],
+    ["vllm", "vLLM 0.28.0", 19.322446999999997, 20.687245,
+      4.397164220472441, 4.4020235078740155, 221.37967662907252, 17.345765693,
+      "70392889d4b8fa250bea544caa2d14f1041cdd9a5c18aa5837471557ae2e4976"],
+  ];
+  const fields = ["id", "name", "medianTtftMs", "p95TtftMs", "medianTpotMs",
+    "p95TpotMs", "finiteOutputTokensPerSecond", "measuredWindowSeconds", "archiveSha256"];
+  value.engines.forEach((engine, index) => {
+    keys(engine, fields);
+    assert.deepEqual(fields.map((field) => engine[field]), expected[index]);
+    assert(Math.abs(engine.finiteOutputTokensPerSecond * engine.measuredWindowSeconds - 30 * 128) < 1e-9);
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(value.pins)), {
+    planSha256: "eb91e12ee440c45135f4a7755d780cb8bf1d8aae19c383b601df3dcda850ef4a",
+    pairedReviewSha256: "1a13f8834e46cd8ccac63ee656bc1593f636eb08a1374bbc130e49375144a360",
+    vendorImageSha256: "c5f9efa2623d9c8b2e483d2a139202e496baf5a04900a4f32907149f41a42dba",
+    vendorRepoDigest: "vllm/vllm-openai-rocm@sha256:e0a3b2bd3fe7ec563916c3a5d949898d133458c18d6b2f460c906885cfb32032",
+  });
+}
+
+function validateMatchedHttpWidth55c(value) {
+  keys(value, ["date", "measuredRequestsPerEngine", "excludedWarmupsPerEngine",
+    "untimedDiagnosticsPerEngine", "order", "scope", "correctness", "interpretation",
+    "limits", "engines", "pins"]);
+  assert.equal(value.date, "2026-10-06");
+  assert.equal(value.measuredRequestsPerEngine, 30);
+  assert.equal(value.excludedWarmupsPerEngine, 10);
+  assert.equal(value.untimedDiagnosticsPerEngine, 2);
+  assert.deepEqual([...value.order], ["ferric", "vllm"]);
+  for (const text of ["not cross-engine ABBA", "TP1/C1", "128 input and 128 output tokens",
+    "context 8192", "BF16 decoder and configured FP32 head", "Vendor head weights remain BF16",
+    "not true token interarrival or shader durations", "includes drain and is not sustained throughput"]) {
+    assert(value.scope.includes(text), text);
+  }
+  for (const text of ["all 42 requests", "only two untimed diagnostics",
+    "warmup/timed streams retain exact UTF-8 and usage, not token IDs",
+    "normal, unsignaled owned teardown", "do not prove continuous isolation",
+    "clock, power, temperature and throttle equivalence is not established"]) {
+    assert(value.correctness.includes(text), text);
+  }
+  for (const text of ["22.72 times slower on median TTFT", "12.20 times slower on median TPOT",
+    "No vendor win, default promotion, formal proof or stable-tail claim",
+    "current55c native-prefill32 B", "observer repair is not a speedup", "earlier failures remain failed"]) {
+    assert(value.interpretation.includes(text), text);
+  }
+  keys(value.limits, ["crossEngineAbba", "continuousIsolation", "clockPowerEquivalence",
+    "vendorTimedTokenIdsRetained", "sustainedThroughput", "defaultPromotion", "formalProof"]);
+  Object.values(value.limits).forEach((flag) => assert.equal(flag, false));
+  assert.equal(value.engines.length, 2);
+  const expected = [
+    ["ferric", "Ferric 55c prefill32", 431.032717, 435.8653761,
+      53.11882012992126, 53.390301768897636, 17.901873571425067, 214.502687927,
+      "7a27aae681a8ba1bb84990d1ca3df1e066bd15cc0026bb7f3783cbeb7d59c3b6"],
+    ["vllm", "vLLM 0.28.0", 18.9687665, 19.7419725,
+      4.352391988188977, 4.357501377952756, 223.76761319585998, 17.160660317,
+      "7298b68214141e964440124851c3ecc290ea56a53b16e322e8d45a2c5461fc09"],
+  ];
+  const fields = ["id", "name", "medianTtftMs", "p95TtftMs", "medianTpotMs",
+    "p95TpotMs", "finiteOutputTokensPerSecond", "measuredWindowSeconds", "archiveSha256"];
+  value.engines.forEach((engine, index) => {
+    keys(engine, fields);
+    assert.deepEqual(fields.map((field) => engine[field]), expected[index]);
+    assert(Math.abs(engine.finiteOutputTokensPerSecond * engine.measuredWindowSeconds - 30 * 128) < 1e-9);
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(value.pins)), {
+    planSha256: "8f765017de3d9fe6138e42f09aad0818172c42b0af1d14dc182febac0a565cf6",
+    pairedReviewSha256: "dd84f4503d4fbef3a0fd0eee2c7025a1bb910eac4fe81fd7f09bbb13a6d7b134",
+    vendorImageSha256: "c5f9efa2623d9c8b2e483d2a139202e496baf5a04900a4f32907149f41a42dba",
+    vendorRepoDigest: "vllm/vllm-openai-rocm@sha256:e0a3b2bd3fe7ec563916c3a5d949898d133458c18d6b2f460c906885cfb32032",
+  });
+  assert(value.correctness.includes("5,376 output token IDs"));
+  for (const text of ["unchanged 652-command decode and V19 KV",
+    "no split-K, paired-load or fence composition", "Historical R6 results are not pooled",
+    "not an isolated cross-revision width speedup or evidence of a reliable decode gain"]) {
+    assert(value.interpretation.includes(text), text);
+  }
+  assert.equal((value.engines[0].medianTtftMs / value.engines[1].medianTtftMs).toFixed(2), "22.72");
+  assert.equal((value.engines[0].medianTpotMs / value.engines[1].medianTpotMs).toFixed(2), "12.20");
+}
+
 export function validatePerformance(data) {
   keys(data, ["updated", "scope", "interpretation", "correctness", "statistics", "definitions",
     "variants", "requests", "pruningReuse", "runtimeProfile", "fixtures", "identities",
     "provenance", "publication", "ablations", "mfmaPair", "deviceTp1Pair", "peerObservations", "peerSourceControls",
-    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair", "mfmaRepeated", "mfmaPruning", "deviceTp1Repeated", "currentCompatibility", "concurrentRounds", "fp32HeadV7"]);
+    "hostTranspose", "replicaCohorts", "wideRowPair", "transposeModelPair", "mfmaRepeated", "mfmaPruning", "deviceTp1Repeated", "currentCompatibility", "concurrentRounds", "fp32HeadV7", "matchedHttpR6", "matchedHttpWidth55c"]);
+  assert.equal(data.updated, "2026-10-06");
+  validateMatchedHttpR6(data.matchedHttpR6);
+  validateMatchedHttpWidth55c(data.matchedHttpWidth55c);
   validateRoundPerformance(data.concurrentRounds);
   validateHeadPerformance(data.fp32HeadV7);
   assert.match(data.updated, /^\d{4}-\d{2}-\d{2}$/);
@@ -409,6 +524,44 @@ export function testPerformanceRejections(data) {
   testRoundPerformanceRejections(data.concurrentRounds);
   testHeadPerformanceRejections(data.fp32HeadV7);
   const mutations = [
+    (copy) => { copy.matchedHttpWidth55c.engines.reverse(); },
+    (copy) => { copy.matchedHttpWidth55c.engines[0].medianTtftMs = 783.6189665; },
+    (copy) => { copy.matchedHttpWidth55c.engines[0].medianTpotMs /= 10; },
+    (copy) => { copy.matchedHttpWidth55c.engines[1].p95TpotMs = 0; },
+    (copy) => { copy.matchedHttpWidth55c.engines[1].finiteOutputTokensPerSecond *= 2; },
+    (copy) => { copy.matchedHttpWidth55c.measuredRequestsPerEngine = 40; },
+    (copy) => { copy.matchedHttpWidth55c.excludedWarmupsPerEngine = 0; },
+    (copy) => { copy.matchedHttpWidth55c.untimedDiagnosticsPerEngine = 42; },
+    (copy) => { copy.matchedHttpWidth55c.order.reverse(); },
+    (copy) => { copy.matchedHttpWidth55c.limits.vendorTimedTokenIdsRetained = true; },
+    (copy) => { copy.matchedHttpWidth55c.limits.continuousIsolation = true; },
+    (copy) => { copy.matchedHttpWidth55c.limits.defaultPromotion = true; },
+    (copy) => { copy.matchedHttpWidth55c.scope = "Cross-engine ABBA, sustained throughput"; },
+    (copy) => { copy.matchedHttpWidth55c.correctness = "Timed vendor token IDs verified"; },
+    (copy) => { copy.matchedHttpWidth55c.interpretation = "Ferric wins"; },
+    (copy) => { copy.matchedHttpWidth55c.pins.planSha256 = "0".repeat(64); },
+    (copy) => { copy.matchedHttpWidth55c.engines[0].archiveSha256 = copy.matchedHttpWidth55c.engines[1].archiveSha256; },
+    (copy) => { copy.matchedHttpWidth55c = copy.matchedHttpR6; },
+    (copy) => { copy.matchedHttpWidth55c.correctness = copy.matchedHttpWidth55c.correctness.replace("5,376", "5,120"); },
+    (copy) => { copy.matchedHttpWidth55c.interpretation = copy.matchedHttpWidth55c.interpretation.replace("Historical R6 results are not pooled", "Historical results are pooled"); },
+    (copy) => { copy.matchedHttpWidth55c.interpretation = copy.matchedHttpWidth55c.interpretation.replace("not an isolated cross-revision width speedup or evidence of a reliable decode gain", "reliable decode gain"); },
+    (copy) => { copy.matchedHttpR6.engines.reverse(); },
+    (copy) => { copy.matchedHttpR6.engines[0].medianTtftMs = 783.6189665; },
+    (copy) => { copy.matchedHttpR6.engines[0].medianTpotMs /= 10; },
+    (copy) => { copy.matchedHttpR6.engines[1].p95TpotMs = 0; },
+    (copy) => { copy.matchedHttpR6.engines[1].finiteOutputTokensPerSecond *= 2; },
+    (copy) => { copy.matchedHttpR6.measuredRequestsPerEngine = 40; },
+    (copy) => { copy.matchedHttpR6.excludedWarmupsPerEngine = 0; },
+    (copy) => { copy.matchedHttpR6.untimedDiagnosticsPerEngine = 42; },
+    (copy) => { copy.matchedHttpR6.order.reverse(); },
+    (copy) => { copy.matchedHttpR6.limits.vendorTimedTokenIdsRetained = true; },
+    (copy) => { copy.matchedHttpR6.limits.continuousIsolation = true; },
+    (copy) => { copy.matchedHttpR6.limits.defaultPromotion = true; },
+    (copy) => { copy.matchedHttpR6.scope = "Cross-engine ABBA, sustained throughput"; },
+    (copy) => { copy.matchedHttpR6.correctness = "Timed vendor token IDs verified"; },
+    (copy) => { copy.matchedHttpR6.interpretation = "Ferric wins"; },
+    (copy) => { copy.matchedHttpR6.pins.planSha256 = "0".repeat(64); },
+    (copy) => { copy.matchedHttpR6.engines[0].archiveSha256 = copy.matchedHttpR6.engines[1].archiveSha256; },
     (copy) => { copy.currentCompatibility.accepted[2].collective = null; },
     (copy) => { copy.currentCompatibility.accepted[2].projection = "mfma"; },
     (copy) => { copy.currentCompatibility.rejected[1].outputHeadPruning = true; },

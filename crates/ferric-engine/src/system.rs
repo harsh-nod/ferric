@@ -3,10 +3,13 @@
 #[allow(unused_imports)]
 use crate::cache::{KvDetachedRequest, KvError, KvPool, MAX_REQUEST_SLOTS};
 use crate::epoch::ExactCompletion;
-use crate::scheduler::{DispatchBatch, KvQuiescencePermit, Scheduler, SchedulerError};
+use crate::scheduler::{
+    DispatchBatch, KvQuiescencePermit, M1ExactDispatchErrorV1, M1ScheduledDispatchV1, Scheduler,
+    SchedulerError,
+};
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::scheduling::RequestState;
-use ferric_spec::RequestId;
+use ferric_spec::{RequestId, M1_MAX_ACTIVE_SEQUENCES};
 use vstd::prelude::*;
 
 verus! {
@@ -32,12 +35,20 @@ pub struct CompletionFailure {
 
 impl CompletionFailure {
     #[must_use]
-    pub const fn error(&self) -> EngineError {
+    pub const fn error(&self) -> (error: EngineError)
+        ensures error == self.error_spec(),
+    {
         self.error
     }
 
     #[must_use]
-    pub fn into_completion(self) -> Option<ExactCompletion> {
+    pub fn into_completion(self) -> (completion: Option<ExactCompletion>)
+        ensures completion == self.completion_spec(),
+    {
+        self.completion
+    }
+
+    pub closed spec fn completion_spec(&self) -> Option<ExactCompletion> {
         self.completion
     }
 
@@ -90,6 +101,20 @@ pub struct Engine<const C: usize> {
     faulted: bool,
 }
 
+/// Permanently faulted Engine retained after a capture phase abandons all
+/// admitted request authority.
+#[must_use = "the quarantined Engine remains the terminal scheduler/KV owner"]
+pub struct M1CaptureQuarantinedEngineV1<const C: usize> {
+    engine: Engine<C>,
+}
+
+impl<const C: usize> M1CaptureQuarantinedEngineV1<C> {
+    #[must_use]
+    pub fn is_faulted(&self) -> bool {
+        self.engine.is_faulted()
+    }
+}
+
 impl<const C: usize> Engine<C> {
     closed spec fn identity_agreement(&self) -> bool {
         &&& forall |slot: int| 0 <= slot < C ==> {
@@ -118,12 +143,26 @@ impl<const C: usize> Engine<C> {
         self.faulted
     }
 
+    pub closed spec fn page_tokens_spec(&self) -> u32 {
+        self.kv.page_tokens_spec()
+    }
+
+    pub closed spec fn queue_rearm_quarantine_refines(&self, before: &Self) -> bool {
+        &&& self.scheduler == before.scheduler
+        &&& self.kv == before.kv
+        &&& self.permits@ == before.permits@
+    }
+
     pub closed spec fn live_count_spec(&self) -> usize {
         self.scheduler.live_count_spec()
     }
 
     pub closed spec fn completed_epoch_spec(&self) -> CompletionEpoch {
         self.scheduler.completed_epoch_spec()
+    }
+
+    pub closed spec fn submitted_epoch_spec(&self) -> CompletionEpoch {
+        self.scheduler.submitted_epoch_spec()
     }
 
     pub closed spec fn state_spec(&self, request: RequestId) -> Option<RequestState> {
@@ -156,6 +195,23 @@ impl<const C: usize> Engine<C> {
 
     pub closed spec fn slot_generation_spec(&self, slot: int) -> u32 {
         self.scheduler.slot_generation_spec(slot)
+    }
+
+    /// A completion epoch is externally reordered relative to the exact next
+    /// pending scheduler batch. The count guards exclude earlier preflight
+    /// errors that have a different diagnostic.
+    pub open spec fn completion_epoch_reordered(
+        &self,
+        completion_epoch: CompletionEpoch,
+        accepted_count: nat,
+    ) -> bool {
+        &&& !self.faulted_spec()
+        &&& self.pending_batch_member_count_spec() > 0
+        &&& accepted_count == self.pending_batch_member_count_spec()
+        &&& ferric_spec::completion::exact_next(
+            self.completed_epoch_spec(),
+            completion_epoch,
+        ).is_err()
     }
 
     closed spec fn same_state(&self, before: &Self) -> bool {
@@ -445,6 +501,157 @@ impl<const C: usize> Engine<C> {
                         _ => false,
                     }
             }
+        }
+    }
+
+    closed spec fn reincarnation_success_step(
+        &self,
+        before: &Self,
+        predecessor: RequestId,
+        permit: KvQuiescencePermit,
+        detached: KvDetachedRequest,
+        after_take: Scheduler<C>,
+        after_release: KvPool,
+        successor: RequestId,
+    ) -> bool {
+        &&& before.scheduler.reincarnation_candidate(predecessor)
+        &&& after_take.retiring_permit_refines(
+            &before.scheduler,
+            &Ok(Some(permit)),
+        )
+        &&& permit.request_spec() == predecessor
+        &&& before.kv.release_authority_enabled(predecessor, &permit)
+        &&& before.kv.release_authority_decision(predecessor, &permit) == Ok(())
+        &&& detached.request_spec() == predecessor
+        &&& detached.origin_spec() == permit.origin_spec()
+        &&& !after_release.request_live_by_slot_spec(predecessor.slot_spec() as int)
+        &&& after_release.request_generation_by_slot_spec(
+            predecessor.slot_spec() as int,
+        ) == before.kv.request_generation_by_slot_spec(
+            predecessor.slot_spec() as int,
+        ) + 1
+        &&& after_release.identity_frame_except(
+            &before.kv,
+            predecessor.slot_spec() as int,
+        )
+        &&& self.scheduler.reincarnated_detached_refines(
+            &after_take,
+            &detached,
+            successor,
+        )
+        &&& exists|kv_result: Result<(), KvError>|
+            #[trigger] self.kv.create_refines(
+                &after_release,
+                successor,
+                &kv_result,
+            ) && kv_result.is_ok()
+    }
+
+    closed spec fn reincarnation_success_refines(
+        &self,
+        before: &Self,
+        successor: RequestId,
+    ) -> bool {
+        &&& self.permits@ == before.permits@
+        &&& !before.faulted_spec()
+        &&& !self.faulted_spec()
+        &&& exists|predecessor: RequestId,
+            permit: KvQuiescencePermit,
+            detached: KvDetachedRequest,
+            after_take: Scheduler<C>,
+            after_release: KvPool|
+            #[trigger] self.reincarnation_success_step(
+                before,
+                predecessor,
+                permit,
+                detached,
+                after_take,
+                after_release,
+                successor,
+            )
+    }
+
+    proof fn reincarnation_success_establishes_witness(
+        &self,
+        before: &Self,
+        predecessor: RequestId,
+        permit: KvQuiescencePermit,
+        detached: KvDetachedRequest,
+        after_take: Scheduler<C>,
+        after_release: KvPool,
+        successor: RequestId,
+    )
+        requires
+            self.permits@ == before.permits@,
+            !before.faulted_spec(),
+            !self.faulted_spec(),
+            self.reincarnation_success_step(
+                before,
+                predecessor,
+                permit,
+                detached,
+                after_take,
+                after_release,
+                successor,
+            ),
+        ensures self.reincarnation_success_refines(before, successor),
+    {
+        reveal(Engine::reincarnation_success_refines);
+        assert(exists|witness_predecessor: RequestId,
+            witness_permit: KvQuiescencePermit,
+            witness_detached: KvDetachedRequest,
+            witness_after_take: Scheduler<C>,
+            witness_after_release: KvPool|
+            #[trigger] self.reincarnation_success_step(
+                before,
+                witness_predecessor,
+                witness_permit,
+                witness_detached,
+                witness_after_take,
+                witness_after_release,
+                successor,
+            )) by {
+            assert(self.reincarnation_success_step(
+                before,
+                predecessor,
+                permit,
+                detached,
+                after_take,
+                after_release,
+                successor,
+            ));
+        };
+    }
+
+    pub closed spec fn reincarnate_next_retiring_refines(
+        &self,
+        before: &Self,
+        result: &Result<RequestId, EngineError>,
+    ) -> bool {
+        match result {
+            Err(EngineError::Faulted) => {
+                &&& self.permits@ == before.permits@
+                &&& before.faulted_spec()
+                &&& self.same_state(before)
+            }
+            Err(EngineError::Scheduler(error)) => {
+                &&& self.permits@ == before.permits@
+                &&& !before.faulted_spec()
+                &&& (*error == SchedulerError::DetachmentMismatch
+                    || *error == SchedulerError::GenerationExhausted)
+                &&& self.same_state(before)
+            }
+            Err(EngineError::Kv(_)) => {
+                &&& self.permits@ == before.permits@
+                &&& !before.faulted_spec()
+                &&& self.faulted_spec()
+                &&& self.kv.same_state(&before.kv)
+                &&& self.scheduler.identity_frame(&before.scheduler)
+            }
+            Ok(successor) => {
+                self.reincarnation_success_refines(before, *successor)
+            }
+            Err(_) => false,
         }
     }
 
@@ -863,6 +1070,35 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    pub(crate) proof fn apply_completion_observations(
+        &self,
+        before: &Self,
+        completion_epoch: CompletionEpoch,
+        accepted_tokens: Seq<u32>,
+        result: &Result<usize, CompletionFailure>,
+    )
+        requires self.completion_refines(
+            before,
+            completion_epoch,
+            accepted_tokens,
+            result,
+        ),
+        ensures
+            match result {
+                Ok(completed) => {
+                    &&& *completed == before.pending_batch_member_count_spec()
+                    &&& self.completed_epoch_spec() == completion_epoch
+                }
+                Err(failure) => match failure.completion_spec() {
+                    Some(returned) => returned.epoch_spec() == completion_epoch,
+                    None => self.faulted_spec(),
+                },
+            },
+    {
+        reveal(Engine::completion_refines);
+        reveal(CompletionFailure::completion_spec);
+    }
+
     /// Constructs all request, ring, page, and completion-scratch storage.
     ///
     /// # Errors
@@ -940,6 +1176,31 @@ impl<const C: usize> Engine<C> {
         self.faulted
     }
 
+    /// Permanently quarantines an in-flight M1 queue rearm after Ferric retains
+    /// every available queue, cache, allocation, and scheduler owner.
+    pub(crate) fn quarantine_m1_queue_rearm_failure(&mut self)
+        requires old(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).faulted_spec(),
+            final(self).queue_rearm_quarantine_refines(old(self)),
+    {
+        reveal(Engine::well_formed);
+        reveal(Engine::faulted_spec);
+        reveal(Engine::queue_rearm_quarantine_refines);
+        self.faulted = true;
+    }
+
+    /// Consumes the Engine into terminal capture-quarantine custody.
+    #[must_use = "the quarantined Engine remains the terminal scheduler/KV owner"]
+    pub fn into_m1_capture_quarantine(self) -> M1CaptureQuarantinedEngineV1<C>
+        requires self.well_formed(),
+    {
+        let mut engine = self;
+        engine.quarantine_m1_queue_rearm_failure();
+        M1CaptureQuarantinedEngineV1 { engine }
+    }
+
     #[must_use]
     pub const fn capacity(&self) -> (capacity: usize)
         ensures capacity == C,
@@ -959,6 +1220,178 @@ impl<const C: usize> Engine<C> {
         ensures epoch == self.completed_epoch_spec(),
     {
         self.scheduler.completed_epoch()
+    }
+
+    /// Exact logical page width used by this Engine's KV pool.
+    #[must_use]
+    pub fn page_tokens(&self) -> (page_tokens: u32)
+        requires self.well_formed(),
+        ensures page_tokens == self.page_tokens_spec(),
+    {
+        self.kv.page_tokens()
+    }
+
+    pub(crate) fn pending_batch_member_count(&self) -> (count: usize)
+        requires self.well_formed(),
+        ensures count == self.pending_batch_member_count_spec(),
+    {
+        self.scheduler.pending_batch_member_count()
+    }
+
+    pub(crate) fn pending_member(&self, offset: usize) -> (request: Option<RequestId>)
+        requires self.well_formed(),
+        ensures request == self.pending_member_spec(offset),
+    {
+        self.scheduler.pending_member(offset)
+    }
+
+    /// Performs every externally rejectable exact-completion check without
+    /// consuming completion authority or mutating scheduler/KV state.
+    pub(crate) fn preflight_complete_exact(
+        &self,
+        completion: &ExactCompletion,
+        accepted_tokens: &[u32],
+    ) -> (result: Result<(), EngineError>)
+        requires self.well_formed(),
+        ensures
+            self.completion_epoch_reordered(
+                completion.epoch_spec(),
+                accepted_tokens@.len(),
+            ) ==> result == Err(EngineError::Scheduler(
+                SchedulerError::CompletionNotExactNext,
+            )),
+    {
+        proof {
+            reveal(Engine::completion_epoch_reordered);
+        }
+        if self.faulted {
+            return Err(EngineError::Faulted);
+        }
+        let member_count = self.scheduler.pending_batch_member_count();
+        if accepted_tokens.len() != member_count {
+            return Err(EngineError::CompletionResultCount {
+                expected: member_count,
+                actual: accepted_tokens.len(),
+            });
+        }
+        if member_count == 0 {
+            return Err(EngineError::Scheduler(SchedulerError::NoPendingBatch));
+        }
+        let completed_epoch = self.scheduler.completed_epoch();
+        assert(completed_epoch == self.completed_epoch_spec()) by {
+            reveal(Engine::completed_epoch_spec);
+        }
+        let observed_epoch = completion.epoch();
+        match ferric_spec::completion::check_exact_next(completed_epoch, observed_epoch) {
+            Err(_) => {
+                return Err(EngineError::Scheduler(
+                    SchedulerError::CompletionNotExactNext,
+                ));
+            }
+            Ok(_) => {}
+        }
+        assert(observed_epoch == completion.epoch_spec());
+        assert(!self.completion_epoch_reordered(
+            completion.epoch_spec(),
+            accepted_tokens@.len(),
+        ));
+
+        let mut index = 0;
+        while index < member_count
+            invariant
+                self.well_formed(),
+                !self.completion_epoch_reordered(
+                    completion.epoch_spec(),
+                    accepted_tokens@.len(),
+                ),
+                index <= member_count,
+                member_count <= C,
+                accepted_tokens@.len() == member_count,
+            decreases member_count - index,
+        {
+            let request = match self.scheduler.pending_member(index) {
+                Some(request) => request,
+                None => return Err(EngineError::InvariantViolation),
+            };
+            match self.scheduler.state(request) {
+                Some(RequestState::InFlight) => {
+                    let resident = match self.kv.resident_tokens(request) {
+                        Some(tokens) => tokens,
+                        None => return Err(EngineError::InvariantViolation),
+                    };
+                    let committed = match self.kv.committed_tokens(request) {
+                        Some(tokens) => tokens,
+                        None => return Err(EngineError::InvariantViolation),
+                    };
+                    let tentative = match resident.checked_sub(committed) {
+                        Some(tokens) => tokens,
+                        None => return Err(EngineError::InvariantViolation),
+                    };
+                    if accepted_tokens[index] > tentative {
+                        return Err(EngineError::Kv(KvError::CommitExceedsResident));
+                    }
+                }
+                Some(RequestState::Retiring) => {
+                    if !self.scheduler.pending_retirement_ready(
+                        index,
+                        request,
+                        completion.epoch(),
+                    ) {
+                        if request.generation() == u32::MAX {
+                            return Err(EngineError::Scheduler(
+                                SchedulerError::GenerationExhausted,
+                            ));
+                        }
+                        return Err(EngineError::InvariantViolation);
+                    }
+                }
+                _ => return Err(EngineError::InvariantViolation),
+            }
+            index += 1;
+        }
+        Ok(())
+    }
+
+    /// Rejects a non-next exact completion during the immutable preflight and
+    /// returns its linear completion authority unchanged.
+    ///
+    /// This is a proof-bearing view of the same order check used by
+    /// [`Self::complete_exact`]. The accepted-count and pending-batch guards in
+    /// `completion_epoch_reordered` exclude earlier diagnostics.
+    #[must_use]
+    pub fn reject_reordered_completion(
+        &self,
+        completion: ExactCompletion,
+        accepted_tokens: &[u32],
+    ) -> (failure: CompletionFailure)
+        requires
+            self.well_formed(),
+            self.completion_epoch_reordered(
+                completion.epoch_spec(),
+                accepted_tokens@.len(),
+            ),
+        ensures
+            failure.error_spec() == EngineError::Scheduler(
+                SchedulerError::CompletionNotExactNext,
+            ),
+            failure.returns_completion_at_spec(completion.epoch_spec()),
+    {
+        let result = self.preflight_complete_exact(&completion, accepted_tokens);
+        match result {
+            Err(error) => {
+                assert(error == EngineError::Scheduler(
+                    SchedulerError::CompletionNotExactNext,
+                ));
+                CompletionFailure::returned(error, completion)
+            }
+            Ok(()) => {
+                assert(false);
+                CompletionFailure::returned(
+                    EngineError::Scheduler(SchedulerError::CompletionNotExactNext),
+                    completion,
+                )
+            }
+        }
     }
 
     /// Admits one request generation into the scheduler and KV pool.
@@ -1587,6 +2020,298 @@ impl<const C: usize> Engine<C> {
         }
     }
 
+    /// Replaces the next already-quiescent retiring request with its exact
+    /// same-slot, next-generation ready successor.
+    ///
+    /// The successor never enters the free ring, so unrelated vacant slots
+    /// retain their admission order.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EngineError::Faulted`] after fail-stop, a scheduler error when
+    /// no retiring generation is available or its generation is exhausted,
+    /// or a KV error after faulting on an internal authority mismatch.
+    pub fn reincarnate_next_retiring(
+        &mut self,
+    ) -> (result: Result<RequestId, EngineError>)
+        requires old(self).well_formed(),
+        ensures
+            final(self).well_formed(),
+            final(self).reincarnate_next_retiring_refines(old(self), &result),
+            match result {
+                Ok(successor) => {
+                    &&& final(self).state_spec(successor) == Some(RequestState::Ready)
+                    &&& final(self).resident_tokens_spec(successor) == Some(0)
+                    &&& final(self).committed_tokens_spec(successor) == Some(0)
+                    &&& final(self).live_count_spec() == old(self).live_count_spec()
+                }
+                Err(_) => true,
+            },
+    {
+        let ghost entry = *self;
+        reveal(Engine::well_formed);
+        reveal(Engine::reincarnate_next_retiring_refines);
+        reveal(Engine::faulted_spec);
+        reveal(Engine::same_state);
+        proof {
+            self.scheduler.same_scalars_reflexive();
+            self.kv.same_state_reflexive();
+        }
+        self.require_healthy()?;
+
+        let predecessor = match self.scheduler.preflight_next_reincarnation() {
+            Ok(request) => request,
+            Err(error) => {
+                assert(self.scheduler == entry.scheduler);
+                assert(self.kv == entry.kv);
+                assert(self.permits@ == entry.permits@);
+                assert(self.faulted == entry.faulted);
+                assert(error == SchedulerError::DetachmentMismatch
+                    || error == SchedulerError::GenerationExhausted);
+                assert(self.same_state(&entry));
+                assert(self.reincarnate_next_retiring_refines(
+                    &entry,
+                    &Err(EngineError::Scheduler(error)),
+                ));
+                return Err(EngineError::Scheduler(error));
+            }
+        };
+        assert(entry.scheduler.reincarnation_candidate(predecessor));
+        proof {
+            entry.scheduler.apply_reincarnation_candidate_identity(predecessor);
+        }
+
+        let ghost entry_scheduler = self.scheduler;
+        let ghost entry_kv = self.kv;
+        let take_result = self.scheduler.take_retiring_permit();
+        proof {
+            entry_scheduler.reincarnation_candidate_requires_taken_permit(
+                &self.scheduler,
+                predecessor,
+                &take_result,
+            );
+        }
+        let permit = match take_result {
+            Ok(Some(permit)) => permit,
+            Ok(None) | Err(_) => {
+                assert(false);
+                return Err(EngineError::Scheduler(SchedulerError::InvariantViolation));
+            }
+        };
+        let ghost taken_permit = permit;
+        let ghost after_take_scheduler = self.scheduler;
+        assert(after_take_scheduler.retiring_permit_refines(
+            &entry_scheduler,
+            &Ok(Some(taken_permit)),
+        ));
+        proof {
+            after_take_scheduler.retiring_permit_preserves_live_count(
+                &entry_scheduler,
+                taken_permit,
+            );
+        }
+        assert(permit.request_spec() == predecessor) by {
+            entry_scheduler.reincarnation_candidate_matches_taken_permit(
+                &after_take_scheduler,
+                predecessor,
+                taken_permit,
+            );
+        }
+
+        let detached = match self.kv.release_request(predecessor, permit) {
+            Ok(detached) => detached,
+            Err(failure) => {
+                let (error, _permit) = failure.into_parts();
+                self.faulted = true;
+                assert(self.kv.same_state(&entry.kv));
+                assert(self.scheduler.identity_frame(&entry.scheduler));
+                assert(self.permits@ == entry.permits@);
+                assert forall|slot: int| 0 <= slot < C implies {
+                    &&& self.scheduler.slot_is_live_spec(slot)
+                        == self.kv.request_live_by_slot_spec(slot)
+                    &&& self.scheduler.slot_generation_spec(slot)
+                        == self.kv.request_generation_by_slot_spec(slot)
+                } by {
+                    assert(self.scheduler.slot_is_live_spec(slot)
+                        == entry.scheduler.slot_is_live_spec(slot));
+                    assert(self.scheduler.slot_generation_spec(slot)
+                        == entry.scheduler.slot_generation_spec(slot));
+                }
+                assert(self.well_formed());
+                assert(self.reincarnate_next_retiring_refines(
+                    &entry,
+                    &Err(EngineError::Kv(error)),
+                ));
+                return Err(EngineError::Kv(error));
+            }
+        };
+        let ghost released_detached = detached;
+        let ghost after_release_kv = self.kv;
+        assert(detached.request_spec() == predecessor);
+        assert(detached.origin_spec() == taken_permit.origin_spec());
+        assert(after_take_scheduler.detachment_ready(
+            predecessor,
+            detached.origin_spec(),
+        ));
+        assert(after_take_scheduler.detached_enabled(&detached)) by {
+            reveal(Scheduler::detached_enabled);
+            entry_scheduler.apply_reincarnation_candidate_identity(predecessor);
+            after_take_scheduler.apply_detachment_ready_identity(
+                predecessor,
+                detached.origin_spec(),
+            );
+        }
+
+        let ghost before_reincarnate_scheduler = self.scheduler;
+        let successor = self.scheduler.reincarnate_detached(detached);
+        assert(self.scheduler.reincarnated_detached_refines(
+            &before_reincarnate_scheduler,
+            &released_detached,
+            successor,
+        ));
+        proof {
+            self.scheduler.apply_reincarnated_detached_identity(
+                &before_reincarnate_scheduler,
+                &released_detached,
+                successor,
+            );
+        }
+        assert(self.kv == after_release_kv);
+        assert(self.kv.create_enabled(successor)) by {
+            reveal(KvPool::create_enabled);
+            assert(successor.slot_spec() == predecessor.slot_spec());
+            assert(successor.generation_spec() == predecessor.generation_spec() + 1);
+            assert(entry_scheduler.slot_generation_spec(predecessor.slot_spec() as int)
+                == entry_kv.request_generation_by_slot_spec(predecessor.slot_spec() as int)) by {
+                reveal(Engine::identity_agreement);
+            }
+            assert(!after_release_kv.request_live_by_slot_spec(
+                predecessor.slot_spec() as int,
+            ));
+            assert(after_release_kv.request_generation_by_slot_spec(
+                predecessor.slot_spec() as int,
+            ) == entry_kv.request_generation_by_slot_spec(
+                predecessor.slot_spec() as int,
+            ) + 1);
+        }
+        let create_result = self.kv.create_request(successor);
+        assert(self.kv.create_refines(&after_release_kv, successor, &create_result));
+        match &create_result {
+            Err(error) => {
+                assert(false);
+                self.faulted = true;
+                Err(EngineError::Kv(*error))
+            }
+            Ok(()) => {
+                assert(create_result.is_ok());
+                assert(exists|kv_result: Result<(), KvError>|
+                    #[trigger] self.kv.create_refines(
+                        &after_release_kv,
+                        successor,
+                        &kv_result,
+                    ) && kv_result.is_ok()) by {
+                }
+                proof {
+                    self.kv.successful_create_has_empty_tokens(
+                        &after_release_kv,
+                        successor,
+                        &create_result,
+                    );
+                }
+                assert forall|slot: int| 0 <= slot < C implies {
+                    &&& self.scheduler.slot_is_live_spec(slot)
+                        == self.kv.request_live_by_slot_spec(slot)
+                    &&& self.scheduler.slot_generation_spec(slot)
+                        == self.kv.request_generation_by_slot_spec(slot)
+                } by {
+                    if slot == successor.slot_spec() as int {
+                        assert(self.scheduler.slot_is_live_spec(slot));
+                        assert(self.scheduler.slot_generation_spec(slot)
+                            == successor.generation_spec());
+                        assert(self.kv.request_live_by_slot_spec(slot));
+                        assert(self.kv.request_generation_by_slot_spec(slot)
+                            == successor.generation_spec());
+                    } else {
+                        assert(self.scheduler.slot_is_live_spec(slot)
+                            == before_reincarnate_scheduler.slot_is_live_spec(slot));
+                        assert(self.scheduler.slot_generation_spec(slot)
+                            == before_reincarnate_scheduler.slot_generation_spec(slot));
+                        assert(before_reincarnate_scheduler.slot_is_live_spec(slot)
+                            == entry_scheduler.slot_is_live_spec(slot));
+                        assert(before_reincarnate_scheduler.slot_generation_spec(slot)
+                            == entry_scheduler.slot_generation_spec(slot));
+                        self.kv.apply_identity_frame_except(
+                            &after_release_kv,
+                            successor.slot_spec() as int,
+                            slot,
+                        );
+                        after_release_kv.apply_identity_frame_except(
+                            &entry_kv,
+                            predecessor.slot_spec() as int,
+                            slot,
+                        );
+                    }
+                }
+                assert forall|slot: int| C <= slot < MAX_REQUEST_SLOTS implies {
+                    &&& !self.kv.request_live_by_slot_spec(slot)
+                    &&& self.kv.request_generation_by_slot_spec(slot) == 1
+                } by {
+                    assert(slot != successor.slot_spec() as int);
+                    self.kv.apply_identity_frame_except(
+                        &after_release_kv,
+                        successor.slot_spec() as int,
+                        slot,
+                    );
+                    after_release_kv.apply_identity_frame_except(
+                        &entry_kv,
+                        predecessor.slot_spec() as int,
+                        slot,
+                    );
+                }
+                assert(self.permits@ == entry.permits@);
+                assert(self.well_formed());
+                assert(self.reincarnation_success_step(
+                    &entry,
+                    predecessor,
+                    taken_permit,
+                    released_detached,
+                    after_take_scheduler,
+                    after_release_kv,
+                    successor,
+                )) by {
+                    reveal(Engine::reincarnation_success_step);
+                }
+                proof {
+                    self.reincarnation_success_establishes_witness(
+                        &entry,
+                        predecessor,
+                        taken_permit,
+                        released_detached,
+                        after_take_scheduler,
+                        after_release_kv,
+                        successor,
+                    );
+                }
+                assert(self.reincarnation_success_refines(&entry, successor));
+                let ghost success_result: Result<RequestId, EngineError> = Ok(successor);
+                assert(success_result == Ok(successor));
+                assert(self.reincarnate_next_retiring_refines(&entry, &success_result)) by {
+                    reveal(Engine::reincarnate_next_retiring_refines);
+                }
+                reveal(Engine::state_spec);
+                reveal(Engine::resident_tokens_spec);
+                reveal(Engine::committed_tokens_spec);
+                reveal(Engine::live_count_spec);
+                assert(self.scheduler.state_spec(successor) == Some(RequestState::Ready));
+                assert(self.kv.resident_tokens_spec(successor) == Some(0));
+                assert(self.kv.committed_tokens_spec(successor) == Some(0));
+                assert(self.scheduler.live_count_spec()
+                    == entry.scheduler.live_count_spec());
+                Ok(successor)
+            }
+        }
+    }
+
     /// Reclaims one already-quiescent retired request, when available.
     ///
     /// # Errors
@@ -1847,10 +2572,42 @@ impl<const C: usize> Engine<C> {
                 final(output)@,
                 &result,
             ),
+            match result {
+                Ok(Some(batch)) => {
+                    &&& batch.member_count_spec() > 0
+                    &&& batch.member_count_spec() <= old(output)@.len()
+                    &&& final(output)@.len() == old(output)@.len()
+                    &&& batch.epoch_spec().value as int
+                        == old(self).submitted_epoch_spec().value as int + 1
+                    &&& final(self).submitted_epoch_spec() == batch.epoch_spec()
+                    &&& batch.epoch_spec().value
+                        > old(self).completed_epoch_spec().value
+                    &&& forall|offset: int|
+                        0 <= offset < batch.member_count_spec() ==> {
+                            let request = #[trigger] final(output)@[offset];
+                            &&& old(self).state_spec(request)
+                                == Some(RequestState::Ready)
+                            &&& final(self).state_spec(request)
+                                == Some(RequestState::InFlight)
+                        }
+                    &&& forall|request: RequestId|
+                        request.slot_spec() < C
+                        && (forall|offset: int|
+                            0 <= offset < batch.member_count_spec() ==>
+                                #[trigger] final(output)@[offset].slot_spec()
+                                    != request.slot_spec())
+                        ==> final(self).state_spec(request)
+                            == old(self).state_spec(request)
+                },
+                _ => true,
+            },
     {
         reveal(Engine::well_formed);
         reveal(Engine::dispatch_ready_refines);
         reveal(Engine::faulted_spec);
+        reveal(Engine::completed_epoch_spec);
+        reveal(Engine::submitted_epoch_spec);
+        reveal(Engine::state_spec);
         proof {
             self.scheduler.same_scalars_reflexive();
             self.kv.same_state_reflexive();
@@ -1859,6 +2616,19 @@ impl<const C: usize> Engine<C> {
         let ghost before_scheduler = self.scheduler;
         let ghost before_output = output@;
         let scheduler_result = self.scheduler.dispatch_ready(output);
+        proof {
+            match &scheduler_result {
+                Ok(Some(batch)) => {
+                    self.scheduler.expose_successful_dispatch_observations(
+                        &before_scheduler,
+                        before_output,
+                        output@,
+                        batch,
+                    );
+                }
+                _ => {},
+            }
+        }
         proof {
             self.scheduler.apply_dispatch_refines(
                 &before_scheduler,
@@ -1887,6 +2657,71 @@ impl<const C: usize> Engine<C> {
             Ok(batch) => Ok(batch),
             Err(error) => Err(EngineError::Scheduler(error)),
         }
+    }
+
+    /// Dispatches at most the M1 lane capacity and captures the exact selected roster.
+    ///
+    /// The scheduler's linear batch metadata and the caller-inaccessible stack
+    /// scratch prefix move immediately into one [`M1ScheduledDispatchV1`].
+    ///
+    /// # Errors
+    ///
+    /// Returns the same fail-stop or scheduler error as [`Self::dispatch_ready`].
+    pub fn dispatch_m1_ready(
+        &mut self,
+    ) -> (result: Result<Option<M1ScheduledDispatchV1>, EngineError>)
+        requires old(self).well_formed(),
+        ensures final(self).well_formed(),
+    {
+        let mut selected = [RequestId::new(0, 0); M1_MAX_ACTIVE_SEQUENCES as usize];
+        match self.dispatch_ready(&mut selected)? {
+            Some(batch) => Ok(Some(M1ScheduledDispatchV1::from_dispatch_batch(
+                batch,
+                &selected,
+            ))),
+            None => Ok(None),
+        }
+    }
+
+    /// Dispatches the exact caller-named Ready subset in caller-provided lane
+    /// order at the exact next epoch. Other Ready requests remain unchanged.
+    ///
+    /// Every caller-controlled rejection is decided before dispatch mutates
+    /// scheduler state, so a corrected call can retry the same epoch.
+    ///
+    /// # Errors
+    ///
+    /// Returns a fail-stop rejection, an epoch or roster validation error, or
+    /// an exact scheduler-capacity error before any dispatch state advances.
+    pub fn dispatch_m1_exact_ready(
+        &mut self,
+        expected_epoch: CompletionEpoch,
+        requests: &[RequestId],
+    ) -> (result: Result<M1ScheduledDispatchV1, M1ExactDispatchErrorV1>)
+        requires old(self).well_formed(),
+        ensures final(self).well_formed(),
+    {
+        reveal(Engine::well_formed);
+        if self.faulted {
+            return Err(M1ExactDispatchErrorV1::Faulted);
+        }
+        let ghost before_scheduler = self.scheduler;
+        let result = self.scheduler.dispatch_m1_exact_ready(expected_epoch, requests);
+        assert(self.identity_agreement()) by {
+            reveal(Engine::identity_agreement);
+            assert forall|slot: int| 0 <= slot < C implies {
+                &&& self.scheduler.slot_is_live_spec(slot)
+                    == self.kv.request_live_by_slot_spec(slot)
+                &&& self.scheduler.slot_generation_spec(slot)
+                    == self.kv.request_generation_by_slot_spec(slot)
+            } by {
+                assert(self.scheduler.slot_is_live_spec(slot)
+                    == before_scheduler.slot_is_live_spec(slot));
+                assert(self.scheduler.slot_generation_spec(slot)
+                    == before_scheduler.slot_generation_spec(slot));
+            }
+        }
+        result
     }
 
     /// Applies one exact completion and its per-member accepted token counts.
@@ -1930,6 +2765,17 @@ impl<const C: usize> Engine<C> {
         }
         assert(self.same_state(&entry));
         assert(entry == *old(self));
+        if let Err(error) = self.preflight_complete_exact(&completion, accepted_tokens) {
+            let ghost returned_epoch = completion.epoch_spec();
+            let result = Err(CompletionFailure::returned(error, completion));
+            assert(self.completion_refines(
+                &entry,
+                returned_epoch,
+                accepted_tokens@,
+                &result,
+            ));
+            return result;
+        }
         if self.faulted {
             return Err(CompletionFailure::returned(EngineError::Faulted, completion));
         }
@@ -2707,7 +3553,7 @@ impl<const C: usize> Engine<C> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Engine, EngineError};
+    use super::{Engine, EngineError, M1ExactDispatchErrorV1};
     use crate::epoch::ExactCompletion;
     use ferric_spec::completion::CompletionEpoch;
     use ferric_spec::scheduling::RequestState;
@@ -2731,6 +3577,161 @@ mod tests {
         assert_eq!(engine.committed_tokens(request), Some(2));
         assert_eq!(engine.resident_tokens(request), Some(2));
         assert_eq!(engine.state(request), Some(RequestState::Ready));
+    }
+
+    #[test]
+    fn m1_dispatch_owns_exact_selected_prefix_and_canonical_padding() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+        engine.append_tentative(first, 1).unwrap();
+        engine.append_tentative(second, 1).unwrap();
+
+        let scheduled = engine.dispatch_m1_ready().unwrap().unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member_count(), 2);
+        assert_eq!(scheduled.member(0), Some(first));
+        assert_eq!(scheduled.member(1), Some(second));
+        assert!(scheduled.members()[2..].iter().all(Option::is_none));
+    }
+
+    #[test]
+    fn m1_exact_dispatch_preserves_named_order_and_skips_other_ready_requests() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let skipped = engine.admit().unwrap();
+        let third = engine.admit().unwrap();
+        engine.append_tentative(first, 1).unwrap();
+        engine.append_tentative(skipped, 2).unwrap();
+        engine.append_tentative(third, 3).unwrap();
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[third, first])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member_count(), 2);
+        assert_eq!(scheduled.member(0), Some(third));
+        assert_eq!(scheduled.member(1), Some(first));
+        assert_eq!(engine.state(third), Some(RequestState::InFlight));
+        assert_eq!(engine.state(first), Some(RequestState::InFlight));
+        assert_eq!(engine.state(skipped), Some(RequestState::Ready));
+        assert_eq!(engine.resident_tokens(skipped), Some(2));
+    }
+
+    #[test]
+    fn m1_exact_dispatch_accepts_a_strict_ready_subset() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+
+        let first_batch = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[first])
+            .unwrap();
+        assert_eq!(first_batch.members()[..1], [Some(first)]);
+        assert_eq!(engine.state(first), Some(RequestState::InFlight));
+        assert_eq!(engine.state(second), Some(RequestState::Ready));
+        assert_eq!(engine.free_pages(), 32);
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(2), &[second])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(2));
+        assert_eq!(scheduled.members()[..1], [Some(second)]);
+    }
+
+    #[test]
+    fn m1_exact_dispatch_rejects_duplicates_without_mutation() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+
+        assert_eq!(
+            engine.dispatch_m1_exact_ready(CompletionEpoch::new(1), &[first, first]),
+            Err(M1ExactDispatchErrorV1::DuplicateRequest {
+                first_lane: 0,
+                lane: 1,
+            })
+        );
+        assert_eq!(engine.state(first), Some(RequestState::Ready));
+        assert_eq!(engine.state(second), Some(RequestState::Ready));
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[first, second])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.members()[..2], [Some(first), Some(second)]);
+    }
+
+    #[test]
+    fn m1_exact_dispatch_rejects_missing_handles_without_mutation() {
+        let mut engine = Engine::<4>::new(32, 4, 64).unwrap();
+        let request = engine.admit().unwrap();
+        let missing = RequestId::new(3, 99);
+
+        assert_eq!(
+            engine.dispatch_m1_exact_ready(CompletionEpoch::new(1), &[missing]),
+            Err(M1ExactDispatchErrorV1::MissingRequest {
+                lane: 0,
+                request: missing,
+            })
+        );
+        assert_eq!(engine.state(request), Some(RequestState::Ready));
+        assert_eq!(engine.live_count(), 1);
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[request])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member(0), Some(request));
+    }
+
+    #[test]
+    fn m1_exact_dispatch_rejects_non_ready_handles_without_mutation() {
+        let mut engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let in_flight = engine.admit().unwrap();
+        let mut one = output::<1>();
+        let first_batch = engine.dispatch_ready(&mut one).unwrap().unwrap();
+        assert_eq!(first_batch.epoch(), CompletionEpoch::new(1));
+        let ready = engine.admit().unwrap();
+
+        assert_eq!(
+            engine.dispatch_m1_exact_ready(CompletionEpoch::new(2), &[in_flight]),
+            Err(M1ExactDispatchErrorV1::RequestNotReady {
+                lane: 0,
+                request: in_flight,
+                state: RequestState::InFlight,
+            })
+        );
+        assert_eq!(engine.state(in_flight), Some(RequestState::InFlight));
+        assert_eq!(engine.state(ready), Some(RequestState::Ready));
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(2), &[ready])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(2));
+        assert_eq!(scheduled.member(0), Some(ready));
+    }
+
+    #[test]
+    fn m1_exact_dispatch_rejects_the_wrong_epoch_without_mutation() {
+        let mut engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+
+        assert_eq!(
+            engine.dispatch_m1_exact_ready(CompletionEpoch::new(2), &[request]),
+            Err(M1ExactDispatchErrorV1::EpochMismatch {
+                expected: CompletionEpoch::new(1),
+                actual: CompletionEpoch::new(2),
+            })
+        );
+        assert_eq!(engine.state(request), Some(RequestState::Ready));
+        assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
+
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[request])
+            .unwrap();
+        assert_eq!(scheduled.epoch(), CompletionEpoch::new(1));
+        assert_eq!(scheduled.member(0), Some(request));
     }
 
     #[test]
@@ -2846,6 +3847,57 @@ mod tests {
     }
 
     #[test]
+    fn exact_slot_reincarnation_preserves_unused_free_head_and_dispatches() {
+        let mut engine = Engine::<32>::new(64, 4, 32).unwrap();
+        let predecessor = engine.admit().unwrap();
+        assert_eq!(predecessor, RequestId::new(0, 1));
+        engine.retire(predecessor).unwrap();
+
+        let successor = engine.reincarnate_next_retiring().unwrap();
+        assert_eq!(successor, RequestId::new(0, 2));
+        assert_eq!(engine.state(predecessor), None);
+        assert_eq!(engine.state(successor), Some(RequestState::Ready));
+        assert_eq!(engine.resident_tokens(successor), Some(0));
+
+        engine.append_tentative(successor, 1).unwrap();
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &[successor])
+            .unwrap();
+        assert_eq!(scheduled.member(0), Some(successor));
+
+        let untouched = engine.admit().unwrap();
+        assert_eq!(untouched, RequestId::new(1, 1));
+    }
+
+    #[test]
+    fn reincarnation_order_is_independent_of_requested_roster_order() {
+        let mut engine = Engine::<32>::new(64, 4, 32).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+        engine.retire(first).unwrap();
+        engine.retire(second).unwrap();
+
+        let requested = [
+            RequestId::new(second.slot(), second.generation() + 1),
+            RequestId::new(first.slot(), first.generation() + 1),
+        ];
+        let reclaimed_first = engine.reincarnate_next_retiring().unwrap();
+        let reclaimed_second = engine.reincarnate_next_retiring().unwrap();
+        assert_eq!(reclaimed_first, requested[1]);
+        assert_eq!(reclaimed_second, requested[0]);
+
+        engine.append_tentative(requested[0], 1).unwrap();
+        engine.append_tentative(requested[1], 1).unwrap();
+        let scheduled = engine
+            .dispatch_m1_exact_ready(CompletionEpoch::new(1), &requested)
+            .unwrap();
+        assert_eq!(scheduled.member(0), Some(requested[0]));
+        assert_eq!(scheduled.member(1), Some(requested[1]));
+
+        assert_eq!(engine.admit().unwrap(), RequestId::new(2, 1));
+    }
+
+    #[test]
     fn in_flight_retirement_reclaims_only_after_exact_completion() {
         let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
         let request = engine.admit().unwrap();
@@ -2882,6 +3934,62 @@ mod tests {
         assert_eq!(engine.committed_tokens(active), Some(2));
         assert_eq!(engine.resident_tokens(active), Some(2));
         assert_eq!(engine.live_count(), 1);
+    }
+
+    #[test]
+    fn exact_completion_preflight_rejects_epoch_count_and_acceptance_without_mutation() {
+        let mut engine = Engine::<2>::new(16, 4, 32).unwrap();
+        let first = engine.admit().unwrap();
+        let second = engine.admit().unwrap();
+        engine.append_tentative(first, 2).unwrap();
+        engine.append_tentative(second, 3).unwrap();
+        let mut members = output::<2>();
+        let batch = engine.dispatch_ready(&mut members).unwrap().unwrap();
+        assert_eq!(members, [first, second]);
+
+        let exact = ExactCompletion::from_contracted_hsa_quiescence(batch.epoch());
+        assert_eq!(engine.preflight_complete_exact(&exact, &[1, 2]), Ok(()));
+        assert!(matches!(
+            engine.preflight_complete_exact(&exact, &[1]),
+            Err(EngineError::CompletionResultCount {
+                expected: 2,
+                actual: 1
+            })
+        ));
+        assert_eq!(
+            engine.preflight_complete_exact(&exact, &[3, 2]),
+            Err(EngineError::Kv(super::KvError::CommitExceedsResident))
+        );
+        let late = ExactCompletion::from_contracted_hsa_quiescence(CompletionEpoch::new(
+            batch.epoch().value() + 1,
+        ));
+        assert!(matches!(
+            engine.preflight_complete_exact(&late, &[1, 2]),
+            Err(EngineError::Scheduler(
+                super::SchedulerError::CompletionNotExactNext
+            ))
+        ));
+        assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
+        assert_eq!(engine.state(first), Some(RequestState::InFlight));
+        assert_eq!(engine.state(second), Some(RequestState::InFlight));
+        assert_eq!(engine.resident_tokens(first), Some(2));
+        assert_eq!(engine.resident_tokens(second), Some(3));
+    }
+
+    #[test]
+    fn retiring_preflight_checks_future_exact_detachment_without_settling() {
+        let mut engine = Engine::<1>::new(8, 4, 32).unwrap();
+        let request = engine.admit().unwrap();
+        engine.append_tentative(request, 1).unwrap();
+        let mut members = output::<1>();
+        let batch = engine.dispatch_ready(&mut members).unwrap().unwrap();
+        engine.retire(request).unwrap();
+        let exact = ExactCompletion::from_contracted_hsa_quiescence(batch.epoch());
+
+        assert_eq!(engine.preflight_complete_exact(&exact, &[0]), Ok(()));
+        assert_eq!(engine.state(request), Some(RequestState::Retiring));
+        assert_eq!(engine.completed_epoch(), CompletionEpoch::new(0));
+        assert_eq!(engine.resident_tokens(request), Some(1));
     }
 
     #[test]

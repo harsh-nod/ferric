@@ -1,0 +1,51 @@
+{
+  "schema": "FerricNative32PublicationReadinessA001",
+  "date": "2026-10-06",
+  "status": "source-scopes-audited-main-prerequisite-integration-required",
+  "qualified_branch_head": "255fc7861e116f0fc4f2cdf32d82a7ee5a99e7a1",
+  "observed_remote_main": "5d3d93d3e7f08645273d274bc35efbc79133e686",
+  "remote_main_freshly_verified": true,
+  "baseline_source_archive_sha256": "6089abea6ebc3363557c8e5fb8b4e2e488fa49b4f30f99029dfcc16b7c5bddd7",
+  "head_relative_scopes": {
+    "native32": {
+      "files": 136,
+      "tracked_changes": 40,
+      "additions": 96,
+      "manifest_sha256": "e514956dbc1502c45eecf5829405e9de4e09f40c37f26cf4b87dcf8171e82647",
+      "current_worktree_bytes_match": true
+    },
+    "native32_plus_a009": {
+      "files": 145,
+      "tracked_changes": 41,
+      "additions": 104,
+      "manifest_sha256": "060815d03589b229db33d7add5d968bc4500dcea45e2247326a8b2bf5fd7ff6f"
+    },
+    "a009_plus_splitk_kernel": {
+      "files": 154,
+      "tracked_changes": 41,
+      "additions": 113,
+      "manifest_sha256": "727a0f76f9fe9562937895fec7c82bf8f03d7f0a6d47a613aea3d8480c89ea8a"
+    }
+  },
+  "manifest_encoding": "Relative-path to SHA256 map; sorted compact JSON without newline.",
+  "a009_worktree_overlay": {
+    "files": 28,
+    "replacements": 20,
+    "additions": 8,
+    "preimage_map_sha256": "ecff1a3873629b666f77505b8f20a83ecf8f18f5b024278175dd70173480258b",
+    "postimage_map_sha256": "d876363308708a81e0ac524524563158046c3d5c748eb7a3fbca0137b28dc6d6",
+    "all_preimages_and_absence_checked": true,
+    "applied": false,
+    "required_source": "Exact qualified model-source-a009 archive members, not unformatted proposal after/ files."
+  },
+  "main_integration": {
+    "engineering_adapter_present": false,
+    "conflicting_existing_dependency_files": 11,
+    "root_workspace_and_lock_differ": true,
+    "requires": "Review the prerequisite source integration against current main; do not overwrite shared engine/spec or merge all branch history."
+  },
+  "unrelated_source_docs_site_tools_workflows_excluded": true,
+  "fresh_build_or_test_claimed": false,
+  "commit_created": false,
+  "pushed_to_main": false
+}

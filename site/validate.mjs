@@ -2136,6 +2136,1593 @@ for (const staleOrForbidden of [
 
 const indexSource = await readFile(join(siteRoot, "index.html"), "utf8");
 const appSource = await readFile(join(siteRoot, "app.js"), "utf8");
+
+const fixedSafeV10Claims = [
+  ["fixed-safe-v10-progress", "On one MI350X on mi350-2, all 36 cells pass: ten finite cases in each of two activation epochs and 16 timing cells in A/B/B/A order. All seven full-buffer and guard records pass, including final timing checks, with clean unsignaled worker and supervisor teardown. R3 shows no useful measured gain and is not promoted."],
+  ["fixed-safe-v10-scope", "This is a cache-hot synthetic 12288x4096 gate/up pair, not Qwen inference. Both arms use compiler/SDK 1a5999f6 plus the same capture patch and the historical 5e2/dd6 runtime. Each timing cell has a fresh worker, two excluded warmup groups and 32 measured groups, for 512 retained samples. One-pair and five-pair groups, activation epochs and AB/BA orders remain separate; inner groups are not independent worker repetitions."],
+  ["fixed-safe-v10-measurement", "The metric is instrumented controller wall per cache-hot gate/up pair, in microseconds, with prepacking and uploads excluded. Worker and controller scopes overlap and cannot be added or subtracted to infer GPU time. Positive improvement means lower candidate latency. The final 206.882 us baseline is retained, not discarded or pooled away."],
+  ["fixed-safe-v10-runtime", "Every 32-group timing cell records 321 operational-currentness checks. Their overlapping host scope records about 384-387 us per pair with one pair per group and 77-79 us with five; measured transfer and kernel-admission deltas are zero. Token programs are already integrated and measured on historical 807f0: ordinary/token TPOT is 60.702/55.296 ms in AB and 54.161/55.297 ms in BA, with no repeatable gain. Latest source review indicates the same minimum ten currentness checks per backend group for token and matched ordered64 paths, plus five outer token checks; these are source counts, not measured token counters. Next priorities are latest-client qualification and measured group utilization/batching analysis, not a demonstrated GPU bottleneck or model gain."],
+  ["fixed-safe-v10-next", "Separate R4 finite-check-hoist CPU validation passes 36 tests per feature mode and strict Clippy, plus 16 native-harness and 11 launcher fixtures. Emission a002 succeeds and actual ISA/ELF metadata are captured; independent static review accepts the finite-only diagnostic, with no completed R3-versus-R4 native result recorded here. The separately built 4fb8ae50 core worker passes 106 library and six CLI tests. Latest client source and wire migration remain CPU-unqualified, with the lock not regenerated and full-model qualification pending."],
+  ["fixed-safe-v10-limits", "Finite parity is not invalid-input or numerical-trap qualification. This screen establishes no GPU duration, TTFT/TPOT, serving throughput, stable gain, TP8 or vendor comparison. No default or model promotion follows. Historical HTTP results remain separate and unchanged, and all 33 M1 gates remain open."],
+];
+const fixedSafeV10Rows = [
+  ["1-0-AB", ["1", "0", "AB", "624.215", "623.537", "+0.1086%"]],
+  ["1-0-BA", ["1", "0", "BA", "624.504", "624.165", "+0.0543%"]],
+  ["1-1-AB", ["1", "1", "AB", "626.242", "625.710", "+0.0851%"]],
+  ["1-1-BA", ["1", "1", "BA", "623.300", "625.341", "-0.3275%"]],
+  ["5-0-AB", ["5", "0", "AB", "217.030", "217.230", "-0.0920%"]],
+  ["5-0-BA", ["5", "0", "BA", "218.166", "218.418", "-0.1153%"]],
+  ["5-1-AB", ["5", "1", "AB", "218.988", "219.872", "-0.4037%"]],
+  ["5-1-BA", ["5", "1", "BA", "206.882", "217.991", "-5.3698%"]],
+];
+const fixedSafeV10Identities = [
+  ["R3 native results archive SHA-256", "ceed68468e5b30e30dc64fa89b9cdf79cc3cc421b9703fe5141a8a8bf352a5c0"],
+  ["Compiler and SDK source", "1a5999f6e1c5f2363bc2d525af65e84c46502ce6"],
+  ["Baseline image SHA-256", "fdffa040ad94723460a0891cfb5be22be25cd90c440008067f81bde37fed453e"],
+  ["R3 image SHA-256", "4f6ebd3d2294f20ece54a40b20a040129363886fb05b6b7e512bdd9bce447f89"],
+  ["Historical runtime worker SHA-256", "dd6bd3b4a910478e85d2f3530be25819153fad1f08bf33bb14dd534514a601a2"],
+];
+function validateFixedSafeV10Source(input) {
+  const source = input.replace(/<!--[\s\S]*?-->/g, "").replace(/\s+/g, " ");
+  const title = '<h3 id="fixed-safe-v10-title">Fixed-safe gate/up: no useful measured gain</h3>';
+  const start = source.indexOf(title);
+  const end = source.indexOf('<div class="section-label">September 26 engineering checkpoint</div>', start);
+  assert(start >= 0 && end > start && start === source.lastIndexOf(title),
+    "fixed-safe checkpoint must be unique and precede historical September 26 content");
+  assert(source.includes('<div class="section-label">September 29 engineering checkpoint</div>'),
+    "fixed-safe checkpoint date missing");
+  const section = source.slice(start, end);
+  for (const [id, text] of fixedSafeV10Claims) {
+    const matches = [...source.matchAll(new RegExp('<p id="' + id + '"> ([\\s\\S]*?) <\\/p>', "g"))];
+    assert(matches.length === 1 && matches[0][1] === text && section.includes(matches[0][0]),
+      "fixed-safe scope or qualification changed: " + id);
+  }
+  const disclosures = [...section.matchAll(/<details class="performance-identities" id="fixed-safe-v10-evidence"> ([\s\S]*?) <\/details>/g)];
+  assert(disclosures.length === 1
+    && disclosures[0][1].includes("<summary>Fixed-safe R3: all eight comparisons and evidence</summary>")
+    && [...disclosures[0][1].matchAll(/<dt>/g)].length === fixedSafeV10Identities.length,
+  "fixed-safe requires one complete scoped evidence disclosure");
+  const evidence = disclosures[0][1];
+  assert(evidence.includes('<table class="transition-table performance-table" id="fixed-safe-v10-results">')
+    && evidence.includes("<caption>Instrumented controller wall per cache-hot gate/up pair; positive improvement means lower candidate latency.</caption>"),
+  "fixed-safe table boundary changed");
+  const header = evidence.match(/<thead> ([\s\S]*?) <\/thead>/);
+  assert(header, "fixed-safe table header missing");
+  assert(JSON.stringify([...header[1].matchAll(/<th\b[^>]*>([^<]+)<\/th>/g)].map((cell) => cell[1]))
+    === JSON.stringify(["Pairs/group", "Epoch", "Order", "Baseline (us/pair)", "R3 (us/pair)", "Improvement"]),
+    "fixed-safe table units changed");
+  const rows = [...evidence.matchAll(/<tr data-fixed-safe-v10-row="([^"]+)">([\s\S]*?)<\/tr>/g)]
+    .map((row) => [row[1], [...row[2].matchAll(/<(?:th|td)\b[^>]*>([^<]+)<\/(?:th|td)>/g)].map((cell) => cell[1])]);
+  assert(JSON.stringify(rows) === JSON.stringify(fixedSafeV10Rows), "fixed-safe eight unpooled comparisons changed");
+  assert([...evidence.matchAll(/<tr\b/g)].length === 9, "fixed-safe has an extra or missing table row");
+  for (const [label, identity] of fixedSafeV10Identities) {
+    assert(evidence.includes("<dt>" + label + "</dt> <dd>" + identity + "</dd>"),
+      "fixed-safe evidence identity changed: " + label);
+  }
+}
+validateFixedSafeV10Source(indexSource);
+for (const [before, after] of [
+  ...fixedSafeV10Claims.map(([, text]) => [text, "Changed fixed-safe claim."]),
+  ...fixedSafeV10Identities.map(([, identity]) => [identity, "0".repeat(identity.length)]),
+  ["September 29 engineering checkpoint", "September 28 engineering checkpoint"],
+  ["Fixed-safe gate/up: no useful measured gain", "Fixed-safe gate/up: performance win"],
+  ["<td>206.882</td>", "<td>218.988</td>"],
+  ["<td>-5.3698%</td>", "<td>+5.3698%</td>"],
+  ["<td>+0.1086%</td>", "<td>+10.1086%</td>"],
+  ['<th scope="col">Baseline (us/pair)</th>', '<th scope="col">Baseline (ms/pair)</th>'],
+]) {
+  const fixture = indexSource.replace(/\s+/g, " ");
+  assert(fixture.includes(before), "fixed-safe mutation target missing: " + before);
+  let rejected = false;
+  try { validateFixedSafeV10Source("<!-- " + before + " -->" + fixture.replace(before, after)); }
+  catch { rejected = true; }
+  assert(rejected, "fixed-safe accepted altered evidence or claim: " + before);
+}
+for (const [id] of fixedSafeV10Claims) {
+  const paragraph = indexSource.match(new RegExp('<p id="' + id + '">[\\s\\S]*?<\\/p>'))[0];
+  for (const replacement of ["", paragraph + paragraph]) {
+    let rejected = false;
+    try { validateFixedSafeV10Source(indexSource.replace(paragraph, replacement)); }
+    catch { rejected = true; }
+    assert(rejected, "fixed-safe accepted missing or duplicate paragraph: " + id);
+  }
+}
+for (const [id] of fixedSafeV10Rows) {
+  const row = indexSource.match(new RegExp('<tr data-fixed-safe-v10-row="' + id + '">[\\s\\S]*?<\\/tr>'))[0];
+  for (const replacement of ["", row + row]) {
+    let rejected = false;
+    try { validateFixedSafeV10Source(indexSource.replace(row, replacement)); }
+    catch { rejected = true; }
+    assert(rejected, "fixed-safe accepted missing or duplicate comparison: " + id);
+  }
+}
+
+const september23Claims = [
+  ["september23-progress", "Four native starts match all 2,048 output IDs and decoded bytes. Candidate TTFT is 72.306% lower in AB and 69.447% lower in BA; TPOT is 7.575% higher in AB and 8.130% higher in BA. Finite-window output rate is 8.857% and 7.908% higher, respectively."],
+  ["prefill32-v7-scope", "Qwen3-8B on mi350, TP1/C1, 128/128 tokens, context 8192, BF16 with an FP32 head; prefix caching and speculation off. Each start excludes one warmup and measures three requests. Both use chunk32, the same controller, dd6 worker built from 5e2 and nine images; only V5 versus two V27 prefill copies changes. V19 decode stays fixed."],
+  ["prefill32-v7-limits", "AB and BA remain separate. This native screen is not HTTP, sustained throughput, a stable gain or a vendor win. Defaults remain unchanged."],
+  ["prefill32-v7-parity", "The separate isolated prefill-copy prerequisite passes all 20 native byte-and-guard parity cells on mi350, with clean unsignaled worker and supervisor exits. That parity check is not a timing result."],
+  ["packet-ticks-v7-progress", "The opt-in ordered64 diagnostic has accepted CPU qualification with 2,585 passing Rust executions. Native replay matches all 128 output IDs and decoded bytes, retaining 87,711 packet records. Independent raw-interval and custody reviews pass. Raw ticks are uncalibrated, not nanoseconds, shader-only time, additive time shares or a speedup. No new vendor comparison is established."],
+  ["packed-gate-up-v7-progress", "The fresh 33-cell campaign passes all 65,536 packing patterns, 16 finite-parity cells and 16 timing cells. Four separate ABBA cohorts observe 40.0% to 42.6% lower controller wall time, a 1.67 to 1.74x baseline/candidate ratio, including activation packing."],
+  ["packed-gate-up-v7-currentness", "This is a cache-hot synthetic 12288x4096 gate/up pair, using historical compiler/SDK 413ba987 and the 5e2/dd6 worker. One-pair and five-pair groups, each in two queue epochs, stay separate. Earlier interrupted attempts remain failures; the historical binaries are not latest-qualified."],
+  ["packed-gate-up-v7-limits", "This is not GPU time, model TTFT/TPOT or serving throughput. Numerical-trap and model qualification remain open. No vLLM win is claimed; prior vendor results, defaults and all 33 open M1 gates remain unchanged."],
+  ["runtime-wait-v8-progress", "Default and active-poll wait arms each pass 210 dependent packets and 528 guarded readbacks. The active arm completes all six groups without fallback. These are synthetic correctness and accounting checks, not a measured latency gain."],
+  ["runtime-token-v8-progress", "The separate token-program smoke passes 195 dependent packets across reuse, release and queue rollover, plus exact default-route and late-pointer rejections. All owned workers are reaped without signals; expected fatal exits are not clean exits. Zero GPU publication after the late error is not directly observed."],
+  ["client-token-v8-progress", "An independently audited V4 CPU receipt covers all seven feature families and 32 test targets: five fresh R13 token-binary targets plus 27 explicitly inherited R12 targets. It records 5,168 passing test executions, not unique tests; 278 hardware/authored ignores and seven instances of the existing library exclusion remain disclosed. Compiler dependency and generated-input checks justify inheritance; R13 changes only one test file, with 1,320 other source files unchanged. R13's 14 production-check/strict-Clippy commands, diagnostic aggregate, both 52-test policy gates, all 10 actual-image checks and actual ABI producer/consumer pass. The stale test assertion omitted 290 required zero-extent RMSNorm fixups: 2,569 total equals 2,279 nonempty plus 290 empty fixups. R13 compiled both controllers successfully but failed retention; R14 independently copied the same binaries and completed final collection without a Rust source change or rebuild. The qualified 21-file client was integrated behind the default-off 652-packet token-program opt-in. R7 native-harness qualification passes all 24 CPU fixtures; both controllers pass cold parity and native ABBA. The fresh matched HTTP pair passes; no repeatable token-program gain, sustained-serving qualification or default promotion is established."],
+  ["runtime-publication-v8-progress", "Runtime source 807f0bef70da75c81e56de6eb4fd6e9c1f78e5e2 was published to fe2o3 main with [skip ci]. Historical main 89c8c899 retained all nine runtime trees and 762 closure paths. Latest observed main 1f4d83c4 (September 26 UTC) retains the same 896 mapped inputs and complete runtime closure as fd1b32e8. Compared with qualified 807, eight of nine runtime trees and 759 prior paths remain unchanged; three paths are modified and two added, for 764 current paths. Its conditional gfx942 direct-dispatch path leaves existing gfx950 worker, token-program, ordered-batch and wait source files unchanged. Only 891 of 896 broadly mapped files match 807. Runtime source equivalence no longer holds. The measured worker/client qualification is exact 807, not a rebuild or native qualification of 1f4d83c4 and not latest-compiler qualification. Historical binaries retain their original identities; adopting newer runtime code requires fresh qualification."],
+  ["runtime-token-v8-limits", "Synthetic runtime checks alone establish no model gain. The fresh single HTTP pair leaves Ferric 11.752 times slower than vLLM by mean TPOT; the historical three-pair series retains its original 15.100 to 18.157 range. Defaults and all 33 M1 gates remain unchanged."],
+  ["matched-http-v8-progress", "One fresh Ferric-to-vLLM 0.28.0 HTTP pair passes on September 26 UTC. Ferric mean TTFT is 890.522 ms versus 19.567 ms; mean TPOT is 51.443 ms versus 4.377 ms; finite output rate is 17.240 versus 222.219 tokens/s. Ferric remains 11.752 times slower by mean TPOT. All 60 measured requests succeed."],
+  ["matched-http-v8-scope", "Each engine uses ten excluded warmups, thirty measured requests and two untimed exact-output diagnostics: Qwen3-8B on mi350 GPU0, TP1/C1, 128/128 tokens, context 8192, BF16 decoder with explicit FP32 output head, greedy fixed length, prefix caching and speculation off. Ferric retains the qualified 807 worker/client and opt-in token program, not latest-SDK qualification."],
+  ["matched-http-v8-limits", "HTTP TTFT is client-send to first nonempty text; TPOT is first-to-last text divided by 127, not true per-token interarrival latency. Output rate is 3,840 tokens over the finite measured cohort including gaps and drain, not sustained loaded throughput. This is one fixed-order pair, not repeated-start confidence, a stable tail, a stock BF16-head ranking, TP8 or a speculative comparison. Historical three-pair and native-ingress measurements are not pooled with it."],
+  ["token-model-v8-progress", "Both cold paths match all 256 token IDs and decoded bytes. Four native ABBA starts match all 2,048 outputs including warmups, with clean unsignaled teardown. Ordinary/token TPOT is 60.702/55.296 ms in AB and 54.161/55.297 ms in BA: the candidate is 8.9% lower in one order but 2.1% higher in reverse. Baseline drift prevents a repeatable token-program speedup claim."],
+  ["token-model-v8-limits", "Each native start excludes one warmup and measures three requests. These are controller-ingress timings, not HTTP or GPU-only duration; the fixed prompt reaches context 255 and does not qualify the 256-to-257 fallback transition, loaded serving or TP8. Both controllers and the worker keep their actual 807-qualified provenance."],
+  ["packed-model-v8-progress", "The default-off standalone packed gate/up route is integrated across exactly 20 files. R5 fast qualification passes all fourteen diagnostic commands, 44 focused tests and 53 policy tests after four test-only cfg guards repair the retained R4 failure. All 26 draft native-harness fixtures pass with fake controllers and clean temporary-directory cleanup. The all-fresh 36-target full CPU matrix, real packed model parity, cold/ABBA timing and HTTP comparison remain open. The ordinary 688-dispatch packed route is separate from the fixed 652-dispatch token program; no packed model speedup or default promotion is claimed."],
+];
+const september23Identities = [
+  ["Prefill32 native report SHA-256", "5ef8c2f2e5a313e16c69401a72f633b9539afcee285d407fe94b65843693bfdc"],
+  ["Prefill32 native supervisor SHA-256", "3443cba3e4030e19900e50d4e0875c14eb1a53a6cd3ade10c33503787a56853f"],
+  ["Isolated prefill-copy parity report SHA-256", "d8a5df743cd9d30ca714d02e8aa7a24774b36067bda80afbbe3c633deb825508"],
+  ["Isolated prefill-copy parity supervisor SHA-256", "3a381a2e184f9f9a1295984821da2f7882b235969732ee453bcf7d3c3397c277"],
+];
+const runtimeV8Identities = [
+  [
+    "Packed synthetic report SHA-256",
+    "7e3e71e09202d32e6192614af0fce90a3f43dd46c307c3c8788d1c6c2d0079ec"
+  ],
+  [
+    "Wait native report SHA-256",
+    "592d5b1b21c24b3a97984dcc673f1981c14a8feb11974fe88d50fefaf380b1a2"
+  ],
+  [
+    "Token native report SHA-256",
+    "77b77a3065af3a52ad15bc66933c7bfabf814d481e4f1e81a2151db10b102484"
+  ],
+  [
+    "Initial client CPU custody SHA-256",
+    "b59a5339b1318d948d97a1070c3d3998115f736ce9d3faf7952094e042e8c958"
+  ],
+  [
+    "Fresh HTTP pair summary SHA-256",
+    "8ea42b053b11716d805b7865fed98279163da959b8d43903d0b75d394d5a37f3"
+  ],
+  [
+    "Token model ABBA report SHA-256",
+    "34ef4b4e3eff4e55c023c2b656b90f102b17964bac78a4d1d2e6b183ec4d4ab7"
+  ],
+  [
+    "Packed draft fixture custody SHA-256",
+    "7522d19a9c1a84940512d4810de6c15be0056cf30e2ff9ba6ffcd35cb9892d82"
+  ]
+];
+function validateSeptember23Source(input) {
+  const source = input.replace(/<!--[\s\S]*?-->/g, "").replace(/\s+/g, " ");
+  const start = source.indexOf('<h3 id="prefill32-v7-progress-title">');
+  const end = source.indexOf('<h3>September 22 engineering checkpoint</h3>', start);
+  assert(start >= 0 && end > start && start === source.lastIndexOf('<h3 id="prefill32-v7-progress-title">'),
+    "September 23 must be unique and precede unchanged September 22 history");
+  assert(source.includes('<div class="section-label">September 26 engineering checkpoint</div>')
+    && source.includes('<div class="section-label">September 23 native prefill screen</div>'),
+    "current checkpoint or historical prefill date missing");
+  const section = source.slice(start, end);
+  assert(section.includes('<h3 id="prefill32-v7-progress-title">Prefill32: lower TTFT, higher TPOT</h3>')
+    && section.includes('<h3 id="packet-ticks-v7-progress-title">Packet-tick attribution accepted</h3>')
+    && section.includes('<h3 id="packed-gate-up-v7-progress-title">Packed gate/up: accepted synthetic screen</h3>')
+    && section.includes('<h3 id="runtime-token-v8-progress-title">Runtime wait and token programs: native correctness</h3>')
+    && section.includes('<h3 id="client-token-v8-progress-title">Token client: full-model parity</h3>')
+    && section.includes('<h3 id="matched-http-v8-title">Fresh HTTP: vLLM remains faster</h3>')
+    && section.includes('<h3 id="token-model-v8-title">Token model ABBA: no repeatable gain</h3>')
+    && section.includes('<h3 id="packed-model-v8-title">Packed model: CPU qualification in progress</h3>'),
+  "current progress outcome or qualification heading changed");
+  for (const [id, text] of september23Claims) {
+    const matches = [...source.matchAll(new RegExp('<p id="' + id + '"> ([\\s\\S]*?) <\\/p>', "g"))];
+    assert(matches.length === 1 && matches[0][1] === text && section.includes(matches[0][0]),
+      "current progress scope, regression or qualification state changed: " + id);
+  }
+  const disclosures = [...section.matchAll(/<details class="performance-identities" id="prefill32-v7-identities"> ([\s\S]*?) <\/details>/g)];
+  assert(disclosures.length === 1
+    && disclosures[0][1].includes("<summary>Prefill32 native screen and isolated parity: evidence</summary>")
+    && [...disclosures[0][1].matchAll(/<dt>/g)].length === 4,
+  "September 23 requires one four-identity evidence disclosure");
+  for (const [label, digest] of september23Identities) {
+    assert(disclosures[0][1].includes("<dt>" + label + "</dt> <dd>" + digest + "</dd>"),
+      "September 23 evidence identity changed: " + label);
+  }
+  const runtimeDisclosures = [...section.matchAll(/<details class="performance-identities" id="runtime-v8-identities"> ([\s\S]*?) <\/details>/g)];
+  assert(runtimeDisclosures.length === 1
+    && runtimeDisclosures[0][1].includes("<summary>Packed, runtime and initial client evidence</summary>")
+    && [...runtimeDisclosures[0][1].matchAll(/<dt>/g)].length === runtimeV8Identities.length,
+    "one complete scoped runtime evidence disclosure required");
+  for (const [label, digest] of runtimeV8Identities) {
+    assert(runtimeDisclosures[0][1].includes("<dt>" + label + "</dt> <dd>" + digest + "</dd>"),
+      "runtime evidence identity changed: " + label);
+  }
+}
+validateSeptember23Source(indexSource);
+for (const [before, after] of [
+  ...september23Claims.map(([, text]) => [text, "Changed September 23 claim."]),
+  ...september23Identities.map(([, digest]) => [digest, "0".repeat(64)]),
+  ...runtimeV8Identities.map(([, digest]) => [digest, "0".repeat(64)]),
+  ["7e3e71e09202d32e6192614af0fce90a3f43dd46c307c3c8788d1c6c2d0079ec","0000000000000000000000000000000000000000000000000000000000000000"],
+  ["592d5b1b21c24b3a97984dcc673f1981c14a8feb11974fe88d50fefaf380b1a2","0000000000000000000000000000000000000000000000000000000000000000"],
+  ["77b77a3065af3a52ad15bc66933c7bfabf814d481e4f1e81a2151db10b102484","0000000000000000000000000000000000000000000000000000000000000000"],
+  ["b59a5339b1318d948d97a1070c3d3998115f736ce9d3faf7952094e042e8c958","0000000000000000000000000000000000000000000000000000000000000000"],
+  ["1.67 to 1.74x baseline/candidate ratio","1.67 to 1.74x model speedup"],
+  ["including activation packing","excluding activation packing"],
+  ["Four separate ABBA cohorts","Four pooled ABBA cohorts"],
+  ["the historical binaries are not latest-qualified","the historical binaries are latest-qualified"],
+  ["Runtime wait and token programs: native correctness","Runtime wait and token programs: measured speedup"],
+  ["Token client: full-model parity","Full client qualification passed"],
+  ["all seven feature families and 32 test targets","all seven feature families and 33 test targets"],
+  ["5,168 passing test executions, not unique tests","5,168 unique passing tests"],
+  ["278 hardware/authored ignores and seven instances of the existing library exclusion","zero ignored tests and zero exclusions"],
+  ["five fresh R13 token-binary targets plus 27 explicitly inherited R12 targets","32 freshly rebuilt R14 targets"],
+  ["Compiler dependency and generated-input checks justify inheritance","No dependency or generated-input checks are required"],
+  ["R13 changes only one test file, with 1,320 other source files unchanged","R13 changes production source and all source files are globally equivalent"],
+  ["R13's 14 production-check/strict-Clippy commands, diagnostic aggregate, both 52-test policy gates, all 10 actual-image checks and actual ABI producer/consumer pass","Every CPU and native test passes on latest compiler"],
+  ["2,569 total equals 2,279 nonempty plus 290 empty fixups","2,279 total requires no zero-extent fixups"],
+  ["R13 compiled both controllers successfully but failed retention","R13 passed all phases including retention"],
+  ["R14 independently copied the same binaries and completed final collection without a Rust source change or rebuild","R14 rebuilt Rust source and all controllers"],
+  ["The qualified 21-file client was integrated behind the default-off 652-packet token-program opt-in","All client source is integrated and the 688-packet graph is enabled by default"],
+  ["R7 native-harness qualification passes all 24 CPU fixtures; both controllers pass cold parity and native ABBA","R5 native-harness fixture qualification is complete and native execution is authorized"],
+  ["The fresh matched HTTP pair passes; no repeatable token-program gain, sustained-serving qualification or default promotion is established","Full-model parity, model gain, vendor wins, serving qualification and default promotion are established"],
+  ["expected fatal exits are not clean exits","expected fatal exits are clean exits"],
+  ["Zero GPU publication after the late error is not directly observed","Zero GPU publication after the late error is proven"],
+  ["807f0bef70da75c81e56de6eb4fd6e9c1f78e5e2","b7d5f2bf7bf9e66037df1ff1d7ca2738ffdf98dd"],
+  ["Historical main 89c8c899 retained all nine runtime trees and 762 closure paths","Latest main 89c8c899 retains all nine runtime trees and 762 closure paths"],
+  ["Latest observed main 1f4d83c4 (September 26 UTC) retains the same 896 mapped inputs and complete runtime closure as fd1b32e8. Compared with qualified 807, eight of nine runtime trees and 759 prior paths remain unchanged; three paths are modified and two added, for 764 current paths","Latest observed main 1f4d83c4 is runtime-byte-identical to 807"],
+  ["Its conditional gfx942 direct-dispatch path leaves existing gfx950 worker, token-program, ordered-batch and wait source files unchanged","Its conditional dispatch changes the existing gfx950 worker, token-program, ordered-batch and wait paths"],
+  ["Only 891 of 896 broadly mapped files match 807","All 896 broadly mapped files match 807"],
+  ["Runtime source equivalence no longer holds","Runtime source equivalence still holds"],
+  ["The measured worker/client qualification is exact 807, not a rebuild or native qualification of 1f4d83c4 and not latest-compiler qualification","The integrated client is rebuilt and native-qualified on latest 1f4d83c4 compiler"],
+  ["Historical binaries retain their original identities; adopting newer runtime code requires fresh qualification","Historical binaries are relabeled as latest; no fresh qualification is required"],
+  ["Prefill32: lower TTFT, higher TPOT", "Prefill32: lower TTFT and TPOT"],
+  ["Packet-tick attribution accepted", "Packet-tick qualification pending"],
+  ["Packed gate/up: accepted synthetic screen", "Packed gate/up: native qualification complete"],
+  ["September 26 engineering checkpoint", "September 23 engineering checkpoint"],
+  ["September 23 native prefill screen", "September 24 native prefill screen"],
+  ["TPOT is 7.575% higher in AB and 8.130% higher in BA", "TPOT is lower in both orders"],
+  ["all 20 native byte-and-guard parity cells", "all 20 full-model timing cells"],
+  ["2,585 passing Rust executions", "2,586 passing Rust executions"],
+  ["all 128 output IDs and decoded bytes, retaining 87,711 packet records", "all 128 output IDs and decoded bytes, retaining 87,700 packet records"],
+  ["Raw ticks are uncalibrated, not nanoseconds", "Raw ticks are calibrated nanoseconds"],
+  ["No vLLM win is claimed; prior vendor results, defaults and all 33 open M1 gates remain unchanged", "A vLLM win is claimed; defaults are promoted and all M1 gates are closed"],
+]) {
+  const fixture = indexSource.replace(/\s+/g, " ");
+  assert(fixture.includes(before), "September 23 mutation target missing: " + before);
+  let rejected = false;
+  try { validateSeptember23Source("<!-- " + before + " -->" + fixture.replace(before, after)); }
+  catch { rejected = true; }
+  assert(rejected, "September 23 accepted altered evidence or claim: " + before);
+}
+for (const [id] of september23Claims) {
+  const paragraph = indexSource.match(new RegExp('<p id="' + id + '">[\\s\\S]*?<\\/p>'))[0];
+  for (const replacement of ["", paragraph + paragraph]) {
+    let rejected = false;
+    try { validateSeptember23Source(indexSource.replace(paragraph, replacement)); }
+    catch { rejected = true; }
+    assert(rejected, "September 23 accepted missing or duplicated claim: " + id);
+  }
+}
+
+const kvCopyV7Campaigns = [
+  [
+    "j1",
+    "Campaign J1: first screen",
+    "kv-copy-v7-results",
+    "J1 KV-copy native AB and BA screen",
+    [
+      [
+        "baseline-AB",
+        "Baseline AB",
+        "807.243",
+        "64.455",
+        "14.232567"
+      ],
+      [
+        "candidate-AB",
+        "KV copy AB",
+        "809.845",
+        "52.820",
+        "17.024785"
+      ],
+      [
+        "candidate-BA",
+        "KV copy BA",
+        "827.309",
+        "52.755",
+        "17.003771"
+      ],
+      [
+        "baseline-BA",
+        "Baseline BA",
+        "807.647",
+        "63.878",
+        "14.348660"
+      ]
+    ]
+  ],
+  [
+    "j2",
+    "Campaign J2: independent repeat",
+    "kv-copy-v7-repeat-results",
+    "J2 KV-copy native AB and BA screen",
+    [
+      [
+        "baseline-AB",
+        "Baseline AB",
+        "944.284",
+        "77.743",
+        "11.831300"
+      ],
+      [
+        "candidate-AB",
+        "KV copy AB",
+        "858.399",
+        "59.668",
+        "15.171775"
+      ],
+      [
+        "candidate-BA",
+        "KV copy BA",
+        "852.170",
+        "59.939",
+        "15.121163"
+      ],
+      [
+        "baseline-BA",
+        "Baseline BA",
+        "892.749",
+        "71.798",
+        "12.785176"
+      ]
+    ]
+  ]
+];
+const kvCopyV7Rows = [
+  [
+    "j1-baseline-AB",
+    "Baseline AB",
+    "807.243",
+    "64.455",
+    "14.232567"
+  ],
+  [
+    "j1-candidate-AB",
+    "KV copy AB",
+    "809.845",
+    "52.820",
+    "17.024785"
+  ],
+  [
+    "j1-candidate-BA",
+    "KV copy BA",
+    "827.309",
+    "52.755",
+    "17.003771"
+  ],
+  [
+    "j1-baseline-BA",
+    "Baseline BA",
+    "807.647",
+    "63.878",
+    "14.348660"
+  ],
+  [
+    "j2-baseline-AB",
+    "Baseline AB",
+    "944.284",
+    "77.743",
+    "11.831300"
+  ],
+  [
+    "j2-candidate-AB",
+    "KV copy AB",
+    "858.399",
+    "59.668",
+    "15.171775"
+  ],
+  [
+    "j2-candidate-BA",
+    "KV copy BA",
+    "852.170",
+    "59.939",
+    "15.121163"
+  ],
+  [
+    "j2-baseline-BA",
+    "Baseline BA",
+    "892.749",
+    "71.798",
+    "12.785176"
+  ]
+];
+const kvCopyV7Identities = [
+  [
+    "J1 KV-copy native report SHA-256",
+    "ce74369df5b5ed52721f2ad043d1e0828060494bd7bfebf6da7fa5de9359bb68"
+  ],
+  [
+    "J1 KV-copy supervisor SHA-256",
+    "9ed41c54a927adc53426342f3b3563703138a4507c152dc33772903f675caeee"
+  ],
+  [
+    "J2 KV-copy native report SHA-256",
+    "55c1455bea17de55ca52aaaaa1ceb5b8bbe8f2d230f3c79ad423c4a0c22d6634"
+  ],
+  [
+    "J2 KV-copy supervisor SHA-256",
+    "7a02e34c290c21cd932debb61bd37baf3e3c93bad8e34e69ab14a58e38b05479"
+  ]
+];
+const kvCopyV7Claims = [
+  [
+    "september22-progress",
+    "Two independent ordered64 KV-copy native screens match all 4,096 output IDs and decoded bytes. J1 TPOT is 18.051% lower in AB and 17.413% lower in BA; J2 is 23.250% and 16.516% lower. J1 TTFT is 0.322% and 2.435% higher; J2 TTFT is lower, with absolute timing drift between campaigns. These small native screens are not HTTP, a vendor comparison or a stable win. Defaults are unchanged. All 33 M1 gates remain open."
+  ],
+  [
+    "kv-copy-v7-scope",
+    "September 22: Qwen3-8B on mi350, TP1/C1, 128 input and 128 output tokens, context 8192, BF16 checkpoint with an explicit FP32 head. Prefix caching and speculation are off. Two independent campaigns each use four fresh starts: AB runs baseline then candidate, BA reverses the order. Each start excludes one warmup and measures three requests: eight starts, 24 measured requests and eight excluded warmups in total. Both campaigns use the same controller, dd6 worker built from 5e2, and nine images. Only baseline versus parallel-c1-v19 KV append changes. Ordered64, parallel-prefill16-v27, split8-v21 and baseline partial GEMV remain fixed."
+  ],
+  [
+    "kv-copy-v7-outcome",
+    "J1 candidate TPOT is 18.051% lower in AB and 17.413% lower in BA. Finite-window ingress output rate is 19.619% and 18.504% higher; TTFT is 0.322% and 2.435% higher, respectively. The J1 BA TTFT regression is retained."
+  ],
+  [
+    "kv-copy-v7-repeat-outcome",
+    "J2 candidate TPOT is 23.250% lower in AB and 16.516% lower in BA. Finite-window ingress output rate is 28.234% and 18.271% higher; TTFT is 9.095% and 4.545% lower, respectively."
+  ],
+  [
+    "kv-copy-v7-drift",
+    "Absolute timings drift between campaigns: baseline mean TPOT is 63.878 to 64.455 ms in J1 and 71.798 to 77.743 ms in J2; candidate mean TPOT is 52.755 to 52.820 ms in J1 and 59.668 to 59.939 ms in J2. Campaigns and orders remain separate; no samples are pooled or dropped. These descriptive native measurements are not HTTP latency, sustained throughput, GPU time, confidence bounds or a stable gain."
+  ],
+  [
+    "kv-copy-v7-correctness",
+    "All 32 requests, including eight excluded warmups, match all 4,096 reference output IDs and decoded bytes. Each request retains 135 model batches and 87,711 packets. All eight controller starts exit 0; worker closure is separately confirmed by all_workers_exited metadata. Reserved inner groups are absent after cleanup; their receipts retain TERM and KILL flags as sent, not signal-free teardown. Both outer supervisors exit 0 without TERM or KILL."
+  ],
+  [
+    "kv-copy-v7-limits",
+    "Both campaigns are retained separately. No new HTTP or vendor comparison is established; the earlier vLLM numbers below are unchanged. This is not a vLLM or SGLang win, a TP8 or speculative-decoding result, serving qualification or a default change. All 33 M1 gates remain open."
+  ]
+];
+function validateKvCopyV7Source(source) {
+  const start = source.indexOf('<h3 id="kv-copy-v7-title">');
+  const end = source.indexOf('<h3 id="matched-ordered64-http-title">', start);
+  assert(start >= 0 && end > start && start === source.lastIndexOf('<h3 id="kv-copy-v7-title">'),
+    "KV-copy screens must be unique and precede retained HTTP evidence");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  assert(section.includes("KV copy: two native AB/BA screens")
+    && (section.match(/<tr(?:\s|>)/g) ?? []).length === 10,
+  "KV-copy screens require exactly eight starts and two headers");
+  assert(JSON.stringify([...section.matchAll(/data-kv-copy-v7-campaign="([^"]+)"/g)].map((match) => match[1]))
+    === JSON.stringify(["j1", "j2"]), "KV-copy campaigns must remain separate and ordered");
+  for (const [campaign, title, id, region, rows] of kvCopyV7Campaigns) {
+    assert(section.includes('<h4 id="kv-copy-v7-' + campaign + '-title">' + title + "</h4>")
+      && section.includes('aria-label="' + region + '"'), "KV-copy campaign label changed");
+    const tables = [...section.matchAll(new RegExp('<table class="transition-table performance-table" id="' + id
+      + '" data-kv-copy-v7-campaign="' + campaign + '">([\\s\\S]*?)<\\/table>', "g"))];
+    assert(tables.length === 1 && (tables[0][1].match(/<tr(?:\s|>)/g) ?? []).length === 5,
+      "each KV-copy campaign requires its own four-start table");
+    for (const heading of ["Native start", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+      assert(tables[0][1].includes('<th scope="col">' + heading + "</th>"), "KV-copy column changed");
+    }
+    assert(JSON.stringify([...tables[0][1].matchAll(/<tr data-kv-copy-v7-arm="([^"]+)">/g)].map((match) => match[1]))
+      === JSON.stringify(rows.map((row) => campaign + "-" + row[0])), "KV-copy campaign AB/BA order changed");
+  }
+  assert(JSON.stringify([...section.matchAll(/<tr data-kv-copy-v7-arm="([^"]+)">/g)].map((match) => match[1]))
+    === JSON.stringify(kvCopyV7Rows.map((row) => row[0])), "KV-copy full eight-start order changed");
+  for (const [arm, label, ttft, tpot, rate] of kvCopyV7Rows) {
+    assert(section.includes('<tr data-kv-copy-v7-arm="' + arm + '"> <th scope="row">' + label
+      + "</th> <td>" + ttft + "</td> <td>" + tpot + "</td> <td>" + rate + "</td> </tr>"),
+    "KV-copy accepted native metric changed: " + arm);
+  }
+  for (const [label, digest] of kvCopyV7Identities) {
+    assert(section.includes("<dt>" + label + "</dt> <dd>" + digest + "</dd>"), "KV-copy evidence changed: " + label);
+  }
+  for (const [id, expected] of kvCopyV7Claims) {
+    const scope = id === "september22-progress" ? source : section;
+    const paragraphs = [...scope.matchAll(new RegExp('<p(?: class="[^"]*")? id="' + id + '">([\\s\\S]*?)<\\/p>', "g"))];
+    assert(paragraphs.length === 1 && paragraphs[0][1].replace(/\s+/g, " ").trim() === expected,
+      "KV-copy scope or caveat changed: " + id);
+  }
+}
+validateKvCopyV7Source(indexSource);
+const kvCopyV7Start = indexSource.indexOf('<h3 id="kv-copy-v7-title">');
+const kvCopyV7End = indexSource.indexOf('<h3 id="matched-ordered64-http-title">', kvCopyV7Start);
+const kvCopyV7Fixture = indexSource.slice(kvCopyV7Start, kvCopyV7End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ...kvCopyV7Rows.flatMap((row) => row.slice(2).map((metric) => ["<td>" + metric + "</td>", "<td>0.000001</td>"])),
+  ...kvCopyV7Identities.map(([, digest]) => [digest, "0".repeat(64)]),
+  ...kvCopyV7Claims.filter(([id]) => id !== "september22-progress").map(([, claim]) => [claim, "Changed KV-copy claim."]),
+  ...["18.051%", "17.413%", "19.619%", "18.504%", "0.322%", "2.435%",
+    "23.250%", "16.516%", "28.234%", "18.271%", "9.095%", "4.545%"].map((metric) => [metric, "0.001%"]),
+  ["no samples are pooled or dropped", "samples are pooled"],
+  ["Absolute timings drift", "Absolute timings do not drift"],
+  ["not HTTP latency", "HTTP latency"],
+  ["not signal-free teardown", "signal-free teardown"],
+  ["controller starts exit 0", "workers exit 0"],
+  ["eight excluded warmups", "zero excluded warmups"],
+]) {
+  assert(kvCopyV7Fixture.includes(before), "KV-copy mutation target missing: " + before);
+  let rejected = false;
+  try {
+    validateKvCopyV7Source(indexSource.slice(0, kvCopyV7Start) + "<!-- " + before + " -->"
+      + kvCopyV7Fixture.replace(before, after) + indexSource.slice(kvCopyV7End));
+  } catch { rejected = true; }
+  assert(rejected, "KV-copy accepted altered measurement or claim: " + before);
+}
+const kvCopyV7Markup = [...kvCopyV7Fixture.matchAll(/<tr data-kv-copy-v7-arm="[^"]+">[\s\S]*?<\/tr>/g)].map((match) => match[0]);
+for (const changed of [
+  kvCopyV7Fixture.replace(kvCopyV7Markup[3], ""),
+  kvCopyV7Fixture.replace(kvCopyV7Markup[7], ""),
+  kvCopyV7Fixture.replace(kvCopyV7Markup[4], kvCopyV7Markup[4] + kvCopyV7Markup[4]),
+  kvCopyV7Fixture.replace(kvCopyV7Markup[0], "KV_COPY_FIRST_ROW")
+    .replace(kvCopyV7Markup[4], kvCopyV7Markup[0]).replace("KV_COPY_FIRST_ROW", kvCopyV7Markup[4]),
+  kvCopyV7Fixture.replace('data-kv-copy-v7-campaign="j2"', 'data-kv-copy-v7-campaign="j1"'),
+]) {
+  let rejected = false;
+  try { validateKvCopyV7Source(indexSource.slice(0, kvCopyV7Start) + changed + indexSource.slice(kvCopyV7End)); }
+  catch { rejected = true; }
+  assert(rejected, "KV-copy accepted missing, duplicated, pooled or reordered starts/campaigns");
+}
+const kvCopyV7Progress = indexSource.match(/<p id="september22-progress">[\s\S]*?<\/p>/)[0];
+let kvCopyV7ProgressRejected = false;
+try { validateKvCopyV7Source(indexSource.replace(kvCopyV7Progress, kvCopyV7Progress.replace("not HTTP", "HTTP"))); }
+catch { kvCopyV7ProgressRejected = true; }
+assert(kvCopyV7ProgressRejected, "KV-copy progress accepted an HTTP claim");
+
+const september22Rows = [
+  ["pair1", "Pair 1", "63.833", "4.228", "15.100"],
+  ["pair2", "Pair 2", "79.535", "4.380", "18.157"],
+  ["pair3", "Pair 3", "67.801", "4.394", "15.432"],
+];
+const september22Identities = [
+  ["Ordered64 three-pair series SHA-256", "579c4abeda3f56ca2a77ec1e1f63d37c0961cec92381f90da6a368d79ab3a3ec"],
+  ["V7 host diagnostic report SHA-256", "3ddeaf566cffd14d4503a5078de7f87d6a99c0da4227ffd9cf25606f622998fe"],
+];
+const september22Claims = [
+  ["september22-http-progress", "The fresh ordered64 HTTP campaign completes all three alternating pairs; Ferric remains 15.100 to 18.157 times slower than vLLM by mean TPOT. A separate single-cold V7 diagnostic passes exact-output replay, with TTFT 818.53 ms and TPOT 64.64 ms. Its worker interval is not GPU time. No speedup is claimed. All 33 M1 gates remain open."],
+  ["matched-ordered64-http-scope", "September 22: Qwen3-8B on mi350, TP1/C1, 128 input and 128 output tokens, context 8192, BF16 checkpoint with an explicit FP32 head. Prefix caching and speculation are off. All six starts and all three alternating paired replays pass, including exact-output diagnostics, timing replay and owned cleanup."],
+  ["matched-ordered64-http-outcome", "Ferric does not beat vLLM in any pair. The mean paired TPOT ratio is 16.229 times, not a pooled latency or confidence bound. TPOT is the first-to-last text span divided by 127, not true token interarrival latency. This is repeated-pair screening, not competitiveness, stable-tail, sustained-throughput or framework-win qualification."],
+  ["v7-host-diagnostic-result", "One cold instrumented request passes exact-output native replay: 128 output token IDs and decoded bytes match, with 135 model batches, 87,711 dispatches and clean exit. TTFT is 818.53 ms and TPOT is 64.64 ms. This is a separate diagnostic, not a new vendor comparison or a matched HTTP result."],
+  ["v7-host-diagnostic-intervals", "Mean decode batch wall is 64.626 ms. Worker publication/completion accounts for 58.473 ms (90.48%); controller packing is 0.171 ms (0.265%). The worker interval includes GPU work, polling and fences, excludes preparation/staging, and is not GPU time. Phase scopes overlap and cannot be added as kernel costs."],
+  ["v7-host-diagnostic-limits", "All 127 decode batches are retained, including the seven slower final batches. Instrumentation can perturb execution. No speedup is claimed; defaults are unchanged and all 33 M1 gates remain open. No SGLang, TP8 or speculative-decoding performance result is established here."],
+  ["september22-history", "The earlier HTTP R3 remains a separate rejected, incomplete series; its third pair is not repaired, replaced or relabeled by the new campaign. Historical native and HTTP measurements below retain their original scope."],
+];
+function validateSeptember22Source(source) {
+  const start = source.indexOf('<h3 id="matched-ordered64-http-title">');
+  const end = source.indexOf('<h3 id="matched-http-r3-title">', start);
+  assert(start >= 0 && end > start && start === source.lastIndexOf('<h3 id="matched-ordered64-http-title">'),
+    "September 22 checkpoint must be unique and precede separate R3 history");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  assert(section.includes("Ordered64 HTTP: three accepted pairs, still slower")
+    && section.includes("V7 host diagnostic: attribution, not a speedup"), "September 22 outcomes changed");
+  assert(section.includes('id="matched-ordered64-http-results"')
+    && (section.match(/<tr(?:\s|>)/g) ?? []).length === 4,
+  "Ordered64 HTTP requires three separate pairs and one header, without a pooled row");
+  for (const heading of ["Pair", "Ferric TPOT (ms)", "vLLM TPOT (ms)", "Ferric / vLLM"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `Ordered64 HTTP column changed: ${heading}`);
+  }
+  assert(JSON.stringify([...section.matchAll(/<tr data-ordered64-http-pair="([^"]+)">/g)].map((match) => match[1]))
+    === JSON.stringify(september22Rows.map((row) => row[0])), "Ordered64 HTTP pair order changed");
+  for (const [pair, label, ferric, vllm, ratio] of september22Rows) {
+    assert(section.includes(`<tr data-ordered64-http-pair="${pair}"> <th scope="row">${label}</th> <td>${ferric}</td> <td>${vllm}</td> <td>${ratio}</td> </tr>`),
+      `Ordered64 HTTP ${pair} differs from the accepted series`);
+  }
+  for (const [label, digest] of september22Identities) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `September 22 evidence changed: ${label}`);
+  }
+  for (const [id, expected] of september22Claims) {
+    const scope = id === "september22-http-progress" ? source : section;
+    const paragraphs = [...scope.matchAll(new RegExp(`<p(?: class="[^"]*")? id="${id}">([\\s\\S]*?)<\\/p>`, "g"))];
+    assert(paragraphs.length === 1 && paragraphs[0][1].replace(/\s+/g, " ").trim() === expected,
+      `September 22 scope or measurement changed: ${id}`);
+  }
+}
+validateSeptember22Source(indexSource);
+const september22Start = indexSource.indexOf('<h3 id="matched-ordered64-http-title">');
+const september22End = indexSource.indexOf('<h3 id="matched-http-r3-title">', september22Start);
+const september22Fixture = indexSource.slice(september22Start, september22End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ...september22Rows.flatMap((row) => row.slice(2).map((metric) => [`<td>${metric}</td>`, "<td>0.000001</td>"])),
+  ...september22Identities.map(([, digest]) => [digest, "0".repeat(64)]),
+  ...september22Claims.filter(([id]) => id !== "september22-http-progress").map(([, claim]) => [claim, "Changed checkpoint claim."]),
+  ...["16.229", "818.53", "64.64", "64.626", "58.473", "90.48%", "0.171", "0.265%"].map((metric) => [metric, "0.000001"]),
+  ["is not GPU time", "is GPU time"], ["seven slower final batches", "seven excluded final batches"],
+  ["three accepted pairs, still slower", "three accepted pairs, vendor win"],
+]) {
+  assert(september22Fixture.includes(before), `September 22 mutation target missing: ${before}`);
+  let rejected = false;
+  try { validateSeptember22Source(indexSource.slice(0, september22Start) + `<!-- ${before} -->`
+    + september22Fixture.replace(before, after) + indexSource.slice(september22End)); } catch { rejected = true; }
+  assert(rejected, `September 22 accepted changed evidence or scope: ${before}`);
+}
+const september22RowMarkup = [...september22Fixture.matchAll(/<tr data-ordered64-http-pair="[^"]+">[\s\S]*?<\/tr>/g)].map((match) => match[0]);
+for (const changed of [
+  september22Fixture.replace(september22RowMarkup[2], ""),
+  september22Fixture.replace(september22RowMarkup[0], september22RowMarkup[0] + september22RowMarkup[0]),
+  september22Fixture.replace(september22RowMarkup[0], "SEPTEMBER22_FIRST_ROW")
+    .replace(september22RowMarkup[1], september22RowMarkup[0]).replace("SEPTEMBER22_FIRST_ROW", september22RowMarkup[1]),
+]) {
+  let rejected = false;
+  try { validateSeptember22Source(indexSource.slice(0, september22Start) + changed + indexSource.slice(september22End)); } catch { rejected = true; }
+  assert(rejected, "September 22 accepted missing, duplicated or reordered pairs");
+}
+const september22Progress = indexSource.match(/<p id="september22-http-progress">[\s\S]*?<\/p>/)[0];
+let september22ProgressRejected = false;
+try { validateSeptember22Source(indexSource.replace(september22Progress, september22Progress.replace("slower than vLLM", "faster than vLLM"))); }
+catch { september22ProgressRejected = true; }
+assert(september22ProgressRejected, "September 22 progress accepted a vendor-win claim");
+
+const httpR3Rows = [
+  ["pair1-ferric", "Pair1: Ferric composed", "810.928", "69.587", "13.265065"],
+  ["pair1-vllm", "Pair1: vLLM 0.28.0", "20.148", "4.367", "222.524242"],
+  ["pair2-ferric", "Pair2: Ferric composed", "811.404", "69.186", "13.335104"],
+  ["pair2-vllm", "Pair2: vLLM 0.28.0", "18.835", "4.350", "223.905213"],
+];
+const httpR3Identities = [
+  ["HTTP R3 Pair1 summary SHA-256", "d3fa11cce07e0181e155498b72191a47e88a3240abf8cd840dbd5c075c5e788e"],
+  ["HTTP R3 Pair2 summary SHA-256", "e74214f1923eac3bbda26ae13acdaae0d0a2d1011ec3aa3cfce52338d5da4c97"],
+  ["HTTP R3 rejected series SHA-256", "962bce221f76fee67bb40a71bd9e0302095eba742f60885ef0b6cd1fc2e03159"],
+  ["HTTP R3 Pair3 Ferric rejection SHA-256", "c8a69e6f21cc9fe08d161617ef4a100630bc32674270d6634bb49bf60e4bbe11"],
+  ["HTTP R3 original series manifest SHA-256", "1753e5cb0fd40b7f4b6dcedef54d8dfa506915de26e317515e93c3354a5d17ee"],
+  ["HTTP R3 shared plan SHA-256", "981c0991d88692b36d53df47866b0292c16f843d281ffbbe74fdfc7c701b5e04"],
+];
+const httpR3Claims = [
+  "Composed HTTP R3: two pairs accepted, series rejected",
+  "Qwen3-8B on mi350 physical GPU 0, TP1/C1, 128 input and 128 output tokens, context 8192, BF16 decoder and FP32 output head.",
+  "same SSE client, greedy fixed-length output, speculation off and prefix caching off.",
+  "Each start excludes 10 warmups, measures 30 requests and checks two untimed output diagnostics.",
+  "Pair1 runs Ferric then vLLM; Pair2 runs vLLM then Ferric.",
+  "Ferric mean TPOT is 15.93 times vLLM in Pair1 and 15.91 times in Pair2; mean TTFT is 40.25 and 43.08 times vLLM, respectively.",
+  "All 30 measured requests succeed for each engine in each accepted pair.",
+  "separate per-pair observations, not a pooled result or confidence estimate.",
+  "Ferric does not beat vLLM in either accepted pair.",
+  "The unchanged manifest declares three pairs.",
+  "Pair3 Ferric was rejected by sampled KFD ownership checks after a foreign process appeared.",
+  "Its timing is not admitted.",
+  "An owned command required forced cleanup; cleanup completed.",
+  "Pair3 vLLM was never started.",
+  "No accepted Pair3 summary exists.",
+  "The aggregator returned rejected-series, with acceptance, competitiveness and framework-win flags false.",
+  "no replacement, splicing, aggregate spread or completed-series claim is made.",
+  "TTFT is client send to first nonempty text.",
+  "TPOT is the first-to-last text span divided by 127, not true token interarrival latency.",
+  "Output rate is 3,840 tokens divided by each engine's complete measured span, including request gaps and drain but excluding warmups and diagnostics.",
+  "These finite rates are not sustained throughput.",
+  "No confidence interval, stable-tail, equal-p99-SLO or release qualification follows from these pairs.",
+  "Ferric checks all 42 requests against full token IDs and decoded bytes.",
+  "vLLM checks exact token IDs only in two untimed diagnostics; its 40 timed requests match decoded text and usage.",
+  "Accepted pairs pass owned cleanup and GPU-idle postflight.",
+  "Process ownership is sampled every 500 ms, not continuously proven; the rejected third attempt remains preserved.",
+  "Composition R6 controller, rebuilt 5e2 worker and seven fixed images with packed16-v22, split8-v21 and parallel-prefill16-v27 enabled.",
+  "The worker is uninstrumented in these HTTP runs.",
+  "not an independent model-file rehash or source-to-binary authentication.",
+  "This is not a stock BF16-head comparison.",
+  "Historical V22 and native cohorts stay separate; their differences do not isolate individual optimization gains.",
+  "No SGLang, TP8, speculative-decoding, general framework ranking or serving qualification is established.",
+];
+const httpR3ProgressClaims = [
+  "Pair1 and Pair2 pass individual replay", "three-pair series is rejected and incomplete",
+  "69.587 and 69.186 ms", "4.367 and 4.350 ms", "15.93 and 15.91 times vLLM",
+  "Pair3 Ferric was rejected after a foreign GPU process appeared", "its timing is not admitted", "Pair3 vLLM was never started",
+  "No replacement or splicing repairs this series", "not a vendor win or sustained-serving result",
+];
+function validateHttpR3Source(source) {
+  const start = source.indexOf('<h3 id="matched-http-r3-title">');
+  const end = source.indexOf('<h3 id="matched-v22-http-title">', start);
+  assert(start >= 0 && end > start && start === source.lastIndexOf('<h3 id="matched-http-r3-title">'),
+    "HTTP R3 must be unique and precede preserved V22 history");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of httpR3Claims) assert(section.includes(claim), `HTTP R3 evidence or scope changed: ${claim}`);
+  assert(!/\bFerric (?:is |runs )?(?:faster than|beats|outperforms|wins against) (?:vLLM|SGLang)\b/i.test(section),
+    "HTTP R3 cannot claim a vendor win");
+  assert(section.includes('id="matched-http-r3-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 5,
+    "HTTP R3 requires exactly four accepted engine rows, no third-pair or aggregate row");
+  for (const heading of ["Pair and engine", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `HTTP R3 column changed: ${heading}`);
+  }
+  assert(JSON.stringify([...section.matchAll(/<tr data-http-r3-arm="([^"]+)">/g)].map((match) => match[1]))
+    === JSON.stringify(httpR3Rows.map((row) => row[0])), "HTTP R3 row order changed");
+  for (const [arm, label, ttft, tpot, rate] of httpR3Rows) {
+    assert(section.includes(`<tr data-http-r3-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `HTTP R3 ${arm} values differ from accepted individual replay`);
+  }
+  for (const [label, digest] of httpR3Identities) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `HTTP R3 receipt changed: ${label}`);
+  }
+  const progress = [...source.matchAll(/<p id="http-r3-progress">([\s\S]*?)<\/p>/g)];
+  assert(progress.length === 1, "Exactly one HTTP R3 progress paragraph required");
+  const text = progress[0][1].replace(/\s+/g, " ");
+  for (const claim of httpR3ProgressClaims) assert(text.includes(claim), `HTTP R3 progress changed: ${claim}`);
+}
+validateHttpR3Source(indexSource);
+const httpR3Start = indexSource.indexOf('<h3 id="matched-http-r3-title">');
+const httpR3End = indexSource.indexOf('<h3 id="matched-v22-http-title">', httpR3Start);
+const httpR3Fixture = indexSource.slice(httpR3Start, httpR3End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ...httpR3Rows.flatMap((row) => row.slice(2).map((metric) => [`<td>${metric}</td>`, "<td>0.000001</td>"])),
+  ...httpR3Identities.map(([label, digest]) => [`<dt>${label}</dt> <dd>${digest}</dd>`, `<dt>${label}</dt> <dd>${"0".repeat(64)}</dd>`]),
+  ...httpR3Claims.map((claim) => [claim, "Changed HTTP claim must be rejected."]),
+]) {
+  assert(httpR3Fixture.includes(before), `HTTP R3 mutation target missing: ${before}`);
+  let rejected = false;
+  try { validateHttpR3Source(indexSource.slice(0, httpR3Start) + `<!-- ${before} -->`
+    + httpR3Fixture.replace(before, after) + indexSource.slice(httpR3End)); } catch { rejected = true; }
+  assert(rejected, `HTTP R3 accepted changed evidence or scope: ${before}`);
+}
+const httpR3ProgressParagraph = indexSource.match(/<p id="http-r3-progress">[\s\S]*?<\/p>/)[0];
+for (const claim of httpR3ProgressClaims) {
+  let rejected = false;
+  const changed = httpR3ProgressParagraph.replace(/\s+/g, " ").replace(claim, "Changed progress claim.");
+  try { validateHttpR3Source(indexSource.replace(httpR3ProgressParagraph, changed)); } catch { rejected = true; }
+  assert(rejected, `HTTP R3 accepted changed progress: ${claim}`);
+}
+
+function validateMatchedV22HttpSource(source) {
+  const start = source.indexOf('<h3 id="matched-v22-http-title">');
+  const end = source.indexOf('<h3 id="native-partial-gemv-r4-title">', start);
+  assert(start >= 0 && end > start, "Latest V22 HTTP section boundaries are missing");
+  assert(start === source.lastIndexOf('<h3 id="matched-v22-http-title">'), "Latest V22 HTTP section must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "Earlier V22 / vLLM HTTP pair: no win",
+    "Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output tokens, context 8192, BF16 decoder and FP32 output head.",
+    "same SSE client, greedy fixed-length output, speculation off and prefix caching off.",
+    "10 excluded warmups, 30 measured requests and two untimed output diagnostics.",
+    "Ferric has 19.66 times the mean TPOT and 125.02 times the mean TTFT of vLLM in this cell.",
+    "All 30 measured requests succeed for each engine.",
+    "Cohorts run in fixed order, vLLM then Ferric, with one server start each.",
+    "There is no confidence interval or stable-tail claim.",
+    "This is not a stock BF16-head comparison.",
+    "TTFT is client send to first nonempty text.",
+    "TPOT is the first-to-last text span divided by 127, not true token interarrival latency.",
+    "Output rate divides 3,840 tokens by the complete measured span, including request gaps and drain, excluding warmups and diagnostics.",
+    "It is not sustained throughput.",
+    "Ferric token IDs and decoded bytes match for all 42 requests.",
+    "vLLM token IDs match in two untimed diagnostics; its 40 timed requests match decoded text and usage.",
+    "Both engines use the same 500 ms process-ownership sampling policy",
+    "Sampling is not continuous isolation proof.",
+    "Earlier contention-rejected attempts remain excluded.",
+    "Owned cleanup and GPU-idle postflight pass for both engines.",
+    "Replay checks retained model/image hash receipts, not an independent model-file rehash or source-to-binary authentication.",
+    "packed16-v22 with the historical f68 worker from runtime 5ed3840a and five unchanged kernel images.",
+    "Ordered64, V19, V23 and V25 are not part of this HTTP result.",
+    "cross-campaign differences do not attribute a gain to packet packing alone.",
+    "No TP8, speculative-decoding, SGLang, general framework ranking or serving qualification is established.",
+  ]) assert(section.includes(claim), `Latest V22 HTTP claim missing: ${claim}`);
+  assert(!/\bFerric (?:is |runs )?(?:faster than|beats|outperforms|wins against|is competitive)\b/i.test(section),
+    "Latest V22 HTTP result cannot claim a vendor win");
+  assert(section.includes('id="matched-v22-http-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 3,
+    "Latest V22 HTTP table must contain only a header and two engines");
+  for (const heading of ["Engine", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `Latest V22 HTTP column changed: ${heading}`);
+  }
+  for (const [engine, label, ttft, tpot, rate] of [
+    ["ferric", "Ferric V22 packed", "2329.922", "83.598", "9.885898"],
+    ["vllm", "vLLM 0.28.0", "18.636", "4.252", "228.904359"],
+  ]) assert(section.includes(`<tr data-v22-http-engine="${engine}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+    `Latest V22 HTTP ${engine} values differ from accepted replay`);
+  for (const [label, digest] of [
+    ["Paired replay summary SHA-256", "0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07"],
+    ["Shared plan SHA-256", "71855e76d38c3d3ff11d21b7ff33d7c67303a5fc28dff07c8deebb0ee14cf7fd"],
+    ["Ferric receipt SHA-256", "91cc42648156fbfedd44a03b704ad9c80a125efe8809b0fc4cff5441b9d2fe92"],
+    ["vLLM receipt SHA-256", "e428d623aaece123ef80d926b93e9be409bfbeb3bef9dcd1023503bf132b35c2"],
+  ]) assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `Latest V22 HTTP receipt changed: ${label}`);
+}
+
+validateMatchedV22HttpSource(indexSource);
+const matchedV22HttpStart = indexSource.indexOf('<h3 id="matched-v22-http-title">');
+const matchedV22HttpEnd = indexSource.indexOf('<h3 id="native-partial-gemv-r4-title">', matchedV22HttpStart);
+const matchedV22HttpFixture = indexSource.slice(matchedV22HttpStart, matchedV22HttpEnd).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ["<td>83.598</td>", "<td>3.598</td>"], ["<td>4.252</td>", "<td>42.520</td>"],
+  ["<td>9.885898</td>", "<td>98.858980</td>"], ["19.66 times the mean TPOT", "0.96 times the mean TPOT"],
+  ["Sampling is not continuous isolation proof.", "Sampling proves continuous isolation."],
+  ["Earlier contention-rejected attempts remain excluded.", "Earlier rejected attempts are accepted."],
+  ["cross-campaign differences do not attribute a gain", "cross-campaign differences attribute a gain"],
+  ["0283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07", "1283449b779015bffe0ba72954069ffcca7b809ae6aadf91aa24d6b3fb9d1c07"],
+]) {
+  assert(matchedV22HttpFixture.includes(before), `Latest V22 HTTP rejection fixture missing: ${before}`);
+  let rejected = false;
+  try { validateMatchedV22HttpSource(indexSource.slice(0, matchedV22HttpStart) + `<!-- ${before} -->`
+    + matchedV22HttpFixture.replace(before, after) + indexSource.slice(matchedV22HttpEnd)); } catch { rejected = true; }
+  assert(rejected, `Latest V22 HTTP accepted changed measurement or claim: ${before}`);
+}
+
+const partialGemvR4Rows = [
+  ["baseline-ab", "Baseline AB", "877.878138", "79.613330", "11.647774"],
+  ["candidate-ab", "Candidate AB", "945.068094", "82.110499", "11.253843"],
+  ["candidate-ba", "Candidate BA", "1040.976727", "91.870497", "10.071339"],
+  ["baseline-ba", "Baseline BA", "885.450433", "91.893385", "10.194000"],
+];
+const partialGemvR4Identities = [
+  ["Partial GEMV R4 report SHA-256", "2d5c5846318a93fd888cf35e27cd87f9d53914976bb8371bc1a4e3f92a4d05a4"],
+  ["Partial GEMV R4 supervisor SHA-256", "ff36b8b0e62cd722cfc3c8b2acb091bee8283952d7e859bf082af8af92bf2ae0"],
+];
+const partialGemvR4Claims = [
+  "Partial GEMV R4: native AB/BA screening",
+  "Qwen3-8B on mi350, TP1/C1. AB runs baseline then candidate; BA reverses that order.",
+  "Each start excludes one warmup and measures three requests.",
+  "The candidate replaces only one-row attention-output/down partial GEMV; both modes admit the same eight images and preserve grouping and reduction order.",
+  "These are native ingress measurements, not HTTP or vendor results.",
+  "Candidate/baseline TPOT ratios are 1.031366 in AB and 0.999751 in BA; TTFT ratios are 1.076537 and 1.175647.",
+  "No gain is demonstrated.",
+  "Orders are not pooled or cherry-picked; these finite-window output rates are not sustained throughput.",
+  "The candidate is not promoted to HTTP or made the default.",
+  "The earlier matched HTTP pairs still show roughly 16 times vLLM's TPOT.",
+  "No SGLang, TP8 or speculative-decoding gain is established.",
+  "All 16 requests match 2,048 reference output IDs and decoded bytes.",
+  "The supervisor completes cleanly without signals, with no remaining KFD owners.",
+  "Exact output parity is not source-to-binary authentication, proof or serving qualification.",
+  "All 33 M1 gates remain open.",
+];
+const partialGemvR4ProgressClaims = [
+  "Four native AB/BA starts match all 2,048 output IDs and decoded bytes.",
+  "Candidate/baseline TPOT ratios are 1.031366 in AB and 0.999751 in BA; TTFT is higher in both orders.",
+  "Each start excludes one warmup and measures three requests.",
+  "No gain is demonstrated, so the candidate is not promoted to HTTP or made the default.",
+  "The matched vLLM scoreboard remains unchanged.",
+];
+function validatePartialGemvR4Source(source) {
+  assert(source.includes('<h3 id="partial-gemv-r4-progress-title">Partial GEMV R4: no demonstrated gain</h3>'),
+    "Partial GEMV R4 progress must preserve the no-gain outcome");
+  const start = source.indexOf('<h3 id="native-partial-gemv-r4-title">');
+  const end = source.indexOf('<h3 id="native-ordered64-four-core-title">', start);
+  assert(start > source.indexOf('<h3 id="matched-v22-http-title">') && end > start
+    && start === source.lastIndexOf('<h3 id="native-partial-gemv-r4-title">'),
+  "Partial GEMV R4 must be unique and separate from HTTP and older native results");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of partialGemvR4Claims) assert(section.includes(claim), `Partial GEMV R4 scope changed: ${claim}`);
+  assert(section.includes('id="native-partial-gemv-r4-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 5,
+    "Partial GEMV R4 requires four separate starts and one header, with no pooled row");
+  for (const heading of ["Native start", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `Partial GEMV R4 column changed: ${heading}`);
+  }
+  assert(JSON.stringify([...section.matchAll(/<tr data-partial-gemv-r4-arm="([^"]+)">/g)].map((match) => match[1]))
+    === JSON.stringify(partialGemvR4Rows.map((row) => row[0])), "Partial GEMV R4 start order changed");
+  for (const [arm, label, ttft, tpot, rate] of partialGemvR4Rows) {
+    assert(section.includes(`<tr data-partial-gemv-r4-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `Partial GEMV R4 ${arm} differs from its accepted report`);
+  }
+  for (const [label, digest] of partialGemvR4Identities) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `Partial GEMV R4 identity changed: ${label}`);
+  }
+  const progress = [...source.matchAll(/<p id="partial-gemv-r4-progress">([\s\S]*?)<\/p>/g)];
+  assert(progress.length === 1, "Exactly one Partial GEMV R4 progress paragraph required");
+  for (const claim of partialGemvR4ProgressClaims) {
+    assert(progress[0][1].replace(/\s+/g, " ").includes(claim), `Partial GEMV R4 progress changed: ${claim}`);
+  }
+}
+validatePartialGemvR4Source(indexSource);
+const partialGemvR4Start = indexSource.indexOf('<h3 id="native-partial-gemv-r4-title">');
+const partialGemvR4End = indexSource.indexOf('<h3 id="native-ordered64-four-core-title">', partialGemvR4Start);
+const partialGemvR4Fixture = indexSource.slice(partialGemvR4Start, partialGemvR4End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ...partialGemvR4Rows.flatMap((row) => row.slice(2).map((metric) => [`<td>${metric}</td>`, "<td>0.000001</td>"])),
+  ...partialGemvR4Identities.map(([label, digest]) => [`<dt>${label}</dt> <dd>${digest}</dd>`, `<dt>${label}</dt> <dd>${"0".repeat(64)}</dd>`]),
+  ...partialGemvR4Claims.map((claim) => [claim, "Changed native claim must be rejected."]),
+]) {
+  assert(partialGemvR4Fixture.includes(before), `Partial GEMV R4 mutation target missing: ${before}`);
+  let rejected = false;
+  try { validatePartialGemvR4Source(indexSource.slice(0, partialGemvR4Start) + `<!-- ${before} -->`
+    + partialGemvR4Fixture.replace(before, after) + indexSource.slice(partialGemvR4End)); } catch { rejected = true; }
+  assert(rejected, `Partial GEMV R4 accepted changed measurement or scope: ${before}`);
+}
+const partialGemvR4Progress = indexSource.match(/<p id="partial-gemv-r4-progress">[\s\S]*?<\/p>/)[0];
+for (const claim of partialGemvR4ProgressClaims) {
+  let rejected = false;
+  try { validatePartialGemvR4Source(indexSource.replace(partialGemvR4Progress,
+    partialGemvR4Progress.replace(/\s+/g, " ").replace(claim, "Changed progress claim."))); } catch { rejected = true; }
+  assert(rejected, `Partial GEMV R4 accepted changed progress: ${claim}`);
+}
+
+const ordered64NativeRows = [
+  ["baseline-AB","Baseline AB","1024.554916","94.799826","9.797235"],
+  ["candidate-AB","Candidate AB","858.870490","70.714876","13.007960"],
+  ["candidate-BA","Candidate BA","865.604204","70.180564","13.089270"],
+  ["baseline-BA","Baseline BA","876.261260","80.273610","11.561235"],
+];
+const ordered64NativeIdentities = [
+  ["Ordered64 native report SHA-256","cbef8172a332d0d3086889f8ac5cab4b1f913114a4c37535bcf23b062c812015"],
+  ["Ordered64 native supervisor SHA-256","e2e234a94971f996b4f4bb1167ed80664ee1362c45a7d091a816b6d3ce2d7617"],
+];
+const ordered64NativeClaims = [
+  ["ordered64-native-progress","All 2,048 output IDs and decoded bytes match across four native starts. TPOT is 25.4061% lower in AB and 12.5733% lower in BA; the two orders remain separate. Each start excludes one warmup and measures three requests. This is native screening, not a new HTTP result or vLLM win. Defaults and the matched HTTP scoreboard remain unchanged."],
+  ["native-ordered64-four-core-scope","Qwen3-8B on mi350, TP1/C1, sequential 128-input/128-output requests. AB runs baseline then candidate; BA reverses that order. Each start excludes one warmup and measures three requests. Both arms use the same controller, dd6 worker built from 5e2 and eight images. Only packed16 versus packed64 ordered submission changes; parallel-prefill16-v27 and split8-v21 stay enabled, and partial GEMV stays off."],
+  ["native-ordered64-four-core-outcome","Candidate/baseline TPOT ratios are 0.745939 in AB and 0.874267 in BA: TPOT is 25.4061% and 12.5733% lower, respectively. TTFT ratios are 0.838286 and 0.987838; output-rate ratios are 1.327717 and 1.132169. Orders are not pooled or cherry-picked. These finite-window output rates are not sustained throughput, shader timings, confidence intervals or a stable gain. This supports a separate matched HTTP test, not HTTP qualification or a vLLM win. Defaults remain unchanged. The matched HTTP scoreboard still shows roughly 16 times vLLM's TPOT. No SGLang, TP8 or speculative-decoding gain is established."],
+  ["native-ordered64-four-core-provenance","CPU qualification retains 17 original R3 one-core gates and a separate successful four-core controller build; it is not 18 fresh four-core gates. The controller's opt-in runtime dependency is pinned to 13e; the worker remains built from 5e2. The baseline profile is prefill16-decode-partial-gemv-v28-live-v1 with GEMV off; the candidate profile is prefill16-decode-ordered64-v29-live-v1."],
+  ["native-ordered64-four-core-correctness","All 16 requests match all 2,048 reference output IDs and decoded bytes. The outer supervisor exits 0 without signals. Each arm records cleanup_ok true and its owned group absent, with TERM and KILL flags retained as sent. This is not a claim of signal-free arm teardown. Exact output parity is not independent source-to-binary authentication, protected proof or serving qualification. All 33 M1 gates remain open."],
+];
+function validateOrdered64NativeSource(source) {
+  assert(source.includes('<h3 id="ordered64-native-progress-title">Ordered64: accepted native AB/BA screen</h3>'),
+    "Ordered64 progress must preserve its native-only outcome");
+  const start = source.indexOf('<h3 id="native-ordered64-four-core-title">');
+  const end = source.indexOf('<h3 id="native-composed-v28-title">', start);
+  assert(start > source.indexOf('<h3 id="native-partial-gemv-r4-title">') && end > start
+    && start === source.lastIndexOf('<h3 id="native-ordered64-four-core-title">'),
+  "Ordered64 native result must be unique and separate from R4, HTTP and older native results");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  assert(section.includes('<h3 id="native-ordered64-four-core-title">Ordered64: lower native TPOT in both orders</h3>'),
+    "Ordered64 native outcome heading changed");
+  assert(section.includes('id="native-ordered64-four-core-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 5,
+    "Ordered64 native screen requires four separate starts and one header, with no pooled row");
+  assert(section.includes('tabindex="0" role="region" aria-label="Ordered64 native AB/BA screening"'),
+    "Ordered64 native table requires its accessible scroll region");
+  for (const heading of ["Native start", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes('<th scope="col">' + heading + "</th>"), "Ordered64 native column changed: " + heading);
+  }
+  assert(JSON.stringify([...section.matchAll(/<tr data-ordered64-four-core-arm="([^"]+)">/g)].map((match) => match[1]))
+    === JSON.stringify(ordered64NativeRows.map((row) => row[0])), "Ordered64 native start order changed");
+  for (const [arm, label, ttft, tpot, rate] of ordered64NativeRows) {
+    assert(section.includes('<tr data-ordered64-four-core-arm="' + arm + '"> <th scope="row">' + label
+      + "</th> <td>" + ttft + "</td> <td>" + tpot + "</td> <td>" + rate + "</td> </tr>"),
+    "Ordered64 native " + arm + " differs from its accepted report");
+  }
+  for (const [label, digest] of ordered64NativeIdentities) {
+    assert(section.includes("<dt>" + label + "</dt> <dd>" + digest + "</dd>"), "Ordered64 native identity changed: " + label);
+  }
+  for (const [id, expected] of ordered64NativeClaims) {
+    const scope = id === "ordered64-native-progress" ? source : section;
+    const paragraphs = [...scope.matchAll(new RegExp('<p(?: class="[^"]*")? id="' + id + '">([\\s\\S]*?)<\\/p>', "g"))];
+    assert(paragraphs.length === 1 && paragraphs[0][1].replace(/\s+/g, " ").trim() === expected,
+      "Ordered64 native scope or provenance changed: " + id);
+  }
+}
+validateOrdered64NativeSource(indexSource);
+const ordered64NativeStart = indexSource.indexOf('<h3 id="native-ordered64-four-core-title">');
+const ordered64NativeEnd = indexSource.indexOf('<h3 id="native-composed-v28-title">', ordered64NativeStart);
+const ordered64NativeFixture = indexSource.slice(ordered64NativeStart, ordered64NativeEnd).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ...ordered64NativeRows.flatMap((row) => row.slice(2).map((metric) => ["<td>" + metric + "</td>", "<td>0.000001</td>"])),
+  ...ordered64NativeIdentities.map(([label, digest]) => ["<dt>" + label + "</dt> <dd>" + digest + "</dd>",
+    "<dt>" + label + "</dt> <dd>" + "0".repeat(64) + "</dd>"]),
+  ...["0.745939", "0.874267", "0.838286", "0.987838", "1.327717", "1.132169", "25.4061%", "12.5733%"]
+    .map((value) => [value, "0.000000"]),
+  ...ordered64NativeClaims.filter(([id]) => id !== "ordered64-native-progress")
+    .map(([, claim]) => [claim, "Changed native claim must be rejected."]),
+  ["partial GEMV stays off", "partial GEMV is enabled"],
+  ["prefill16-decode-ordered64-v29-live-v1", "prefill16-decode-partial-gemv-v28-live-v1"],
+  ["cbef8172a332d0d3086889f8ac5cab4b1f913114a4c37535bcf23b062c812015", "2d5c5846318a93fd888cf35e27cd87f9d53914976bb8371bc1a4e3f92a4d05a4"],
+  ["17 original R3 one-core gates", "18 fresh R3 four-core gates"],
+  ["worker remains built from 5e2", "worker is built from 13e"],
+  ["TERM and KILL flags retained as sent", "TERM and KILL were never sent"],
+  ["Defaults remain unchanged.", "Candidate is now the default."],
+  ["not HTTP qualification or a vLLM win", "HTTP qualification and a vLLM win"],
+  ["All 33 M1 gates remain open.", "All 33 M1 gates are closed."],
+]) {
+  assert(ordered64NativeFixture.includes(before), "Ordered64 native mutation target missing: " + before);
+  let rejected = false;
+  try { validateOrdered64NativeSource(indexSource.slice(0, ordered64NativeStart) + "<!-- " + before + " -->"
+    + ordered64NativeFixture.replace(before, after) + indexSource.slice(ordered64NativeEnd)); } catch { rejected = true; }
+  assert(rejected, "Ordered64 native accepted changed measurement, scope or provenance: " + before);
+}
+const ordered64NativeRowMarkup = [...ordered64NativeFixture.matchAll(/<tr data-ordered64-four-core-arm="[^"]+">[\s\S]*?<\/tr>/g)].map((match) => match[0]);
+for (const changed of [
+  ordered64NativeFixture.replace(ordered64NativeRowMarkup[0], ""),
+  ordered64NativeFixture.replace(ordered64NativeRowMarkup[0], ordered64NativeRowMarkup[0] + ordered64NativeRowMarkup[0]),
+  ordered64NativeFixture.replace(ordered64NativeRowMarkup[0], "ORDERED64_FIRST_ROW")
+    .replace(ordered64NativeRowMarkup[1], ordered64NativeRowMarkup[0])
+    .replace("ORDERED64_FIRST_ROW", ordered64NativeRowMarkup[1]),
+]) {
+  let rejected = false;
+  try { validateOrdered64NativeSource(indexSource.slice(0, ordered64NativeStart) + changed
+    + indexSource.slice(ordered64NativeEnd)); } catch { rejected = true; }
+  assert(rejected, "Ordered64 native accepted a missing, duplicate or reordered arm");
+}
+const ordered64NativeProgress = indexSource.match(/<p id="ordered64-native-progress">[\s\S]*?<\/p>/)[0];
+for (const changed of ["", ordered64NativeProgress.replace(/\s+/g, " ").replace(ordered64NativeClaims[0][1], "Changed progress claim.")]) {
+  let rejected = false;
+  try { validateOrdered64NativeSource(indexSource.replace(ordered64NativeProgress, changed)); } catch { rejected = true; }
+  assert(rejected, "Ordered64 native accepted missing or changed progress");
+}
+
+const composedV28Rows = [
+  ["baseline", "Baseline", "2430.855653", "93.406125", "8.954908643"],
+  ["decode-only", "Decode only", "2365.162141", "76.228505", "10.625352362"],
+  ["prefill-only", "Prefill only", "1021.103724", "93.120622", "9.962451944"],
+  ["composed", "Prefill + decode", "855.944209", "85.379419", "10.940545624"],
+];
+const composedV28Identities = [
+  ["Composition R6 report SHA-256", "dbf5e34ea6466d84211c85b778fe668d046c5de931491c32b1f4a8118498bcd6"],
+  ["Composition R6 archive SHA-256", "eb1f97196a736c2b9512a12c966a8ddb25d5aa3f09153ead95489dcf70ef564c"],
+  ["Composition R6 controller SHA-256", "1ffd68bc905ed6a1cc1bfb7dfad88f64b519ed1aede5aa2c079768982960afe6"],
+  ["Composition R6 worker SHA-256", "dd6bd3b4a910478e85d2f3530be25819153fad1f08bf33bb14dd534514a601a2"],
+];
+const composedV28Claims = [
+  "Composition R6: prefill and decode together",
+  "Qwen3-8B on mi350 physical GPU 0, TP1/C1, 128 input and 128 output tokens, context 8192, BF16 decoder / FP32 head, speculation and prefix caching off.",
+  "The four arms run in this order: baseline, decode-only, prefill-only, combined.",
+  "Each excludes one warmup and measures three requests.",
+  "All use one controller binary, the rebuilt 5e2 worker and seven fixed images; instrumentation is off.",
+  "Decode-only enables V22 packing and V25 split attention.",
+  "Prefill-only enables V27 page copy through V28; combined enables both sets of selectors.",
+  "combined TTFT is 64.7884% lower, TPOT is 8.5933% lower and finite-window output rate is 22.1737% higher.",
+  "in this cohort combined TPOT was 12.0046% higher than decode-only: 85.379419 versus 76.228505 ms.",
+  "Repeated runs are needed to determine whether that difference persists; this cohort does not establish a stable penalty.",
+  "These are measured same-run differences, not multiplied historical gains.",
+  "Three measured requests per arm in fixed order do not establish a confidence interval, stable improvement or tail behavior.",
+  "Native TTFT measures controller arrival to first token completion; TPOT is the first-to-last completion span divided by 127.",
+  "Each rate uses 384 output tokens over that arm's full measured ingress window, including gaps and excluding warmup.",
+  "These are not HTTP timings, GPU durations or sustained throughput.",
+  "The HTTP R3 pairs above remain losses; this native result adds no vendor, SGLang, TP8, speculative-decoding or serving qualification.",
+  "All 16 requests match 2,048 reference output IDs and decoded bytes.",
+  "Each arm retains 135 batches per request; baseline and prefill-only use 83,139 packets, while decode-only and combined use 87,711.",
+  "Reported group counts are expected source schedules, not measured counters.",
+  "Owned inner teardown used TERM/KILL; the outer supervisor completed cleanly without signals.",
+  "V21's OCML accuracy premise remains unverified.",
+  "SDK name-string bridges and exact output parity are engineering evidence, not independent source-to-binary authentication or protected proof.",
+  "Historical images and prerequisite runs retain their original identities.",
+  "Defaults are unchanged; all 33 M1 gates remain open.",
+];
+const composedV28Progress = {
+  "composed-v28-progress": ["Composition R6 matches 2,048 output token IDs and decoded bytes", "Combined mean TTFT is 64.7884% lower",
+    "TPOT is 8.5933% lower", "output rate is 22.1737% higher", "In this cohort, combined TPOT was also 12.0046% higher than decode-only",
+    "repeated runs are needed to determine whether that difference persists",
+    "Three measured requests per arm, in fixed order", "not HTTP, sustained throughput or a vendor win",
+    "newer HTTP R3 pairs remain losses; their three-pair series is incomplete"],
+  "model-r8-progress": ["four cold ordinary/diagnostic requests", "512 output IDs and decoded bytes",
+    "166,278 raw timestamp records across 20,478 groups", "same rebuilt 5e2 worker as their ordinary controls",
+    "Raw tick intervals are not nanoseconds, additive shader costs or a performance result",
+    "exact parity is not proof qualification", "Composition R6 itself is uninstrumented"],
+};
+function validateNativeComposedV28Source(source) {
+  const start = source.indexOf('<h3 id="native-composed-v28-title">');
+  const end = source.indexOf('<h3 id="native-v28-title">', start);
+  const http = source.indexOf('<h3 id="matched-v22-http-title">');
+  assert(http >= 0 && start > http && end > start && start === source.lastIndexOf('<h3 id="native-composed-v28-title">'),
+    "Composition R6 must be unique, after the unchanged HTTP scoreboard and before historical V28");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of composedV28Claims) assert(section.includes(claim), `Composition R6 scope changed: ${claim}`);
+  assert(!/\b(?:Ferric|Composition R6|the combined arm) (?:is |runs )?(?:faster than|beats|outperforms|wins against) (?:vLLM|SGLang)\b/i.test(section),
+    "Composition R6 cannot claim a vendor win");
+  assert(section.includes('id="native-composed-v28-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 5,
+    "Composition R6 requires exactly four arms and one header");
+  for (const heading of ["Native arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `Composition R6 column changed: ${heading}`);
+  }
+  assert(JSON.stringify([...section.matchAll(/<tr data-composed-v28-arm="([^"]+)">/g)].map((match) => match[1]))
+    === JSON.stringify(composedV28Rows.map((row) => row[0])), "Composition R6 arm order changed");
+  for (const [arm, label, ttft, tpot, rate] of composedV28Rows) {
+    assert(section.includes(`<tr data-composed-v28-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `Composition R6 ${arm} differs from the accepted report`);
+  }
+  for (const [label, digest] of composedV28Identities) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `Composition R6 identity changed: ${label}`);
+  }
+  for (const [id, claims] of Object.entries(composedV28Progress)) {
+    const paragraphs = [...source.matchAll(new RegExp(`<p id="${id}">([\\s\\S]*?)<\\/p>`, "g"))];
+    assert(paragraphs.length === 1, `Exactly one ${id} paragraph required`);
+    const text = paragraphs[0][1].replace(/\s+/g, " ");
+    for (const claim of claims) assert(text.includes(claim), `${id} scope changed: ${claim}`);
+  }
+}
+validateNativeComposedV28Source(indexSource);
+const composedV28Start = indexSource.indexOf('<h3 id="native-composed-v28-title">');
+const composedV28End = indexSource.indexOf('<h3 id="native-v28-title">', composedV28Start);
+const composedV28Fixture = indexSource.slice(composedV28Start, composedV28End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ...composedV28Rows.flatMap((row) => row.slice(2).map((metric) => [`<td>${metric}</td>`, "<td>0.000001</td>"])),
+  ...composedV28Identities.map(([label, digest]) => [`<dt>${label}</dt> <dd>${digest}</dd>`, `<dt>${label}</dt> <dd>${"0".repeat(64)}</dd>`]),
+  ...composedV28Claims.map((claim) => [claim, "Changed native claim must be rejected."]),
+  ['<th scope="col">Mean TPOT (ms)</th>', '<th scope="col">Shader duration (ms)</th>'],
+]) {
+  assert(composedV28Fixture.includes(before), `Composition R6 mutation target missing: ${before}`);
+  let rejected = false;
+  // An earlier duplicate must not divert this mutation away from its owned section.
+  try { validateNativeComposedV28Source(indexSource.slice(0, composedV28Start) + `<!-- ${before} -->`
+    + composedV28Fixture.replace(before, after) + indexSource.slice(composedV28End)); } catch { rejected = true; }
+  assert(rejected, `Composition R6 accepted changed evidence or scope: ${before}`);
+}
+for (const [id, claims] of Object.entries(composedV28Progress)) {
+  const expression = new RegExp(`<p id="${id}">([\\s\\S]*?)<\\/p>`);
+  const paragraph = indexSource.match(expression)[0];
+  for (const claim of claims) {
+    const normalized = paragraph.replace(/\s+/g, " ");
+    assert(normalized.includes(claim), `Composition progress mutation target missing: ${claim}`);
+    let rejected = false;
+    try { validateNativeComposedV28Source(indexSource.replace(paragraph, normalized.replace(claim, "Changed progress claim."))); } catch { rejected = true; }
+    assert(rejected, `Composition progress accepted changed claim: ${claim}`);
+  }
+}
+
+const nativeV28Rows = [
+  ["baseline", "Baseline", "2312.563649", "85.149690", "9.750891"],
+  ["parallel-prefill16-v27", "V28 parallel prefill copy", "808.974061", "85.154418", "11.011655"],
+];
+const nativeV28Identities = [
+  ["V28 native report SHA-256", "fd58ba7aa82f7bc7a18868e9837bf0de2929910ef519d74b8302a0b2d68ead17"],
+  ["V28 retained archive SHA-256", "039561bd6c792e3e57c7685a65c27e787905aa7f8579850254852f7c17e6fee5"],
+  ["V28 controller SHA-256", "3ea106b88e1e77c48ff9d32aa988ecd0554d9b6d5bc1d7eb62b5e4caeff0914c"],
+  ["Historical V28 worker SHA-256", "f68e42197f5f91854f7ec15c92b2fe1eee29a5620a6d313751e64f0af9598ebc"],
+];
+const nativeV28Claims = [
+  "V28 prefill copy: lower native TTFT, unchanged TPOT",
+  "Qwen3-8B on mi350 physical GPU 0, TP1/C1, 128 input and 128 output tokens, context 8192, BF16 decoder / FP32 head, speculation and prefix caching off.",
+  "Each arm has one excluded warmup followed by three measured requests, in fixed baseline then parallel-prefill16-v27 order.",
+  "Both use the same V28 controller, historical f68 worker, five historical images and the same V27 image.",
+  "Only the prefill-copy selector changes; V22 packing and V25 split attention are absent from both arms.",
+  "mean TTFT is 65.0183% lower and TPOT is effectively unchanged.",
+  "Three measured requests per arm in a fixed order provide screening evidence only: no confidence interval, stable gain or tail claim.",
+  "The independent decode-composition result below cannot be multiplied into this prefill result; the combined candidate is measured separately in Composition R6 above.",
+  "These are controller-ingress measurements, neither HTTP timings nor GPU durations.",
+  "TTFT runs from request arrival to first token completion; TPOT divides the first-to-last token completion span by 127.",
+  "Each output rate is 384 tokens over the measured ingress window, including gaps and excluding warmup, not sustained throughput.",
+  "The unchanged matched V22 / vLLM HTTP result remains a loss: 19.66 times the TPOT and 125.02 times the TTFT.",
+  "No new vLLM or SGLang comparison, TP8, speculation, latest-runtime or serving result follows.",
+  "All eight requests match all 1,024 reference token IDs and decoded bytes.",
+  "Both arms preserve 135 batches and 83,139 packets per request; V27 substitutes 288 prefill append kernels without reducing the packet count.",
+  "legacy inner arm teardown used owned TERM/KILL signals, while the outer supervisor exited cleanly without signals.",
+  "The earlier staging-path failure remains excluded.",
+  "Exact output parity for this input is not general numerical or protected proof qualification.",
+  "The 5a/d10 SDK name-string bridge provides engineering custody, not independent source-to-binary authentication.",
+  "Defaults stay unchanged and all 33 M1 gates remain open.",
+];
+function validateNativeV28Source(source) {
+  const start = source.indexOf('<h3 id="native-v28-title">');
+  const end = source.indexOf('<h3 id="native-composition-title">', start);
+  const http = source.indexOf('<h3 id="matched-v22-http-title">');
+  assert(http >= 0 && start > http && end > start && start === source.lastIndexOf('<h3 id="native-v28-title">'),
+    "V28 screening must be unique and follow the unchanged HTTP result");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of nativeV28Claims) assert(section.includes(claim), `V28 native scope changed: ${claim}`);
+  assert(!/\b(?:Ferric|V28|the candidate) (?:is |runs )?(?:faster than|beats|outperforms|wins against) (?:vLLM|SGLang)\b/i.test(section),
+    "V28 native screening cannot claim a vendor win");
+  assert(section.includes('id="native-v28-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 3,
+    "V28 requires exactly two native arms and one header");
+  for (const heading of ["Native prefill arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `V28 column changed: ${heading}`);
+  }
+  assert(JSON.stringify([...section.matchAll(/<tr data-v28-arm="([^"]+)">/g)].map((match) => match[1]))
+    === JSON.stringify(nativeV28Rows.map((row) => row[0])), "V28 arm order changed");
+  for (const [arm, label, ttft, tpot, rate] of nativeV28Rows) {
+    assert(section.includes(`<tr data-v28-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `V28 ${arm} differs from the accepted R4 report`);
+  }
+  for (const [label, digest] of nativeV28Identities) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `V28 evidence changed: ${label}`);
+  }
+  const paragraphs = [...source.matchAll(/<p id="v28-progress">([\s\S]*?)<\/p>/g)];
+  assert(paragraphs.length === 1, "Exactly one V28 progress paragraph required");
+  const progress = paragraphs[0][1].replace(/\s+/g, " ");
+  for (const claim of ["all 1,024 reference token IDs and decoded bytes", "Mean TTFT falls 65.0183%",
+    "2312.564 to 808.974 ms", "TPOT is effectively unchanged at 85.150 versus 85.154 ms",
+    "not HTTP or a vendor win", "newer HTTP R3 pairs above are still losses",
+    "do not multiply this reduction", "Defaults stay unchanged"]) {
+    assert(progress.includes(claim), `V28 progress changed: ${claim}`);
+  }
+}
+validateNativeV28Source(indexSource);
+const nativeV28Start = indexSource.indexOf('<h3 id="native-v28-title">');
+const nativeV28End = indexSource.indexOf('<h3 id="native-composition-title">', nativeV28Start);
+const nativeV28Fixture = indexSource.slice(nativeV28Start, nativeV28End).replace(/\s+/g, " ");
+const nativeV28Mutations = [
+  ...nativeV28Rows.flatMap((row) => row.slice(2).map((metric) => [`<td>${metric}</td>`, "<td>0.000001</td>"])),
+  ...nativeV28Identities.map(([label, digest]) => [`<dt>${label}</dt> <dd>${digest}</dd>`, `<dt>${label}</dt> <dd>${"0".repeat(64)}</dd>`]),
+  ...nativeV28Claims.map((claim) => [claim, "Changed scope must be rejected."]),
+  ["<th scope=\"col\">Mean TPOT (ms)</th>", "<th scope=\"col\">GPU duration (ms)</th>"],
+];
+for (const [before, after] of nativeV28Mutations) {
+  assert(nativeV28Fixture.includes(before), `V28 rejection fixture missing: ${before}`);
+  let rejected = false;
+  try { validateNativeV28Source(indexSource.slice(0, nativeV28Start)
+    + nativeV28Fixture.replace(before, after) + indexSource.slice(nativeV28End)); } catch { rejected = true; }
+  assert(rejected, `V28 screening accepted changed scope or evidence: ${before}`);
+}
+for (const [before, after] of [["Mean TTFT falls 65.0183%", "Mean TTFT falls 95.0183%"],
+  ["TPOT is effectively unchanged at 85.150 versus 85.154 ms", "TPOT improves 65%"],
+  ["not HTTP or a vendor win", "an HTTP vendor win"]]) {
+  const fixture = indexSource.replace(/\s+/g, " ");
+  assert(fixture.includes(before), `V28 progress rejection fixture missing: ${before}`);
+  let rejected = false;
+  try { validateNativeV28Source(fixture.replace(before, after)); } catch { rejected = true; }
+  assert(rejected, `V28 progress accepted an unsupported claim: ${before}`);
+}
+
+const compositionRows = [
+  ["baseline", "Baseline", "2299.826074", "84.737454", "9.799532"],
+  ["packed-only", "V22 packing only", "2325.464341", "83.252562", "9.923006"],
+  ["split-only", "V25 split only", "2302.796852", "73.957084", "10.944131"],
+  ["composed", "V22 + V25 composed", "2311.805893", "70.241527", "11.395125"],
+];
+const compositionIdentities = [
+  ["Composition report SHA-256", "86500d3357241488ac64692618c7a1bf05ab71062b79b7c75c2d5dfefdd77447"],
+  ["Composition retained archive SHA-256", "bda385eba79356b7bb311eb83c44e0e064c7ec4a598bb6ab0dadff2a696aee43"],
+  ["Controller SHA-256", "898b4ded4d93583c4421f3dbc87fb7beb8ce43e22e4ba18534e6425d91a8d900"],
+  ["Historical worker SHA-256", "f68e42197f5f91854f7ec15c92b2fe1eee29a5620a6d313751e64f0af9598ebc"],
+];
+
+function validateNativeCompositionSource(source) {
+  const start = source.indexOf('<h3 id="native-composition-title">');
+  const end = source.indexOf('<h3 id="native-v22-title">', start);
+  const latestHttp = source.indexOf('<h3 id="matched-v22-http-title">');
+  assert(start >= 0 && end > start && latestHttp >= 0 && latestHttp < start,
+    "Native composition must follow the unchanged latest HTTP comparison");
+  assert(start === source.lastIndexOf('<h3 id="native-composition-title">'), "Native composition must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "V22 + V25: four-arm native comparison",
+    "Qwen3-8B on mi350, TP1/C1, 128 input and 128 output tokens, context 8192, BF16 decoder / FP32 output head, speculation off and prefix caching off.",
+    "The fixed order is baseline, packing-only, split-only, then composed, with one excluded warmup and three measured requests per arm.",
+    "same controller binary, historical f68 worker and six historical images.",
+    "Packing and split-attention selectors are the only arm changes.",
+    "composed mean TPOT is 17.11% lower, mean TTFT is 0.52% higher and measured-window output rate is 16.28% higher.",
+    "These observed deltas are not an additive prediction from earlier separate V22 and V25 runs.",
+    "Three measured requests per arm in fixed order do not establish confidence intervals, a stable gain or tail behavior.",
+    "These are controller-ingress timings, not HTTP timings or GPU durations.",
+    "TTFT spans request arrival to first token completion; TPOT is the first-to-last token completion span divided by 127.",
+    "Each rate divides 384 output tokens by that arm's measured ingress window, including inter-request gaps and excluding warmup.",
+    "It is not sustained throughput.",
+    "The HTTP R3 pairs above remain losses; no vendor comparison, SGLang measurement, TP8 result or serving qualification follows.",
+    "All 16 requests match all 2,048 reference token IDs and decoded bytes; every arm completes and owned cleanup passes.",
+    "Conditional split-attention numerical assumptions, including the unverified OCML accuracy bound, remain unchanged.",
+    "Exact outputs for this input do not establish general numerical or protected proof qualification.",
+    "Defaults remain unchanged.",
+    "This is not a latest-runtime result; the newer timestamp instrumentation is not part of this cohort.",
+    "All 33 M1 gates remain open.",
+  ]) assert(section.includes(claim), `Native composition scope changed: ${claim}`);
+  assert(!/\b(?:Ferric|V22|V25|the composed arm) (?:is |runs )?(?:faster than|beats|outperforms|wins against) (?:vLLM|SGLang)\b/i.test(section),
+    "Native composition cannot claim a vendor win");
+  assert(section.includes('id="native-composition-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 5,
+    "Native composition requires one header and four arms");
+  for (const heading of ["Native arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `Native composition column changed: ${heading}`);
+  }
+  assert(JSON.stringify([...section.matchAll(/<tr data-composition-arm="([^"]+)">/g)].map((match) => match[1]))
+    === JSON.stringify(compositionRows.map((row) => row[0])), "Native composition arm order changed");
+  for (const [arm, label, ttft, tpot, rate] of compositionRows) {
+    assert(section.includes(`<tr data-composition-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `Native composition ${arm} differs from the accepted report`);
+  }
+  for (const [label, digest] of compositionIdentities) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `Native composition receipt changed: ${label}`);
+  }
+  const progress = (id) => {
+    const matches = [...source.matchAll(new RegExp(`<p id="${id}">([\\s\\S]*?)<\\/p>`, "g"))];
+    assert(matches.length === 1, `Exactly one ${id} paragraph required`);
+    return matches[0][1].replace(/\s+/g, " ");
+  };
+  const composition = progress("composition-progress");
+  for (const claim of ["all 2,048 reference token IDs and decoded bytes", "composed TPOT is 17.11% lower",
+    "TTFT is 0.52% higher", "not a new vLLM or SGLang win", "Defaults remain unchanged."]) {
+    assert(composition.includes(claim), `Composition progress scope changed: ${claim}`);
+  }
+  const timestamp = progress("timestamp-progress");
+  for (const claim of ["published on fe2o3 main at 3d473f9ff", "210 dependent operations and 528 guard checks",
+    "raw ticks, not shader nanoseconds or isolated kernel durations", "no performance gain or proof qualification is claimed",
+    "[skip ci], with no GitHub-hosted build or test", "historical f68 worker, not this newer runtime"]) {
+    assert(timestamp.includes(claim), `Timestamp scope changed: ${claim}`);
+  }
+  const v27 = progress("v27-progress");
+  for (const claim of ["actual Wave64 image", "336-byte kernarg segment and 12 arguments",
+    "no LDS, scratch, spills or AGPR use reported", "Isolated native validation passes 28 correctness cases and retains 12 timing cells",
+    "clean supervisor teardown", "timings are diagnostics, not a full-model TTFT or TPOT result",
+    "V28 full-model native screening is reported below; neither result is serving qualification"]) {
+    assert(v27.includes(claim), `V27 isolated scope changed: ${claim}`);
+  }
+  for (const [label, digest] of [
+    ["V27 native report SHA-256", "e501fb19d64e4c28168612eeaa6a5f06865da4399a78910af6070e3a116c58e8"],
+    ["V27 native archive SHA-256", "32f5972eb1274bc0d3825e52e7c0cf65a09249f71f3aa36c44ce68c71223a32a"],
+  ]) assert(source.replace(/\s+/g, " ").includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `V27 receipt changed: ${label}`);
+}
+
+validateNativeCompositionSource(indexSource);
+const compositionFixture = indexSource.replace(/\s+/g, " ");
+const compositionSectionStart = compositionFixture.indexOf('<h3 id="native-composition-title">');
+const compositionSectionEnd = compositionFixture.indexOf('<h3 id="native-v22-title">', compositionSectionStart);
+const compositionSectionFixture = compositionFixture.slice(compositionSectionStart, compositionSectionEnd);
+const compositionMutations = [
+  ...compositionRows.flatMap((row) => row.slice(2).map((metric) => [`<td>${metric}</td>`, "<td>0.000001</td>"])),
+  ...compositionIdentities.map(([label, digest]) => [`<dt>${label}</dt> <dd>${digest}</dd>`, `<dt>${label}</dt> <dd>${"0".repeat(64)}</dd>`]),
+  ["baseline, packing-only, split-only, then composed", "composed, split-only, packing-only, then baseline"],
+  ["one excluded warmup and three measured requests per arm", "one excluded warmup and thirty measured requests per arm"],
+  ["same controller binary, historical f68 worker and six historical images", "same controller binary, latest worker and seven images"],
+  ["mean TPOT is 17.11% lower", "mean TPOT is 71.11% lower"],
+  ["mean TTFT is 0.52% higher", "mean TTFT is 0.52% lower"],
+  ["output rate is 16.28% higher", "output rate is 61.28% higher"],
+  ["not an additive prediction", "an additive prediction"],
+  ["do not establish confidence intervals", "establish confidence intervals"],
+  ["not HTTP timings or GPU durations", "HTTP timings and GPU durations"],
+  ["All 16 requests match all 2,048", "All 16 requests match all 1,024"],
+  ["unverified OCML accuracy bound", "verified OCML accuracy bound"],
+  ["The HTTP R3 pairs above remain losses", "Ferric beats vLLM"],
+  ["210 dependent operations and 528 guard checks", "211 dependent operations and 529 guard checks"],
+  ["raw ticks, not shader nanoseconds", "calibrated shader nanoseconds"],
+  ["[skip ci], with no GitHub-hosted build or test", "GitHub-hosted build and test passed"],
+  ["336-byte kernarg segment and 12 arguments", "344-byte kernarg segment and 13 arguments"],
+  ["passes 28 correctness cases and retains 12 timing cells", "passes 29 correctness cases and retains 13 timing cells"],
+  ["timings are diagnostics, not a full-model TTFT or TPOT result", "timings establish a full-model TTFT and TPOT gain"],
+  ["V28 full-model native screening is reported below; neither result is serving qualification", "V28 is serving qualified"],
+  ["e501fb19d64e4c28168612eeaa6a5f06865da4399a78910af6070e3a116c58e8", "0".repeat(64)],
+  ["32f5972eb1274bc0d3825e52e7c0cf65a09249f71f3aa36c44ce68c71223a32a", "0".repeat(64)],
+];
+for (const [before, after] of compositionMutations) {
+  assert(compositionFixture.includes(before), `Native composition rejection fixture missing: ${before}`);
+  const fixture = compositionSectionFixture.includes(before)
+    ? compositionFixture.slice(0, compositionSectionStart) + compositionSectionFixture.replace(before, after)
+      + compositionFixture.slice(compositionSectionEnd)
+    : compositionFixture.replace(before, after);
+  let rejected = false;
+  try { validateNativeCompositionSource(fixture); } catch { rejected = true; }
+  assert(rejected, `Native composition accepted changed evidence or scope: ${before}`);
+}
+
+function validateNativeV22Source(source) {
+  const start = source.indexOf('<h3 id="native-v22-title">');
+  const end = source.indexOf('<h3 id="native-v19-title">', start);
+  assert(start >= 0 && end > start, "V22 native section boundaries are missing");
+  assert(source.indexOf('id="native-v22-title"') === source.lastIndexOf('id="native-v22-title"'),
+    "V22 native section must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "V22 native packet-packing A/B",
+    "Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens, context 8192, BF16 decoder / FP32 head, speculation off and prefix caching off.",
+    "Each arm has one excluded warmup and three measured requests, in fixed baseline then candidate order.",
+    "Both arms use the same controller, f68 runtime, five unchanged images and sequential arrivals; only the packet-grouping selector changes.",
+    "In this run, mean TPOT is 11.63% lower and finite-window output rate is 11.47% higher.",
+    "Candidate TPOT samples are 98.199, 109.135 and 89.237 ms.",
+    "Three measured requests in fixed order do not establish a stable effect or confidence interval.",
+    "Defaults remain unchanged.",
+    "These are controller-ingress timings, not HTTP timings.",
+    "TTFT spans request arrival to first token completion; TPOT is the first-to-last token completion span divided by 127.",
+    "Output rate divides 384 tokens by the measured ingress window, including inter-request gaps and excluding warmup.",
+    "This is not sustained throughput, a GPU duration, a vendor comparison or serving qualification.",
+    "All eight requests match all 1,024 reference token IDs and decoded bytes.",
+    "Each arm completes 540 batches and 332,556 dispatches with successful owned cleanup.",
+    "Inherited CPU affinity and nice 0 are unchanged.",
+    "The separately tested ordered64 worker is not used in this pair.",
+    "This native A/B does not replace or improve the frozen HTTP result below.",
+  ]) {
+    assert(section.includes(claim), `V22 native section is missing: ${claim}`);
+  }
+  assert(!/\b(?:V22|Ferric|the candidate) (?:is |runs )?(?:faster than|beats|outperforms|wins against) (?:vLLM|SGLang)\b/i.test(section),
+    "V22 native cohort cannot claim a vendor win");
+  assert(section.includes('id="native-v22-results"') && (section.match(/<tr(?:\s|>)/g) ?? []).length === 3,
+    "V22 table requires exactly one header and two arms");
+  for (const heading of ["Packet-grouping arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `V22 column changed: ${heading}`);
+  }
+  for (const [arm, label, ttft, tpot, rate] of [
+    ["baseline", "Control: baseline", "2600.412", "111.871", "7.614984"],
+    ["packed16-v22", "Candidate: packed16-v22", "2524.218", "98.857", "8.488262"],
+  ]) {
+    assert(section.includes(`<tr data-v22-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `V22 ${arm} values differ from the accepted native report`);
+  }
+  for (const [label, digest] of [
+    ["V22 native report SHA-256", "634c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697"],
+    ["V22 retained archive SHA-256", "a16078f0541f06857cad27a6e549ed83759535ba71db1b967b61cced223e7287"],
+    ["Ordered64 correctness report SHA-256", "77e225baf226ef220234834207f6be8568b941ee35410da092bc7f014d5d0b33"],
+  ]) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `V22 receipt changed: ${label}`);
+  }
+  const ordered = source.match(/<p id="ordered64-progress">([\s\S]*?)<\/p>/)?.[1].replace(/\s+/g, " ");
+  assert(ordered?.includes("Historical synthetic-only check."), "Ordered64 synthetic history must remain explicitly historical");
+  assert(ordered?.includes("passes 251 synthetic dependent packets and 594 full-buffer/guard checks, including idle queue rollover"),
+    "Ordered64 exact correctness scope changed");
+  assert(ordered.includes("This is correctness-only: no model inference, timing result or model-performance gain is established."),
+    "Ordered64 correctness-only limitation missing");
+}
+
+function mutateNativeV22Fixture(source, before, after, scope = "native-v22") {
+  assert(scope === "native-v22" || scope === "ordered64-progress", "Unknown V22 mutation scope");
+  const [startMarker, endMarker] = scope === "native-v22"
+    ? ['<h3 id="native-v22-title">', '<h3 id="native-v19-title">']
+    : ['<p id="ordered64-progress">', "</p>"];
+  const start = source.indexOf(startMarker);
+  const end = source.indexOf(endMarker, start + startMarker.length);
+  assert(start >= 0 && end > start, `V22 mutation scope missing: ${scope}`);
+  const section = source.slice(start, end);
+  assert(section.includes(before), `V22 rejection fixture is missing in ${scope}: ${before}`);
+  assert(section.indexOf(before) === section.lastIndexOf(before), `V22 mutation target is ambiguous in ${scope}: ${before}`);
+  return source.slice(0, start) + section.replace(before, after) + source.slice(end);
+}
+
+validateNativeV22Source(indexSource);
+const nativeV22FixtureSource = indexSource.replace(/\s+/g, " ");
+for (const [before, after, scope = "native-v22"] of [
+  ["<td>111.871</td>", "<td>11.187</td>"], ["<td>98.857</td>", "<td>9.886</td>"],
+  ["<td>7.614984</td>", "<td>76.149840</td>"], ["<td>8.488262</td>", "<td>84.882620</td>"],
+  ["11.63% lower", "90% lower"], ["11.47%", "900%"],
+  ["fixed baseline", "randomized baseline"], ["five unchanged images", "six unchanged images"],
+  ["Historical synthetic-only check.", "Current model performance.", "ordered64-progress"],
+  ["passes 251 synthetic dependent packets", "passes 252 synthetic dependent packets", "ordered64-progress"],
+  ["no model inference, timing result", "model inference and timing result", "ordered64-progress"],
+  ["634c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697", "034c1634aac5a1a01fd7e436fe155a8d3300e14e5dca76bb0920dd0af54aa697"],
+]) {
+  const changed = mutateNativeV22Fixture(nativeV22FixtureSource, before, after, scope);
+  let rejected = false;
+  try {
+    validateNativeV22Source(changed);
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, `V22 accepted a changed measurement or claim: ${before}`);
+}
+const earlierV22Phrase = '<p id="unrelated-v22-mutation-fixture">fixed baseline</p>';
+const duplicatedV22Fixture = earlierV22Phrase + nativeV22FixtureSource;
+validateNativeV22Source(duplicatedV22Fixture);
+const changedV22Fixture = mutateNativeV22Fixture(duplicatedV22Fixture, "fixed baseline", "randomized baseline");
+assert(changedV22Fixture.startsWith(earlierV22Phrase), "V22 mutation changed the earlier unrelated phrase");
+assert(changedV22Fixture.includes("requests, in randomized baseline then candidate order."),
+  "V22 mutation missed the intended native ordering claim");
+let changedV22FixtureRejected = false;
+try { validateNativeV22Source(changedV22Fixture); } catch { changedV22FixtureRejected = true; }
+assert(changedV22FixtureRejected, "V22 duplicate-phrase regression failed to reject changed native evidence");
+
+function validateNativeV19Source(source) {
+  const start = source.indexOf('<h3 id="native-v19-title">');
+  const end = source.indexOf('<h3 id="matched-v5-title">', start);
+  assert(start >= 0 && end > start, "V19 native section boundaries are missing");
+  assert(source.indexOf('id="native-v19-title"') === source.lastIndexOf('id="native-v19-title"'),
+    "V19 native section must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "V19 native KV-copy A/B: no gain",
+    "Qwen3-8B on mi350, TP1/C1, with 128 input tokens and 128 output tokens, context 8192, BF16 decoder / FP32 head, speculation off and prefix caching off.",
+    "Each arm has one excluded warmup and three measured requests, in fixed control then candidate order.",
+    "Both arms load the same six images and use the same controller, runtime and sequential arrivals; only the KV-copy selector changes.",
+    "The candidate is slower on average in this run, with measured TPOT samples of 81.875, 101.385 and 87.431 ms.",
+    "Three samples in fixed order do not establish a stable effect or a confidence interval.",
+    "Defaults remain unchanged.",
+    "These are controller-ingress timings, not HTTP timings.",
+    "TTFT spans request arrival to first token completion; TPOT is the first-to-last token completion span divided by 127.",
+    "Output rate divides 384 tokens by the measured ingress window, including inter-request gaps and excluding warmup.",
+    "This is not sustained throughput, a GPU duration, a vendor comparison or serving qualification.",
+    "All eight requests match all 1,024 reference token IDs and decoded bytes.",
+    "Each arm completes 540 batches and 332,556 dispatches with successful owned cleanup.",
+    "Both arms retain inherited CPU affinity and nice 0.",
+    "Build receipts bind engineering provenance, not independent source-to-binary authentication.",
+    "This native A/B does not replace or improve the frozen HTTP result below.",
+  ]) {
+    assert(section.includes(claim), `V19 native section is missing: ${claim}`);
+  }
+  for (const claim of [
+    /\b(?:V19|the candidate|Ferric) (?:is |runs )?(?:faster|beats|outperforms|wins)\b/i,
+    /\b(?:V19|the candidate) (?:speedup|performance gain)\b/i,
+  ]) {
+    assert(!claim.test(section), `V19 native section contains a gain claim: ${claim}`);
+  }
+  assert(section.includes('id="native-v19-results"'), "V19 native table is missing");
+  for (const heading of ["KV-copy arm", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `V19 native column changed: ${heading}`);
+  }
+  assert((section.match(/<tr(?:\s|>)/g) ?? []).length === 3, "V19 native table must contain only a header and two arms");
+  for (const [arm, label, ttft, tpot, rate] of [
+    ["baseline", "Control: baseline", "2300.203", "84.754", "9.797679"],
+    ["parallel-c1-v19", "Candidate: parallel-c1-v19", "2458.523", "90.230", "9.196630"],
+  ]) {
+    assert(section.includes(`<tr data-v19-arm="${arm}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `V19 native ${arm} row differs from the accepted report`);
+  }
+  for (const [label, digest] of [
+    ["V19 native report SHA-256", "93817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3"],
+    ["V19 retained archive SHA-256", "4f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61"],
+  ]) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `V19 native receipt changed: ${label}`);
+  }
+}
+
+validateNativeV19Source(indexSource);
+const nativeV19Start = indexSource.indexOf('<h3 id="native-v19-title">');
+const nativeV19End = indexSource.indexOf('<h3 id="matched-v5-title">', nativeV19Start);
+const nativeV19Source = indexSource.slice(nativeV19Start, nativeV19End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ["2300.203", "230.203"],
+  ["84.754", "8.475"],
+  ["9.797679", "97.976790"],
+  ["2458.523", "245.852"],
+  ["90.230", "9.023"],
+  ["9.196630", "91.966300"],
+  ["TP1/C1", "TP8/C8"],
+  ["one excluded warmup and three measured requests", "one excluded warmup and thirty measured requests"],
+  ["in fixed control", "in randomized control"],
+  ["controller-ingress timings, not HTTP timings", "HTTP timings"],
+  ["This is not sustained throughput", "This is sustained throughput"],
+  ["1,024 reference token IDs", "128 reference token IDs"],
+  ["332,556 dispatches", "332,555 dispatches"],
+  ["not independent source-to-binary authentication", "independent source-to-binary authentication"],
+  ["93817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3", "03817dcd9bb5d66ced2f03d639a89e152626097dc979783a82c6d76ea95600b3"],
+  ["4f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61", "0f8e658d2c14bdb8ce1669aeab8ef382444d93fb4db258ed9cfd16e812a37a61"],
+  ["Defaults remain unchanged.", "Defaults remain unchanged. V19 is faster."],
+]) {
+  assert(nativeV19Source.includes(before), `V19 rejection fixture is missing: ${before}`);
+  let rejected = false;
+  try {
+    validateNativeV19Source(indexSource.slice(0, nativeV19Start)
+      + nativeV19Source.replace(before, after) + indexSource.slice(nativeV19End));
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, `V19 validation accepted a changed measurement or claim: ${before}`);
+}
+
+function validateMatchedV5Source(source) {
+  const start = source.indexOf('<h3 id="matched-v5-title">');
+  const end = source.indexOf('<div data-live-http-progress>', start);
+  assert(start >= 0 && end > start, "V5 matched section boundaries are missing");
+  assert(source.indexOf('id="matched-v5-title"') === source.lastIndexOf('id="matched-v5-title"'),
+    "V5 matched section must be unique");
+  const section = source.slice(start, end).replace(/\s+/g, " ");
+  for (const claim of [
+    "V5 matched Ferric / vLLM HTTP pair",
+    "Qwen3-8B on mi350 physical GPU 0, TP1, concurrency 1, 128 input and 128 output tokens, context 8192, BF16 decoder and FP32 output-head profile.",
+    "Both engines use the same SSE client, with speculation and prefix caching disabled.",
+    "10 excluded warmups, 30 measured requests and two untimed output diagnostics.",
+    "Ferric has 27.08 times the mean TPOT and 128.37 times the mean TTFT of vLLM in this cell.",
+    "All 30 measured requests succeed for each engine.",
+    "Cohorts run in fixed order, vLLM then Ferric, with one server start each; no confidence interval or stable tail claim follows.",
+    "This is not a stock BF16-output-head comparison.",
+    "TTFT is client send to first nonempty text.",
+    "TPOT is the first-to-last text span divided by 127, not true per-token inter-token latency.",
+    "Output rate divides 3,840 tokens by the complete measured cohort window, including request gaps and drain, excluding warmups and diagnostics.",
+    "It is not sustained throughput.",
+    "Independent replay passes the same plan, client, model/image hash receipts and reference checks.",
+    "Ferric token IDs match for all 42 requests; vLLM token IDs match in the two untimed diagnostics, while its 40 timed requests match decoded text and usage.",
+    "Owned processes and the vendor container are cleaned up, and GPU postflight checks are idle.",
+    "The replay checks retained hash receipts; it does not independently rehash model files.",
+    "Ferric baseline keeps its 1fc45a52 implementation and 5ed3840a runtime attribution",
+    "existing kernel images retain their original producers.",
+    "A finite matched cohort does not establish sustained throughput, serving qualification, a general engine ranking or SGLang performance.",
+  ]) {
+    assert(section.includes(claim), `V5 matched section is missing: ${claim}`);
+  }
+  for (const claim of [
+    /\bFerric (?:is |runs )?(?:faster than|beats|outperforms)\b/i,
+    /\bFerric (?:wins|is competitive|has achieved parity)\b/i,
+    /\b(?:general engine|framework) win\b/i,
+  ]) {
+    assert(!claim.test(section), `V5 matched section contains a win claim: ${claim}`);
+  }
+  assert(section.includes('id="matched-v5-results"'), "V5 matched table is missing");
+  for (const heading of ["Engine", "Mean TTFT (ms)", "Mean TPOT (ms)", "Output tokens/s"]) {
+    assert(section.includes(`<th scope="col">${heading}</th>`), `V5 matched column changed: ${heading}`);
+  }
+  assert((section.match(/<tr(?:\s|>)/g) ?? []).length === 3, "V5 matched table must contain only a header and two engines");
+  for (const [engine, label, ttft, tpot, rate] of [
+    ["ferric", "Ferric V17 combined", "2555.823", "114.619", "7.479295"],
+    ["vllm", "vLLM 0.28.0", "19.909", "4.232", "229.358430"],
+  ]) {
+    assert(section.includes(`<tr data-v5-engine="${engine}"> <th scope="row">${label}</th> <td>${ttft}</td> <td>${tpot}</td> <td>${rate}</td> </tr>`),
+      `V5 matched ${engine} row differs from the replay-confirmed summary`);
+  }
+  for (const [label, digest] of [
+    ["Paired replay summary SHA-256", "11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9"],
+    ["Shared plan SHA-256", "b25fa9824afeac3b5531aa4748b708abfd8edf87e839a7e862d68f1d41f18175"],
+    ["Ferric receipt SHA-256", "f6e4837cf1a613e41e28ec311476fbe77a9b1fab9c133a2c7140a8e6cc1be37a"],
+    ["vLLM receipt SHA-256", "dc98f64b11228002526fe47184b3fe14de419347f45e467692d6ebe9991c94f2"],
+  ]) {
+    assert(section.includes(`<dt>${label}</dt> <dd>${digest}</dd>`), `V5 matched receipt changed: ${label}`);
+  }
+}
+
+validateMatchedV5Source(indexSource);
+const matchedV5Start = indexSource.indexOf('<h3 id="matched-v5-title">');
+const matchedV5End = indexSource.indexOf('<div data-live-http-progress>', matchedV5Start);
+const matchedV5Fixture = indexSource.slice(matchedV5Start, matchedV5End).replace(/\s+/g, " ");
+for (const [before, after] of [
+  ["2555.823", "255.823"],
+  ["114.619", "11.461"],
+  ["229.358430", "22.935843"],
+  ["TP1, concurrency 1, 128 input and 128 output", "TP8, concurrency 8, 128 input and 128 output"],
+  ["BF16 decoder and FP32 output-head profile", "BF16 decoder and BF16 output-head profile"],
+  ["speculation and prefix caching disabled", "speculation and prefix caching enabled"],
+  ["30 measured requests and two untimed output diagnostics", "31 measured requests and two untimed output diagnostics"],
+  ["not true per-token inter-token latency", "true per-token inter-token latency"],
+  ["It is not sustained throughput.", "It is sustained throughput."],
+  ["11c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9", "01c761a2e4408fc29a822a29f87ed10995c5799e407fc3233068f197836974a9"],
+  ["Ferric has 27.08 times", "Ferric beats vLLM. Ferric has 27.08 times"],
+]) {
+  assert(matchedV5Fixture.includes(before), `V5 rejection fixture is missing: ${before}`);
+  let rejected = false;
+  try {
+    validateMatchedV5Source(indexSource.slice(0, matchedV5Start)
+      + matchedV5Fixture.replace(before, after) + indexSource.slice(matchedV5End));
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, `V5 validation accepted a changed measurement or claim: ${before}`);
+}
+
 for (const target of [
   "data-readiness",
   "data-resident-progress",

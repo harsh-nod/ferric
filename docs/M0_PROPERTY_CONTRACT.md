@@ -37,7 +37,8 @@ Each `Proved` record must bind:
 
 - this exact statement and its compiler-reported executable function paths;
 - the complete read-only source closure and same-source specifications;
-- the structured whole-crate Verus result produced with `--no-cheating`;
+- the structured whole-crate library-target Verus result produced with
+  `--lib --no-cheating`;
 - the authenticated Verus, `rust_verify`, Z3, vstd, Rust, and configuration
   identities used by the qualification;
 - the exact negative mutations assigned to the property; and
@@ -55,7 +56,7 @@ constructing the set.
 
 The qualification builds `proofs/property-binder` against
 `fe2o3-proof-contracts` at exact fe2o3 commit
-`a6fa86b5ccf8f0438925cfec8f48a5d713874da3`. The binder checks this table
+`e527d230c05dfeefec6cc6c91de0b6f16310f677`. The binder checks this table
 against `proofs/M0_PROPERTIES.json`, reconciles every `Proved` path and required
 actual-body mutation, invokes `ContractSetV1::validate_closed`, and emits a
 canonical property artifact. Its binary, source closure, lockfile, complete

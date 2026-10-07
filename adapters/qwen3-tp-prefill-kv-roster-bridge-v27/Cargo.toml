@@ -1,0 +1,20 @@
+[package]
+name = "ferric-qwen3-tp-prefill-kv-roster-bridge-v27"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+publish = false
+
+[workspace]
+
+[dependencies]
+
+[build-dependencies]
+ferric-qwen3-tp-prefill-kv-copy-kernels-device-v27 = { path = "../../device/qwen3-tp-prefill-kv-copy-kernels-v27", version = "=0.1.0", default-features = false, features = ["gfx950"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }

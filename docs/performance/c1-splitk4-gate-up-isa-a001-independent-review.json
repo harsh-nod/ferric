@@ -1,0 +1,61 @@
+{
+  "schema": "FerricSplitK4GateUpIndependentStaticReviewV1",
+  "accepted": true,
+  "scope": "Independent raw ELF sections, AMDGPU MessagePack metadata, kernel descriptors, ISA and retained source/emission receipt hashes; no GPU execution",
+  "image": {
+    "sha256": "d28610d291eeec0589afbf269e26d21b7111c96f08106e1f661d6a66f024bf03",
+    "bytes": 13136,
+    "observation_sha256": "a7417322dafe8e0af927a6457f0dea2c324e94ec2692329f7d76a215ed3273bb",
+    "capture_sha256": "9b4966c0bef0b78584567249ce2796df97df6606aa6fb19a982029ed55a2dc3c",
+    "capture_state": "payload-complete"
+  },
+  "partial": {
+    "symbol": "ferric_qwen3_c1_gate_up_splitk4_mfma_partial_f32_r1",
+    "kernarg_bytes": 328,
+    "implicit_offset": 72,
+    "alignment": 8,
+    "sgpr": 36,
+    "vgpr": 28,
+    "agpr": 4,
+    "code_bytes": 1288,
+    "workgroup": 64,
+    "wave": 64,
+    "spills": 0,
+    "private_bytes": 0,
+    "lds_bytes": 0,
+    "dynamic_stack": false,
+    "observed": "64 K16 MFMA iterations per K1024 partition; 16-bit tile arithmetic covers 768 column tiles; lane 0..15 FP32 stores"
+  },
+  "merge": {
+    "symbol": "ferric_qwen3_c1_gate_up_splitk4_merge_bf16_r1",
+    "kernarg_bytes": 288,
+    "implicit_offset": 32,
+    "alignment": 8,
+    "sgpr": 25,
+    "vgpr": 9,
+    "agpr": 0,
+    "code_bytes": 596,
+    "workgroup": 64,
+    "wave": 64,
+    "spills": 0,
+    "private_bytes": 0,
+    "lds_bytes": 0,
+    "dynamic_stack": false,
+    "observed": "FP32 loads at offsets 0,49152,98304,147456; ordered additions with finite checks; final BF16 round-to-nearest-even and 16-bit store"
+  },
+  "custody": {
+    "retained_files_rehashed": 91,
+    "source_files": 9,
+    "clean_cpu_receipt_pairs": 5,
+    "emission_inner_sha256": "15259fcb41504af3f7084bb996b11093a42e859006fb737a07c68a495a56676e",
+    "emission_outer_sha256": "69a26c7cf879dfae6403571652a5f20f3e9e9c6fcfca52cb3b4d66c773860328",
+    "inspection_inner_sha256": "c827d0e0e711e07d3d695c7b8e85928377c6df9e36f5ca6f170d0891c91060ae",
+    "inspection_outer_sha256": "9c9d312f561dd7da72ab22b8ad3a6a47bc88050f3ad33fd26526a82ed0b67023",
+    "source_matches_frozen": true,
+    "original_inspection_abi_admitted": false
+  },
+  "native_correctness_established": false,
+  "native_performance_established": false,
+  "formal_proof": false,
+  "default_promotion": false
+}

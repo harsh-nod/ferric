@@ -1,0 +1,1482 @@
+{
+  "experiments/component-harnesses/packet-v19/bind_build.py": {
+    "sha256": "3a2b5929a8838737d4b56ace423f23b8ab2df3a8ed39db52d3ba0b98c18e0bad",
+    "source": "perf-packet-v19-55c-harness-r3/bind_build.py"
+  },
+  "experiments/component-harnesses/packet-v19/check_actual_binding.py": {
+    "sha256": "d48ff64742b2e606a02044d0c35e39d8bd7f90a06ba040f48df62040251def89",
+    "source": "perf-packet-v19-55c-harness-r3/check_actual_binding.py"
+  },
+  "experiments/component-harnesses/packet-v19/check_actual_binding_enabled.py": {
+    "sha256": "36e04fa0508eacf2b033cd5c2052130dbf3ccc0e238d12aa29c29a59cda1e08d",
+    "source": "perf-packet-v19-55c-harness-r3/check_actual_binding_enabled.py"
+  },
+  "experiments/component-harnesses/packet-v19/export_native_inputs.py": {
+    "sha256": "e04edc3d145c8fdc006cf123ca665496a494d821e32fb8b5081a9b835fd31c4b",
+    "source": "perf-packet-v19-55c-harness-r3/export_native_inputs.py"
+  },
+  "experiments/component-harnesses/packet-v19/export_native_inputs_a002.py": {
+    "sha256": "19676c6ba88fbc14eddc82ddd22790c4349c339ee3471f220426576f1fcf257b",
+    "source": "perf-packet-v19-55c-harness-r3/export_native_inputs_a002.py"
+  },
+  "experiments/component-harnesses/packet-v19/export_native_inputs_a002_enabled.py": {
+    "sha256": "e24722ce4742b9bdab0525ea9400bd91f3fce688e8ca7221b8625f218a77a78f",
+    "source": "perf-packet-v19-55c-harness-r3/export_native_inputs_a002_enabled.py"
+  },
+  "experiments/component-harnesses/packet-v19/export_native_inputs_a003.py": {
+    "sha256": "82fa0c4dafa7265005b1941834a26c2b4253ae4da503accf399283b3883adc6a",
+    "source": "perf-packet-v19-55c-harness-r3/export_native_inputs_a003.py"
+  },
+  "experiments/component-harnesses/packet-v19/export_native_inputs_enabled.py": {
+    "sha256": "518b40160f34edcd377dd290657c19cdf39a360981a94304da8a16930b12181f",
+    "source": "perf-packet-v19-55c-harness-r3/export_native_inputs_enabled.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/controller_binding.py": {
+    "sha256": "633fd0ba2181c1870d23547d15de67396bb45ba6f2a8ad2226cc7b1861cd4af4",
+    "source": "perf-packet-v19-55c-harness-r3/harness/controller_binding.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/controller_qualifier.py": {
+    "sha256": "5d30ac68ac5c6cc0a046764e30accb74117cd077b934d5c83f3b3f617a5663b1",
+    "source": "perf-packet-v19-55c-harness-r3/harness/controller_qualifier.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/launch_contract.py": {
+    "sha256": "2f0acb9407586462a1ed70dd70bfb1c3dba5d51a2ca7f837662ce0a2ae278105",
+    "source": "perf-packet-v19-55c-harness-r3/harness/launch_contract.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/measurement/abba_ledger.py": {
+    "sha256": "8826d0a692211222df8fc2fe28fb6b4b28b1e51be4bf9625879bab045135b898",
+    "source": "perf-packet-v19-55c-harness-r3/harness/measurement/abba_ledger.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/measurement/gpu_activity.py": {
+    "sha256": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "source": "perf-packet-v19-55c-harness-r3/harness/measurement/gpu_activity.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/measurement/native_campaign_replay.py": {
+    "sha256": "9a69bda6805cc4b8be3a0c569c99b1b4efba5f805e28339a9cb03bae527922f2",
+    "source": "perf-packet-v19-55c-harness-r3/harness/measurement/native_campaign_replay.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/measurement/native_lifecycle.py": {
+    "sha256": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "source": "perf-packet-v19-55c-harness-r3/harness/measurement/native_lifecycle.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/measurement/native_token_cell.py": {
+    "sha256": "1ffcb1c0d8747890c85f88153f175cc62741dd918fbf42964f2f85e718b3ff42",
+    "source": "perf-packet-v19-55c-harness-r3/harness/measurement/native_token_cell.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/measurement/packet_ticks.py": {
+    "sha256": "bbcba82734b1f71990448e8b80c52158815a655e76980f0b1783bf85757e13a7",
+    "source": "perf-packet-v19-55c-harness-r3/harness/measurement/packet_ticks.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/measurement/test_gpu_activity.py": {
+    "sha256": "397038b2b050c60b1a4a935a3f416f3d1af6847de045ef659972f7d316fbd5bd",
+    "source": "perf-packet-v19-55c-harness-r3/harness/measurement/test_gpu_activity.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/measurement/test_native_lifecycle.py": {
+    "sha256": "73c96e5624b7aab39da1dc66d1a113ec516fc68cc4b7ddf17cf81fc6fab50bfc",
+    "source": "perf-packet-v19-55c-harness-r3/harness/measurement/test_native_lifecycle.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/prepare_stage.py": {
+    "sha256": "c638da1bd7a2ed0c0bdf614a8d28824f88a2f5b72551eb7948a45c208c52b314",
+    "source": "perf-packet-v19-55c-harness-r3/harness/prepare_stage.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/run_stage.py": {
+    "sha256": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "source": "perf-packet-v19-55c-harness-r3/harness/run_stage.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/runtime_binding.py": {
+    "sha256": "0a5853b0544ec658f1c433532a50b1d5bd87fbf1c06170ab53ae05c88caf5ece",
+    "source": "perf-packet-v19-55c-harness-r3/harness/runtime_binding.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/test_cpu_binding.py": {
+    "sha256": "733906287c82235a4b235eb763ee69fe2106209e550f4120ea9bc1f76eaf75df",
+    "source": "perf-packet-v19-55c-harness-r3/harness/test_cpu_binding.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/test_native_launch.py": {
+    "sha256": "84014b7f10157f4f54f78397178f4967b449c96e3b6b60ffd0290bf366446bc5",
+    "source": "perf-packet-v19-55c-harness-r3/harness/test_native_launch.py"
+  },
+  "experiments/component-harnesses/packet-v19/harness/v19_qualifier.py": {
+    "sha256": "0660dc79d28000e78f972fe4dc4460f63271671875526fa43539c329de21fe7f",
+    "source": "perf-packet-v19-55c-harness-r3/harness/v19_qualifier.py"
+  },
+  "experiments/component-harnesses/packet-v19/prepare_qualification.py": {
+    "sha256": "3ad41a7695ad0d690c6c64fe84dca69815a1164110f14d65fcc8d136e30bdce4",
+    "source": "perf-packet-v19-55c-harness-r3/prepare_qualification.py"
+  },
+  "experiments/component-harnesses/packet-v19/prepare_qualification_enabled.py": {
+    "sha256": "e94fe386e94f4bcbd6e68b5536ccdb1647e3ad780ea3ebcf5b359204ff7774e3",
+    "source": "perf-packet-v19-55c-harness-r3/prepare_qualification_enabled.py"
+  },
+  "experiments/component-harnesses/packet-v19/restore_native_inputs.py": {
+    "sha256": "069d486b6520b8dd91b1706ee4a20cf12267a14aa6f051824f5c7cd51aa3e826",
+    "source": "perf-packet-v19-55c-harness-r3/restore_native_inputs.py"
+  },
+  "experiments/component-harnesses/packet-v19/test_packet_ticks.py": {
+    "sha256": "00e2a9a1375ef059cede13efc2270e29697b021ac6c29962d1f85654306b4f64",
+    "source": "perf-packet-v19-55c-harness-r3/test_packet_ticks.py"
+  },
+  "experiments/component-harnesses/packet-v19/test_packet_v19_cell.py": {
+    "sha256": "5f6b0a01ba63114552647c3b2ba4a8916d7206b121e3df6642f974143213eb4e",
+    "source": "perf-packet-v19-55c-harness-r3/test_packet_v19_cell.py"
+  },
+  "experiments/component-harnesses/packet-v19/transport_binding_check.py": {
+    "sha256": "b5a539e8ef14fa3d9464974fe6873c8c3f295a4a47d9175623ff37e37941c1c2",
+    "source": "perf-packet-v19-55c-harness-r3/transport_binding_check.py"
+  },
+  "experiments/component-harnesses/packet-v19/transport_export.py": {
+    "sha256": "7ecc60e23f90065f83ce85ccb2e3b296a6d080f9b2f24175896b25fc4a18763d",
+    "source": "perf-packet-v19-55c-harness-r3/transport_export.py"
+  },
+  "experiments/component-harnesses/packet-v19/transport_export_a002.py": {
+    "sha256": "6c62fa9f5d5d266bcc36d7ab2fced7385a8c140d2ce08e13284ba4d3f05bdcf0",
+    "source": "perf-packet-v19-55c-harness-r3/transport_export_a002.py"
+  },
+  "experiments/component-harnesses/packet-v19/transport_inputs.py": {
+    "sha256": "30686cf52c14ecb635b3d78ae4d90fb422152a8f4444d665287b87274b0978fc",
+    "source": "perf-packet-v19-55c-harness-r3/transport_inputs.py"
+  },
+  "experiments/component-harnesses/prefill-k16/component.py": {
+    "sha256": "e9837407d7c169bd17e508648726d489204bc06a117bd2d43e4c987d4c6f1bbe",
+    "source": "perf-prefill-k16-component-r1/native-a001/component.py"
+  },
+  "experiments/component-harnesses/prefill-k16/component_admission.py": {
+    "sha256": "ef0a420f815255cb3ef90ebe9b7110694782d47b3d27dd4bb68a22f5e625b9d3",
+    "source": "perf-prefill-k16-component-r1/native-a001/component_admission.py"
+  },
+  "experiments/component-harnesses/prefill-k16/component_contract.py": {
+    "sha256": "815b19a5b9cb51409a6d4add1a22240b414d732d14d475ad3c6360e8ea513997",
+    "source": "perf-prefill-k16-component-r1/native-a001/component_contract.py"
+  },
+  "experiments/component-harnesses/prefill-k16/component_entry.py": {
+    "sha256": "ac55489a404b6f373ce3e16d366f9f2fc0051b271b982c7243e4dd5a5a146262",
+    "source": "perf-prefill-k16-component-r1/native-a001/component_entry.py"
+  },
+  "experiments/component-harnesses/prefill-k16/fixtures.py": {
+    "sha256": "6db144ab434039df750f23e4d066e0b4137087fc2ec4a12b00ade9cc610505cb",
+    "source": "perf-prefill-k16-component-r1/native-a001/fixtures.py"
+  },
+  "experiments/component-harnesses/prefill-k16/frozen/component_fixtures.py": {
+    "sha256": "30bfd7d03ecbc2d990fd79da2cad1d88cfecb2886abfa4cb81b63a613bb547d9",
+    "source": "perf-prefill-k16-component-r1/native-a001/frozen/component_fixtures.py"
+  },
+  "experiments/component-harnesses/prefill-k16/frozen/launch_contract.py": {
+    "sha256": "66dc65822584035bfdd385f20f09578388b2dc655e6d5524aa71749422f32d14",
+    "source": "perf-prefill-k16-component-r1/native-a001/frozen/launch_contract.py"
+  },
+  "experiments/component-harnesses/prefill-k16/frozen/native_supervisor.py": {
+    "sha256": "0c2a7cacbffbe74827ade03fd09f05a927cb9ba051ff475744be8d79f3a96436",
+    "source": "perf-prefill-k16-component-r1/native-a001/frozen/native_supervisor.py"
+  },
+  "experiments/component-harnesses/prefill-k16/frozen/probe.py": {
+    "sha256": "a9e702e77f00e414984ac44dc1d72da15145ae3013c6077932c2daef5004203b",
+    "source": "perf-prefill-k16-component-r1/native-a001/frozen/probe.py"
+  },
+  "experiments/component-harnesses/prefill-k16/frozen/process_evidence.py": {
+    "sha256": "e8d70b045e3c4b2d8a025df31d0e61193dceaa35d97b83b1d541ae1f1d72bc2d",
+    "source": "perf-prefill-k16-component-r1/native-a001/frozen/process_evidence.py"
+  },
+  "experiments/component-harnesses/prefill-k16/frozen/profile_v17.py": {
+    "sha256": "37e1aeda338331733617ead881192b20ed769e498e1e991e271295bdb1174158",
+    "source": "perf-prefill-k16-component-r1/native-a001/frozen/profile_v17.py"
+  },
+  "experiments/component-harnesses/prefill-k16/frozen/run_stage.py": {
+    "sha256": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "source": "perf-prefill-k16-component-r1/native-a001/frozen/run_stage.py"
+  },
+  "experiments/component-harnesses/prefill-k16/k16_component.py": {
+    "sha256": "f6c9689a00b659da6613b2b4c93319d0d192ebccf1c1566845273d5daee5e24c",
+    "source": "perf-prefill-k16-component-r1/native-a001/k16_component.py"
+  },
+  "experiments/component-harnesses/prefill-k16/k16_provenance.py": {
+    "sha256": "c1a48e8a50259fb4f6346e4fb6eba29419a0c5e72a2fb7f3fa09be728e81dd66",
+    "source": "perf-prefill-k16-component-r1/native-a001/k16_provenance.py"
+  },
+  "experiments/component-harnesses/prefill-k16/measurement/gpu_activity.py": {
+    "sha256": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "source": "perf-prefill-k16-component-r1/native-a001/measurement/gpu_activity.py"
+  },
+  "experiments/component-harnesses/prefill-k16/measurement/native_lifecycle.py": {
+    "sha256": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "source": "perf-prefill-k16-component-r1/native-a001/measurement/native_lifecycle.py"
+  },
+  "experiments/component-harnesses/prefill-k16/ordered_dispatch.py": {
+    "sha256": "153ee2390ae20e8999d8e6e8b42330215c96aeb07bf820cb09d933e2e93f4d2f",
+    "source": "perf-prefill-k16-component-r1/native-a001/ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/prefill-k16/prepare_k16_bundle.py": {
+    "sha256": "ace40bd467ba3711782ae0ea2e5ebacc25f7381515375f63e1ef2878545f7729",
+    "source": "perf-prefill-k16-component-r1/native-a001/prepare_k16_bundle.py"
+  },
+  "experiments/component-harnesses/prefill-k16/qualify_source.py": {
+    "sha256": "fc59d4a8a053267628c696e8ffe84fdad7cbfb553c9093f50cbc12b7f7ba98fa",
+    "source": "perf-prefill-k16-component-r1/native-a001/qualify_source.py"
+  },
+  "experiments/component-harnesses/prefill-k16/runtime_binding.py": {
+    "sha256": "0a5853b0544ec658f1c433532a50b1d5bd87fbf1c06170ab53ae05c88caf5ece",
+    "source": "perf-prefill-k16-component-r1/native-a001/runtime_binding.py"
+  },
+  "experiments/component-harnesses/prefill-k16/slice_views.py": {
+    "sha256": "f576340f4088bd3bb2267203b789004638a6caa3b2e943932ade15db443a8a4f",
+    "source": "perf-prefill-k16-component-r1/native-a001/slice_views.py"
+  },
+  "experiments/component-harnesses/prefill-k16/supervise_component.py": {
+    "sha256": "614afa96e611cad109e971fa05877e63660a9fffc1c5ea069a0a3eb362d2f206",
+    "source": "perf-prefill-k16-component-r1/native-a001/supervise_component.py"
+  },
+  "experiments/component-harnesses/prefill-k16/test_component_inputs.py": {
+    "sha256": "912b9acf142360bab2ea0f8ee8853fdec513a89c6d082e74d8ae419955995e17",
+    "source": "perf-prefill-k16-component-r1/native-a001/test_component_inputs.py"
+  },
+  "experiments/component-harnesses/prefill-k16/test_k16_bundle.py": {
+    "sha256": "ec9629b89612c8d7bb4dc2dc70d26111802015def7cc841254c273d63a5e4128",
+    "source": "perf-prefill-k16-component-r1/native-a001/test_k16_bundle.py"
+  },
+  "experiments/component-harnesses/prefill-k16/test_k16_component.py": {
+    "sha256": "94fbebc792e9efed8f629361104d894d23c1761768299eb93ffbc2a63826ffee",
+    "source": "perf-prefill-k16-component-r1/native-a001/test_k16_component.py"
+  },
+  "experiments/component-harnesses/prefill-k16/test_k16_provenance.py": {
+    "sha256": "ccbcad7dfb0d1c70a53e4627ace5b88c1843c8b380362240ef4bc995f648fd99",
+    "source": "perf-prefill-k16-component-r1/native-a001/test_k16_provenance.py"
+  },
+  "experiments/component-harnesses/prefill-k16/test_ordered_dispatch.py": {
+    "sha256": "51432fd3033418605e11f31fff13cd0aefa4285ce67e6475817edd480961ef3e",
+    "source": "perf-prefill-k16-component-r1/native-a001/test_ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/prefill-k16/test_supervisor.py": {
+    "sha256": "1a072a8a9f34c3e5e2f1e93fab517a63733e83edbfb608d95e41c85fc1bc9bb1",
+    "source": "perf-prefill-k16-component-r1/native-a001/test_supervisor.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/component.py": {
+    "sha256": "e9837407d7c169bd17e508648726d489204bc06a117bd2d43e4c987d4c6f1bbe",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/component.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/component_admission.py": {
+    "sha256": "ef0a420f815255cb3ef90ebe9b7110694782d47b3d27dd4bb68a22f5e625b9d3",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/component_admission.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/component_contract.py": {
+    "sha256": "9f35afa9503759b5fee5319b458682a328b93748dc6fa119015f821b692899a5",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/component_contract.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/component_entry.py": {
+    "sha256": "df3f385bfc78e353aecc744d5bae1e71db10fec3ea475513cd6bbb4eb30c8289",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/component_entry.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/fixtures.py": {
+    "sha256": "6db144ab434039df750f23e4d066e0b4137087fc2ec4a12b00ade9cc610505cb",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/fixtures.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/frozen/component_fixtures.py": {
+    "sha256": "30bfd7d03ecbc2d990fd79da2cad1d88cfecb2886abfa4cb81b63a613bb547d9",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/frozen/component_fixtures.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/frozen/launch_contract.py": {
+    "sha256": "66dc65822584035bfdd385f20f09578388b2dc655e6d5524aa71749422f32d14",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/frozen/launch_contract.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/frozen/native_supervisor.py": {
+    "sha256": "0c2a7cacbffbe74827ade03fd09f05a927cb9ba051ff475744be8d79f3a96436",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/frozen/native_supervisor.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/frozen/probe.py": {
+    "sha256": "a9e702e77f00e414984ac44dc1d72da15145ae3013c6077932c2daef5004203b",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/frozen/probe.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/frozen/process_evidence.py": {
+    "sha256": "e8d70b045e3c4b2d8a025df31d0e61193dceaa35d97b83b1d541ae1f1d72bc2d",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/frozen/process_evidence.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/frozen/profile_v17.py": {
+    "sha256": "37e1aeda338331733617ead881192b20ed769e498e1e991e271295bdb1174158",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/frozen/profile_v17.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/frozen/run_stage.py": {
+    "sha256": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/frozen/run_stage.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/k16_component.py": {
+    "sha256": "e90139efc186db9b51a2a3a81bd24fc4d59e912322cf731c082075481b3d3afe",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/k16_component.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/k16_provenance.py": {
+    "sha256": "c1a48e8a50259fb4f6346e4fb6eba29419a0c5e72a2fb7f3fa09be728e81dd66",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/k16_provenance.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/measurement/gpu_activity.py": {
+    "sha256": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/measurement/gpu_activity.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/measurement/native_lifecycle.py": {
+    "sha256": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/measurement/native_lifecycle.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/ordered_dispatch.py": {
+    "sha256": "153ee2390ae20e8999d8e6e8b42330215c96aeb07bf820cb09d933e2e93f4d2f",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/prepare_k16_bundle.py": {
+    "sha256": "82c690c3040b72fda2c5c683b4a63559a226f9b7fdf0f722802a695059c4fe36",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/prepare_k16_bundle.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/qualify_source.py": {
+    "sha256": "05ada5aa02e5b722f82ee7cabb929bcfe41215a2b391567f53371b4a3a620ae7",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/qualify_source.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/runtime_binding.py": {
+    "sha256": "0a5853b0544ec658f1c433532a50b1d5bd87fbf1c06170ab53ae05c88caf5ece",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/runtime_binding.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/slice_views.py": {
+    "sha256": "f576340f4088bd3bb2267203b789004638a6caa3b2e943932ade15db443a8a4f",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/slice_views.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/supervise_component.py": {
+    "sha256": "7c904b46d34777cda9036e35d119d22c09a0d7f3b521340f2e511865964a7140",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/supervise_component.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/test_component_inputs.py": {
+    "sha256": "912b9acf142360bab2ea0f8ee8853fdec513a89c6d082e74d8ae419955995e17",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/test_component_inputs.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/test_k16_bundle.py": {
+    "sha256": "514b207b96d679cbc421e63ef0cfdd7cdaa8903627f08beddae083c5f93a4463",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/test_k16_bundle.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/test_k16_component.py": {
+    "sha256": "719e3453bbbee6076e9af3cd023559995087a9ef099ef3ee183b7250d2e97d0f",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/test_k16_component.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/test_k16_provenance.py": {
+    "sha256": "f2c46676914b334ad5f4cb2aad8a66a39ff711b5f74bb60b632184673673ef80",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/test_k16_provenance.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/test_ordered_dispatch.py": {
+    "sha256": "51432fd3033418605e11f31fff13cd0aefa4285ce67e6475817edd480961ef3e",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/test_ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/prefill-k16ticks/test_supervisor.py": {
+    "sha256": "be44ab097fd88dda8caeeee53cb1c273146280af0844f4d6859cbc683bbc3717",
+    "source": "perf-prefill-k16ticks-component-r1/native-a001/test_supervisor.py"
+  },
+  "experiments/component-harnesses/prefill-m32/component.py": {
+    "sha256": "e9837407d7c169bd17e508648726d489204bc06a117bd2d43e4c987d4c6f1bbe",
+    "source": "perf-prefill-m32-component-r1/native-a001/component.py"
+  },
+  "experiments/component-harnesses/prefill-m32/component_admission.py": {
+    "sha256": "cc3bd217f424fa3d193c5311df846bbc9ab364e51cb29a41eac0888eb68e23f5",
+    "source": "perf-prefill-m32-component-r1/native-a001/component_admission.py"
+  },
+  "experiments/component-harnesses/prefill-m32/component_contract.py": {
+    "sha256": "6a73728b5cb7b635283e2bbf7836035378dff1857539750d9e6f8d0b6f471b6b",
+    "source": "perf-prefill-m32-component-r1/native-a001/component_contract.py"
+  },
+  "experiments/component-harnesses/prefill-m32/component_entry.py": {
+    "sha256": "292754c1a7d7704253cd4dbf9af3b906b74624905772fa7d39b04f7566b23135",
+    "source": "perf-prefill-m32-component-r1/native-a001/component_entry.py"
+  },
+  "experiments/component-harnesses/prefill-m32/fixtures.py": {
+    "sha256": "6db144ab434039df750f23e4d066e0b4137087fc2ec4a12b00ade9cc610505cb",
+    "source": "perf-prefill-m32-component-r1/native-a001/fixtures.py"
+  },
+  "experiments/component-harnesses/prefill-m32/frozen/component_fixtures.py": {
+    "sha256": "30bfd7d03ecbc2d990fd79da2cad1d88cfecb2886abfa4cb81b63a613bb547d9",
+    "source": "perf-prefill-m32-component-r1/native-a001/frozen/component_fixtures.py"
+  },
+  "experiments/component-harnesses/prefill-m32/frozen/launch_contract.py": {
+    "sha256": "66dc65822584035bfdd385f20f09578388b2dc655e6d5524aa71749422f32d14",
+    "source": "perf-prefill-m32-component-r1/native-a001/frozen/launch_contract.py"
+  },
+  "experiments/component-harnesses/prefill-m32/frozen/native_supervisor.py": {
+    "sha256": "0c2a7cacbffbe74827ade03fd09f05a927cb9ba051ff475744be8d79f3a96436",
+    "source": "perf-prefill-m32-component-r1/native-a001/frozen/native_supervisor.py"
+  },
+  "experiments/component-harnesses/prefill-m32/frozen/probe.py": {
+    "sha256": "a9e702e77f00e414984ac44dc1d72da15145ae3013c6077932c2daef5004203b",
+    "source": "perf-prefill-m32-component-r1/native-a001/frozen/probe.py"
+  },
+  "experiments/component-harnesses/prefill-m32/frozen/process_evidence.py": {
+    "sha256": "e8d70b045e3c4b2d8a025df31d0e61193dceaa35d97b83b1d541ae1f1d72bc2d",
+    "source": "perf-prefill-m32-component-r1/native-a001/frozen/process_evidence.py"
+  },
+  "experiments/component-harnesses/prefill-m32/frozen/profile_v17.py": {
+    "sha256": "37e1aeda338331733617ead881192b20ed769e498e1e991e271295bdb1174158",
+    "source": "perf-prefill-m32-component-r1/native-a001/frozen/profile_v17.py"
+  },
+  "experiments/component-harnesses/prefill-m32/frozen/run_stage.py": {
+    "sha256": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "source": "perf-prefill-m32-component-r1/native-a001/frozen/run_stage.py"
+  },
+  "experiments/component-harnesses/prefill-m32/m32_component.py": {
+    "sha256": "70f030ca5e672140f884b1d0d42c8e32e115e2c76d2f8b8cd91bf1c116c6a688",
+    "source": "perf-prefill-m32-component-r1/native-a001/m32_component.py"
+  },
+  "experiments/component-harnesses/prefill-m32/m32_provenance.py": {
+    "sha256": "397e39639f61281b69dc2df5d204958f9d75d3185436da7fc81c38e87c250186",
+    "source": "perf-prefill-m32-component-r1/native-a001/m32_provenance.py"
+  },
+  "experiments/component-harnesses/prefill-m32/measurement/gpu_activity.py": {
+    "sha256": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "source": "perf-prefill-m32-component-r1/native-a001/measurement/gpu_activity.py"
+  },
+  "experiments/component-harnesses/prefill-m32/measurement/native_lifecycle.py": {
+    "sha256": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "source": "perf-prefill-m32-component-r1/native-a001/measurement/native_lifecycle.py"
+  },
+  "experiments/component-harnesses/prefill-m32/ordered_dispatch.py": {
+    "sha256": "153ee2390ae20e8999d8e6e8b42330215c96aeb07bf820cb09d933e2e93f4d2f",
+    "source": "perf-prefill-m32-component-r1/native-a001/ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/prefill-m32/prepare_m32_bundle.py": {
+    "sha256": "fbce818383ec50de1ee2e21b90332546bbf4430b52566ea4985cae1f377dd93b",
+    "source": "perf-prefill-m32-component-r1/native-a001/prepare_m32_bundle.py"
+  },
+  "experiments/component-harnesses/prefill-m32/qualify_source.py": {
+    "sha256": "db542f327119cb57475924ce3d24b09eb87147c68227748ed409100aa686c508",
+    "source": "perf-prefill-m32-component-r1/native-a001/qualify_source.py"
+  },
+  "experiments/component-harnesses/prefill-m32/runtime_binding.py": {
+    "sha256": "0a5853b0544ec658f1c433532a50b1d5bd87fbf1c06170ab53ae05c88caf5ece",
+    "source": "perf-prefill-m32-component-r1/native-a001/runtime_binding.py"
+  },
+  "experiments/component-harnesses/prefill-m32/slice_views.py": {
+    "sha256": "92fb8e5f837d063e628df64aa70a33fb527cd9d013c18ed167c78592781ff460",
+    "source": "perf-prefill-m32-component-r1/native-a001/slice_views.py"
+  },
+  "experiments/component-harnesses/prefill-m32/supervise_component.py": {
+    "sha256": "6238f12c92fe2477337650aadc92e7b36e11ee018f696b10fd105350d37b58ca",
+    "source": "perf-prefill-m32-component-r1/native-a001/supervise_component.py"
+  },
+  "experiments/component-harnesses/prefill-m32/test_component_inputs.py": {
+    "sha256": "07de30cf2d573661a292f8cd02caa3cdf2dde27401ebdec197a5fcf286743536",
+    "source": "perf-prefill-m32-component-r1/native-a001/test_component_inputs.py"
+  },
+  "experiments/component-harnesses/prefill-m32/test_m32_bundle.py": {
+    "sha256": "d03214762ffd851916a0e9d46899d0c648f96d7eebd1ee16311753b107a54dbf",
+    "source": "perf-prefill-m32-component-r1/native-a001/test_m32_bundle.py"
+  },
+  "experiments/component-harnesses/prefill-m32/test_m32_component.py": {
+    "sha256": "d024010660163ea11e22ec2949f184ea5794f9e7ceb994a31a04fa90be59dfc4",
+    "source": "perf-prefill-m32-component-r1/native-a001/test_m32_component.py"
+  },
+  "experiments/component-harnesses/prefill-m32/test_m32_provenance.py": {
+    "sha256": "7953e1d4f91566a721ee4bf0892cb0720895a7ba6743164e1ae9d75f10ad224d",
+    "source": "perf-prefill-m32-component-r1/native-a001/test_m32_provenance.py"
+  },
+  "experiments/component-harnesses/prefill-m32/test_ordered_dispatch.py": {
+    "sha256": "51432fd3033418605e11f31fff13cd0aefa4285ce67e6475817edd480961ef3e",
+    "source": "perf-prefill-m32-component-r1/native-a001/test_ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/prefill-m32/test_supervisor.py": {
+    "sha256": "6167922deff0d89bac517c22db0d0ef1d904d72265a2c05a057ba8410a6e34c4",
+    "source": "perf-prefill-m32-component-r1/native-a001/test_supervisor.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/component.py": {
+    "sha256": "e9837407d7c169bd17e508648726d489204bc06a117bd2d43e4c987d4c6f1bbe",
+    "source": "perf-v16-splitk-ordered-component-r1/component.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/component_admission.py": {
+    "sha256": "cc3bd217f424fa3d193c5311df846bbc9ab364e51cb29a41eac0888eb68e23f5",
+    "source": "perf-v16-splitk-ordered-component-r1/component_admission.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/component_contract.py": {
+    "sha256": "91b45fedeb2e774fddf725398a075125508235e87cb2c31a600ee0ebc10ae5b2",
+    "source": "perf-v16-splitk-ordered-component-r1/component_contract.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/component_entry.py": {
+    "sha256": "5cc6c5a459607fb846342f5a2585b50c45e1c21a3f5abf035899b13ba942122e",
+    "source": "perf-v16-splitk-ordered-component-r1/component_entry.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/export_delta.py": {
+    "sha256": "5e41520526083b411f9bcd18fa586c96e1e2bf3dcc229d87bfba93768df16c49",
+    "source": "perf-v16-splitk-ordered-component-r1/export_delta.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/fixtures.py": {
+    "sha256": "30bfd7d03ecbc2d990fd79da2cad1d88cfecb2886abfa4cb81b63a613bb547d9",
+    "source": "perf-v16-splitk-ordered-component-r1/fixtures.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/frozen-tests/test_component.py": {
+    "sha256": "c7b659b4423237218d4a4a1db23b8e7760979003760510e323e4eb5f063b6ec9",
+    "source": "perf-v16-splitk-ordered-component-r1/frozen-tests/test_component.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/frozen-tests/test_fixtures.py": {
+    "sha256": "d38b89f7641c59b812084221f615b650f528af57bf96ca6d9ca7fbb5a4aa7f06",
+    "source": "perf-v16-splitk-ordered-component-r1/frozen-tests/test_fixtures.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/frozen/launch_contract.py": {
+    "sha256": "66dc65822584035bfdd385f20f09578388b2dc655e6d5524aa71749422f32d14",
+    "source": "perf-v16-splitk-ordered-component-r1/frozen/launch_contract.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/frozen/native_supervisor.py": {
+    "sha256": "0c2a7cacbffbe74827ade03fd09f05a927cb9ba051ff475744be8d79f3a96436",
+    "source": "perf-v16-splitk-ordered-component-r1/frozen/native_supervisor.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/frozen/probe.py": {
+    "sha256": "a9e702e77f00e414984ac44dc1d72da15145ae3013c6077932c2daef5004203b",
+    "source": "perf-v16-splitk-ordered-component-r1/frozen/probe.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/frozen/process_evidence.py": {
+    "sha256": "e8d70b045e3c4b2d8a025df31d0e61193dceaa35d97b83b1d541ae1f1d72bc2d",
+    "source": "perf-v16-splitk-ordered-component-r1/frozen/process_evidence.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/frozen/profile_v17.py": {
+    "sha256": "37e1aeda338331733617ead881192b20ed769e498e1e991e271295bdb1174158",
+    "source": "perf-v16-splitk-ordered-component-r1/frozen/profile_v17.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/frozen/run_stage.py": {
+    "sha256": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "source": "perf-v16-splitk-ordered-component-r1/frozen/run_stage.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/measurement/gpu_activity.py": {
+    "sha256": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "source": "perf-v16-splitk-ordered-component-r1/measurement/gpu_activity.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/measurement/native_lifecycle.py": {
+    "sha256": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "source": "perf-v16-splitk-ordered-component-r1/measurement/native_lifecycle.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/ordered_component.py": {
+    "sha256": "a84ebc3f03b741a6699a034838fe70aaa607625422679108bdab8ee502b1dbca",
+    "source": "perf-v16-splitk-ordered-component-r1/ordered_component.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/ordered_dispatch.py": {
+    "sha256": "153ee2390ae20e8999d8e6e8b42330215c96aeb07bf820cb09d933e2e93f4d2f",
+    "source": "perf-v16-splitk-ordered-component-r1/ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/prepare_guarded.py": {
+    "sha256": "a98f2fe0937607e7029210dbf17ebcce6ddbb6c181ab37fc456122dd60cd4be4",
+    "source": "perf-v16-splitk-ordered-component-r1/prepare_guarded.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/prepare_ordered_bundle.py": {
+    "sha256": "49befcae2a5fc45f64606933ffd371ec7654700b1c1b8fa7a1b1d25630ca89ce",
+    "source": "perf-v16-splitk-ordered-component-r1/prepare_ordered_bundle.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/prepare_ordered_bundle_enabled.py": {
+    "sha256": "c9536460bea725338d6de17f55848d63df31e45349a8af4fb78b72fd93955ea9",
+    "source": "perf-v16-splitk-ordered-component-r1/prepare_ordered_bundle_enabled.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/qualify_source.py": {
+    "sha256": "e1b010929bed6c9b53f8b4b2b3fc6d44ffdddbdda75ab206c46b9eeb8b736681",
+    "source": "perf-v16-splitk-ordered-component-r1/qualify_source.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/qualify_source_enabled.py": {
+    "sha256": "b84d2f83eaffd7adf4f9aa760f88dd44d7fe4b2a58c23ea8a57d7beb3cfd0297",
+    "source": "perf-v16-splitk-ordered-component-r1/qualify_source_enabled.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/restore_delta.py": {
+    "sha256": "e3fcafae35faf2abd3799213dfdbba17334cb91a73de509a2f14fd3084e07c4f",
+    "source": "perf-v16-splitk-ordered-component-r1/restore_delta.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/runtime_binding.py": {
+    "sha256": "0a5853b0544ec658f1c433532a50b1d5bd87fbf1c06170ab53ae05c88caf5ece",
+    "source": "perf-v16-splitk-ordered-component-r1/runtime_binding.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/supervise_component.py": {
+    "sha256": "98283b43371380b4f28b0aa1988e8460b0fcc68c772c5be119e774ad4db1569f",
+    "source": "perf-v16-splitk-ordered-component-r1/supervise_component.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/test_ordered_bundle.py": {
+    "sha256": "e7ce9dc743612bebdb562be5ee1dfcb8b19c712242a9e3776c067c05d2f34d1e",
+    "source": "perf-v16-splitk-ordered-component-r1/test_ordered_bundle.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/test_ordered_component.py": {
+    "sha256": "c31d7c0d010154a36e8c4a3d434c6c2c0c779dd583c0bf2b8d3bf648c689efbb",
+    "source": "perf-v16-splitk-ordered-component-r1/test_ordered_component.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/test_ordered_dispatch.py": {
+    "sha256": "51432fd3033418605e11f31fff13cd0aefa4285ce67e6475817edd480961ef3e",
+    "source": "perf-v16-splitk-ordered-component-r1/test_ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/test_supervisor.py": {
+    "sha256": "bc05fbcb64d2a5d8bac8bf173733be743df3dfae19dd0bce511bd6b7bf04e925",
+    "source": "perf-v16-splitk-ordered-component-r1/test_supervisor.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/transport_bundle_inputs.py": {
+    "sha256": "8fabc12467b56530d30a3c38014c5e5974d86329fcb1294db54a677875dc0709",
+    "source": "perf-v16-splitk-ordered-component-r1/transport_bundle_inputs.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/transport_delta_inputs.py": {
+    "sha256": "45ce87207c004a207c14c06f017c8507500ded998b2b9c2a6ccabdcf3243a06e",
+    "source": "perf-v16-splitk-ordered-component-r1/transport_delta_inputs.py"
+  },
+  "experiments/component-harnesses/splitk-ordered/transport_inputs.py": {
+    "sha256": "94865facf0d2172554788a06ab23f494239e42c64fb133b26aef1a6421493a25",
+    "source": "perf-v16-splitk-ordered-component-r1/transport_inputs.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/component.py": {
+    "sha256": "e9837407d7c169bd17e508648726d489204bc06a117bd2d43e4c987d4c6f1bbe",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/component.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/component_admission.py": {
+    "sha256": "cc3bd217f424fa3d193c5311df846bbc9ab364e51cb29a41eac0888eb68e23f5",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/component_admission.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/component_contract.py": {
+    "sha256": "28c9bd9d19687804083eea89cc8cdf30f06017a80a806e25568fc94f54956e80",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/component_contract.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/component_entry.py": {
+    "sha256": "632a282ea8dc8493f00e6e328cd698a71b03da9bb942f2c2f4f4ea0809741455",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/component_entry.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/fixtures.py": {
+    "sha256": "30bfd7d03ecbc2d990fd79da2cad1d88cfecb2886abfa4cb81b63a613bb547d9",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/fixtures.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/frozen-tests/test_component.py": {
+    "sha256": "c7b659b4423237218d4a4a1db23b8e7760979003760510e323e4eb5f063b6ec9",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/frozen-tests/test_component.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/frozen-tests/test_fixtures.py": {
+    "sha256": "d38b89f7641c59b812084221f615b650f528af57bf96ca6d9ca7fbb5a4aa7f06",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/frozen-tests/test_fixtures.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/frozen/launch_contract.py": {
+    "sha256": "66dc65822584035bfdd385f20f09578388b2dc655e6d5524aa71749422f32d14",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/frozen/launch_contract.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/frozen/native_supervisor.py": {
+    "sha256": "0c2a7cacbffbe74827ade03fd09f05a927cb9ba051ff475744be8d79f3a96436",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/frozen/native_supervisor.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/frozen/probe.py": {
+    "sha256": "a9e702e77f00e414984ac44dc1d72da15145ae3013c6077932c2daef5004203b",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/frozen/probe.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/frozen/process_evidence.py": {
+    "sha256": "e8d70b045e3c4b2d8a025df31d0e61193dceaa35d97b83b1d541ae1f1d72bc2d",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/frozen/process_evidence.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/frozen/profile_v17.py": {
+    "sha256": "37e1aeda338331733617ead881192b20ed769e498e1e991e271295bdb1174158",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/frozen/profile_v17.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/frozen/run_stage.py": {
+    "sha256": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/frozen/run_stage.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/measurement/gpu_activity.py": {
+    "sha256": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/measurement/gpu_activity.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/measurement/native_lifecycle.py": {
+    "sha256": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/measurement/native_lifecycle.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/ordered_dispatch.py": {
+    "sha256": "153ee2390ae20e8999d8e6e8b42330215c96aeb07bf820cb09d933e2e93f4d2f",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/paired_component.py": {
+    "sha256": "c6c1d11965ee18162d987c673a69dee89d9f03f661e5de23d5d981d1bb40a4d3",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/paired_component.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/paired_provenance.py": {
+    "sha256": "88e31948f1c80c42babccc0bf7c50c2de59761d26c8998938defc37f1d60fe7e",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/paired_provenance.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/prepare_paired_bundle.py": {
+    "sha256": "5a8630858bc494795a840f6e6f7f37987caf6998ce68133b4dee6fe509dbaef0",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/prepare_paired_bundle.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/qualify_source.py": {
+    "sha256": "75420db4f746d7f42e04c1a5e7fb1dd3cb50a2350f4fb7e79a6f1ec57ecdf395",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/qualify_source.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/runtime_binding.py": {
+    "sha256": "0a5853b0544ec658f1c433532a50b1d5bd87fbf1c06170ab53ae05c88caf5ece",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/runtime_binding.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/supervise_component.py": {
+    "sha256": "f1bb89f23159c31c3ed46503f349a597346d9110771e86afd4ab5714842df255",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/supervise_component.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/test_ordered_dispatch.py": {
+    "sha256": "51432fd3033418605e11f31fff13cd0aefa4285ce67e6475817edd480961ef3e",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/test_ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/test_paired_bundle.py": {
+    "sha256": "ea609c5f13201c17330f4840bae7d745de65188b4cc412ea005ec8ae43f49090",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/test_paired_bundle.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/test_paired_component.py": {
+    "sha256": "e092cca6dc24c6d2891ba371315d7915def438ccd469ed7eeab164b25f315970",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/test_paired_component.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/test_paired_provenance.py": {
+    "sha256": "3814f3bdd79216b704e0fad930f5a0e1aca96ef618b298d7281b92e1d5181a91",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/test_paired_provenance.py"
+  },
+  "experiments/component-harnesses/splitk-paired-ordered/test_supervisor.py": {
+    "sha256": "238e24835d978e6da736ca850990f3dcab225624a83670c9406e0273a86730b6",
+    "source": "perf-v16-splitk-paired-ordered-component-r1/enabled-a001/test_supervisor.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/component.py": {
+    "sha256": "e9837407d7c169bd17e508648726d489204bc06a117bd2d43e4c987d4c6f1bbe",
+    "source": "perf-c1-splitk4-component-r1/native-a001/component.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/component_admission.py": {
+    "sha256": "cc3bd217f424fa3d193c5311df846bbc9ab364e51cb29a41eac0888eb68e23f5",
+    "source": "perf-c1-splitk4-component-r1/native-a001/component_admission.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/component_contract.py": {
+    "sha256": "d92e4aabd880a996da56d982b1dc04abc47a5e3e2b3fd832b96cb48342612fc1",
+    "source": "perf-c1-splitk4-component-r1/native-a001/component_contract.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/component_entry.py": {
+    "sha256": "c377c6b7bc855c3345c6dbe7a2f82d64969e5dec634795885cb5be0669e4be2c",
+    "source": "perf-c1-splitk4-component-r1/native-a001/component_entry.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/fixtures.py": {
+    "sha256": "e7b7f60a6e4ffba7f2097a521246690081dc1108b592791f379826fc1c383abd",
+    "source": "perf-c1-splitk4-component-r1/native-a001/fixtures.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/frozen/component_fixtures.py": {
+    "sha256": "30bfd7d03ecbc2d990fd79da2cad1d88cfecb2886abfa4cb81b63a613bb547d9",
+    "source": "perf-c1-splitk4-component-r1/native-a001/frozen/component_fixtures.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/frozen/launch_contract.py": {
+    "sha256": "66dc65822584035bfdd385f20f09578388b2dc655e6d5524aa71749422f32d14",
+    "source": "perf-c1-splitk4-component-r1/native-a001/frozen/launch_contract.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/frozen/native_supervisor.py": {
+    "sha256": "0c2a7cacbffbe74827ade03fd09f05a927cb9ba051ff475744be8d79f3a96436",
+    "source": "perf-c1-splitk4-component-r1/native-a001/frozen/native_supervisor.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/frozen/probe.py": {
+    "sha256": "a9e702e77f00e414984ac44dc1d72da15145ae3013c6077932c2daef5004203b",
+    "source": "perf-c1-splitk4-component-r1/native-a001/frozen/probe.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/frozen/process_evidence.py": {
+    "sha256": "e8d70b045e3c4b2d8a025df31d0e61193dceaa35d97b83b1d541ae1f1d72bc2d",
+    "source": "perf-c1-splitk4-component-r1/native-a001/frozen/process_evidence.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/frozen/profile_v17.py": {
+    "sha256": "37e1aeda338331733617ead881192b20ed769e498e1e991e271295bdb1174158",
+    "source": "perf-c1-splitk4-component-r1/native-a001/frozen/profile_v17.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/frozen/run_stage.py": {
+    "sha256": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "source": "perf-c1-splitk4-component-r1/native-a001/frozen/run_stage.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/gate_up_component.py": {
+    "sha256": "4cb60aa3a50d6d6df2b13480d49798298360c207981eaebde5def157ee448dce",
+    "source": "perf-c1-splitk4-component-r1/native-a001/gate_up_component.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/gate_up_provenance.py": {
+    "sha256": "1fcaa26375e3cc7501e3992437e3a1ceafc9face1e31551037a6f4228391eaf6",
+    "source": "perf-c1-splitk4-component-r1/native-a001/gate_up_provenance.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/measurement/gpu_activity.py": {
+    "sha256": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "source": "perf-c1-splitk4-component-r1/native-a001/measurement/gpu_activity.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/measurement/native_lifecycle.py": {
+    "sha256": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "source": "perf-c1-splitk4-component-r1/native-a001/measurement/native_lifecycle.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/ordered_dispatch.py": {
+    "sha256": "153ee2390ae20e8999d8e6e8b42330215c96aeb07bf820cb09d933e2e93f4d2f",
+    "source": "perf-c1-splitk4-component-r1/native-a001/ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/prepare_gate_up_bundle.py": {
+    "sha256": "9cd2596d8ba47f08ac822d6070a3884184e07f6d75ba67c0845a62e6f603355d",
+    "source": "perf-c1-splitk4-component-r1/native-a001/prepare_gate_up_bundle.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/qualify_source.py": {
+    "sha256": "d29c663d7cea7a119114edbe4e73a73aa926328937c10ece664e3688697a3832",
+    "source": "perf-c1-splitk4-component-r1/native-a001/qualify_source.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/runtime_binding.py": {
+    "sha256": "0a5853b0544ec658f1c433532a50b1d5bd87fbf1c06170ab53ae05c88caf5ece",
+    "source": "perf-c1-splitk4-component-r1/native-a001/runtime_binding.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/slice_views.py": {
+    "sha256": "7dd175e54a445790299dba1ba072d0dc5aa7af7aa5919b225358cab3d7269d59",
+    "source": "perf-c1-splitk4-component-r1/native-a001/slice_views.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/supervise_component.py": {
+    "sha256": "6291026b752d0f886081f90c0193fb7358f9e99e9f9ec16ed2e53979f16f24da",
+    "source": "perf-c1-splitk4-component-r1/native-a001/supervise_component.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/test_component_inputs.py": {
+    "sha256": "7c968242d9fd8aee0b34145ce14030e76fd3b04ff7c672a5fab2f3235d9b4b94",
+    "source": "perf-c1-splitk4-component-r1/native-a001/test_component_inputs.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/test_gate_up_bundle.py": {
+    "sha256": "614b742a0ca8b50fc22d08cbe11f5479a247e1ccb0a2da5d0463683a8ccb7cfb",
+    "source": "perf-c1-splitk4-component-r1/native-a001/test_gate_up_bundle.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/test_gate_up_component.py": {
+    "sha256": "92452a2542cc2e2fb772b221549d0d98143dde5574d8323adb6f59c093bbba4b",
+    "source": "perf-c1-splitk4-component-r1/native-a001/test_gate_up_component.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/test_gate_up_provenance.py": {
+    "sha256": "729491466af3374db068462b03e8829b2f824941444e63737b6cf52ff9da1275",
+    "source": "perf-c1-splitk4-component-r1/native-a001/test_gate_up_provenance.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/test_ordered_dispatch.py": {
+    "sha256": "51432fd3033418605e11f31fff13cd0aefa4285ce67e6475817edd480961ef3e",
+    "source": "perf-c1-splitk4-component-r1/native-a001/test_ordered_dispatch.py"
+  },
+  "experiments/component-harnesses/splitk4-gate-up/test_supervisor.py": {
+    "sha256": "eb3fc67f48923547364e1050517fa264fb61c8e3fed4fa3fb11ee57668c20602",
+    "source": "perf-c1-splitk4-component-r1/native-a001/test_supervisor.py"
+  },
+  "experiments/gate-up-decode-diagnostic/decode_capture.py": {
+    "sha256": "0f72851ddde98f83d9a3c63b9fd83651e429168012f58112e937c9f1cb07428d",
+    "source": "perf-gate-up-decode-diagnostic-r1/decode_capture.py"
+  },
+  "experiments/gate-up-decode-diagnostic/prepare_capture.py": {
+    "sha256": "7426dd73d800747863cc2a9e760ebe780aa10965b6bd9fc0b5552a6f401c8b1f",
+    "source": "perf-gate-up-decode-diagnostic-r1/prepare_capture.py"
+  },
+  "experiments/gate-up-decode-diagnostic/qualify-a001.py": {
+    "sha256": "2884df74a43b3f23dbbc49481653c261ca69ee111b65eaea19f21e2bee4c0adc",
+    "source": "perf-gate-up-decode-diagnostic-r1/qualify-a001.py"
+  },
+  "experiments/gate-up-decode-diagnostic/qualify-a002.py": {
+    "sha256": "3d4159cb5be69d5e160ac841f6b0a0e1107f163cd67542c0bcbd0277acfe6bd5",
+    "source": "perf-gate-up-decode-diagnostic-r1/qualify-a002.py"
+  },
+  "experiments/gate-up-decode-diagnostic/qualify-a003.py": {
+    "sha256": "6cafc4642ad48db930158c0bc26c931e9f75ed073c1a7cc14ca7a8106e52a993",
+    "source": "perf-gate-up-decode-diagnostic-r1/qualify-a003.py"
+  },
+  "experiments/gate-up-decode-diagnostic/qualify.py": {
+    "sha256": "668d80e403886f6b808a7b747dea538a8330ce29bcf5921dc27dca747873d876",
+    "source": "perf-gate-up-decode-diagnostic-r1/qualify.py"
+  },
+  "experiments/gate-up-decode-diagnostic/qualify_capture.py": {
+    "sha256": "6e4f81f76e8ddc0e1a652aee67c0f4880bdb6484973be6d35949f524fddfcd60",
+    "source": "perf-gate-up-decode-diagnostic-r1/qualify_capture.py"
+  },
+  "experiments/gate-up-decode-diagnostic/retain_cpu.py": {
+    "sha256": "7898c728017c76be1fbc86a195f2437312b215395ccc21ff6b212576b290f390",
+    "source": "perf-gate-up-decode-diagnostic-r1/retain_cpu.py"
+  },
+  "experiments/gate-up-decode-diagnostic/run_decode.py": {
+    "sha256": "614df5e782036ecd86206081b48ee89c7634818d1ae25a984f7d0ab0a0421430",
+    "source": "perf-gate-up-decode-diagnostic-r1/run_decode.py"
+  },
+  "experiments/gate-up-decode-diagnostic/source/Cargo.lock": {
+    "sha256": "3f078709423299583705f726c141795b2269417a916dae44a6c72644adb4d694",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/Cargo.lock"
+  },
+  "experiments/gate-up-decode-diagnostic/source/Cargo.toml": {
+    "sha256": "2ffcb441da32ca505191fa8c5430063c21938a2fa428baea57de7cf5c7c62852",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/Cargo.toml"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/argmax_canary_contract.rs": {
+    "sha256": "072d17d5ed87ff2861c34d6b8e77c5f6de67d23a74f86f032f2ee8302c0eaf21",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/argmax_canary_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/argmax_canary_runtime.rs": {
+    "sha256": "2e80739961986607382560b9dc983255d40cd667a376e4b25200026fd35064e7",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/argmax_canary_runtime.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/attention_argmax_canary_contract.rs": {
+    "sha256": "f44a8fe881e9d8301c10bf01f32555d42dba13cb5f26cde3a3bee49dc774314c",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/attention_argmax_canary_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/c1_kv_copy_v19_live_contract.rs": {
+    "sha256": "8f5bb45a4fb1cfe0aafdb4f67081ca7aeeeb16c70d541ba63a17b1a32d4024f5",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/c1_kv_copy_v19_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/c1_packet_packing_v22_live_contract.rs": {
+    "sha256": "003cd1dc50fef3f0ec2c1fb0f74b89d33908af9c3cc00b741086c69a94bf4e1e",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/c1_packet_packing_v22_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/c1_split_attention_v25_live_contract.rs": {
+    "sha256": "5363f78c2b28e6d49ed06806a12e435c175bb5781efd507a194def4088786608",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/c1_split_attention_v25_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/draft_canary_tests.rs": {
+    "sha256": "e89493b83c2831c3c00ef378acb12c8a3d1199f70303202a02de802faa9a4584",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/draft_canary_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/draft_paged_canary_contract.rs": {
+    "sha256": "535b9f304d303575bcacd7ed6976878598cc9cfccc144b17b2aaf426bcbf9c53",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/draft_paged_canary_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/draft_paged_canary_tests.rs": {
+    "sha256": "569399edb8a26e658f37f60365a1df35de72cda93819886288fb33e81f7b7f16",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/draft_paged_canary_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/engineering_m5_capture.rs": {
+    "sha256": "1384b8f29a8cd8a7f9b5d61523206bcd340bc57133ef559b1b5df21e630ce979",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/engineering_m5_capture.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-m1-engineering-r29-capture.rs": {
+    "sha256": "1e4b38e7997b3f65e801586d334a9d6a0337d378807f4838627bb3fe7f733209",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-m1-engineering-r29-capture.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-m1-engineering-speculative-smoke.rs": {
+    "sha256": "4f2c327ad3f38b2e55d3e26424dfef724fbbe7738f10eb3a7fc292ceb001236f",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-m1-engineering-speculative-smoke.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-m1-engineering-target-smoke.rs": {
+    "sha256": "4cff002edb6d217f46a302e856c808ee5018f28378522167e2136716f3d04642",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-m1-engineering-target-smoke.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-m1-r33-adapter.rs": {
+    "sha256": "da94b8304fd0f284b770d04224c95c5a284f438d6515fe22113082d611c3c319",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-m1-r33-adapter.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-argmax-canary.rs": {
+    "sha256": "5b97c671bb7b0defeaa3f7e60fcb545f11314f6e4ddf70dbe2340c05a76014f4",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-argmax-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-attention-argmax-canary.rs": {
+    "sha256": "bffac34d125b1ea729a0c6d3bf9205195bb73f38879c93647d2390ac46aaa525",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-attention-argmax-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-c1-kv-copy-v19-live.rs": {
+    "sha256": "850e0fbc8bd8087f7c6db16c494f407fbdc4f0771b6d0ac91c5f690e9b34b67a",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-c1-kv-copy-v19-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-c1-packed-v22-live.rs": {
+    "sha256": "f5ff3dea610f68f0e08f2a7d58184607eeeada7826833df5f269beb1bb5c909b",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-c1-packed-v22-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-c1-split-attention-v25-live.rs": {
+    "sha256": "66df29c96bf4ebd42a082d8707be13560880738e0cdc9b214014e824dd9cc8bd",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-c1-split-attention-v25-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-draft-canary.rs": {
+    "sha256": "3bbe30ef62b3a94ad74dee8a84981d8a8132ea926601419e79168647041ee274",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-draft-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-draft-paged-canary.rs": {
+    "sha256": "4f4f91677dcd851bb49a13d8e7cd50ffe1d83208040b406de0f9da4c10b701b7",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-draft-paged-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-gate-up-decode-diagnostic.rs": {
+    "sha256": "9261c128de3aefc15263fc18d2cc76e306d93855c43438ac0317e5cf5ff27a7f",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-gate-up-decode-diagnostic.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-layer-c1-wave-canary.rs": {
+    "sha256": "3ad3c22952651db529654f3be277e5a054f5ee56c76a8d706dd1a9788a12009f",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-layer-c1-wave-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-layer-c1-wave-live.rs": {
+    "sha256": "fb39a856cc44a711ee9cd92acf32b7e94cf35c0442a7bab5899f3a0699323030",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-layer-c1-wave-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-layer-c1-wave-runtime-diagnostic.rs": {
+    "sha256": "6fee15ba413b47122c3aac3a985995abcddcfb4b0c94b03d2698079a495bfdf4",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-layer-c1-wave-runtime-diagnostic.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-ordered64-baseline-packet-ticks.rs": {
+    "sha256": "04f4fdcc1fbf5df39f1b663878509846a9a0bc9663310760f162c0f1c807ebdb",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-ordered64-baseline-packet-ticks.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-ordered64-host-diagnostic.rs": {
+    "sha256": "ac2f3634b697bf2b3b6eb708eaa54e1ed8b3ad6fd62984f9718476f2a0752f8b",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-ordered64-host-diagnostic.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-ordered64-kv-copy-live.rs": {
+    "sha256": "486919e88541637041780e954881d6fb6d824861c926df5150fb83865bd4ad4f",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-ordered64-kv-copy-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-ordered64-packet-ticks.rs": {
+    "sha256": "e9e74bae716aa5e1883c045d2aa5d76555f30d865a61e4923dd1b46e65a635c4",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-ordered64-packet-ticks.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-packed-down-r1-live.rs": {
+    "sha256": "e8e4ac6d126baf4e15b512bd41101733979aee2200561f001e582a11be3256c2",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-packed-down-r1-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-packed-gate-up-kv-r2-live.rs": {
+    "sha256": "80d4c88c68245fdbc97672b524843856581433dce77af7c977827404426af6fe",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-packed-gate-up-kv-r2-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-paired-paged-canary.rs": {
+    "sha256": "5084baafa83c17617c303c9e088ae87c5b0e38b87150a14f91b4c9e97f84011d",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-paired-paged-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-prefill-program-native-v1-counters.rs": {
+    "sha256": "ca3f14de5941368184203566f7657b871db406d352e8ecd8c9a2e0e1724cf9bd",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-prefill-program-native-v1-counters.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-prefill-program-native-v1-live.rs": {
+    "sha256": "99e26f2b513393b251ef725da3fa2f6be3deac388725a45226f9df35e951e28a",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-prefill-program-native-v1-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-prefill-width-native-counters.rs": {
+    "sha256": "34bbe826033159e399fcf21f0faa16860f9f8a223e5347aa99f6928313107c37",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-prefill-width-native-counters.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-prefill-width-native-live.rs": {
+    "sha256": "407145df13d5b97170452a978db8eef941e1dd5d06ca9592a40ceff906c70a58",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-prefill-width-native-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-prefill16-kv-copy-v28-live.rs": {
+    "sha256": "e1abe8a84acd4ac475359e2bf7aa2863a9aff69c695ef09a86fda0157d9bff26",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-prefill16-kv-copy-v28-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-prefill16-v28-model-timestamps.rs": {
+    "sha256": "599d59a15378241090045bd21dc0233a8f236434af463a5f74bf7f0c6d2ae236",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-prefill16-v28-model-timestamps.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-prefill32-pages-live.rs": {
+    "sha256": "cfcc87109539bd32c2b286c86c77928411d320219dbd47f0ec9656e33de8c484",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-prefill32-pages-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-query-hoist-v14-canary.rs": {
+    "sha256": "ca49ebc67271cf8bafe4f111c272630bf62d7786ab7795a56433aa4e0309e94a",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-query-hoist-v14-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-token-program-native-v1-live.rs": {
+    "sha256": "bac50808e96e24eea6ae5ab2c6caf00aea4d57556a40f38e423664fd2b7a9886",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-token-program-native-v1-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-token-program-v1-counters.rs": {
+    "sha256": "5b8d9fab74a6cca85c0433812481ec55978c8418ca7511ff54b3062dea24dc16",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-token-program-v1-counters.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-token-program-v1-live.rs": {
+    "sha256": "f6c44bb3288b80b4d2d59f9d5ad4dc18c0e61f66df31eded7dc5e8459370384b",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-token-program-v1-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-tp-batch-engineering.rs": {
+    "sha256": "0fad21730992aef11dd0b16e0b2dc208ea87f4656d0f8bcfb1ac0ed8b7d5a46d",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-tp-batch-engineering.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-tp-engineering.rs": {
+    "sha256": "387ec744af5511318ac16819619b88995226f7460194eaf5b8fd235c68130dd3",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-tp-engineering.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-wave-argmax-live.rs": {
+    "sha256": "9fd6b63b9b3a38fe3daa19bddf3b9121c457d094b8a3cd2419e05091ce57aae6",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-wave-argmax-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-wave-argmax-submission-canary.rs": {
+    "sha256": "e848a73131ac29434ee384b09f6e99ba01085ad07f27d5deca2adc6d8a496f76",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-wave-argmax-submission-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-wave-rmsnorm-v15-canary.rs": {
+    "sha256": "28219caf22466120cf799b5d8ca7a442e13e6434444cabc0bd58edb80baf30b4",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-wave-rmsnorm-v15-canary.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-wave-rmsnorm-v15-live.rs": {
+    "sha256": "51559c7c31dafedf7f658c627d366f44a5e737d294420ea413139b02805d3183",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-wave-rmsnorm-v15-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-wave-target-v17-live.rs": {
+    "sha256": "5468a0ac00adb657d8d5c2e45b3d51bed213de31cbcbb1957f2d794086a7915f",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-wave-target-v17-live.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-qwen3-wave-target-v17-runtime-diagnostic.rs": {
+    "sha256": "57e75d95f698d0000514450bb2e83d954ce40173e84a86c87b78f074a341aa31",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-qwen3-wave-target-v17-runtime-diagnostic.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ferric-r33-custody-vault-abort-probe.rs": {
+    "sha256": "e18635e3b43a631cf624acc65dccae5e045e4c064b3dcda2394ef8668811d290",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ferric-r33-custody-vault-abort-probe.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/layer_c1_wave_canary_contract.rs": {
+    "sha256": "25ea73bed23f514bf43e9189dd1d1b7a1fca4d369c46a0a49052464a7b3c6dfb",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/layer_c1_wave_canary_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/layer_c1_wave_live_contract.rs": {
+    "sha256": "056c7b5e222c4f84111dbe30581c7904aacca164a2d2b13080ecaf16a0dda49b",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/layer_c1_wave_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/layer_c1_wave_runtime_diagnostic_contract.rs": {
+    "sha256": "6eca673654d1dcc04190af8a220072b271ba51b9bd31533ddca4830e30cb4b34",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/layer_c1_wave_runtime_diagnostic_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/native_decode_request_contract.rs": {
+    "sha256": "313241275f658d4f91ac8f2f42fb15123429e47aba8ac033b09bfff658e465b2",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/native_decode_request_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/native_gate_up_live_profile.rs": {
+    "sha256": "6b58189e4403905c2aeae97df6d314b71afb0d738b0a9e64825676e8d7e8e872",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/native_gate_up_live_profile.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/native_prefill_width_contract.rs": {
+    "sha256": "45001040f569f85b582b7d1d674e7281e72eea530a0257621a8c73ba654ab135",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/native_prefill_width_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ordered64_baseline_packet_ticks_contract.rs": {
+    "sha256": "9a41c0d0eb519eea7bf2bf2f146d7101b76b46a65d8a0956e12194f2ed127a7b",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ordered64_baseline_packet_ticks_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ordered64_host_diagnostic_contract.rs": {
+    "sha256": "3d6a7713876c8910ef554b057a5b34a6ed17375304c4dacdf04cccd99bf43188",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ordered64_host_diagnostic_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ordered64_kv_copy_live_contract.rs": {
+    "sha256": "9b073bc0350f7af1ab88964f7c5a2064b2579e93e35662de20df703996e1e775",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ordered64_kv_copy_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/ordered64_packet_ticks_contract.rs": {
+    "sha256": "2dfd725bb5a3502e57d6d2c0886fd5d9538ca17a7b4fb5f73e334b0062b97a92",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/ordered64_packet_ticks_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/packed_down_live_contract.rs": {
+    "sha256": "682f7de25aac54a9fab9b4f850efd3fafdeb957427a1c8a6d167f6a9c2573c9d",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/packed_down_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/packed_down_live_profile.rs": {
+    "sha256": "93c1f5d77c088b8c288bb22ab9ba4df9fa582bce5554509a1295b418711091f1",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/packed_down_live_profile.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/packed_gate_up_live_contract.rs": {
+    "sha256": "11c740410dc07189b45b9af0c14c7ebb1c04e7ef6a225f88d0c3cd56d1a77997",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/packed_gate_up_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/packed_gate_up_live_profile.rs": {
+    "sha256": "fe7fb782b9ddaf74b235e083bfadd0edac8e7572caaa57437d48ed4de02b5d63",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/packed_gate_up_live_profile.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/paired_paged_canary_contract.rs": {
+    "sha256": "1476b84d4f6b85087d424a3369f9bd11d16f37e74337d7c8548f18a68390349f",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/paired_paged_canary_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/paired_paged_canary_tests.rs": {
+    "sha256": "345723b6880549fe3f7cac9d65d8bcbc8ad6f44327505937704535135b212e35",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/paired_paged_canary_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/prefill32_pages_live_contract.rs": {
+    "sha256": "bff4614c83615973c0798cda3473accd974f3821142bb11f243c101d0ed8b3d3",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/prefill32_pages_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/prefill_kv_copy_v28_live_contract.rs": {
+    "sha256": "bcd2873f045bf415c6a99ee7af7612d13ab6570dfb00da8388635bbf1658b3a8",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/prefill_kv_copy_v28_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/query_hoist_v14_canary_contract.rs": {
+    "sha256": "eb769629c8a00900711aa74437542b8e410869d3205dc37ab47d5be0c70123ed",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/query_hoist_v14_canary_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/smoke_bootstrap.rs": {
+    "sha256": "3a69190602463b1de193adccda4cea00e7d75df8c0fcc996628e120ece51e61a",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/smoke_bootstrap.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/speculative_resident_smoke.rs": {
+    "sha256": "628039ecd5f2fe76e7b2be6eadaed41af0b677d4c536f8b7c0458ae924cfdccf",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/speculative_resident_smoke.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/startup_diagnostics.rs": {
+    "sha256": "7096b3075bc6aa4b7755e19b2147d21ba5128613da72e8f563cfb2f39d68395c",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/startup_diagnostics.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_benchmark_control.rs": {
+    "sha256": "2d9aa819f2401419a952337418fabd29fd21fc0eca39f6d5332b70d4e6f3b60b",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_benchmark_control.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_host_timing.rs": {
+    "sha256": "67fe67eedeb2da3c6e0942f2fe04eaf173a0386a85f60d56e7374eef6787f4a6",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_host_timing.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_peer_worker.rs": {
+    "sha256": "40fc59bad8df7b58f871b3cd2f52d8aa5f00761b9450eb59093c71d8e5d07c40",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_peer_worker.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_rank_worker.rs": {
+    "sha256": "6cdd3fef6066b46a084e124fd1585095d01bc143801abfc950e4cc8750edfe04",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_rank_worker.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker.rs": {
+    "sha256": "f5a0d27f2b62acf14aaa9110e32e1ca0376f737ab9cf867c52f17a8a35485a5c",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_decode_diagnostic.rs": {
+    "sha256": "084f10b54e3f87de8368c43b0749c3ca7781f738bde2cd5a7380dca6a7219f5c",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_decode_diagnostic.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_diagnostics_tests.rs": {
+    "sha256": "ccd38e9fe5261eb2917d1cee4c2be89a99b07d2f0d825f2ce7d49aca3f7d808b",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_diagnostics_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_dispatch.rs": {
+    "sha256": "d08260ed1264b448f86b16435d445cc9b12fe1cb669df6a2ae3addc2f677df84",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_dispatch.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_gate_up_actual_tests.rs": {
+    "sha256": "ae6167fe3446da0fd246a397ca70a621e00accdf3a948432d79393fa35138d61",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_gate_up_actual_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_gate_up_program.rs": {
+    "sha256": "738d8f5e37203e1842dc5dc89201ac58793985dbecd5ff2160020f5b4654b75d",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_gate_up_program.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_gate_up_tests.rs": {
+    "sha256": "3d7cb8e1f14006395c3d4a750e3d39ac98a256bd5091c502de4449fe8a159977",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_gate_up_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_model_timestamps.rs": {
+    "sha256": "4b0ddd0d3f8a9e0081d910ffdd7a8ce3b0c4a2aa12d2a96f19468dab1e7543a3",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_model_timestamps.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_ordered64_tests.rs": {
+    "sha256": "1185e6344ed38a2041a627bae4a570bfe91951922582a0d6c160a302e3d968cc",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_ordered64_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_prefill32_actual_tests.rs": {
+    "sha256": "1c8bb9714f754726c66aa8efb083be9124dce8d1f3d2d35ad71b47ccad44e52e",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_prefill32_actual_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_prefill32_lifecycle_tests.rs": {
+    "sha256": "32feb851e287c8207bae45d6d9d439bfee03305251452e5f99108fb02d7580d1",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_prefill32_lifecycle_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_prefill32_program.rs": {
+    "sha256": "5752ae2da4a6bc6aafd335adfe7ec34963a4ea3e6c530e112125193070d349f0",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_prefill32_program.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_prefill_program.rs": {
+    "sha256": "119aeb867625a738662ceceb736e98bd68017ed7792750d21a0d9adfd8b1a5f9",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_prefill_program.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_token_program.rs": {
+    "sha256": "20fe21cde773fdd2be99b69ed6ac16f76a1fdbdfeaab83e157026c717fade805",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_token_program.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/tp_worker_token_program_tests.rs": {
+    "sha256": "23558b86478b77482ec4504907cbba1f1cff8d71569d0213afbdba2843b97517",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/tp_worker_token_program_tests.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/wave_argmax_live_contract.rs": {
+    "sha256": "d54f7b85c6accd4ce76807220c5a563f27fbe70872536a9b0bb7ca28346bc08e",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/wave_argmax_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/wave_argmax_submission_canary_contract.rs": {
+    "sha256": "c5e705bc2ef896708a898986f8ee0db4c2a5bef4dec63df007167cae2e54e6d8",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/wave_argmax_submission_canary_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/wave_rmsnorm_v15_canary_contract.rs": {
+    "sha256": "b1f957db581e4708dbfe51a01bc9b38066c85565d36b1d87b7e18343ffa7aba2",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/wave_rmsnorm_v15_canary_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/wave_rmsnorm_v15_live_contract.rs": {
+    "sha256": "e51a898ef2c7b8cd7b223ea85df7c2874c3101da0b23b0a7f2a5e3fda733927d",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/wave_rmsnorm_v15_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/wave_target_v17_live_contract.rs": {
+    "sha256": "fd7a693369b3688607fd4d82bdb5a5e7b5c7ee5a8120cfc1ed2222153672f8b6",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/wave_target_v17_live_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/wave_target_v17_runner.rs": {
+    "sha256": "a947d5b933f629bc38b02bd226f8d30f5edee780d8dd5de570ebf6f302d063d0",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/wave_target_v17_runner.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/bin/wave_target_v17_runtime_diagnostic_contract.rs": {
+    "sha256": "e2c15d813740db7505981d231edcb4706acb8cc6920ef204b1fee6ffc6ad79d1",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/bin/wave_target_v17_runtime_diagnostic_contract.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/source/src/token_program_abi_fixture.rs": {
+    "sha256": "0ed0bcd08d7df64bd0817824f5d59581ed48a6de2a3ded32c2d31235d6115130",
+    "source": "perf-gate-up-decode-diagnostic-r1/source/src/token_program_abi_fixture.rs"
+  },
+  "experiments/gate-up-decode-diagnostic/test_decode_capture.py": {
+    "sha256": "7151068b6403f73cd60438f73742d872af57a9fd311c056585ef01c75071d94e",
+    "source": "perf-gate-up-decode-diagnostic-r1/test_decode_capture.py"
+  },
+  "experiments/gate-up-decode-diagnostic/transport-a001/decode_capture.py": {
+    "sha256": "0f72851ddde98f83d9a3c63b9fd83651e429168012f58112e937c9f1cb07428d",
+    "source": "perf-gate-up-decode-diagnostic-r1/transport-a001/decode_capture.py"
+  },
+  "experiments/gate-up-decode-diagnostic/transport-a001/prepare_capture.py": {
+    "sha256": "7426dd73d800747863cc2a9e760ebe780aa10965b6bd9fc0b5552a6f401c8b1f",
+    "source": "perf-gate-up-decode-diagnostic-r1/transport-a001/prepare_capture.py"
+  },
+  "experiments/gate-up-decode-diagnostic/transport-a001/qualify_capture.py": {
+    "sha256": "6e4f81f76e8ddc0e1a652aee67c0f4880bdb6484973be6d35949f524fddfcd60",
+    "source": "perf-gate-up-decode-diagnostic-r1/transport-a001/qualify_capture.py"
+  },
+  "experiments/gate-up-decode-diagnostic/transport-a001/run_decode.py": {
+    "sha256": "614df5e782036ecd86206081b48ee89c7634818d1ae25a984f7d0ab0a0421430",
+    "source": "perf-gate-up-decode-diagnostic-r1/transport-a001/run_decode.py"
+  },
+  "experiments/gate-up-decode-diagnostic/transport-a001/test_decode_capture.py": {
+    "sha256": "7151068b6403f73cd60438f73742d872af57a9fd311c056585ef01c75071d94e",
+    "source": "perf-gate-up-decode-diagnostic-r1/transport-a001/test_decode_capture.py"
+  },
+  "experiments/ordinary-splitk/harness/bind_build.py": {
+    "sha256": "f01e556483de67af2fef09184abb3fbc5c5c74f9522da3411fc4a2a96235d831",
+    "source": "perf-splitk-model-harness-r3/bind_build.py"
+  },
+  "experiments/ordinary-splitk/harness/export_delta.py": {
+    "sha256": "3c74ea039abc42523d4543d3fa29090aa4a8b878a109d7605722c96afb258bf9",
+    "source": "perf-splitk-model-harness-r3/export_delta.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/experimental_evidence.py": {
+    "sha256": "8fa2522b58bc4d84f1c7c742b6afbfd0ec5b0b6ba7b57277d6bbeab1edc68752",
+    "source": "perf-splitk-model-harness-r3/harness/experimental_evidence.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/fixtures/frozen_run_v17_native.py": {
+    "sha256": "810a22cb4e805662a7575e2e4ec261fe161a43405f675a7b639f45a62664301f",
+    "source": "perf-splitk-model-harness-r3/harness/fixtures/frozen_run_v17_native.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/fixtures/frozen_run_v25_native.py": {
+    "sha256": "8c3f6cf9677df9530bc59ebc0a3cbba2355215e002a60a01f9d002c456ea0920",
+    "source": "perf-splitk-model-harness-r3/harness/fixtures/frozen_run_v25_native.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/launch_contract.py": {
+    "sha256": "6a5b72b7f41b59bbb7ad64cb0a68c9c5f453716301d460a06a4b247e1ce3ce79",
+    "source": "perf-splitk-model-harness-r3/harness/launch_contract.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/abba_ledger.py": {
+    "sha256": "0478d6a465a7d90e8c506f952610fcbe641a4d215cf058f720c12ff47dd5e55f",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/abba_ledger.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/gpu_activity.py": {
+    "sha256": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/gpu_activity.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/native_campaign_replay.py": {
+    "sha256": "ce99e641c79bc827cbb9d6325c77c84aa5d0ef97084ca64464a5148666940f52",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/native_campaign_replay.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/native_lifecycle.py": {
+    "sha256": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/native_lifecycle.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/native_token_cell.py": {
+    "sha256": "960b2df836eabcc71230ba4dacc9366d8977b090b742de1d5dcf0357fca6d721",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/native_token_cell.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/splitk_selection.py": {
+    "sha256": "21613f39000ad054a34080cf7f386c099e0b3bf70786390179a9b863883fdcd5",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/splitk_selection.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/test_abba_ledger.py": {
+    "sha256": "1be2c1255532f7c420e34aee8c887a430e48718b566691b44d7aba65011117b6",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/test_abba_ledger.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/test_gpu_activity.py": {
+    "sha256": "397038b2b050c60b1a4a935a3f416f3d1af6847de045ef659972f7d316fbd5bd",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/test_gpu_activity.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/test_native_campaign_replay.py": {
+    "sha256": "ba87cbce6749c341573260417ae6f4e6fb5c59a738604fcfb4e164558e6f580f",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/test_native_campaign_replay.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/test_native_lifecycle.py": {
+    "sha256": "73c96e5624b7aab39da1dc66d1a113ec516fc68cc4b7ddf17cf81fc6fab50bfc",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/test_native_lifecycle.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/measurement/test_native_token_cell.py": {
+    "sha256": "0a407c69fdd38621824296d216287cbd653d073f92b0a98491300de6f02f1b93",
+    "source": "perf-splitk-model-harness-r3/harness/measurement/test_native_token_cell.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/prepare_stage.py": {
+    "sha256": "2d9a6e9e1c75506f944c96bcdd01ce2d68eec3f9107ccc45678fa9a5798ced2b",
+    "source": "perf-splitk-model-harness-r3/harness/prepare_stage.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/run_stage.py": {
+    "sha256": "36d8eef5890c13c3a0ed6d1a99d327796ca9277bb3265cab0f5b21d3fe66fbed",
+    "source": "perf-splitk-model-harness-r3/harness/run_stage.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/test_cpu_binding.py": {
+    "sha256": "454c522a262b267b84466908d6ffe22bf1cbc1ade8ea1913690cbc2178939142",
+    "source": "perf-splitk-model-harness-r3/harness/test_cpu_binding.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/test_native_launch.py": {
+    "sha256": "255748a162804a26890aee68c01e64cb673ca70a1c45e6271203ac17aa755f03",
+    "source": "perf-splitk-model-harness-r3/harness/test_native_launch.py"
+  },
+  "experiments/ordinary-splitk/harness/harness/test_splitk_selection.py": {
+    "sha256": "26e027cf4a4ca3a3c3fd983a13d741b6b3b6018ad177be45d0f9fc69f4bbc00f",
+    "source": "perf-splitk-model-harness-r3/harness/test_splitk_selection.py"
+  },
+  "experiments/ordinary-splitk/harness/prepare_native.py": {
+    "sha256": "4e4cb2c93e0d2c3cbaa4d11aada2e47026608bb5a14ec85365d387a48f1b8b30",
+    "source": "perf-splitk-model-harness-r3/prepare_native.py"
+  },
+  "experiments/ordinary-splitk/harness/prepare_qualification.py": {
+    "sha256": "d1cab69557bcdce7a324203362ceafe43b5d1aae5ada08ce22ca5ad9f3f2c0e2",
+    "source": "perf-splitk-model-harness-r3/prepare_qualification.py"
+  },
+  "experiments/ordinary-splitk/harness/qualify.py": {
+    "sha256": "c3e5b5350dc1abaa7a7e76d292878356ad40735facabbfae72a631686a3f68c6",
+    "source": "perf-splitk-model-harness-r3/qualify.py"
+  },
+  "experiments/ordinary-splitk/harness/qualify_binding.py": {
+    "sha256": "245fb3e2908732da56a4bc581bd1ea68467dc379d8a25401c55e8a02cb8bae2e",
+    "source": "perf-splitk-model-harness-r3/qualify_binding.py"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/Cargo.toml": {
+    "sha256": "bc6c5b981555ae5c909935e61387a830ae262710f362bb09239e4d2b39c2e578",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/Cargo.toml"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-splitk-down-r1-live.rs": {
+    "sha256": "b6ffba9030f5350edc3551c2bdd6d5657a5d103f5f2f7f695c1044f756945bbc",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-splitk-down-r1-live.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/bin/splitk_down_live_contract.rs": {
+    "sha256": "20d165f7beff0c30a94390585da302fa418e493d58ee082e7bf9b4493f373ba5",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/bin/splitk_down_live_contract.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/bin/splitk_down_live_profile.rs": {
+    "sha256": "d15b19c45e3236dc6c9a9e702c110942cea009e5564e53e67d721da630e8cded",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/bin/splitk_down_live_profile.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/bin/wave_target_v17_runner.rs": {
+    "sha256": "987d89ff5dc63c451410f57bace9ee3943cebcabbceef90c63207944cd86a53e",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/bin/wave_target_v17_runner.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_artifact.rs": {
+    "sha256": "06ffd4f3a6b5cb04beabe378c49fcc4d418699a29a9de730f90ef553de7366ad",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_artifact.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_artifact/packed_bf16_r2.rs": {
+    "sha256": "7937a5eaf6a64c156a30303f9bb6f88f7979b45ba98745dd43d101a8c68fbdcc",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_artifact/packed_bf16_r2.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_artifact/splitk_down_r1.rs": {
+    "sha256": "8340b0d199c196d1b91c1d7c3148d63c3d9ee072cf30071a9311ac46748ba0ec",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_artifact/splitk_down_r1.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/batched.rs": {
+    "sha256": "8a25282d76061a3a2d68c8475fb18c00181b45cd3f89926ad40dd0b0739aafe1",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/batched.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/batched/c1_split_attention_v25.rs": {
+    "sha256": "1f3bfa2b427338ec7e9eb0a0b8bb42c513fa71835c7b50d789fc38dec747e672",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/batched/c1_split_attention_v25.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/batched/packed_down_r1.rs": {
+    "sha256": "5d14358e537632f1618e7ef97479546511145f2efd46617833a043fbbb22160d",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/batched/packed_down_r1.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/batched/prefill16_ordered_v1.rs": {
+    "sha256": "4a4815f8ffd84d02ec9d8f43b4be692237ee952958f10376ce7dc6f2f51b8155",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/batched/prefill16_ordered_v1.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/batched/splitk_down_r1.rs": {
+    "sha256": "d21a41a09485cf8cc63813cac019e14fb21770659fa5fd823916f2896e5f4a71",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/batched/splitk_down_r1.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests.rs": {
+    "sha256": "8177932d3042677ce0a75394ae682bf9f8b06c025e8286c4fba46fcd64bc30b3",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests/splitk_down_r1.rs": {
+    "sha256": "84cfb049dd99c62951c960edb91af3147e7a3181c9c06798ee46d184da4410e4",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/batched/tests/splitk_down_r1.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/projection.rs": {
+    "sha256": "2032207010916cd80ac40164ed9e741df34aa23ae89b2c07d3bde0a34f122370",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/projection.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/reduction.rs": {
+    "sha256": "f952ee18866f0f61a63fa34fa2754e3ba5aec059a4520b5628710dbf6bb26150",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/reduction.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/row_profile.rs": {
+    "sha256": "d5390d6afacd4a090cd18f6064da63226d852612041871213768372c989e0053",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/row_profile.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/src/tp_execution/row_profile/splitk_down_r1.rs": {
+    "sha256": "0f84853949842bc8ab992d3121dca22dea93f3593f7b700bc382777165d1cd5a",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/src/tp_execution/row_profile/splitk_down_r1.rs"
+  },
+  "experiments/ordinary-splitk/source-overlay/adapters/m1-engineering-execution-v1/tests/source_policy.rs": {
+    "sha256": "765fe65620ccf3fbff08824048d441c3c687256ce7e143a2d0d9207a6b114e19",
+    "source": "perf-splitk-model-integration-r1/qualified-a004/formatted-a001/adapters/m1-engineering-execution-v1/tests/source_policy.rs"
+  }
+}

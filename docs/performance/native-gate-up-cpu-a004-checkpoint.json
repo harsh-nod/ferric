@@ -1,0 +1,49 @@
+{
+  "schema": "FerricNativeGateUpCpuCheckpointR1",
+  "date": "2026-10-06",
+  "status": "focused_library_and_worker_passed_runner_successor_pending",
+  "fe2o3_main": "55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9",
+  "source_archive_sha256": "5758dbc966c491265919ea6ea92076dc4e0f7b016f746cb81f30add2a85d077f",
+  "source_files": 1438,
+  "overlay_files": 19,
+  "qualification": {
+    "host": "mi300x-2",
+    "profile": "FerricCpuFourCore40GiBEmitterV1",
+    "library_passed": 9,
+    "library_ignored_actual_image": 1,
+    "worker_passed": 6,
+    "both_focused_outer_status": 0,
+    "both_focused_clean_reaped_unsignaled": true,
+    "library_elf_sha256": "0c4d1e0f10939aaed105470aa63969a89896d6fc388a5f56a8a966d5aabadeb3",
+    "worker_test_elf_sha256": "c9999d41c119f6400dd839f6573b0fab8f05c477f6147b97436978ec89d6810a",
+    "library_outer_sha256": "6f6536efa4af75700019dac236e1e6065b822f2c413660e107527ff0f019c620",
+    "worker_outer_sha256": "a1d5d398a0072d31803cb943f718196d5e250dbd514f62c026d3fc70aa7532f3"
+  },
+  "preserved_failures": {
+    "a001": "recording weight buffer capacity was too small",
+    "a002": "recording backend lacked synthetic split-K partial/merge handling",
+    "a003_broad": "compile finished; old packed full-matrix upload regression hit 1100-second timeout; remaining observed descendant terminated; outer125 and no broad-suite qualification"
+  },
+  "retention": {
+    "archive_sha256": "bae938f76dc9964594c9f119148d641522e21667d9895b97330b8956867f214f",
+    "archive_bytes": 44035219,
+    "receipt_sha256": "d1ba3747802be4821b1d0c525108d201c57b6c8b9fefd6fb0c83eb79cb3313b6",
+    "regular_files_verified": 2924,
+    "logical_bytes_verified": 192068920,
+    "local_archive_and_all_member_hashes_verified": true,
+    "includes": "a002/a003 source, raw phase records, focused a004 records and both compiled test ELFs"
+  },
+  "next_source": {
+    "archive_sha256": "ad289852bd593e478de9a7adff19a9836f2899a8709b363e03dc5ae7cf491f96",
+    "source_files": 1441,
+    "overlay_files": 25,
+    "includes": "runner selection, explicit image pins, metadata, distinct capacity-only capture and actual-image worker fixture",
+    "tests_passed": false
+  },
+  "model_performance_qualified": false,
+  "native_executed": false,
+  "default_promotion": false,
+  "serving_qualified": false,
+  "compiler_runtime_changes": false,
+  "committed_or_pushed": false
+}

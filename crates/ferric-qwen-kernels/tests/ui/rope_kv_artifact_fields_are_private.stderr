@@ -1,0 +1,5 @@
+error[E0616]: field `worker` of struct `InspectedQwen3RopeKvKernelV1` is private
+ --> tests/ui/rope_kv_artifact_fields_are_private.rs:4:22
+  |
+4 |     let _ = artifact.worker;
+  |                      ^^^^^^ private field

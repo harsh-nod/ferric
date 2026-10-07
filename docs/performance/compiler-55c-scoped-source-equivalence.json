@@ -1,0 +1,71 @@
+{
+  "schema": "FerricCompiler55cScopedSourceEquivalenceV1",
+  "review_mode": "local immutable Git and retained data only",
+  "revisions": {
+    "emitter_base": "79a75a04c6b1ab2f91eddafa7d0a35378fbb0f3a",
+    "tested_two_fix_commit": "bed1d37f50abd3f331b9b28ce648e47f235a90d5",
+    "published_private_access_fix": "abaa69f827fbc55cc647c55b9884c9742c115a86",
+    "published_equivalent_compiler": "510ec3b62ce245225235e1195a7982ff06fcc713",
+    "current_sdk_runtime": "55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9",
+    "llvm_worker_source": "84ab85a424c821c9c2eca155baa5e33ea064349a"
+  },
+  "retained_emitter": {
+    "archive_sha256": "f54098fd910d864ad44886aa19a710b92c66de2c607e0c865a2baa6f1a17d607",
+    "source_roster_sha256": "e199664031455c73ec426af9eda2eb44c269d6126165fcb25a6065b070074467",
+    "verified_archive_files": 10294,
+    "binary_roster_sha256": "e0979739a144a41af225bef7e7db151aebdb66124ad03eec90f6991ce9d699af",
+    "quartet_build_result_sha256": "14c4ca4c0efd6adafb90d723ec88bf96a1a3e74aaff275b96cbdc3f92347a1c2",
+    "quartet_retention_result_sha256": "8da046c2b6252fcf3a42401be213dd3177908e35dcf89248d87d0f860b12af5f",
+    "published_510_archive_sha256": "76cac5d522764f79651c75574634837058aca65e8d622719ae748a034594eb47"
+  },
+  "current_source": {
+    "archive_sha256": "a9772e55f9a140d0749a621c07ea2c9cb19c36b2416656278dd8d2a2095321d3",
+    "source_roster_sha256": "de4683bf5fe2097b23c3583c1f27edb0b41fc9545cb00401a379501798474443",
+    "roster_files_independently_matched_to_55c_git": 10347
+  },
+  "source_comparison": {
+    "emitter_to_510_all_crates_and_root_manifests_equal": true,
+    "emitter_to_510_other_differences": 53,
+    "other_difference_scope": "documentation and disabled debugger proposals",
+    "510_to_55c_insertions": 1300,
+    "510_to_55c_deletions": 48,
+    "510_to_55c_binary_diff_sha256": "d495ca363245d54aa8d431df802131eb0205ebd66cc68e97d90efa62370fbe6f",
+    "changed_paths": [
+      "crates/fe2o3-kfd/src/bin/gfx950_engineering_worker.rs",
+      "crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "crates/fe2o3-kfd/src/engineering_gfx950_debug_cold_v1.rs",
+      "crates/fe2o3-kfd/src/engineering_gfx950_token_program.rs",
+      "crates/fe2o3-kfd/src/engineering_gfx950_token_program_native_tests.rs",
+      "crates/fe2o3-kfd/src/engineering_gfx950_token_program_tests.rs",
+      "crates/fe2o3-kfd/src/engineering_token_program.rs",
+      "crates/fe2o3-kfd/src/engineering_token_program_slots512_tests.rs",
+      "crates/fe2o3-kfd/src/engineering_token_program_slots512_wire_edges_tests.rs",
+      "crates/fe2o3-kfd/src/engineering_token_program_tests.rs",
+      "crates/fe2o3-kfd/src/engineering_wire.rs",
+      "crates/fe2o3-kfd/src/gfx950_engineering_worker_wait_tests.rs",
+      "crates/fe2o3-kfd/src/lib.rs"
+    ],
+    "llvm_worker_subtree_84ab_to_55c_equal": true
+  },
+  "actual_build_feature_boundary": {
+    "profile": "FerricCpuFourCore32GiBEmitterV1",
+    "source": "/tmp/ferric-v16-emitter-b95a642-r1/source/core-79a-witness-rank-a001",
+    "cargo_selection": "build --locked --offline --manifest-path SOURCE/Cargo.toml -p rustc-codegen-fe2o3 -p cargo-fe2o3 --lib --bin fe2o3-rustc-extract --bin cargo-fe2o3 --bin fe2o3-engineering-lld-proxy",
+    "explicit_features": [],
+    "cargo_fe2o3_depends_on_kfd": true,
+    "kfd_default_features": [],
+    "workspace_manifest_enables_engineering_gfx950_for_selected_build": false,
+    "changed_lib_rs_scope": "One re-export inside cfg(all(feature=engineering-gfx950, target_os=linux, target_arch=x86_64))",
+    "other_changed_source_scope": "Engineering modules gated by engineering-gfx950, their nested tests, and a worker binary requiring engineering-gfx950",
+    "evidence_basis": "Recorded Cargo argv, cleared wrapper environment, immutable manifests and Rust cfg boundaries; not a newly executed rustc feature trace"
+  },
+  "conclusion": {
+    "active_compiler_source_equivalent_for_recorded_configuration": true,
+    "stale_compiler_functionality_identified": false,
+    "whole_source_trees_identical": false,
+    "fresh_55c_compiler_build": false,
+    "binary_equivalence_proven": false,
+    "historical_binary_identity_preserved": true,
+    "new_tests_builds_or_emissions_performed": false
+  }
+}

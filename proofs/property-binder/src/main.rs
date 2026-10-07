@@ -19,8 +19,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const FORMAT: &str = "ferric.m0-property-manifest.v1";
-const FE2O3_COMMIT: &str = "a6fa86b5ccf8f0438925cfec8f48a5d713874da3";
-const FE2O3_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=a6fa86b5ccf8f0438925cfec8f48a5d713874da3#a6fa86b5ccf8f0438925cfec8f48a5d713874da3";
+const FE2O3_COMMIT: &str = "e527d230c05dfeefec6cc6c91de0b6f16310f677";
+const FE2O3_SOURCE: &str = "git+https://github.com/harsh-nod/fe2o3.git?rev=e527d230c05dfeefec6cc6c91de0b6f16310f677#e527d230c05dfeefec6cc6c91de0b6f16310f677";
 const MACHINE_NAMESPACE: &str = "harsh-nod.ferric.machine_refined.v1";
 const MACHINE_CODE: u16 = 1;
 const EVIDENCE_FORMAT: &str = "FERRIC-M0-EVIDENCE-INDEX-V1";
@@ -1218,9 +1218,24 @@ fn validate_checked_evidence(
     if !runtime.contains("test result: ok.") || runtime.contains("FAILED") {
         return Err("runtime test transcript is not an all-pass result".to_owned());
     }
-    for gate in ["fmt", "clippy", "test-debug", "test-release"] {
-        let marker = format!("FERRIC_QUALITY_GATE={gate}:PASS");
-        if runtime.lines().filter(|line| *line == marker).count() != 1 {
+    for gate in [
+        "fmt",
+        "clippy",
+        "clippy-all-features",
+        "test-debug",
+        "test-debug-all-features",
+        "test-release",
+        "test-release-all-features",
+        "source-closure-policy",
+        "m1-benchmark-policy",
+        "m1-reference-policy",
+        "m1-r29-differential-evidence",
+    ] {
+        let begin = format!("FERRIC_QUALITY_GATE={gate}:BEGIN");
+        let pass = format!("FERRIC_QUALITY_GATE={gate}:PASS");
+        if runtime.lines().filter(|line| *line == begin).count() != 1
+            || runtime.lines().filter(|line| *line == pass).count() != 1
+        {
             return Err(format!(
                 "quality gate transcript marker is not exact: {gate}"
             ));
@@ -1365,7 +1380,7 @@ fn build_contract(
         file_measurement(inventory, "runtime-cargo-lock")?.digest,
         file_measurement(inventory, "verus-closure")?.digest,
         file_measurement(inventory, "verus-version")?.digest,
-        sha256_bytes(b"--locked --release --no-cheating --output-json"),
+        sha256_bytes(b"--locked --release --lib --no-cheating --output-json"),
     ];
     let proof_tool = exact_tool(
         inventory,

@@ -1,0 +1,44 @@
+{
+  "schema": "FerricNativeGateUpCpuCheckpointR1",
+  "date_utc": "2026-10-06",
+  "source_archive_sha256": "ad289852bd593e478de9a7adff19a9836f2899a8709b363e03dc5ae7cf491f96",
+  "source_overlay_files": 25,
+  "source_files": 1441,
+  "cpu_host": "mi300x-2",
+  "sdk_revision": "55c1a9b6da5e835e4cec9e1d69609ce884c1a5c9",
+  "focused_tests": {"library_passed": 10, "library_ignored": 1, "worker_passed": 6, "profile_passed": 4},
+  "explicit_tests": {"actual_image_admission": 1, "driver_captures": 2, "actual_image_abi_packing": 2},
+  "all_successful_test_phases_clean_reaped_unsignaled": true,
+  "strict_clippy_passed": false,
+  "strict_clippy_findings": "Four narrowing casts and one missing must_use; repairs are a separate successor, not credited here.",
+  "prefill_dispatches_both_arms": 649,
+  "decode_dispatches": {"control": 652, "candidate": 724},
+  "capture_positions": [143, 144],
+  "candidate_distinct_kn_weights": 72,
+  "candidate_scratch_bytes": 196608,
+  "non_gate_up_commands_equal_between_arms": 580,
+  "dynamic_slots": {"pointers": 72, "scalars": 108, "total": 180},
+  "abi": {
+    "control": {"definition_bytes": 298169, "kernarg_bytes": 219016, "payload_bytes": 517185, "pointer_fixups": [2569, 2279, 290]},
+    "candidate": {"definition_bytes": 317326, "kernarg_bytes": 239752, "payload_bytes": 557078, "pointer_fixups": [2713, 2423, 290]},
+    "execute_header_bytes": [7098, 7100]
+  },
+  "graph_sha256": {
+    "control": "3df9f1a8e4db8f618e2f6c65c5868ea72b6d91605d2ea899d1ab70fc94075057",
+    "candidate": "81089c41901ba372220ccde0c6402f4b299be8be994df3e4db7b2d45bd5826b1"
+  },
+  "retention": {
+    "archive_sha256": "69ed2e2da7194867ca2f8b13f45c2db924ce5ca19716aad3c5bda5c31ba0933f",
+    "archive_bytes": 32976280,
+    "receipt_sha256": "92e0fa366bdf813b534fe7f04a8244a6d6600d7b16a25eb9457ae120c56764be",
+    "files": 1526,
+    "all_member_hashes_verified_locally_without_executing_project_code": true
+  },
+  "recording_weights": "Distinct capacity-only synthetic identities, not authenticated model contents",
+  "native_executed": false,
+  "model_token_parity_qualified": false,
+  "model_tpot_speedup_qualified": false,
+  "model_ttft_speedup_qualified": false,
+  "vendor_comparison_changed": false,
+  "next": "Qualify the separate admission-close, metadata-scope, source-policy and lint successor; release build, native parity and matched model A/B remain required."
+}

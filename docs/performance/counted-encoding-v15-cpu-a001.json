@@ -1,0 +1,139 @@
+{
+  "schema": "FerricCountedEncodingCpuObservationV1",
+  "change_id": "v15-counted-token-encoding-r1",
+  "host": "mi300x",
+  "core_base": "bee71f6b4aaa507a5bcefcf23d5bcd562ee145cd",
+  "status": "cpu_microbenchmark_passed_native_pending",
+  "graph_sha256": "a84b7ea74783e5eb0ff9899c85716e8b9526f0d92a072e1f6933c3c78ff9c913",
+  "image_map_sha256": "aa9368c190f92e1ddb532488eef5f4de4be2ebd1c0b3e134dd80b817f26c09d3",
+  "test_binary_sha256": "e0afc02896e2df6a5e9ea6b267c7ca3d0624e5546db7c2f451b79952e962b2d9",
+  "raw_stdout": "products/perf-v14-20261005/cpu-results/pages-v15-encoding-release-replay-a001/stdout",
+  "method": {
+    "release_build": true,
+    "positions": [
+      143,
+      144
+    ],
+    "dispatches": 652,
+    "updates": 180,
+    "excluded_warmup_calls": 32,
+    "measured_sample_groups": 24,
+    "calls_per_group": 64,
+    "blocks_per_position": 3,
+    "order": [
+      "owned",
+      "counted",
+      "counted",
+      "owned"
+    ],
+    "same_process": true,
+    "independent_process_repetitions": 1,
+    "clock": "std::time::Instant",
+    "fake_worker_closed_before_timing": true
+  },
+  "per_position": [
+    {
+      "position": 143,
+      "baseline_us": 356.5332109375,
+      "candidate_us": 207.35984895833334,
+      "saving_us": 149.17336197916663,
+      "reduction_percent": 41.839962562510514
+    },
+    {
+      "position": 144,
+      "baseline_us": 359.04478125,
+      "candidate_us": 209.98653645833335,
+      "saving_us": 149.05824479166668,
+      "reduction_percent": 41.51522388731744
+    }
+  ],
+  "adjacent_pairs": [
+    {
+      "position": 143,
+      "block": 0,
+      "order": "AB",
+      "reduction_percent": 40.94469807036612
+    },
+    {
+      "position": 143,
+      "block": 0,
+      "order": "BA",
+      "reduction_percent": 40.976752194930754
+    },
+    {
+      "position": 143,
+      "block": 1,
+      "order": "AB",
+      "reduction_percent": 43.719891977233
+    },
+    {
+      "position": 143,
+      "block": 1,
+      "order": "BA",
+      "reduction_percent": 41.23374177848811
+    },
+    {
+      "position": 143,
+      "block": 2,
+      "order": "AB",
+      "reduction_percent": 42.485307967783505
+    },
+    {
+      "position": 143,
+      "block": 2,
+      "order": "BA",
+      "reduction_percent": 41.67937789262061
+    },
+    {
+      "position": 144,
+      "block": 0,
+      "order": "AB",
+      "reduction_percent": 41.06421092585766
+    },
+    {
+      "position": 144,
+      "block": 0,
+      "order": "BA",
+      "reduction_percent": 41.69273440926816
+    },
+    {
+      "position": 144,
+      "block": 1,
+      "order": "AB",
+      "reduction_percent": 41.58931770990094
+    },
+    {
+      "position": 144,
+      "block": 1,
+      "order": "BA",
+      "reduction_percent": 41.476180440100784
+    },
+    {
+      "position": 144,
+      "block": 2,
+      "order": "AB",
+      "reduction_percent": 41.49778996402771
+    },
+    {
+      "position": 144,
+      "block": 2,
+      "order": "BA",
+      "reduction_percent": 41.766797318472506
+    }
+  ],
+  "correctness": {
+    "post_sample_owned_encoding_equality": true,
+    "counted_validation_equivalence": true,
+    "actual_image_abi_checks": true,
+    "late_invalid_dispatch_rejected_before_registration": true,
+    "native_executed": false,
+    "model_parity": false,
+    "allocation_counts_measured": false
+  },
+  "native_metrics": {
+    "ttft_ms": null,
+    "tpot_ms": null,
+    "throughput_tokens_per_second": null
+  },
+  "decision": "Keep isolated candidate for native qualification. No default promotion or vLLM speedup claim."
+}

@@ -1,0 +1,13 @@
+{
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/Cargo.lock": "bc31798285f5e50b765c9f51591f79f3411d27343ebeff7901df8aa829ea57eb",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/Cargo.toml": "6a9b1be6c2bc6b407acd63b2ac2694afe57e9fe156f10b1b3bc42acdf1b6058b",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/build.rs": "7b8c16eef6c8c6d41b0989b29e6215bee7a2263cdfd0ca558903ab821d5d6e8a",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/build/target_contract.rs": "d48a07c5e96b4908aedcd332fb470e00812fbeb51ca299fd655d6629a0e0b3ad",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/src/lib.rs": "acb0c457ffabf5238e45dae2d3503cbb0879cd06ab37b7ed37a75d1fc4bd3d75",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/src/projection.rs": "dcba969d61e8cef086a4912e0b392115c57ce2c7bad511905594acf1ed7bab91",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/tests/contract.rs": "b63b6d996c542e7e6a0a89fe60d1ff62a78e7835a4725d1fd684edfb938cb551",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/tests/fixtures/projection_k2.rs.txt": "65dc8f3c0b288f2cb632ebc32b72d52086c4d2a0259e97136afac29ba3a822c1",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/tests/fixtures/projection_unpaired.rs.txt": "b3a5fc7171dbcb0c7d9117207fdd0302f96787cd4ca55ff5aa41f4dada0d4fc0",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/tests/geometry.rs": "4e349c36516c79440a37cdde8fcd3dd42a88314864026dca205e620babe36901",
+  "device/qwen3-tp-c1-splitk-down-kernels-v1/tests/paired_schedule.rs": "4c9da61d3478a8e7ae629268f28b5b03824c7e04d596b86c62937ca626762a68"
+}

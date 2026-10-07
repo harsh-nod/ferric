@@ -1,0 +1,11 @@
+error[E0277]: the trait bound `InspectedQwen3SwiGluKernelV1: Clone` is not satisfied
+ --> tests/ui/swiglu_inspected_cannot_clone.rs:6:21
+  |
+6 |     require_clone::<InspectedQwen3SwiGluKernelV1>();
+  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Clone` is not implemented for `InspectedQwen3SwiGluKernelV1`
+  |
+note: required by a bound in `require_clone`
+ --> tests/ui/swiglu_inspected_cannot_clone.rs:3:21
+  |
+3 | fn require_clone<T: Clone>() {}
+  |                     ^^^^^ required by this bound in `require_clone`

@@ -1,0 +1,5 @@
+error[E0616]: field `prepared` of struct `InertQwen3RopeKvWorkerRequestV1` is private
+ --> tests/ui/rope_kv_request_fields_are_private.rs:4:21
+  |
+4 |     let _ = request.prepared;
+  |                     ^^^^^^^^ private field
