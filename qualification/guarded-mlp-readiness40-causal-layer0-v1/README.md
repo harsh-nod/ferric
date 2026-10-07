@@ -205,15 +205,29 @@ diagnostic processing. It does not mean numerical acceptance. In particular,
 the first Q difference has not been shown to cause the position-five argmax
 difference, and matching inputs alone do not identify an arithmetic bug.
 
+## Exact Q/K Diagnostic
+
+The subsequent [five-dot diagnostic](qkv-exact-v1/RESULTS.md) passed all 18 tests
+on MI350 and rehashed the original 4 GB shard before and after use. Its original
+checkpoint rows and both packed-QKV hashes join the current native upload
+manifest. All five dots use the same captured normalized inputs on both sides.
+
+Ferric matches once-rounded exact BF16 at the first three differing scalars
+(Q rows 168, 3950 and 1462 at positions 0, 1 and 2); the framework matches at
+the remaining two (Q row 10 at position 3 and K row 609 at position 5).
+None is an exact midpoint tie. This is not an accumulation-order emulator or
+a full-projection exactness claim. It rules out treating framework agreement
+alone as evidence that a numerical change improves these selected results.
+
 ## Remaining Gates
 
 Both native and framework instrumentation preserve their own prior histories
-and selected payloads. The next diagnostic is an independent exact BF16 dot
-reference for the five differing Q/K projection scalars, including a join from
-the original checkpoint rows to the actual native packed upload hashes.
-The independently observed attention and output-projection/residual differences
-also remain to be resolved. No arithmetic change or tolerance relaxation follows
-from this comparison alone.
+and selected payloads. Exact Q/K dots have now been checked. The remaining
+same-input attention differences need independent diagnosis; the current
+output-projection/residual capture is also being joined to the existing exact
+O replay. No arithmetic change or tolerance relaxation follows from these
+comparisons alone. Prompt-position argmax diagnostics and actual generated-token
+acceptance must remain distinct.
 
 Full 2,048-prompt/256-generated megakernel correctness, sustained decode
 throughput, the 700 tokens/s target, and issue #42 milestones remain open.
