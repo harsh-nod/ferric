@@ -154,6 +154,34 @@ record. Original receipts are unchanged; the model was not rerun for retention.
 
 Reference repeatability does not establish Ferric correctness or a speedup.
 
+## Native Admission CPU Result
+
+The MI350-host CPU qualification completed with 25 named tests passed, zero
+failures, errors, or skips, and one naturally completed, reaped owned process.
+Controller elapsed time was 14.737213685992174 seconds. GPU visibility was
+disabled; the process was restricted to CPUs 8 and 9.
+
+`native-admission-cpu-v1` retains 20 original archive members and a separate
+retention record: 19 manifest pins and 200,341 expanded bytes, including all ten
+deployed source bodies and seven raw evidence files.
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| CPU terminal | 14,321 | `68edb0e99cc4a079c1ff5051f09a5792230fa02bad2c79da0b9b2469347630ce` |
+| Retained archive | 50,919 | `19e00bf6cbc4260a3db34863599a58a167842cbb21b66325fcc56f9f7d3a0ac3` |
+
+An independent data-only audit joined every retained original to the archive,
+all 25 raw named outcomes to the test-source roster, the owned-process records,
+and the unchanged before/after source hashes. It did not import the tested
+helpers or rerun tests. Remote executable pins remain original metadata during
+local retention; this audit did not rehash those remote executables.
+
+This result qualifies the synthetic Full2303 admission and exact generated-ID /
+decoded-byte comparison tests, including their rejection cases. It does not
+establish actual Full2303 native execution, native launch feasibility, a real
+256-token native/reference match, full-model tensor acceptance, or performance.
+Those gates remain open.
+
 ## Remaining Gates
 
 Measured launch feasibility must precede a full GPU run. Actual completion must

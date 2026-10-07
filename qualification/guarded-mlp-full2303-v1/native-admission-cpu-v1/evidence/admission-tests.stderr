@@ -1,0 +1,30 @@
+test_comparison_never_accepts_short_bool_or_fitted_token_vectors (test_full.BehaviorTests.test_comparison_never_accepts_short_bool_or_fitted_token_vectors) ... ok
+test_decoded_byte_mismatch_fails_without_normalization (test_full.BehaviorTests.test_decoded_byte_mismatch_fails_without_normalization) ... ok
+test_exact256_ids_and_raw_decoded_bytes_pass_only (test_full.BehaviorTests.test_exact256_ids_and_raw_decoded_bytes_pass_only) ... ok
+test_full_admission_joins_owned_stdout_command_and_retirement_before_mismatch (test_full.BehaviorTests.test_full_admission_joins_owned_stdout_command_and_retirement_before_mismatch) ... ok
+test_generated_mismatch_fails_including_ties_first_and_last (test_full.BehaviorTests.test_generated_mismatch_fails_including_ties_first_and_last) ... ok
+test_native_admission_original_pin_is_required_before_reference (test_full.BehaviorTests.test_native_admission_original_pin_is_required_before_reference) ... ok
+test_pinned_reference_manifest_refuses_replacement_before_projection (test_full.BehaviorTests.test_pinned_reference_manifest_refuses_replacement_before_projection) ... ok
+test_reference_history_repeat_payload_and_output_drift (test_full.BehaviorTests.test_reference_history_repeat_payload_and_output_drift) ... ok
+test_reference_two_actual_own_histories_and_matrix_capture (test_full.BehaviorTests.test_reference_two_actual_own_histories_and_matrix_capture) ... ok
+test_all144_pages_and_last_page_boundaries (test_full.FullTests.test_all144_pages_and_last_page_boundaries) ... ok
+test_all_original_records_order_count_and_canonical_bytes (test_full.FullTests.test_all_original_records_order_count_and_canonical_bytes) ... ok
+test_authentic_prompt_then_only_previous_own_output (test_full.FullTests.test_authentic_prompt_then_only_previous_own_output) ... ok
+test_bank_retirement_generation_and_bool_refused (test_full.FullTests.test_bank_retirement_generation_and_bool_refused) ... ok
+test_both_stream_budgets_and_compact_retention_accounting (test_full.FullTests.test_both_stream_budgets_and_compact_retention_accounting) ... ok
+test_close_exact256_and_retirement_flags (test_full.FullTests.test_close_exact256_and_retirement_flags) ... ok
+test_complete2303_own256_and_four_captures (test_full.FullTests.test_complete2303_own256_and_four_captures) ... ok
+test_control_guard_and_cross_forward_frontiers (test_full.FullTests.test_control_guard_and_cross_forward_frontiers) ... ok
+test_decoded_file_pin_skip_policy_and_raw_bytes (test_full.FullTests.test_decoded_file_pin_skip_policy_and_raw_bytes) ... ok
+test_fresh_full_marker_and_owned_natural_retirement (test_full.FullTests.test_fresh_full_marker_and_owned_natural_retirement) ... ok
+test_last_output_is_not_consumed_and_no_forward2304 (test_full.FullTests.test_last_output_is_not_consumed_and_no_forward2304) ... ok
+test_readiness_ar4_and_teacher_forced_profiles_refused (test_full.FullTests.test_readiness_ar4_and_teacher_forced_profiles_refused) ... ok
+test_selected_capture_roster_paths_hashes_and_extent (test_full.FullTests.test_selected_capture_roster_paths_hashes_and_extent) ... ok
+test_selected_payload_finite_lowest_tie_and_zero (test_full.FullTests.test_selected_payload_finite_lowest_tie_and_zero) ... ok
+test_stderr_authority_false_flags_and_strict_json (test_full.FullTests.test_stderr_authority_false_flags_and_strict_json) ... ok
+test_unselected_original_hash_and_chain_changes_refused (test_full.FullTests.test_unselected_original_hash_and_chain_changes_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 14.573s
+
+OK

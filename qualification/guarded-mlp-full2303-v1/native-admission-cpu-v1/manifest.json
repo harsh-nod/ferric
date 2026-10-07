@@ -1,0 +1,100 @@
+{
+  "admitted_test_count": 25,
+  "external_tools_rehashed_locally": false,
+  "files": {
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "compare_full.py": {
+      "bytes": 13208,
+      "sha256": "f6ba7ed47d93a5b03562cf22c730ebebd64ddc01afd1910acc0c51f8b3c875b1"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "evidence/admission-tests.command.json": {
+      "bytes": 1136,
+      "sha256": "0917aaa346760e103541aafe0d862fb0790840407fb0325e57648ab032d5e470"
+    },
+    "evidence/admission-tests.result.json": {
+      "bytes": 1768,
+      "sha256": "31fa25311a9a82b82bd2c9af0e9c928bd9a37effebb7a3d3f5bc55a78d5143da"
+    },
+    "evidence/admission-tests.started.json": {
+      "bytes": 596,
+      "sha256": "842d2ae7a9bea594817a9213fdc4c686e54afb22374bd77db1562b4f3ed02707"
+    },
+    "evidence/admission-tests.stderr": {
+      "bytes": 3583,
+      "sha256": "33f782f5ac4ebecc72c11d761cffcbb7bb594c86721db0f0ef6bfa31d193178e"
+    },
+    "evidence/admission-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/complete.json": {
+      "bytes": 14321,
+      "sha256": "68edb0e99cc4a079c1ff5051f09a5792230fa02bad2c79da0b9b2469347630ce"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 2816,
+      "sha256": "fa31e51791006a242e20090221c2ccfc2e3719a533e48f669d219f18ad60a8e5"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 2816,
+      "sha256": "fa31e51791006a242e20090221c2ccfc2e3719a533e48f669d219f18ad60a8e5"
+    },
+    "full_announcement.py": {
+      "bytes": 3246,
+      "sha256": "66e97079ac1df7c56db159c86aede157907fdb817464311d96c3333c803a0621"
+    },
+    "full_reference.py": {
+      "bytes": 11342,
+      "sha256": "195ea81ab55e0523ca9b6a41680c654f7e99d7fb949b7d032a8f897d3620e471"
+    },
+    "pure-evidence.py": {
+      "bytes": 18149,
+      "sha256": "19dc895c2c614537a77da291a6820a1a64a191e499eeba7226dedaf55fd184ca"
+    },
+    "reference.py": {
+      "bytes": 11388,
+      "sha256": "466028fe6061de915bd852328030e9ea81a0b0874e4305563ecc78f0073b1d7b"
+    },
+    "run_cpu.py": {
+      "bytes": 12661,
+      "sha256": "82b83b4fcbe6afbaaaaf4948a3516c33ffeca6a51658061b858936d7f69c9f46"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_full.py": {
+      "bytes": 28057,
+      "sha256": "5acd7134ec8c4216a85a92d8629eb364e12d5af26fa8baf620ba87d19e56923f"
+    },
+    "validate_full.py": {
+      "bytes": 22139,
+      "sha256": "b640f4500e97c2c9ce276998d1c276f9ebc4c305748f449cfdf45b36ad8bb0f7"
+    }
+  },
+  "mode": "admission",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_failure": null,
+  "original_files": 18,
+  "original_postcheck_errors": [],
+  "original_tools_rehashed_at_export": true,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-full2303-native-admission-pure-cpu-export-v1",
+  "selected_files": 19,
+  "synthetic_only": true,
+  "terminal": {
+    "bytes": 14321,
+    "sha256": "68edb0e99cc4a079c1ff5051f09a5792230fa02bad2c79da0b9b2469347630ce"
+  },
+  "terminal_name": "complete.json"
+}
