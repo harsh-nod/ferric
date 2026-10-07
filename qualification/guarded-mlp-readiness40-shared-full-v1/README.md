@@ -94,6 +94,35 @@ source composition and the pre-application integration plan.
 | Readiness parent ELF | `682d5455b9c5966fa6a3ad02f0e755117b7d7e69241ead372ee22fbd703de804` |
 | Parent archive | `e3b2b25d4c24d3375b129ac9b0fbcc5f4efbce78e3997c2536ef0280fa870ae9` |
 
+## Timed Parent CPU Result
+
+The third parent attempt adds an explicit timed SharedFull route alongside the
+existing timed Default route. It passed all 478 selected tests in 54 scopes
+across 64 naturally retired phases in 408.478 seconds on `mi350`. The 948-name
+library inventory is not a full-library test-run claim. All seven standalone
+products built; source, dependency, cache, tool and product postchecks passed.
+
+Four parent files were integrated from the actual tested, formatted postimages.
+All 1,257 canonical source pins match, including the unchanged 205 worker files
+and seven Full2303 parent paths. The 454 original capsule members are retained
+in `parent-cpu-attempt-v3`. `parent-timed-source-integration.json` is the original
+pre-application plan; its `patch_applied=false` describes when that plan was
+created, not the current integrated state.
+
+The new selector is
+`--observe-guarded-readiness40-position5-shared-full-host-timing`. Both timing
+routes retain 124 disjoint parent-wall spans. The Shared policy record and the
+timing sidecar are independently admitted; ordinary framing, Close, retention
+bounds and the worker executable are unchanged. CPU qualification is not a
+native timing result, a GPU-overlap trace or a throughput measurement.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Timed parent terminal | `f7134c5f22d75c8295b8ab99ad8625fac40aa615ac1682340c0b8e6ffde1f71e` |
+| Tested source map | `9e70e32da52ebba96a8354ecd5fe60bbb3add9a7d1b93ba0d218572349f129c4` |
+| Timed readiness ELF | `3bd47134bacc5c25d088ecb8c9a50659060b2cdc6b38a57f9204fd212ae1de9f` |
+| Timed parent archive | `8f4d1fc600165464bed278cb6fc023fa725fd816b9e010c7567fce6094469af6` |
+
 ## Earlier Storage Stop
 
 The first parent CPU attempt stopped during its sixth phase when the live

@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "finite_projection_residual_layer_wire_v1::tests::",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2662,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/evidence/parent-projection-residual-wire.command.json",
+    "sha256": "8cee782b87e8e735b2ecf85bd06c3df8ce454afb14cbc871b1ec5dd136256e1e"
+  },
+  "elapsed_ns": 219824736,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-projection-residual-wire",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3113317,
+  "pid": 3113317,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1284,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/evidence/parent-projection-residual-wire.stderr",
+    "sha256": "b6f2f1a45d77c7d16f480aadf784229ec826fc7dc72d2aa23c69560a7087dd13"
+  },
+  "stdout": {
+    "bytes": 616,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/evidence/parent-projection-residual-wire.stdout",
+    "sha256": "da064305e1be44f58c84112a48a958db85f35822259b1aa20ff3548f1213180a"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

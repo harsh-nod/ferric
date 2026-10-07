@@ -1,0 +1,6 @@
+
+running 1 test
+test tests::projection_shared_host_bin_requires_distinct_optin_and_no_policy_options ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,193 @@
+{
+  "schema": "ferric-readiness40-position5-shared-full-host-timing-source-v1",
+  "base": {
+    "parent_capsule": "qualification/guarded-mlp-readiness40-shared-full-v1/parent-cpu-attempt-v2",
+    "parent_terminal": {
+      "bytes": 3983617,
+      "sha256": "7e4ad4324ea3b0302e1f7cf738b699e0e0721025963e659f0ba7f5bc35d70a8d"
+    },
+    "parent_source_map": {
+      "bytes": 507330,
+      "sha256": "82c6cdd0f0af07173777b44aad9a457f8092234f3ae0415eb778bad8492f1118"
+    },
+    "tested_postimages": true,
+    "source_rows": 1260,
+    "ferric_rows": 1257,
+    "worker_rows": 205,
+    "selected_passes": 475,
+    "library_inventory": 946,
+    "phases": 64,
+    "selected_scopes": 54,
+    "products": 7
+  },
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs",
+      "before": {
+        "bytes": 8307,
+        "sha256": "ea20dfafcf7f83d32b416e236306531a2d1d72b567f12454c83f886d7600a959"
+      },
+      "after": {
+        "bytes": 10741,
+        "sha256": "fb7b357ba8d9f51d37c8d0201ba9639ca03eb921059003b3617856afa78a1e55"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs",
+      "before": {
+        "bytes": 25207,
+        "sha256": "78f01af304364148af5cf6801fc2783acb5ee1a3c2dde699548b71c870ff49db"
+      },
+      "after": {
+        "bytes": 25225,
+        "sha256": "5ca7698896eebd2ab47daa8127ad983406bb0331cb56c943fba5aee90b659de6"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs",
+      "before": {
+        "bytes": 14744,
+        "sha256": "5fd3047eaf07d535b02f70e38ccdab231632b8c0bb79d5478c230a2576d2bfad"
+      },
+      "after": {
+        "bytes": 16309,
+        "sha256": "9caabceb774f65f58f9d59b99365563fbabc36c82808f3cbdf58a7ce49e04e1a"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs",
+      "before": {
+        "bytes": 9060,
+        "sha256": "6df2e907f1ecdbbee2408824c6976ac5a9a36db6e060450466e506bee43efef1"
+      },
+      "after": {
+        "bytes": 12851,
+        "sha256": "c7fb220b64cd91228c0155564d42017c6df6ea3eb0faee867263909c520a28c3"
+      }
+    }
+  ],
+  "unchanged_contracts": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_shared_full.rs",
+      "bytes": 2491,
+      "sha256": "6ffdb27c1749f5097b97d38aecf9984e539b54e153173b3a143d13d90cb35200"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_shared_full_tests.rs",
+      "bytes": 2713,
+      "sha256": "05608865cfae707d16b89ccbe7a55656714511cd1cc0e7e25c50f58c08cfc9cb"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_evidence.rs",
+      "bytes": 12292,
+      "sha256": "8bfba4ae38e1e8df528bd3572334cafbc2b45ab61442ffdcf87098c6ae18e12a"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/Cargo.toml",
+      "bytes": 14110,
+      "sha256": "2aeaa576d3cd649ad879db99446a971a993d08ff213e56b315f0c0dd41600edb"
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "bytes": 90553,
+      "sha256": "92e586b82d7a4718b8836416b2f144e6a4c441bc6e0004b5304c4a7f697dd8dd"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1.rs",
+      "bytes": 4371,
+      "sha256": "94cf747afd172a08de9f047f0ed47ffa0134916bafe399b1f19004571c2f85eb"
+    },
+    {
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_wire_v1.rs",
+      "bytes": 7781,
+      "sha256": "dd0dd2f840437da5633dfa23ea7d1d352ede43b28c51ff3654b3110db8bb8034"
+    }
+  ],
+  "new_tests": {
+    "parent_library": [
+      "readiness_shared_full_host_timing_keeps_all_existing_entry_signatures",
+      "readiness_shared_full_host_timing_refuses_mode_and_opt_in_before_io"
+    ],
+    "parent_readiness_binary": [
+      "shared_full_host_timing_parent_cli_is_one_separate_opt_in"
+    ]
+  },
+  "test_roster": [
+    {
+      "name": "shared_full_host_timing_parent_cli_is_one_separate_opt_in",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs",
+      "target": "parent_readiness_binary"
+    },
+    {
+      "name": "readiness_shared_full_host_timing_keeps_all_existing_entry_signatures",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs",
+      "target": "parent_library"
+    },
+    {
+      "name": "readiness_shared_full_host_timing_refuses_mode_and_opt_in_before_io",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs",
+      "target": "parent_library"
+    }
+  ],
+  "conditional_census": {
+    "selected_passes": 478,
+    "library_inventory": 948,
+    "phases": 64,
+    "selected_scopes": 54,
+    "products": 7,
+    "source_rows": 1260,
+    "ferric_rows": 1257,
+    "worker_rows": 205
+  },
+  "scope": {
+    "source_only": true,
+    "compiled": false,
+    "tests_executed": false,
+    "native_execution": false,
+    "combined_parent_entry_added": true,
+    "explicit_selector": "--observe-guarded-readiness40-position5-shared-full-host-timing",
+    "wrapper_schema": "FerricReadiness40Position5SharedFullTimedObservationV1",
+    "event_count": 124,
+    "forward_rows": 40,
+    "generated_tokens": 0,
+    "capture_positions": [
+      0,
+      5,
+      16,
+      39
+    ],
+    "sidecar_max_bytes": 65536,
+    "stdout_max_bytes": 131072,
+    "old_entry_signatures_changed": false,
+    "config_struct_changed": false,
+    "default_policy_changed": false,
+    "shared_policy_changed": false,
+    "recorder_scope_changed": false,
+    "wire_changed": false,
+    "ordinary_observation_schema_changed": false,
+    "worker_changed": false,
+    "runtime_changed": false,
+    "kernel_images_changed": false,
+    "deadline_changed": false,
+    "retention_cap_changed": false,
+    "features_changed": false,
+    "dependency_graph_changed": false,
+    "numerical_acceptance": false,
+    "performance_claim": false,
+    "full2303_feasibility": false,
+    "private_shared_recorder_prohibition_removed": true
+  },
+  "future_actual_terminal": null,
+  "patch": {
+    "bytes": 13261,
+    "sha256": "47db76980248610d27981ec68fbfb3c53f24abbc7f46e71757cd5eb768941761"
+  },
+  "readme": {
+    "bytes": 7956,
+    "sha256": "d95baa19af35ceb8a112250cbd4405f1841db455b3f8c514d33615b6308ee492"
+  }
+}

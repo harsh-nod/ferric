@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-host-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2676,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.command.json",
+    "sha256": "c5ff6dbef577df7e7dd83fb00f336dbad8a59e6a7953913ef68fd0611dae482b"
+  },
+  "elapsed_ns": 527082727,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-decode-host-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3108675,
+  "pid": 3108675,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2434,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.stderr",
+    "sha256": "b5ca8d0e32de5b0bafa13e16de29e64704558e82c0f6fd55c61a9ace63be8bc5"
+  },
+  "stdout": {
+    "bytes": 197,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.stdout",
+    "sha256": "c07fcccadb129b4bc33d32176d59583956f3a071d00f256bb5934a21de5fa777"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
