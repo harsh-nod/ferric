@@ -1,0 +1,447 @@
+{
+  "schema": "ferric-readiness40-bank-scoped-census-worker-source-v1",
+  "source_generation": "readiness40-bank-scoped-census-worker-v3",
+  "canonical_changed": false,
+  "compiled": false,
+  "tested": false,
+  "native_execution": false,
+  "runtime_changed": false,
+  "default_group_policy_changed": false,
+  "allocation_preflights_changed": true,
+  "allocation_preflights_changed_only_for_explicit_warm_position5": true,
+  "currentness_temporal_equivalence_claim": false,
+  "performance_claim": false,
+  "numerical_acceptance": false,
+  "full_launch_admitted": false,
+  "base": {
+    "repository": "ferric",
+    "commit": "c1e1ab4f4322eaa293fdb6861f7c0d4b7e11ab51",
+    "worker_receipt": {
+      "path": "qualification/guarded-mlp-scoped-bank-rearm-v1/cpu-attempt-v2/evidence/complete.json",
+      "bytes": 2395639,
+      "sha256": "e522aafde4204c24be8fac9b1ecf8d49f8e3389819ad8cfda765f2145647c432"
+    },
+    "worker_sources": {
+      "path": "qualification/guarded-mlp-scoped-bank-rearm-v1/cpu-attempt-v2/evidence/sources-after.json",
+      "bytes": 423235,
+      "sha256": "73e3ad534a3d48bddd717780215142dd588f4a776dd25f003305854f70d7c285"
+    },
+    "worker_inventory": {
+      "path": "qualification/guarded-mlp-scoped-bank-rearm-v1/cpu-attempt-v2/evidence/worker-tests.stdout",
+      "bytes": 91741,
+      "sha256": "857720eae2743c380e5f149cf4db326b9e6707cc0023f741e06e112acdc6164f"
+    },
+    "worker_files": 216,
+    "passed": 760,
+    "ignored": 4,
+    "inventory": 764,
+    "all_worker_bodies_joined": true
+  },
+  "requires": {
+    "runtime_manifest": {
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-scoped-capacity-census-v1/runtime-v1/source-manifest.json",
+      "bytes": 10742,
+      "sha256": "4956d1b7c5aa06cfd34872ad070c670cde012b0ea87bd921b4d071f25b89d7b7"
+    },
+    "runtime_interface": {
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-scoped-capacity-census-v1/runtime-v1/INTERFACE.md",
+      "bytes": 2938,
+      "sha256": "25cbd47e8d075e5378d6368ccbeb2029c8856ed7edf498d9bb0e5232315e835a"
+    },
+    "design": {
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-scoped-capacity-census-v1/design-v1/README.md",
+      "bytes": 21082,
+      "sha256": "b62de3f933ef6536fc9d4aabef4297c1dd572ff01858ba15e27b7ed45a3eecae"
+    }
+  },
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3.rs",
+      "before": null,
+      "after": {
+        "bytes": 7728,
+        "sha256": "9359e3a471a4fc39abdeed21feb65953646157403d7196e149054c6f44ba203c"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 11198,
+        "sha256": "71f5fff103b8d16f52a7bc0cc9ebff5aa4604dcc989ed4d31a3a655cfda898cf"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "before": {
+        "bytes": 2963,
+        "sha256": "8e26ed7fc7ef8b0470cfb46429cd64417830e729e0bbdc66179e37c585a05135"
+      },
+      "after": {
+        "bytes": 3024,
+        "sha256": "40987bf2b00d47d90d3baf8991d6e3ff8e33e980fd89ad5711a430865244b4d0"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "before": {
+        "bytes": 22157,
+        "sha256": "e9c9fe6d06aed63b4bc1851dfba3d1bb4980f7274a2e7caaec8c9104c3a834cb"
+      },
+      "after": {
+        "bytes": 22850,
+        "sha256": "b78eded968ea7671c168a1e5920152f49b0897f3f684adaa29c314fe81425a28"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_census_v3.rs",
+      "before": null,
+      "after": {
+        "bytes": 8160,
+        "sha256": "f1c8dffcecd518fd6f1641895e5cf1b7d1e3edeb379b895f44a94d816f5fad7d"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1.rs",
+      "before": {
+        "bytes": 20914,
+        "sha256": "b2e6750f459dd1f9fae375331b819122468352458084ba039d52a08171406946"
+      },
+      "after": {
+        "bytes": 23952,
+        "sha256": "748ca9c5a156d9f0fa99723e85ad81cbaf5b0fa4af7d53a0fc21ecc93ea452a9"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs",
+      "before": {
+        "bytes": 20556,
+        "sha256": "4ed8275fb3a9707b97c37352ed329723727655b6bed04cbe7fef5976cdb27145"
+      },
+      "after": {
+        "bytes": 24232,
+        "sha256": "df1c1bc1e6df067170d2c2e45aa788064ffc76336d5ec8c285eed6a375705b5e"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs",
+      "before": {
+        "bytes": 28032,
+        "sha256": "3fcb5ef740f4bce52c3f912abbdc120b4cf0b508860106a54c280829f1f4070e"
+      },
+      "after": {
+        "bytes": 32659,
+        "sha256": "1de779fce8a8ca46846f0c63a7d2de61aefc76f7e268069ac408423c9a3a7cd5"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/resident_layer/guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 17545,
+        "sha256": "61851302479966a4267c1cd48584aad78b38f98932db4c2cd21ba5337db2cba7"
+      },
+      "after": {
+        "bytes": 19420,
+        "sha256": "1e00a9785e801c49bd99a394fdfb77241702109f4695bdcb93c9b1cf6aa87ad8"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_census_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 7353,
+        "sha256": "58e789188553aa744c5b158c635abe8ae3a097ea5f0c6e8bbd239f0af0175dc5"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_currentness_v1.rs",
+      "before": {
+        "bytes": 17669,
+        "sha256": "7d1a3a230f57ea571ea8bbb8f40b2aea62c8c21dc0269f3ad8e9541161bbc60f"
+      },
+      "after": {
+        "bytes": 17680,
+        "sha256": "7116da52bf3f2ca51772c97655c34e27fdbd8bddc95ad6989813f75eb65fc8f7"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs",
+      "before": {
+        "bytes": 22335,
+        "sha256": "4fea305cd22ebe0708fe6386bdbb9add706405605431afa47e75e02ffd41ba6e"
+      },
+      "after": {
+        "bytes": 22467,
+        "sha256": "726047f228f5bf3ca5ddcad2273b5c5c8a3c7621e3faa7680feb7f69f544cf35"
+      }
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs",
+      "before": {
+        "bytes": 13611,
+        "sha256": "94b0042302413b403a6cb4f5a1c33981331aebd5f9d5a18a9deb3f6b72bd6c88"
+      },
+      "after": {
+        "bytes": 15238,
+        "sha256": "52f6a8ef3da4f231c42816d1b85a3073e5ca3a9efc684af2711f92ef042b511f"
+      }
+    }
+  ],
+  "unchanged_contracts": [
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/Cargo.toml",
+      "bytes": 581,
+      "sha256": "bca0026055d76e9178b867589e8c6573ce74d0ebfe7d5144265124ead23784e1"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/Cargo.lock",
+      "bytes": 7470,
+      "sha256": "df2a4e0b9cf96687328a5b1e41937eb940e62144314d7f903c8c961da947f7aa"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_wire_v1.rs",
+      "bytes": 7781,
+      "sha256": "dd0dd2f840437da5633dfa23ea7d1d352ede43b28c51ff3654b3110db8bb8034"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2.rs",
+      "bytes": 27097,
+      "sha256": "b9bd7dde4d49e84599dd6a6b226118b0d3fc0f3bda936a7a4c46e69c70c26ad2"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_v2.rs",
+      "bytes": 7464,
+      "sha256": "0a29ba87cf0c8da42509a3efcebb5c1867dbc36120e1e03146b4b103b785382d"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1.rs",
+      "bytes": 6738,
+      "sha256": "47eb5ccd6e6d8b2fbef62cf2413df31d8712b064e7336a7553f22c8b68f1725d"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_bank_scoped_v2.rs",
+      "bytes": 11024,
+      "sha256": "4fdfc9ea7a45f7b97edf1b4ef1c01228c652105cd916d46f9700fc4a14a2051e"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_scoped_v1.rs",
+      "bytes": 10122,
+      "sha256": "9980c25ae6857f7759fb27ff0212c610c8731365e26d8795362a823028d9ab61"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_v1.rs",
+      "bytes": 6447,
+      "sha256": "34e541a9c7210d7cd7314fbffe59a60ac55841549221ff013685e11e0dfaef02"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1.rs",
+      "bytes": 11344,
+      "sha256": "681307e459fda5e9b7c156a452993ab805cf85f647b868c3212eda0da881a302"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+      "bytes": 21859,
+      "sha256": "7ad357c3cc32c9417e390c467f363c1f8339902e36c550b45249de083cc08a09"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs",
+      "bytes": 18339,
+      "sha256": "4b06cfb89b3167dd645764d10f52d458bf7a64bd9aae5eebc320f773b0e650ab"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/bank_scoped_currentness_v1.rs",
+      "bytes": 13822,
+      "sha256": "8a1e226c0db7c441f04fc81cf8f775445b1ea4645638e8e21d068005d5e5d11e"
+    }
+  ],
+  "new_tests": {
+    "worker_library": [
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_checks_every_call_count_and_unbounded_counter_overflow",
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_checks_separate_bank_census_generations_and_overflow",
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_exact_closed_record_roundtrips",
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_refuses_boolean_integer_substitution",
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_refuses_every_policy_and_authority_drift",
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_refuses_other_profiles_and_missing_identity",
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_rejects_subset_owner_and_legacy_bank_records",
+      "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_requires_one_exact_bounded_record",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::census_scoped::tests::census_state_first_use_requires_no_census_and_checks_subset_overflow",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::census_scoped::tests::census_state_refuses_owner_drift_order_other_profiles_and_unwind",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::census_scoped::tests::census_state_rejects_fallback_and_counter_drift_after_runtime_return",
+      "native_catalog::forward::guarded_mlp_decode_v1::readiness::census_scoped::tests::census_state_runs_only_1368_warm_layers_and_keeps_nested_bank_totals",
+      "native_guarded_mlp_readiness_cli_v1::tests::census_scoped_cli_has_one_explicit_flag_and_preserves_existing_route_signatures",
+      "native_guarded_mlp_readiness_cli_v1::tests::census_scoped_cli_refuses_policy_combinations_before_input_and_keeps_deadline",
+      "state_roster::guarded_mlp_decode_v1::scoped_census_v1::tests::census_roster_assertion_is_derived_from_real_ledger_and_same_slot",
+      "state_roster::guarded_mlp_decode_v1::scoped_census_v1::tests::census_roster_keeps_first_use_full_extent_and_unwind_refusals",
+      "state_roster::guarded_mlp_decode_v1::scoped_census_v1::tests::census_roster_post_runtime_data_refusal_is_terminal_without_retry"
+    ],
+    "worker_readiness_binary": [
+      "census_scoped_executable_routes_explicit_selector_without_fallback_or_stdin_relock"
+    ]
+  },
+  "test_source_rows": [
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_exact_closed_record_roundtrips",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_refuses_every_policy_and_authority_drift",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_requires_one_exact_bounded_record",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_refuses_other_profiles_and_missing_identity",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_refuses_boolean_integer_substitution",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_checks_every_call_count_and_unbounded_counter_overflow",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_checks_separate_bank_census_generations_and_overflow",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "finite_guarded_mlp_readiness_bank_scoped_census_v3::tests::census_scoped_policy_rejects_subset_owner_and_legacy_bank_records",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_bank_scoped_census_v3_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "native_catalog::forward::guarded_mlp_decode_v1::readiness::census_scoped::tests::census_state_runs_only_1368_warm_layers_and_keeps_nested_bank_totals",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_census_v3.rs"
+    },
+    {
+      "target": "lib",
+      "name": "native_catalog::forward::guarded_mlp_decode_v1::readiness::census_scoped::tests::census_state_rejects_fallback_and_counter_drift_after_runtime_return",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_census_v3.rs"
+    },
+    {
+      "target": "lib",
+      "name": "native_catalog::forward::guarded_mlp_decode_v1::readiness::census_scoped::tests::census_state_refuses_owner_drift_order_other_profiles_and_unwind",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_census_v3.rs"
+    },
+    {
+      "target": "lib",
+      "name": "native_catalog::forward::guarded_mlp_decode_v1::readiness::census_scoped::tests::census_state_first_use_requires_no_census_and_checks_subset_overflow",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_census_v3.rs"
+    },
+    {
+      "target": "lib",
+      "name": "native_guarded_mlp_readiness_cli_v1::tests::census_scoped_cli_has_one_explicit_flag_and_preserves_existing_route_signatures",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "native_guarded_mlp_readiness_cli_v1::tests::census_scoped_cli_refuses_policy_combinations_before_input_and_keeps_deadline",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs"
+    },
+    {
+      "target": "lib",
+      "name": "state_roster::guarded_mlp_decode_v1::scoped_census_v1::tests::census_roster_assertion_is_derived_from_real_ledger_and_same_slot",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_census_v1.rs"
+    },
+    {
+      "target": "lib",
+      "name": "state_roster::guarded_mlp_decode_v1::scoped_census_v1::tests::census_roster_post_runtime_data_refusal_is_terminal_without_retry",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_census_v1.rs"
+    },
+    {
+      "target": "lib",
+      "name": "state_roster::guarded_mlp_decode_v1::scoped_census_v1::tests::census_roster_keeps_first_use_full_extent_and_unwind_refusals",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_census_v1.rs"
+    },
+    {
+      "target": "readiness_cli",
+      "name": "census_scoped_executable_routes_explicit_selector_without_fallback_or_stdin_relock",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs"
+    }
+  ],
+  "old_inline_test_bodies_preserved": 30,
+  "conditional": {
+    "worker_files": 220,
+    "worker_passed": 779,
+    "worker_ignored": 4,
+    "worker_inventory": 783,
+    "coupled_runtime_files": 825,
+    "coupled_source_files_including_four_helpers": 1049
+  },
+  "test_targets": {
+    "worker_library": {
+      "passed": 754,
+      "ignored": 4
+    },
+    "worker_binary": {
+      "passed": 0,
+      "ignored": 0
+    },
+    "worker_readiness_binary": {
+      "passed": 9,
+      "ignored": 0
+    },
+    "worker_wire": {
+      "passed": 16,
+      "ignored": 0
+    }
+  },
+  "interface": {
+    "path": "INTERFACE.md",
+    "bytes": 6284,
+    "sha256": "34e4edafee8637c9ee6a8105de974095e3cec6f3d4108d2e94f6e529341394c3"
+  },
+  "readme": {
+    "path": "README.md",
+    "bytes": 6714,
+    "sha256": "7a08190164ed9a130c8a70c00422a5063774986d4a0b4890538417978bd1d84c"
+  },
+  "patch": {
+    "path": "integration.patch",
+    "bytes": 60859,
+    "sha256": "e7564a0a24c79b9e8b17ab9311c9dacf7da713116cda140253d3fb3cbd573377"
+  }
+}

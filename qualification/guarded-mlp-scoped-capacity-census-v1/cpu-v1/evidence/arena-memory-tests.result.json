@@ -1,0 +1,55 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-capacity-census-cpu-v228-v1/fe2o3/Cargo.toml",
+    "-p",
+    "fe2o3-kfd",
+    "--features",
+    "engineering-gfx950",
+    "--lib",
+    "memory_linux::paired_arena_reuse_v1::tests::",
+    "--",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2519,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-capacity-census-cpu-v228-v1/evidence/arena-memory-tests.command.json",
+    "sha256": "fe8d07bae4320ba34b987c78e2cfc0f928dea5bfd8bbf735b52871f3cec6a349"
+  },
+  "elapsed_ns": 123884677,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "arena-memory-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 767609,
+  "pid": 767609,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 3964,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-capacity-census-cpu-v228-v1/evidence/arena-memory-tests.stderr",
+    "sha256": "3f618a67409864b57ecdeb3f98011178e09803f2bf3b59db2dbb68db45916440"
+  },
+  "stdout": {
+    "bytes": 373,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-capacity-census-cpu-v228-v1/evidence/arena-memory-tests.stdout",
+    "sha256": "9a0e3fdf3524ee393d4b3f4764f824eabb19cea7d0d8d43f1c308b964f5f8019"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

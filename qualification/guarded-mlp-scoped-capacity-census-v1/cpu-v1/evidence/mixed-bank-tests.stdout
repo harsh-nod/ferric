@@ -1,0 +1,27 @@
+
+running 22 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::scoped::custody_tests::scoped_bank_outer_owner_quarantines_partial_commit_and_unwind ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_bounds_timeouts_and_outer_deadline_refuse_before_effects ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_cross_kind_identity_collisions_refuse_before_atomic_reads ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_every_deadline_boundary_blocks_the_next_operation ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_every_error_boundary_quarantines_without_later_effects ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_every_unwind_boundary_quarantines_without_publishing ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_generations_require_one_common_nonzero_successor ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_initial_validation_has_no_stores_or_retired_arenas ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_last_invalid_prefix_or_pair_performs_zero_stores ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_native_prefix_metadata_rejects_wrong_phase_rank_group_and_extent ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_native_refuses_context_free_custody_and_quarantines_all_entries ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_native_unwind_keeps_group_and_typed_owners_quarantined ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_reuse_custody_is_unavailable_until_all_36_pairs_pass ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_validates_every_owner_before_stores_and_publishes_last ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_admission_requires_fixed_completed_reusable_exact_roster ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_counts_are_separate_exact_window_data ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_every_effect_deadline_including_exit_and_commit_is_fail_stop ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_every_effect_error_and_unwind_quarantines_the_whole_roster ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_facade_requires_concrete_exclusive_typed_roster ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_native_first_use_and_invalid_deadline_quarantine_every_owner ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_stale_generation_duplicate_and_last_rank_refuse_before_stores ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_validates_all_36_before_first_reset_and_commits_after_exit ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 1128 filtered out; finished in 0.04s
+

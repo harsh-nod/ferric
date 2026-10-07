@@ -1,0 +1,19 @@
+{
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "original_runtime_cargo_identities_equal": 2,
+  "passed": true,
+  "performance_claim": false,
+  "qualified_runtime_nonfixture_bodies_equal": 821,
+  "qualified_worker_bodies_equal": 220,
+  "runtime_fixtures_copied": false,
+  "schema": "ferric-scoped-capacity-census-integration-postcheck-v1",
+  "sources": {
+    "bytes": 431540,
+    "sha256": "145b177805d0eefdac0e868729d28d26f1646259116a9ff10e316250e1668d69"
+  },
+  "tested_runtime_postimages_copied": 12,
+  "tested_worker_postimages_copied": 13,
+  "total_source_bodies_checked": 2100,
+  "unchanged_nonworker_ferric_bodies": 1057
+}

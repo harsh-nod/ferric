@@ -6,7 +6,18 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest implementation: the
+Latest implementation: the new
+[scoped allocation census runtime and worker](../qualification/guarded-mlp-scoped-capacity-census-v1/README.md)
+are integrated after a fresh MI350 coupled CPU run: all 26 phases passed in
+158.984 seconds, including 1,165 runtime tests with eight existing ignores and
+779 worker tests with four existing ignores. The 25 actual tested Rust files
+were integrated with a 2,100-body source postcheck. This opt-in warm-layer path
+preserves complete allocation accounting and ordered rank checks while moving
+two selected zero-add preflights inside the closed layer operation. Its parent
+qualification, data admission and fresh GPU comparison are still pending.
+It is not a measured speedup or a Full2303 admission.
+
+The preceding
 [bank-scoped rearm path](../qualification/guarded-mlp-scoped-bank-rearm-v1/README.md)
 is integrated after a fresh coupled MI350 CPU qualification. All 26 phases
 passed in 166.963 seconds: 1,152 runtime tests with eight existing ignores,
