@@ -72,3 +72,10 @@ reusable storage and currentness policies, preserve full payload/history
 equality, and retire cleanly. The independent Readiness40 numerical discrepancy
 is a separate correctness investigation, not fixed or explained by this API.
 All issue #42 milestones and the 700 tokens/s target remain open.
+
+The [source-derived bandwidth budget](roofline-v1/README.md) estimates what
+700 tokens/s would require for BF16 TP2 single-request 2,048/256 decode.
+With the current full rank-0 LM head and a conditional 8 TB/s peak per device,
+the mean-context streaming floor is 1.044 ms/token and the target needs about
+73.1% of rank 0's peak bandwidth before nonoverlapped overhead. This is a
+planning model, not measured GPU traffic, throughput or an attainability claim.

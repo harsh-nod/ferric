@@ -49,6 +49,13 @@ retired reusable arenas while preserving queue/signal/ownership checks.
 The existing worker does not select it; native qualification and timing remain
 pending. Fewer source-level full checks are not a measured speedup.
 
+The reviewed [700 tokens/s bandwidth budget](../qualification/guarded-mlp-terminal-pair-v1/roofline-v1/README.md)
+joins checkpoint bytes and actual TP2 weight/cache placement. Conditional on
+8 TB/s peak HBM bandwidth per device, current rank-0 placement gives a
+1.044 ms/token streaming floor at the mean decode context. The target requires
+73.1% of rank 0's peak before other nonoverlapped overhead. Actual SKU,
+sustained bandwidth, cache traffic and attainability remain unmeasured.
+
 Current GPU bring-up: the guarded parent and worker completed both four-step
 teacher-forced and autoregressive runs on MI350, through all 36 layers and
 both ranks. The fresh autoregressive outer controller passes in one attempt,
