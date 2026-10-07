@@ -1,0 +1,69 @@
+{
+  "schema": "ferric-readiness40-causal-layer0-parent-read-fix-v2",
+  "predecessor_source": {
+    "bytes": 8279,
+    "sha256": "9cce663d74160516c14033e8417c54dbce666b25e61dc232c11b494c055f558c"
+  },
+  "preimages": "frozen-v1-authored-parent-bodies-not-canonical-or-qualified-postimages",
+  "files": [
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs",
+      "before": {
+        "bytes": 22832,
+        "sha256": "b8e5c83896011d11ed15c6880f3e59756ab57794c9761c40b16d5bef383cd2a6"
+      },
+      "after": {
+        "bytes": 22757,
+        "sha256": "225de11ded12f6fe190165270531b1e3ca3e7e8da4cc0c74f5d1cc3d8f46ae39"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_causal.rs",
+      "before": {
+        "bytes": 8084,
+        "sha256": "641fc3947c2450627ba15b8751aade719521438530937ab5cf7dbe46cb1fc8e9"
+      },
+      "after": {
+        "bytes": 8351,
+        "sha256": "5eea55933eb58caa9b1db9735b819e51dfe2e69df2e266357e43602428850dc4"
+      }
+    },
+    {
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_causal_tests.rs",
+      "before": {
+        "bytes": 6693,
+        "sha256": "3cb868ae2623e49263700e43bd58f74285b0a686d6aef1d0e807ff4bfe8f6d9e"
+      },
+      "after": {
+        "bytes": 7734,
+        "sha256": "3901f79893475b12dfc4b91e36fe175a755ffa44d80e21daa400de959f0c7f50"
+      }
+    }
+  ],
+  "new_tests": {
+    "parent_library": [
+      "tp_finite_client::long::readiness::causal::tests::causal_parent_file_backed_sidecar_reads_and_rechecks_pinned_bytes"
+    ]
+  },
+  "conditional_parent": {
+    "phases": 60,
+    "selected_scopes": 51,
+    "passed": 444,
+    "library_inventory": 918,
+    "source_rows": 1244
+  },
+  "worker_source_changed": false,
+  "runtime_source_changed": false,
+  "wire_or_image_changed": false,
+  "limits_changed": false,
+  "admission_weakened": false,
+  "source_only": true,
+  "tests_executed": false,
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "review_diff": {
+    "bytes": 3761,
+    "sha256": "92314abe9d147bf0ca124b63ed9dbcad1aa0fef7bff7ac62b7edc6c16b3bc039"
+  }
+}

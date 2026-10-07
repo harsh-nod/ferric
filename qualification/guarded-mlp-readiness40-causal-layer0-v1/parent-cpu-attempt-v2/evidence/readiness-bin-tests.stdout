@@ -1,0 +1,8 @@
+
+running 3 tests
+test tests::causal_parent_cli_has_a_separate_closed_mode ... ok
+test tests::position5_parent_cli_requires_distinct_exact_flag ... ok
+test tests::readiness_parent_cli_is_explicit_and_has_no_long_or_ar4_fallback ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

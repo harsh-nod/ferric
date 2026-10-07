@@ -1,6 +1,6 @@
 # Causal Layer-Zero Diagnostic
 
-The worker source and independent data checker are CPU-qualified on MI350.
+The worker, corrected parent source and independent data checker are CPU-qualified on MI350.
 Native causal capture and its cross-framework comparison have not yet run. This is diagnostic
 instrumentation, not numerical acceptance or a performance route.
 
@@ -59,7 +59,8 @@ authenticates a file but returns an empty buffer. The new parent consumer
 needed the authenticated bytes. The reviewed retry changes that argument,
 shares the file-backed validator with the post-Close path, and adds a regression
 covering valid contents, mutation, a wrong digest, and a missing file. The retry
-must pass the entire selected parent qualification before integration.
+passed the entire selected parent qualification before integration, as recorded
+below. The failed V1 evidence remains unchanged.
 
 `checker-cpu-v1` retains the original MI350 data-checker evidence. All 29 tests
 passed, including the 12 new causal capture/parity tests. The owned test process
@@ -70,6 +71,31 @@ data tests, not native execution or numerical acceptance.
 | --- | --- |
 | Failed parent terminal | `060c05edc7ec35703e54c8120fa630553fc7c263205e2b45fdddb0c03a69225b` |
 | Checker terminal | `99054dc3eaf5d7455bf6cf1c9eb8b82db947f1ba27194f5b03f4238684faec27` |
+
+## Corrected Parent Result
+
+`parent-cpu-attempt-v2` retains 436 original archive members and a separate
+retention record. The MI350 retry completed all 60 phases in 402.10 seconds:
+444 selected tests passed, with zero failures or ignored selections. All 438
+prior selected tests and six new tests passed. The library inventory has 918
+names; this run does not claim execution of the entire library suite.
+
+All six selected Cargo products, the default-feature check and postchecks
+passed. The original failed V1 terminal is preserved as history, not a successful
+baseline. The corrected file-reading regression exercises the same file-backed
+validator used by the parent after Close.
+
+Canonical integration uses the five actual tested parent postimages, including
+two new files. `parent-source-integration-v2.json` records the complete 1,241-file
+Ferric composition with the separately qualified 197 worker files. The worker's
+eight formatting-only transitions between the parent and worker compilations
+are explicit; the two source trees are not described as byte-identical.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Parent V2 terminal | `f2c161753e64f9f2b8b4049ae75cac13332b7eb14217eaad247c8c2e9e13d4ea` |
+| Parent V2 source map | `54b516e6cd3d95973c725923d69d1fd7b9e6fa4ff7b3d4f73272282ed3ba2ae2` |
+| Readiness parent ELF | `a8ada7572717e931bd9149bcab6d043780d3e8513fb5cd3282d8f3c36092b8aa` |
 
 ## Independent Reference Result
 
@@ -99,8 +125,8 @@ separate gates.
 
 ## Remaining Gates
 
-The parent suite must pass before the native diagnostic. Both native and
-framework instrumentation must preserve their
+The CPU prerequisites have passed; native diagnostic validation is still
+pending. Both native and framework instrumentation must preserve their
 own prior forty-record histories and selected payloads. Cross-framework
 stage comparisons then distinguish same-input operation differences from
 upstream propagated differences; native FP32 rank partials are not treated
