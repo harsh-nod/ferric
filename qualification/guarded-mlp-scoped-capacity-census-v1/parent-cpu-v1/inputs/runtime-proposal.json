@@ -1,0 +1,274 @@
+{
+  "schema": "ferric-scoped-capacity-census-runtime-source-v1",
+  "status": "source-only-uncompiled-unexecuted",
+  "runtime_head": "f72864279eeb95df8abf8c407cb7aeb6ce2c3084",
+  "baseline": {
+    "capsule": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-scoped-bank-rearm-v1/cpu-attempt-v2",
+    "terminal": {
+      "bytes": 2395639,
+      "sha256": "e522aafde4204c24be8fac9b1ecf8d49f8e3389819ad8cfda765f2145647c432"
+    },
+    "sources": {
+      "bytes": 423235,
+      "sha256": "73e3ad534a3d48bddd717780215142dd588f4a776dd25f003305854f70d7c285"
+    },
+    "manifest": {
+      "bytes": 32761,
+      "sha256": "bab7dd2dad566cd42da521360a3212f30524f46e86b0202cda93a4f66b01e6a5"
+    },
+    "runtime_map_rows": 822,
+    "canonical_runtime_bodies": 820,
+    "runtime_passed": 1152,
+    "runtime_ignored": 8
+  },
+  "files": [
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "before": {
+        "bytes": 83362,
+        "sha256": "f3c1b9110569c3992425849cc9d6170a37d28700338b2f88a633aa3cf926d07d"
+      },
+      "after": {
+        "bytes": 83483,
+        "sha256": "9da1deae3af661d6729d5decef2ba53cfb81e404e6a868b2b00de2689ad83321"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "before": {
+        "bytes": 35848,
+        "sha256": "3d8f2590596ebbbefdc64425ba656c7e299bd33b1a48ad2c516ec8f537d07076"
+      },
+      "after": {
+        "bytes": 35969,
+        "sha256": "247ded4baa6599127618c5534b4a24a8962a711620373def39755b5ed78cb038"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_capacity_v1.rs",
+      "before": {
+        "bytes": 4519,
+        "sha256": "8d8958e97ae4656dff83eb3bc45a0759180dd99596814463fc4eab356ffd0a3d"
+      },
+      "after": {
+        "bytes": 6742,
+        "sha256": "1c2cf0da97dc1f66b3bf3125d42ec9acae65b59b073ea0ea4ccc4c1b409689cc"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_capacity_v1_tests.rs",
+      "before": {
+        "bytes": 6309,
+        "sha256": "32be50f58cdb6693453c635ce9270c6e86f2f1952a6382585c812c4f28d54e9d"
+      },
+      "after": {
+        "bytes": 11583,
+        "sha256": "2cdd5a2ea757ef1fb0288194e70c539197beec2c9924e2d214afbdbb74c7ed6f"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs",
+      "before": {
+        "bytes": 17483,
+        "sha256": "2e8c803a749e73068764a8d7de4537a38486518d438257e670935e79d3762f0e"
+      },
+      "after": {
+        "bytes": 19374,
+        "sha256": "cf8a821295e528cd73693a0117392e65f4739a9a416262d825347ba2dc7009ed"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs",
+      "before": {
+        "bytes": 15331,
+        "sha256": "0bb22eb2f95ecd207d49ce1d33cbf93fae8ef3c0b652c051c6fcb7fd5135dd81"
+      },
+      "after": {
+        "bytes": 15452,
+        "sha256": "2ba6221db544e03a0f21607bb8d399407ed01f3050eccc7225a6ddcb2f92f714"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_capacity_fence_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 1919,
+        "sha256": "a1c85844e7955893e214cf405e309e4134f06aeed8283b4c0595b3924b7f733d"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_census_layer_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 4602,
+        "sha256": "6a9cf9c7e7190b2497f2e2b8590f3837ef847abe186317129df7f7ecebb1bc9e"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_census_layer_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 9529,
+        "sha256": "b674da289105aedf93c16ace39768142264ffd2fb93b292f151e0b843e011626"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_currentness_v1.rs",
+      "before": {
+        "bytes": 13421,
+        "sha256": "ce2fd7a9f0f2de0d0ae3c45930b91e383ff31d0399d60f7b72a067fcf852342e"
+      },
+      "after": {
+        "bytes": 13884,
+        "sha256": "f294b75492fc079d9aa016246c2ed997c6de2f8692a2c7b8e043476f57d85b25"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1.rs",
+      "before": {
+        "bytes": 12433,
+        "sha256": "ca2879648e86b6a5510a95ab4863dcd6316d7decc0b23f9d18221cc13ee0736c"
+      },
+      "after": {
+        "bytes": 13481,
+        "sha256": "84ed38599d56d9e802f51d9e0edb56d9b67e70c0bce93d45fa8b295941e46dae"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/lib.rs",
+      "before": {
+        "bytes": 21107,
+        "sha256": "dc68e3081e4e878981ebfe6087c23cbdefe55dc643f83c17568d72c63952ad0c"
+      },
+      "after": {
+        "bytes": 21228,
+        "sha256": "52a7ee01bc67cc4577434bdd5206bc8c905df2f5e3564a62c1fd9d6d4ebb1c5e"
+      }
+    }
+  ],
+  "interface": {
+    "bytes": 2938,
+    "sha256": "25cbd47e8d075e5378d6368ccbeb2029c8856ed7edf498d9bb0e5232315e835a"
+  },
+  "readme": {
+    "bytes": 7743,
+    "sha256": "30cc181b84ffd46183862f142d36a33ef21ff85e748b9564ebfb12b3ea8f425a"
+  },
+  "design": {
+    "path": "../design-v1/README.md",
+    "bytes": 21082,
+    "sha256": "b62de3f933ef6536fc9d4aabef4297c1dd572ff01858ba15e27b7ed45a3eecae"
+  },
+  "patch": {
+    "path": "runtime.patch",
+    "bytes": 33255,
+    "sha256": "19f3355ddd21602ce8a7602f1c0b9e8d812c006466d5e2b116218f8deadc5265"
+  },
+  "unchanged_contracts": [
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950.rs",
+      "bytes": 27801,
+      "sha256": "57e32f62c32a5813b8e480ca5309af84f30cafab960166eb668d6bc80b8305e6"
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950_scoped_currentness_v1.rs",
+      "bytes": 12303,
+      "sha256": "64a30d2430f77edcf512a732796e7d308248d2e7a8c9d7e889e0ef375a89a48e"
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/device_gfx950_scoped_currentness_v1_tests.rs",
+      "bytes": 18411,
+      "sha256": "addfb464cc8b9764b9edf1d57d3516371f11467106b96c483f142a773a0d737a"
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1_tests.rs",
+      "bytes": 5754,
+      "sha256": "d8d71780e9b613be1f0e5bbdc0269523bc30ef05dcb8679825586498d4b43c73"
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs",
+      "bytes": 29063,
+      "sha256": "cb8bd029fffce04e8c6bc6b5ab0003f4271b0c076b8447b0b165dc6dfc69e59f"
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_bank_rearm_v1.rs",
+      "bytes": 12780,
+      "sha256": "d4b630c6fbd3bf2be5b1379e9640ffd2a33135a07f8fe0eba57e9757f836f166"
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_bank_rearm_v1_tests.rs",
+      "bytes": 11071,
+      "sha256": "9e86e9aafc29e9ae050b934fae3c0ae2d3513d2f06fad319e7dfd86ed0463c7b"
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs",
+      "bytes": 15676,
+      "sha256": "ef0f31eb3a194bde13ef5f3c61db96c736642246d5f62b06902880248967b4b6"
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1_tests.rs",
+      "bytes": 21416,
+      "sha256": "1c4f9c2b9bb18f34d21b27970114f99352a6654fc94e205a841c9669dd996bc3"
+    }
+  ],
+  "new_tests": [
+    "engineering_gfx950::peer::capacity_v1::tests::capacity_snapshot_reuses_legacy_preflight_order_and_actual_asymmetric_owners",
+    "engineering_gfx950::peer::capacity_v1::tests::capacity_snapshot_refuses_each_owner_and_group_field_drift_within_either_fence_pair",
+    "engineering_gfx950::peer::capacity_v1::tests::capacity_snapshot_equality_retains_ids_and_group_accounting_across_calls",
+    "engineering_gfx950::peer::capacity_v1::tests::capacity_snapshot_zero_add_keeps_actual_limits_and_legacy_id_edge_semantics",
+    "engineering_gfx950::peer::capacity_v1::tests::capacity_snapshot_scoped_owner_shape_does_not_change_eight_owner_legacy_admission",
+    "engineering_gfx950::peer::capacity_v1::tests::capacity_snapshot_refuses_full_route_instead_of_silently_selecting_scoped_policy",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_closed_engine_preserves_all_four_rank_ordered_fences",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_every_rank_queue_and_commit_boundary_failure_is_terminal",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_every_rank_queue_and_commit_boundary_unwind_is_terminal",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_complete_snapshot_drift_refuses_before_exit_even_with_equal_lengths",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_ledger_assertion_is_reject_only_and_owner_order_is_exact",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_malformed_observed_checkpoint_counts_never_reach_commit",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::census::tests::scoped_census_old_closed_backend_keeps_its_original_trace_and_zero_subset"
+  ],
+  "preserved_inline_tests_in_changed_files": 31,
+  "conditional_runtime": {
+    "source_map_rows": 825,
+    "passed": 1165,
+    "ignored": 8,
+    "total": 1173,
+    "new_tests": 13,
+    "scoped_layer_focus_filter": "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::",
+    "scoped_layer_focus_passed": 14,
+    "old_doctests_preserved": true
+  },
+  "compiled": false,
+  "tested": false,
+  "native_execution": false,
+  "canonical_changed": false,
+  "selector_enabled": false,
+  "default_policy_changed": false,
+  "global_currentness_policy_changed": false,
+  "currentness_temporal_equivalence_claim": false,
+  "allocation_preflights_changed_only_in_new_closed_api": true,
+  "arithmetic_changed": false,
+  "performance_claim": false,
+  "numerical_acceptance": false,
+  "full2303_launch_admitted": false
+}

@@ -1,0 +1,54 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "projection_residual_mlp_ordered_observation_v1::tests::ordered_report_profile_control_extent_and_chain_are_bound",
+    "--",
+    "--test-threads=2",
+    "--exact"
+  ],
+  "command": {
+    "bytes": 2782,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-added-6.command.json",
+    "sha256": "808ffdf8645162467b9e2e7b768a8810003b333c755b5f16c440668953a11012"
+  },
+  "elapsed_ns": 228214962,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-added-6",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 859150,
+  "pid": 859150,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1298,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-added-6.stderr",
+    "sha256": "f6ee63c0ee001ddebc2fd345344c8f61358166f54edcdd9a6747092409198938"
+  },
+  "stdout": {
+    "bytes": 240,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-added-6.stdout",
+    "sha256": "a7e96c20d3a84260d3dc17ffe9f29a2934f2a53fc77d14b2202a8cfc486e14ce"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

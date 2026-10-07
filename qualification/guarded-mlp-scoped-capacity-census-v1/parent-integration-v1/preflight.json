@@ -1,0 +1,87 @@
+{
+  "actual_tested_postimages": [
+    {
+      "after": {
+        "bytes": 21510,
+        "sha256": "5820495fa2aeee5c6c2dbdb618311fb8509e179f58b726ee09311c9b325ffe05"
+      },
+      "before": {
+        "bytes": 17851,
+        "sha256": "bbdb7dbd105fc26fa8f20a21c03052cfb73856c1d5b6df410f6d2a15e59507f6"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs"
+    },
+    {
+      "after": {
+        "bytes": 91385,
+        "sha256": "e8b8f1ac16433789e2b580a273a68713558c8fc10e9aa1817ec83ef0b3375ebc"
+      },
+      "before": {
+        "bytes": 91162,
+        "sha256": "386274d42bed73946236cd334e474e17afcf997a9a06d89153efede24efb3e45"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs"
+    },
+    {
+      "after": {
+        "bytes": 28376,
+        "sha256": "fef3b7cab3a3f6c4685b3d6fe68914f2542e4dbdd86b078b275ba4f6d1a45cc6"
+      },
+      "before": {
+        "bytes": 27528,
+        "sha256": "7774a717e35e365be15d40ee56faef02bb672416bdc51fc54f02d53d4693c66e"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs"
+    },
+    {
+      "after": {
+        "bytes": 1551,
+        "sha256": "b5526daa86e276d570b2801dec6a034df7bf0efde711c8d729a8f759d7d67ffb"
+      },
+      "before": null,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_census.rs"
+    },
+    {
+      "after": {
+        "bytes": 8833,
+        "sha256": "32b0bb1b5a94655d36326f4739789fc8b1ae73082ed1face145c57c180f04c17"
+      },
+      "before": null,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_census_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 20663,
+        "sha256": "4072c91136647534a3dfeb0f0eed7b25f9510029f5e739163c35764b70cce7fb"
+      },
+      "before": {
+        "bytes": 19212,
+        "sha256": "6de6ca6524893b7d541492c844e04d353bc23d03e3c9f486074a17542000ff32"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs"
+    },
+    {
+      "after": {
+        "bytes": 27300,
+        "sha256": "76478df7df0057d628c638ccc5a2e5ddd9c2047dd2b5bdae001895f6c0938914"
+      },
+      "before": {
+        "bytes": 22401,
+        "sha256": "f6632219714cf358b9015908fa3f7e93c96b70beadc9ced74b1a668cdf5dec89"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs"
+    }
+  ],
+  "canonical_ferric_bodies": 1279,
+  "passed": true,
+  "schema": "ferric-census-parent-canonical-preflight-v1",
+  "source_map": {
+    "bytes": 526507,
+    "sha256": "0ab51eeff901cd2405faf7dbe63197539ae6173346456d9dabd1833366aab2ff"
+  },
+  "terminal": {
+    "bytes": 4095966,
+    "sha256": "e3915ff3e15e7d52fb57675bda0cc0752ec349c1a8317b0ef826ddcdaed70d44"
+  },
+  "unchanged_worker_bodies": 220
+}

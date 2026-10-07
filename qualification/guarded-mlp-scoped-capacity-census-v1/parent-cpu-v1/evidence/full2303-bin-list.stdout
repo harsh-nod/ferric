@@ -1,0 +1,2 @@
+tests::full2303_parent_cli_requires_the_distinct_exact_opt_in: test
+tests::full2303_scoped_parent_cli_has_one_closed_explicit_selector: test

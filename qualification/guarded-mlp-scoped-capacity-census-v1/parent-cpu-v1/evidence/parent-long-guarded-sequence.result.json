@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "guarded_mlp_long_sequence_v2::",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2685,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-long-guarded-sequence.command.json",
+    "sha256": "79d246dd3647f5d7c49a0d874e6954073729c4844067542e35404fc8fd3c0a0c"
+  },
+  "elapsed_ns": 2345578594,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-long-guarded-sequence",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 861925,
+  "pid": 861925,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1298,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-long-guarded-sequence.stderr",
+    "sha256": "f6ee63c0ee001ddebc2fd345344c8f61358166f54edcdd9a6747092409198938"
+  },
+  "stdout": {
+    "bytes": 1075,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-long-guarded-sequence.stdout",
+    "sha256": "7edb0786e4e1ee3963080c001b4265677626616cb0562c3ff164274530024977"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

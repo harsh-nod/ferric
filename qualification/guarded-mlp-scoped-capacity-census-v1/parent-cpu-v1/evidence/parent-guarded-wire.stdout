@@ -1,0 +1,14 @@
+
+running 9 tests
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_paired_terminal_census_requires_warm_counts_and_actual_close ... ok
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_paired_terminal_wire_domain_is_closed_ar4_and_distinct ... ok
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_reuse_census_is_closed_and_requires_actual_plateau_and_healthy_close ... ok
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_reuse_wire_has_distinct_ar4_profile_and_transcript ... ok
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_authenticates_four_image_bodies_and_exact_begin_before_use ... ok
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_profile_is_closed_and_separate_from_every_legacy_recipe ... ok
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_request_scope_and_transcript_cannot_relabel_old_execution ... ok
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_preserves_all_control_words_u64_timings_and_local_generations ... ok
+test finite_guarded_mlp_decode_wire_v1::tests::guarded_wire_response_refuses_legacy_schema_claims_nonfinite_and_wrong_argmax ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 992 filtered out; finished in 0.02s
+

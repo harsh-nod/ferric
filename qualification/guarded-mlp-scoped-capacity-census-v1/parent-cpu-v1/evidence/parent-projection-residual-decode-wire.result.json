@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--lib",
+    "finite_projection_residual_decode_wire_v1::tests::",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2705,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-projection-residual-decode-wire.command.json",
+    "sha256": "5f64e073ce2d6a899e06c8af41b151f235520c3bf5ef1ea4be9756d573ab32ee"
+  },
+  "elapsed_ns": 221023847,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-projection-residual-decode-wire",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 861746,
+  "pid": 861746,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1298,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-projection-residual-decode-wire.stderr",
+    "sha256": "f6ee63c0ee001ddebc2fd345344c8f61358166f54edcdd9a6747092409198938"
+  },
+  "stdout": {
+    "bytes": 1063,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/parent-projection-residual-decode-wire.stdout",
+    "sha256": "98b48a836d01d0f8fbf96f47411cfdd74d983f6abc5606394e69e7e40e4a66ed"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,143 @@
+{
+  "admitted_tests": 98,
+  "archive": {
+    "bytes": 66012,
+    "sha256": "84af74698b7601844e13d2eff3e08262f5a15c4cf455c816f43e946281220b6a"
+  },
+  "external_tools_rehashed_locally": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 29548,
+      "sha256": "50d1268c73ea34d2ebfe98b995cf56900cd51255dd44234017bbb67f94cac729"
+    },
+    "evidence/readiness-tests.command.json": {
+      "bytes": 1289,
+      "sha256": "a03a05e2bb87291867029987b3663f802420b5d2c1267dc1c7b9fe751cc4ba22"
+    },
+    "evidence/readiness-tests.result.json": {
+      "bytes": 1946,
+      "sha256": "abb90795ec588d5f3c2aa27f8aebe6b21540ab1327edabc9071d8d9c5f13ffc1"
+    },
+    "evidence/readiness-tests.started.json": {
+      "bytes": 734,
+      "sha256": "0f67a33d80ed15990683ec974fc967356e165e5c1940795ec33037d086836931"
+    },
+    "evidence/readiness-tests.stderr": {
+      "bytes": 16099,
+      "sha256": "0ba858b3bbe0b9440246a628def8332da34acd51fc10dcef47f2572ebce6fa3d"
+    },
+    "evidence/readiness-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 6353,
+      "sha256": "b96ab19aa3788fd3711cfe1675d1e5c3fa00b9948fc23b249b88f44465e081e0"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 6353,
+      "sha256": "b96ab19aa3788fd3711cfe1675d1e5c3fa00b9948fc23b249b88f44465e081e0"
+    },
+    "manifest.json": {
+      "bytes": 4952,
+      "sha256": "89a540fab228491909ea3ab8f838debe8ea9cd45d95857ebd9fce8b33bc3f760"
+    },
+    "pure-evidence.py": {
+      "bytes": 19911,
+      "sha256": "3050e37f304c128699330a106bebde8da76b7d0ba1005a872acf54919ea615fe"
+    },
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 20457,
+      "sha256": "d7d2952b5e6dc5d30342b3f71b7ec8230d743a24fbe5c84976bbd14191dce736"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_bank_scoped.py": {
+      "bytes": 14853,
+      "sha256": "3ecc622e660cb6e0790a18ff8bb022a84535c91466d02d6fdbb8625ae080a99b"
+    },
+    "test_census.py": {
+      "bytes": 19688,
+      "sha256": "aca29934c68523dbc91b30439a2c7a5ae552b64a9faf077ddb99b97c861cb5b0"
+    },
+    "test_matched.py": {
+      "bytes": 15400,
+      "sha256": "d5a6b522a1effe29e1ee08430754163cc217cf34c3713ce234926b7c860f9647"
+    },
+    "test_readiness.py": {
+      "bytes": 17802,
+      "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+    },
+    "test_scoped.py": {
+      "bytes": 15936,
+      "sha256": "4c015cdfa072943960e0ffa1f25e0e604790e8dbe222875b4bed207be6563fdc"
+    },
+    "test_scoped_pair.py": {
+      "bytes": 3629,
+      "sha256": "aa95ff79fd3c72ee3658d66e4117738a06f7984a2a77dcc6712b28a272e57f8f"
+    },
+    "test_shared.py": {
+      "bytes": 10737,
+      "sha256": "a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96"
+    },
+    "test_timing.py": {
+      "bytes": 10433,
+      "sha256": "630febf4d840081887692144cc570d70c1d67f9ad3bb5bab1fd6d7d1f61cedb1"
+    },
+    "validate_bank_pair.py": {
+      "bytes": 4428,
+      "sha256": "9d3f1470f6e9d7a17f3c91d1deb29a54c6fa7e8c766dc358e9d7d73e15c4e004"
+    },
+    "validate_bank_scoped.py": {
+      "bytes": 9534,
+      "sha256": "2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772"
+    },
+    "validate_census.py": {
+      "bytes": 10392,
+      "sha256": "090431e59a481d5b681311d5a015ddfd35705cc828c920118d4f0043b862ec9f"
+    },
+    "validate_census_pair.py": {
+      "bytes": 4730,
+      "sha256": "d4f50afe412b68c4066e934a80b96b5a5c0f83ef8ea33c59c53380aa1ab819c4"
+    },
+    "validate_matched.py": {
+      "bytes": 9362,
+      "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_scoped.py": {
+      "bytes": 9184,
+      "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+    },
+    "validate_scoped_pair.py": {
+      "bytes": 3233,
+      "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+    },
+    "validate_shared.py": {
+      "bytes": 8015,
+      "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "mode": "checker",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_files": 29,
+  "original_terminal_unchanged": true,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-readiness40-bank-scoped-census-pure-cpu-retention-v1"
+}

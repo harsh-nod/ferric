@@ -1,0 +1,317 @@
+"""Closed data-only export/retention of the bank-scoped-census synthetic CPU gate."""
+import ast
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import re
+import resource
+import signal
+import stat
+import sys
+import tarfile
+
+E = Path('/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220')
+W = Path('/mnt/c/Users/harmenon/ferric-session-evidence/20261004')
+Q = Path('/home/harsh/ferric-p227-integration/qualification/guarded-mlp-scoped-capacity-census-v1')
+SUPERVISOR = (41485, '8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc')
+MODES = {
+    'checker': dict(count=98, modules={
+        'test_readiness': ('ReadinessTests',),
+        'test_shared': ('SharedTests',),
+        'test_timing': ('TimingTests',),
+        'test_matched': ('MatchedTests',),
+        'test_scoped': ('ScopedTests',),
+        'test_scoped_pair': ('ScopedPairTests',),
+        'test_bank_scoped': ('BankScopedTests',),
+        'test_census': ('CensusTests',),
+    }, sources={
+        'readiness_announcement.py': (3246, 'b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1'),
+        'run_cpu.py': (20457, 'd7d2952b5e6dc5d30342b3f71b7ec8230d743a24fbe5c84976bbd14191dce736'),
+        'supervisor.py': (41485, '8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc'),
+        'test_bank_scoped.py': (14853, '3ecc622e660cb6e0790a18ff8bb022a84535c91466d02d6fdbb8625ae080a99b'),
+        'test_census.py': (19688, 'aca29934c68523dbc91b30439a2c7a5ae552b64a9faf077ddb99b97c861cb5b0'),
+        'test_matched.py': (15400, 'd5a6b522a1effe29e1ee08430754163cc217cf34c3713ce234926b7c860f9647'),
+        'test_readiness.py': (17802, '4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5'),
+        'test_scoped.py': (15936, '4c015cdfa072943960e0ffa1f25e0e604790e8dbe222875b4bed207be6563fdc'),
+        'test_scoped_pair.py': (3629, 'aa95ff79fd3c72ee3658d66e4117738a06f7984a2a77dcc6712b28a272e57f8f'),
+        'test_shared.py': (10737, 'a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96'),
+        'test_timing.py': (10433, '630febf4d840081887692144cc570d70c1d67f9ad3bb5bab1fd6d7d1f61cedb1'),
+        'validate_bank_pair.py': (4428, '9d3f1470f6e9d7a17f3c91d1deb29a54c6fa7e8c766dc358e9d7d73e15c4e004'),
+        'validate_bank_scoped.py': (9534, '2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772'),
+        'validate_census.py': (10392, '090431e59a481d5b681311d5a015ddfd35705cc828c920118d4f0043b862ec9f'),
+        'validate_census_pair.py': (4730, 'd4f50afe412b68c4066e934a80b96b5a5c0f83ef8ea33c59c53380aa1ab819c4'),
+        'validate_matched.py': (9362, 'd31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437'),
+        'validate_readiness.py': (19800, '0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a'),
+        'validate_scoped.py': (9184, 'c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd'),
+        'validate_scoped_pair.py': (3233, '495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62'),
+        'validate_shared.py': (8015, '6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca'),
+        'validate_timing.py': (10104, '27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f'),
+    }),
+}
+RAW = {'sources-before.json', 'sources-after.json'} | {
+    'readiness-tests.' + suffix for suffix in ('command.json', 'started.json', 'result.json', 'stdout', 'stderr')}
+FILE_LIMIT, TOTAL_LIMIT = 1 << 20, 4 << 20
+
+
+def require(ok, why):
+    if not ok:
+        raise ValueError(why)
+
+
+def pin(raw):
+    return dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+
+
+def compact(row):
+    return {key: row[key] for key in ('bytes', 'sha256')}
+
+
+def encoded(value):
+    return (json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + '\n').encode()
+
+
+def parse(raw):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            require(key not in result, 'duplicate JSON key')
+            result[key] = value
+        return result
+    return json.loads(raw, object_pairs_hook=pairs,
+                      parse_constant=lambda _: require(False, 'nonfinite JSON'))
+
+
+def read(path, cap=FILE_LIMIT):
+    require(path.is_absolute() and path.resolve(strict=True) == path, 'canonical input')
+    stamp = lambda s: (s.st_dev, s.st_ino, s.st_mode, s.st_nlink, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK), 'rb') as stream:
+        before = os.fstat(stream.fileno())
+        require(stat.S_ISREG(before.st_mode) and 0 <= before.st_size <= cap, 'bounded regular input')
+        raw = stream.read(cap + 1)
+        after = os.fstat(stream.fileno())
+    require(stamp(before) == stamp(after) == stamp(path.lstat()) and len(raw) == before.st_size, 'input drift')
+    return raw
+
+
+def locations(mode):
+    require(mode in MODES, 'closed CPU gate mode')
+    root = E / ('guarded-mlp-readiness40-bank-scoped-census-' + mode + '-cpu-v228-v1')
+    name = 'guarded-mlp-readiness40-bank-scoped-census-' + mode + '-evidence-v228-v1.tar.gz'
+    return root, name, Q / (mode + '-cpu-v1')
+
+
+def terminal(bodies):
+    names = [n for n in ('complete.json', 'failed.json') if 'evidence/' + n in bodies]
+    require(len(names) == 1, 'one original outcome, never both or invented')
+    return names[0]
+
+
+def validate(mode, bodies, terminal_sha):
+    contract = MODES[mode]
+    root, _, _ = locations(mode)
+    name = terminal(bodies)
+    raw_terminal = bodies['evidence/' + name]
+    require(pin(raw_terminal)['sha256'] == terminal_sha, 'observed original terminal SHA')
+    c = parse(raw_terminal)
+    require(type(c['passed']) is bool and c['schema'] == 'ferric-guarded-mlp-readiness40-bank-scoped-census-checker-cpu-v1'
+            and (name == 'complete.json') == c['passed']
+            and (c['failure'] is None) == c['passed']
+            and (c['passed'] or type(c['failure']) is str)
+            and type(c['postcheck_errors']) is list
+            and all(type(x) is str for x in c['postcheck_errors']), 'honest original CPU outcome')
+    require(type(c['raw']) is dict and set(c['raw']) <= RAW, 'closed original raw prefix')
+    original = set(contract['sources']) | {'evidence/' + n for n in set(c['raw']) | {name}}
+    require(set(bodies) == original | {'pure-evidence.py'}, 'exact original prefix and helper')
+    require(set(c['sources_before']) == set(contract['sources']), 'original source roster')
+    for source, expected in contract['sources'].items():
+        require((len(bodies[source]), pin(bodies[source])['sha256']) == expected
+                and compact(c['sources_before'][source]) == pin(bodies[source])
+                and c['sources_before'][source]['path'] == str(root / source), 'fixed source-before join')
+    after = c['sources_after']
+    require(after is None or after == c['sources_before'], 'no changed source body relabeled as qualified')
+    require(c['source_unchanged'] is (after == c['sources_before']), 'original source postcheck metadata')
+    require(c['controller'] == c['sources_before']['run_cpu.py']
+            and c['supervisor'] == c['sources_before']['supervisor.py'], 'harness source joins')
+    for raw_name, row in c['raw'].items():
+        require(pin(bodies['evidence/' + raw_name]) == compact(row)
+                and row['path'] == str(root / 'evidence' / raw_name), 'raw pin/path join')
+    for label in ('before', 'after'):
+        raw_name = 'sources-' + label + '.json'
+        if raw_name in c['raw']:
+            require(parse(bodies['evidence/' + raw_name]) == c['sources_' + label], 'original source map body')
+    require(type(c['phases']) is list and len(c['phases']) <= 1, 'at most one original owned child')
+    phase = c['phases'][0] if c['phases'] else None
+    phase_names = {'readiness-tests.' + s for s in ('command.json', 'started.json', 'result.json', 'stdout', 'stderr')}
+    if phase is not None:
+        require(phase['label'] == 'readiness-tests'
+                and type(phase['exit_code']) in (int, type(None))
+                and all(type(phase[k]) is bool for k in ('natural_exit', 'reaped', 'process_group_absent',
+                    'forced_cleanup', 'timed_out')), 'original phase state, not success inference')
+        for key, suffix in (('command', '.command.json'), ('stdout', '.stdout'), ('stderr', '.stderr')):
+            raw_name = 'readiness-tests' + suffix
+            if raw_name in c['raw']:
+                require(phase[key] == c['raw'][raw_name], 'original phase stream/command pin')
+        if 'readiness-tests.result.json' in c['raw']:
+            require(parse(bodies['evidence/readiness-tests.result.json']) == phase, 'original result join')
+        if 'readiness-tests.started.json' in c['raw']:
+            require(parse(bodies['evidence/readiness-tests.started.json']) ==
+                    dict(pid=phase['pid'], pgid=phase['pgid'], argv=phase['argv']), 'original owned registration')
+    elif 'readiness-tests.result.json' in c['raw']:
+        require(False, 'result body without recorded owned phase')
+    if 'readiness-tests.command.json' in c['raw']:
+        command = parse(bodies['evidence/readiness-tests.command.json'])
+        require(command['cwd'] == str(root) and command['env'] == c['environment']
+                and (phase is None or command['argv'] == phase['argv']), 'original command/environment')
+    for field in ('HIP_VISIBLE_DEVICES', 'ROCR_VISIBLE_DEVICES', 'CUDA_VISIBLE_DEVICES'):
+        require(c['environment'][field] == '', 'pure CPU GPU visibility')
+    names = []
+    for module, expected_classes in contract['modules'].items():
+        tree = ast.parse(bodies[module + '.py'])
+        classes = [node for node in tree.body if isinstance(node, ast.ClassDef)]
+        require({node.name for node in classes} == set(expected_classes)
+                and len(classes) == len(expected_classes), 'exact synthetic classes')
+        names += [module + '.' + cls.name + '.' + node.name for cls in classes for node in cls.body
+                  if isinstance(node, ast.FunctionDef) and node.name.startswith('test_')]
+    names.sort()
+    require(len(names) == len(set(names)) == contract['count'], 'fixed98 source-declared test names')
+    # Only an actually admitted census may be described as passed, even if a later postcheck failed.
+    if c['tests'] is not None:
+        require(phase is not None and phase['exit_code'] == 0 and phase['natural_exit'] is True
+                and phase['reaped'] is True and phase['process_group_absent'] is True
+                and phase['forced_cleanup'] is False and phase['timed_out'] is False
+                and phase['exception'] is None and phase['storage_failure'] is None
+                and phase['observed_signals'] == [] and phase_names <= set(c['raw']), 'census requires original clean child')
+        require(bodies['evidence/readiness-tests.stdout'] == b'', 'empty test stdout')
+        expression = r'^(test_[A-Za-z0-9_]+) \((test_readiness\.ReadinessTests|test_shared\.SharedTests|test_timing\.TimingTests|test_matched\.MatchedTests|test_scoped\.ScopedTests|test_scoped_pair\.ScopedPairTests|test_bank_scoped\.BankScopedTests|test_census\.CensusTests)\.\1\) \.\.\. ok$'
+        stderr = bodies['evidence/readiness-tests.stderr'].decode()
+        observed = [prefix + '.' + test for test, prefix in re.findall(expression, stderr, re.M)]
+        require(len(observed) == len(set(observed)) == contract['count']
+                and sorted(observed) == names, 'all exact named tests passed')
+        tail = '\n'.join(line for line in re.sub(expression, '', stderr, flags=re.M).splitlines() if line)
+        require(re.fullmatch(r'-{70}\nRan 98 tests in [0-9]+\.[0-9]+s\nOK', tail), 'original unittest complete summary')
+        require(c['tests'] == dict(names=names, passed=98, failed=0, errors=0, skipped=0), 'exact admitted test census')
+    if c['passed']:
+        require(c['postcheck_errors'] == [] and c['tests'] is not None and after == c['sources_before']
+                and set(c['raw']) == RAW and len(bodies) == 30, 'successful29 originals plus helper')
+    require(c['limits'] == dict(whole_seconds=180, test_seconds=120, cleanup_reserve_seconds=50,
+            address_space_bytes=512 << 20, stream_bytes=4 << 20, affinity=[8, 9], nice=10), 'unchanged qualification bounds')
+    require(c['synthetic_data_tests_only'] is True and all(c[k] is False for k in
+            ('gpu_execution', 'native_parent_execution', 'model_execution', 'numerical_acceptance',
+             'full_model_acceptance', 'performance_claim', 'production_authority')), 'pure CPU scope')
+    require(set(c['tool_pins']) == {'python', 'prlimit'}, 'closed original tool metadata')
+    return c, {name: pin(body) for name, body in sorted(bodies.items())}
+
+
+def export_manifest(mode, c, bodies, pins):
+    return dict(schema='ferric-readiness40-bank-scoped-census-pure-cpu-export-v1', mode=mode, files=pins,
+        original_files=len(bodies) - 1, selected_files=len(bodies), terminal_name=terminal(bodies),
+        terminal=pin(bodies['evidence/' + terminal(bodies)]), passed=c['passed'],
+        admitted_test_count=c['tests']['passed'] if c['tests'] is not None else None,
+        original_failure=c['failure'], original_postcheck_errors=c['postcheck_errors'],
+        synthetic_only=True, new_project_execution=False, native_execution=False,
+        numerical_acceptance=False, performance_claim=False,
+        original_tools_rehashed_at_export=True, external_tools_rehashed_locally=False)
+
+
+def export(mode, terminal_sha):
+    root, archive_name, _ = locations(mode)
+    require(os.getuid() == os.geteuid() == 9661 and os.uname().nodename == 'smci350-rck-g03-b19-03', 'actual CPU host')
+    output = E / archive_name
+    require(not os.path.lexists(output) and root.resolve(strict=True) == root, 'fresh output and canonical root')
+    require({p.name for p in root.iterdir()} == set(MODES[mode]['sources']) | {'evidence'}, 'closed live source root')
+    observed = {p.name for p in (root / 'evidence').iterdir()}
+    outcomes = observed & {'complete.json', 'failed.json'}
+    require(len(outcomes) == 1 and observed - outcomes <= RAW, 'one original outcome and closed raw prefix')
+    paths = {name: root / name for name in MODES[mode]['sources']}
+    paths.update({'evidence/' + name: root / 'evidence' / name for name in observed})
+    paths['pure-evidence.py'] = Path(__file__).resolve()
+    bodies = {name: read(path) for name, path in paths.items()}
+    c, pins = validate(mode, bodies, terminal_sha)
+    for row in c['tool_pins'].values():
+        require(pin(read(Path(row['path']), 16 << 20)) == compact(row), 'original Python/prlimit live tool pin')
+    manifest = export_manifest(mode, c, bodies, pins)
+    packaged = dict(bodies, **{'manifest.json': encoded(manifest)})
+    require(len(packaged) <= 31 and sum(map(len, packaged.values())) <= TOTAL_LIMIT, 'bounded thirty-one-member prefix')
+    with output.open('xb') as stream:
+        with tarfile.open(fileobj=stream, mode='w:gz', format=tarfile.USTAR_FORMAT) as tar:
+            for name, raw in sorted(packaged.items()):
+                member = tarfile.TarInfo(name)
+                member.size, member.mode, member.mtime = len(raw), 0o644, 0
+                tar.addfile(member, io.BytesIO(raw))
+        stream.flush(); os.fsync(stream.fileno())
+    require(all(read(path) == bodies[name] for name, path in paths.items()), 'all selected body posthashes')
+    for row in c['tool_pins'].values():
+        require(pin(read(Path(row['path']), 16 << 20)) == compact(row), 'original tool posthash')
+    print(json.dumps(dict(archive=dict(path=str(output), **pin(read(output, TOTAL_LIMIT))),
+        members=len(packaged), original_files=len(bodies) - 1, passed=c['passed'],
+        admitted_tests=manifest['admitted_test_count']), sort_keys=True))
+
+
+def retain(mode, archive_sha, terminal_sha):
+    _, archive_name, dest = locations(mode)
+    archive = W / archive_name
+    raw = read(archive, TOTAL_LIMIT)
+    require(pin(raw)['sha256'] == archive_sha, 'observed archive SHA')
+    allowed = set(MODES[mode]['sources']) | {'evidence/' + n for n in RAW | {'complete.json', 'failed.json'}} | {'pure-evidence.py', 'manifest.json'}
+    bodies, total = {}, 0
+    with tarfile.open(fileobj=io.BytesIO(raw), mode='r:gz') as tar:
+        for member in tar:
+            require(member.name in allowed and member.name not in bodies and member.isfile()
+                    and not member.pax_headers and 0 <= member.size <= FILE_LIMIT, 'closed ordinary member')
+            total += member.size
+            require(total <= TOTAL_LIMIT and len(bodies) < 31, 'bounded original archive prefix')
+            bodies[member.name] = tar.extractfile(member).read(member.size + 1)
+            require(len(bodies[member.name]) == member.size, 'complete original body')
+    require('manifest.json' in bodies, 'original manifest present')
+    manifest_raw = bodies.pop('manifest.json')
+    manifest = parse(manifest_raw)
+    c, pins = validate(mode, bodies, terminal_sha)
+    require(bodies['pure-evidence.py'] == read(Path(__file__).resolve())
+            and manifest == export_manifest(mode, c, bodies, pins), 'exact helper/export manifest')
+    require(read(archive, TOTAL_LIMIT) == raw and dest.parent.resolve(strict=True) == dest.parent
+            and not os.path.lexists(dest), 'archive posthash and fresh retention')
+    bodies['manifest.json'] = manifest_raw
+    dest.mkdir(mode=0o755)
+    for name, body in sorted(bodies.items()):
+        target = dest / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open('xb') as stream:
+            stream.write(body); stream.flush(); os.fsync(stream.fileno())
+        target.chmod(0o644)
+        require(read(target) == body, 'retained original readback')
+    require(read(archive, TOTAL_LIMIT) == raw, 'archive unchanged after publication')
+    report = dict(schema='ferric-readiness40-bank-scoped-census-pure-cpu-retention-v1', mode=mode,
+        archive=pin(raw), files={name: pin(body) for name, body in sorted(bodies.items())},
+        original_files=len(bodies) - 2, passed=c['passed'], admitted_tests=manifest['admitted_test_count'],
+        original_terminal_unchanged=True, external_tools_rehashed_locally=False,
+        new_project_execution=False, native_execution=False, numerical_acceptance=False, performance_claim=False)
+    with (dest / 'retention.json').open('xb') as stream:
+        stream.write(encoded(report)); stream.flush(); os.fsync(stream.fileno())
+    print(json.dumps(dict(destination=str(dest), original_files=len(bodies) - 2,
+        passed=c['passed'], admitted_tests=manifest['admitted_test_count'])))
+
+
+if __name__ == '__main__':
+    require(__debug__ and sys.dont_write_bytecode and len(sys.argv) in (4, 5),
+            'python3 -B pure-evidence.py export MODE TERMINAL_SHA | retain MODE ARCHIVE_SHA TERMINAL_SHA')
+    require(sys.argv[2] in MODES and all(re.fullmatch('[0-9a-f]{64}', value) for value in sys.argv[3:]), 'closed mode and observed hashes')
+    os.umask(0o077)
+    for kind, cap in ((resource.RLIMIT_AS, 128 << 20), (resource.RLIMIT_FSIZE, TOTAL_LIMIT), (resource.RLIMIT_CORE, 0)):
+        limits = resource.getrlimit(kind)
+        value = min([cap] + [n for n in limits if n != resource.RLIM_INFINITY])
+        resource.setrlimit(kind, (value, value))
+    def interrupted(number, _frame):
+        raise RuntimeError('pure evidence signal ' + str(number))
+    for number in (signal.SIGALRM, signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(number, interrupted)
+    signal.alarm(30)
+    try:
+        if sys.argv[1] == 'export' and len(sys.argv) == 4:
+            export(sys.argv[2], sys.argv[3])
+        else:
+            require(sys.argv[1] == 'retain' and len(sys.argv) == 5, 'closed retention invocation')
+            retain(sys.argv[2], sys.argv[3], sys.argv[4])
+    finally:
+        signal.alarm(0)

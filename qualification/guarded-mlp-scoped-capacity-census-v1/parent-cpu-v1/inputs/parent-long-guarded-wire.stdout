@@ -1,0 +1,18 @@
+
+running 13 tests
+test finite_guarded_mlp_long_wire_v2::tests::long_bank_generations_and_page_edges_are_exact ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_bootstrap_identity_images_prompt_and_combined_budget_are_closed ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_control_decoder_preserves_ar4_predicates_and_long_generation ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_maximal_selected_2302_header_and_total_retention_fit_existing_caps ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_nonfinite_payload_wrong_argmax_and_selected_byte_mutation_are_refused ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_profiles_and_close_ids_are_domain_separated_and_ar4_stays_closed ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_record_refuses_oversize_truncation_unknown_fields_and_trailing_bytes ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_selected_and_unselected_frames_round_trip_with_derived_part_pins ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_selected_control_rehash_cannot_hide_invalid_terminal_or_frontiers ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_generated_input_must_be_the_committed_predecessor_not_a_reference_token ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_transcript_refuses_prompt_pages_scope_pending_and_chain_mutations ... ok
+test finite_guarded_mlp_long_wire_v2::tests::position5_profile_preserves_scope_and_is_domain_separated ... ok
+test finite_guarded_mlp_long_wire_v2::tests::long_transcript_full_2303_commits_only_own_outputs_and_exact_close ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 973 filtered out; finished in 0.21s
+

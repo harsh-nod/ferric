@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-queued-mlp-comparison-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2708,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests.command.json",
+    "sha256": "ec446f54f6a3c0856cb758503fdf05da7fd47bf4b38ea56cd1fb83830ec3c71f"
+  },
+  "elapsed_ns": 422172552,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-queued-mlp-comparison-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 858630,
+  "pid": 858630,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2435,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests.stderr",
+    "sha256": "1bf5490d6fa824f6983066bec08f38f9e65a4d348cf7eb0747c133ce97dcff56"
+  },
+  "stdout": {
+    "bytes": 192,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-queued-mlp-comparison-engineering-tests.stdout",
+    "sha256": "e33dc02a8968beb2ec4487eaf6853c20fc499090c9ac2c598fc839ba392727a5"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

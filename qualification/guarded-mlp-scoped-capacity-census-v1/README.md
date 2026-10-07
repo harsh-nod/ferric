@@ -2,8 +2,9 @@
 
 This opt-in experiment reduces repeated host-side discovery during a warm
 guarded-MLP layer. The runtime and worker are integrated after successful
-coupled CPU qualification on MI350. Parent integration, strict data admission
-and a fresh GPU comparison remain separate gates.
+coupled CPU qualification on MI350. The parent is now integrated after its own
+qualification, and the strict data checker passes 98 synthetic tests. A fresh
+GPU comparison remains a separate gate.
 
 The selected path moves two zero-add allocation preflights inside the existing
 closed layer operation. It retains all four capacity-fence boundaries as
@@ -21,6 +22,8 @@ full discovery is not claimed.
 
 - [Coupled CPU results and original evidence](cpu-v1/README.md).
 - [Exact tested-source integration postcheck](integration-v1/postcheck.json).
+- [Parent qualification](parent-cpu-v1/README.md) and [source postcheck](parent-integration-v1/postcheck.json).
+- [Strict data-checker qualification](checker-cpu-v1/README.md).
 - [Previous bank-rearm GPU comparison](../guarded-mlp-scoped-bank-rearm-v1/matched-timing-report-v1/README.md).
 
 All 26 CPU phases passed: 1,165 runtime tests with eight existing ignores,
@@ -28,6 +31,12 @@ All 26 CPU phases passed: 1,165 runtime tests with eight existing ignores,
 ten selected facade doctests and eight parser regressions. The 12 runtime and
 13 worker tested Rust files were integrated, with a 2,100-body source postcheck.
 No GPU run or timing improvement for this new census path is claimed.
+
+The separate parent run passes 535 selected tests across 57 scopes and all
+67 phases in 416.111 seconds, producing seven executables. Its seven tested
+Rust files are integrated with a complete 1,279-body source postcheck; all
+220 qualified worker bodies remain unchanged. This is not the full parent
+library suite. The checker passes all 98 named tests with no skips or failures.
 
 The matching fe2o3 runtime commit is
 [`a820d383a3`](https://github.com/harsh-nod/fe2o3/commit/a820d383a3676f9a9002a15323347a7526e71ded).

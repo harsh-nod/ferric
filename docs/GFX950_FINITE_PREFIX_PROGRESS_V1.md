@@ -13,8 +13,12 @@ are integrated after a fresh MI350 coupled CPU run: all 26 phases passed in
 779 worker tests with four existing ignores. The 25 actual tested Rust files
 were integrated with a 2,100-body source postcheck. This opt-in warm-layer path
 preserves complete allocation accounting and ordered rank checks while moving
-two selected zero-add preflights inside the closed layer operation. Its parent
-qualification, data admission and fresh GPU comparison are still pending.
+two selected zero-add preflights inside the closed layer operation. The parent
+now passes all 67 phases and 535 selected tests across 57 scopes in 416.111
+seconds, with seven executables built. Its seven tested Rust files are
+integrated with a complete 1,279-body source postcheck, preserving all 220
+worker bodies. The strict checker passes all 98 synthetic tests. The fresh
+same-binary bank/census GPU comparison is still pending.
 It is not a measured speedup or a Full2303 admission.
 
 The preceding

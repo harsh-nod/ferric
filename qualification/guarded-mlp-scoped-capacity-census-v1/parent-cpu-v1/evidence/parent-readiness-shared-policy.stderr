@@ -1,0 +1,23 @@
+warning: unused macro definition: `qwen_attention_emit_pair_v1`
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/ferric/device/qwen3-tp-perf-kernels-v3/src/attention_online.rs:11:14
+   |
+11 | macro_rules! qwen_attention_emit_pair_v1 {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_macros)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ferric-qwen3-tp-perf-kernels-device-v3` (lib) generated 1 warning
+warning: method `schema` is never used
+  --> src/../../tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs:42:19
+   |
+32 | impl ArenaRoute {
+   | --------------- method in this implementation
+...
+42 |     pub(crate) fn schema(self) -> &'static str {
+   |                   ^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ferric-m1-engineering-execution-v1` (lib test) generated 1 warning
+    Finished `test` profile [optimized] target(s) in 0.08s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-parent-cpu-v228-v1/target/debug/deps/ferric_m1_engineering_execution_v1-d2b3c85fa9e5d2a9)

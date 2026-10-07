@@ -1,0 +1,11 @@
+{
+  "ferric_source_bodies": 1279,
+  "full_parent_library_suite": false,
+  "gpu_execution": false,
+  "parent_rows_integrated": 7,
+  "passed": true,
+  "qualified_worker_bodies_preserved": 220,
+  "schema": "ferric-census-parent-canonical-postcheck-v1",
+  "source_map_sha256": "0ab51eeff901cd2405faf7dbe63197539ae6173346456d9dabd1833366aab2ff",
+  "test_execution_host": "mi350"
+}

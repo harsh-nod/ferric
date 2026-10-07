@@ -1,0 +1,12 @@
+
+running 7 tests
+test finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_checks_every_call_count_and_unbounded_counter_overflow ... ok
+test finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_exact_closed_record_roundtrips ... ok
+test finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_boolean_integer_substitution ... ok
+test finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_every_policy_and_authority_drift ... ok
+test finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_other_profiles_and_missing_identity ... ok
+test finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_refuses_scope_worker_transcript_and_counts_drift ... ok
+test finite_guarded_mlp_readiness_scoped_v1::tests::scoped_warm_policy_requires_one_exact_bounded_record ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 979 filtered out; finished in 0.00s
+
