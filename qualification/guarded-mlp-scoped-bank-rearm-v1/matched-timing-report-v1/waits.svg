@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="540" viewBox="0 0 1060 540">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="sans-serif" fill="#20252b">
+<text x="24" y="30" font-size="21">Matched Readiness40 parent frame waits</text>
+<text x="24" y="53" font-size="13">One ordered layer / bank+layer pair; same ELF pair and full payload parity required.</text>
+<text x="24" y="73" font-size="12">Wait includes worker execution, pipe wait and framing. Not GPU time or throughput.</text>
+<line x1="700" y1="90" x2="724" y2="90" stroke="#147d92" stroke-width="3"/>
+<text x="731" y="94" font-size="12">Layer V1</text>
+<line x1="840" y1="90" x2="864" y2="90" stroke="#b44b3e" stroke-width="3"/>
+<text x="871" y="94" font-size="12">Bank+layer V2</text>
+<rect x="122.154" y="108" width="903.846" height="356" fill="#f3f5f7"/>
+<line x1="86" y1="464.0" x2="1026" y2="464.0" stroke="#dfe4e8"/>
+<text x="76" y="468.0" text-anchor="end" font-size="12">0.000</text>
+<line x1="86" y1="375.0" x2="1026" y2="375.0" stroke="#dfe4e8"/>
+<text x="76" y="379.0" text-anchor="end" font-size="12">3.302</text>
+<line x1="86" y1="286.0" x2="1026" y2="286.0" stroke="#dfe4e8"/>
+<text x="76" y="290.0" text-anchor="end" font-size="12">6.603</text>
+<line x1="86" y1="197.0" x2="1026" y2="197.0" stroke="#dfe4e8"/>
+<text x="76" y="201.0" text-anchor="end" font-size="12">9.905</text>
+<line x1="86" y1="108.0" x2="1026" y2="108.0" stroke="#dfe4e8"/>
+<text x="76" y="112.0" text-anchor="end" font-size="12">13.206</text>
+<line x1="86.0" y1="108" x2="86.0" y2="464" stroke="#d1d7dc" stroke-dasharray="3 4"/>
+<line x1="206.5128205128205" y1="108" x2="206.5128205128205" y2="464" stroke="#d1d7dc" stroke-dasharray="3 4"/>
+<line x1="471.64102564102564" y1="108" x2="471.64102564102564" y2="464" stroke="#d1d7dc" stroke-dasharray="3 4"/>
+<line x1="1026.0" y1="108" x2="1026.0" y2="464" stroke="#d1d7dc" stroke-dasharray="3 4"/>
+<polyline fill="none" stroke="#147d92" stroke-width="2" points="86.000,112.822 110.103,115.317 134.205,320.105 158.308,319.820 182.410,319.885 206.513,320.729 230.615,320.563 254.718,320.305 278.821,320.646 302.923,320.809 327.026,320.429 351.128,320.882 375.231,321.041 399.333,320.790 423.436,321.209 447.538,321.053 471.641,320.622 495.744,321.138 519.846,320.802 543.949,319.823 568.051,320.335 592.154,319.922 616.256,319.561 640.359,320.180 664.462,320.146 688.564,319.897 712.667,320.274 736.769,320.055 760.872,319.359 784.974,320.490 809.077,320.466 833.179,318.617 857.282,318.476 881.385,318.554 905.487,319.189 929.590,319.219 953.692,319.792 977.795,319.244 1001.897,319.554 1026.000,320.278"/>
+<circle cx="86.000" cy="112.822" r="3" fill="#147d92"/>
+<circle cx="206.513" cy="320.729" r="3" fill="#147d92"/>
+<circle cx="471.641" cy="320.622" r="3" fill="#147d92"/>
+<circle cx="1026.000" cy="320.278" r="3" fill="#147d92"/>
+<polyline fill="none" stroke="#b44b3e" stroke-width="2" points="86.000,109.151 110.103,108.000 134.205,385.931 158.308,385.688 182.410,386.008 206.513,385.723 230.615,385.955 254.718,386.082 278.821,386.323 302.923,386.038 327.026,386.021 351.128,386.072 375.231,386.136 399.333,386.488 423.436,385.765 447.538,385.952 471.641,386.394 495.744,386.160 519.846,386.173 543.949,386.059 568.051,385.826 592.154,386.055 616.256,386.183 640.359,386.413 664.462,386.279 688.564,385.987 712.667,386.421 736.769,386.150 760.872,386.214 784.974,385.923 809.077,386.352 833.179,385.893 857.282,385.875 881.385,385.121 905.487,386.117 929.590,385.866 953.692,386.373 977.795,385.841 1001.897,385.784 1026.000,385.546"/>
+<circle cx="86.000" cy="109.151" r="3" fill="#b44b3e"/>
+<circle cx="206.513" cy="385.723" r="3" fill="#b44b3e"/>
+<circle cx="471.641" cy="386.394" r="3" fill="#b44b3e"/>
+<circle cx="1026.000" cy="385.546" r="3" fill="#b44b3e"/>
+<text x="86.0" y="486" text-anchor="middle" font-size="12">0</text>
+<text x="206.5128205128205" y="486" text-anchor="middle" font-size="12">5</text>
+<text x="327.025641025641" y="486" text-anchor="middle" font-size="12">10</text>
+<text x="471.64102564102564" y="486" text-anchor="middle" font-size="12">16</text>
+<text x="568.051282051282" y="486" text-anchor="middle" font-size="12">20</text>
+<text x="688.5641025641025" y="486" text-anchor="middle" font-size="12">25</text>
+<text x="809.0769230769231" y="486" text-anchor="middle" font-size="12">30</text>
+<text x="929.5897435897435" y="486" text-anchor="middle" font-size="12">35</text>
+<text x="1026.0" y="486" text-anchor="middle" font-size="12">39</text>
+<text x="556.0" y="520" text-anchor="middle" font-size="13">Prompt position (shaded: warm 2-39; markers: captures 0, 5, 16, 39)</text>
+<text x="20" y="286.0" transform="rotate(-90 20 286.0)" text-anchor="middle" font-size="13">Parent wall seconds</text>
+</g></svg>

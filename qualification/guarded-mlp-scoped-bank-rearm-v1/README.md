@@ -18,9 +18,17 @@ failed build is retained separately, as is the successful repaired attempt.
 - [519-test host integration qualification](parent-cpu-attempt-v2/README.md).
 - [Parent integration postcheck](parent-integration-v1/postcheck.json).
 - [Nine-test report qualification](matched-timing-report-cpu-v1/README.md).
+- [Successful same-binary native pair](matched-timing-gpu-v1/README.md).
+- [Measured ablation, plots and reproduction commands](matched-timing-report-v1/README.md).
 
 Host integration passed all 67 phases, and its seven tested Rust files are
-integrated with a complete 1,273-body source postcheck. A same-binary scoped-layer
-versus bank-plus-layer GPU comparison is still pending. CPU qualification does not
-establish a numerical model result, throughput improvement, GPU overlap,
-Full2303 launch feasibility or the 700 tokens/s target.
+integrated with a complete 1,273-body source postcheck. The same-binary scoped-layer
+versus bank-plus-layer GPU pair now also passes all 40 prompt records, four
+complete captured payloads and clean shutdown. Warm-forward parent wall time
+is 45.820% lower in this ordered pair; total parent wall time is 15.613% lower.
+First-use forward time is 1.570% higher. Allocation preflights remain unchanged.
+
+This zero-generated-token engineering experiment does not establish independent
+numerical acceptance, decode throughput, GPU overlap, Full2303 launch feasibility
+or the 700 tokens/s target. Scoped currentness changes observation cadence; it is
+not temporally equivalent to repeated full discovery.

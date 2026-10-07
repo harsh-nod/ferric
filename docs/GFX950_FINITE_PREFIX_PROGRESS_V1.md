@@ -17,24 +17,39 @@ and 11 worker actual Rust postimages were integrated with a 2,091-body source
 postcheck. The separate bank admission checker passes 82 tests. Host integration
 now also passes all 67 phases and 519 selected tests across 57 scopes; its seven
 qualified Rust files are integrated with a complete 1,273-body source postcheck.
-The matched native A/B run remains pending. Allocation preflights are unchanged.
+The [matched native bank-rearm A/B run](../qualification/guarded-mlp-scoped-bank-rearm-v1/matched-timing-gpu-v1/README.md)
+now passes on MI350: both same-binary modes complete all 40 prompt forwards,
+four complete payload captures, healthy Close and all 11 supervised phases.
+All records and selected payloads match each other and the historical baseline.
+Allocation preflights are unchanged.
 
-The latest completed native comparison is the
+The new [bank-rearm tables and plots](../qualification/guarded-mlp-scoped-bank-rearm-v1/matched-timing-report-v1/README.md)
+show warm-forward parent wall spans totaling 202.891 versus 109.926 seconds,
+45.820% lower in the candidate. First-use totals are 25.965 versus 26.373
+seconds, 1.570% higher. Total parent wall time, including setup and shutdown,
+is 575.036 versus 485.255 seconds, 15.613% lower. This is one ordered pair,
+not GPU time, overlap, generated-token throughput or a repeated benchmark.
+The original archive and nine-test-qualified reporting source are published
+with data-only reproduction commands.
+
+The earlier native comparison is the
 [Default/scoped warm-layer pair](../qualification/guarded-mlp-scoped-currentness-v1/matched-timing-gpu-v3/README.md).
 Both modes use the same parent/worker products and reproduce all 40 prompt
 records and four complete captured payloads, including the historical Position5
 baseline. Parent wall time was 938.053 seconds for Default and 576.777 seconds
 for scoped layers, 38.513% lower in this ordered pair. Frame waits totaled
 591.558 and 230.370 seconds, respectively. The
-[tables and plots](../qualification/guarded-mlp-scoped-currentness-v1/matched-timing-report-v3/README.md)
+[tables and plots](../qualification/guarded-mlp-scoped-currentness-v1/matched-timing-report-v3/table.md)
 separate disjoint parent spans; they are not GPU kernel time, an overlap trace,
 generated-token throughput or a repeated benchmark.
 
-The next community checkpoint is the same-binary bank-rearm ablation with
-first-use and warm-forward tables and plots, conditional on its actual GPU
-results. A correct sustained 2,048/256 demo additionally requires resolving the
-position-5 numerical discrepancy and exact independently generated ID/decoded-
-byte agreement. The 700 tokens/s performance demo is not yet ready.
+The bank-rearm ablation is now a bounded community engineering checkpoint,
+with zero generated tokens. The position-5 prompt diagnostic remains unresolved;
+it is not an own-generated token mismatch and does not justify forcing framework-equal
+arithmetic or introducing a new tensor tolerance. The separate sustained
+2,048/256 gate requires exact independently generated ID/decoded-byte agreement
+and full-request numerical acceptance. The 700 tokens/s performance demo is
+not yet ready.
 
 The earlier
 [Readiness40 SharedFull route](../qualification/guarded-mlp-readiness40-shared-full-v1/README.md)
@@ -1951,9 +1966,11 @@ alone is not a self-contained reproducer or proof.
 1. Diagnose the position-5 difference in the completed forty-position genuine
    prompt comparison (39/40 argmax agreement). The exact two-row head check
    confirms correct final BF16 rounding on each implementation's own input;
-   the inputs already differ. Capture genuine causal layer-zero operations
-   and used KV prefixes to locate the first differing boundary. The checked
-   BF16 RoPE image is already in use. Exact layer-zero QKV evaluation also
+   the inputs already differ. The [causal layer-zero and KV captures](../qualification/guarded-mlp-readiness40-causal-layer0-v1/README.md)
+   and their authenticated comparison are complete. Diagnose the remaining
+   arithmetic and propagation differences using these retained boundaries;
+   capture availability is no longer the blocker. The checked BF16 RoPE image
+   is already in use. Exact layer-zero QKV evaluation also
    shows that a framework disagreement need not be a native arithmetic bug.
    Distinguish reduction-order rounding from semantic errors at the remaining
    boundaries without fitting acceptance thresholds to the observations.

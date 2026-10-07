@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="370" viewBox="0 0 1060 370">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="sans-serif" fill="#20252b">
+<text x="24" y="28" font-size="20">Parent totals and forward groups</text>
+<text x="24" y="51" font-size="12">Rows overlap: all forwards = first use + warm. Total also includes preparation, Close and publication.</text>
+<rect x="230" y="68" width="24" height="10" fill="#147d92"/>
+<text x="262" y="78" font-size="12">Layer V1 control</text>
+<rect x="490" y="68" width="24" height="10" fill="#b44b3e"/>
+<text x="522" y="78" font-size="12">Bank+layer V2 candidate</text>
+<text x="24" y="122" font-size="13">Total parent</text>
+<rect x="215" y="105" width="620.000" height="11" fill="#147d92"><title>575035537697 ns</title></rect>
+<text x="860" y="115" font-size="12">575.035538 s</text>
+<rect x="215" y="121" width="523.199" height="11" fill="#b44b3e"><title>485254966223 ns</title></rect>
+<text x="860" y="131" font-size="12">485.254966 s</text>
+<text x="24" y="177" font-size="13">All forwards</text>
+<rect x="215" y="160" width="246.751" height="11" fill="#147d92"><title>228855685085 ns</title></rect>
+<text x="860" y="170" font-size="12">228.855685 s</text>
+<rect x="215" y="176" width="146.957" height="11" fill="#b44b3e"><title>136298964970 ns</title></rect>
+<text x="860" y="186" font-size="12">136.298965 s</text>
+<text x="24" y="232" font-size="13">First use (0-1)</text>
+<rect x="215" y="215" width="27.995" height="11" fill="#147d92"><title>25965153246 ns</title></rect>
+<text x="860" y="225" font-size="12">25.965153 s</text>
+<rect x="215" y="231" width="28.435" height="11" fill="#b44b3e"><title>26372786108 ns</title></rect>
+<text x="860" y="241" font-size="12">26.372786 s</text>
+<text x="24" y="287" font-size="13">Warm (2-39)</text>
+<rect x="215" y="270" width="218.755" height="11" fill="#147d92"><title>202890531839 ns</title></rect>
+<text x="860" y="280" font-size="12">202.890532 s</text>
+<rect x="215" y="286" width="118.522" height="11" fill="#b44b3e"><title>109926178862 ns</title></rect>
+<text x="860" y="296" font-size="12">109.926179 s</text>
+<text x="24" y="350" font-size="12">One ordered same-ELF pair. Parent wall measurement only; no GPU time, throughput or long-run claim.</text>
+</g></svg>

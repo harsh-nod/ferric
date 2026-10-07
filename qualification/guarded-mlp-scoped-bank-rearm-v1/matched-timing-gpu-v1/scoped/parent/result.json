@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 1135,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-matched-timing-gpu-v228-v1/scoped/parent/command.json",
+    "sha256": "ff2097b6043e04ebdc9e25c16df21b9b1bfa939d20e5edd3be1645e14c521518"
+  },
+  "elapsed_seconds": 575.5209059589542,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 486907,
+        "pid": 486907,
+        "ppid": 486723,
+        "sid": 486907,
+        "starttime": 77904746,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 515882,
+        "pid": 515882,
+        "ppid": 486907,
+        "sid": 486907,
+        "starttime": 77913970,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    486907,
+    515882
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 277,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-matched-timing-gpu-v228-v1/scoped/parent/started.json",
+    "sha256": "d254bfaa0d1328cc1daadc0ec62bcf7be027db54eb9d3616047e2d5dadfbe2ea"
+  },
+  "stderr": {
+    "bytes": 2425,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-matched-timing-gpu-v228-v1/scoped/parent/stderr",
+    "sha256": "6093aed8f653cacfc2715e9aff79edadcdaab6b174ec88432e41d94c58c3ff0f"
+  },
+  "stdout": {
+    "bytes": 23870,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-matched-timing-gpu-v228-v1/scoped/parent/stdout",
+    "sha256": "c32d1b5aebf6bce0d41be098fc3eb7583b4c1e7376cb730bed52edcad93f1d4a"
+  }
+}
