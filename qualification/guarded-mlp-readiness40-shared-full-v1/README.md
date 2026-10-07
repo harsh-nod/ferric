@@ -216,7 +216,9 @@ parent timing sidecars are retained without normalization.
 
 The Default outer controller took 950.197 seconds; SharedFull took 495.231
 seconds. These include setup and audits and are not decode throughput or GPU
-time. A separate tested report will partition the original parent wall spans.
+time. The [tested plot and tables](matched-timing-report-v1/README.md) partition
+the original parent wall spans: 943.327 seconds Default and 488.197 seconds
+SharedFull, with frame-wait sums 59.987% lower in this one ordered pair.
 Do not compare these outer totals with per-kernel timings or the 700 tokens/s
 target.
 

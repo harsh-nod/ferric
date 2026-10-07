@@ -1,0 +1,26 @@
+{
+  "all_originals_rehashed": true,
+  "archive": {
+    "bytes": 6739101,
+    "sha256": "8cb6796e8caf56c5829ab77fc3ec41a9941176c50867501b050516673dd3a84e"
+  },
+  "gpu_execution": false,
+  "manifest": {
+    "bytes": 564448,
+    "sha256": "a8ed868c5c3d37b7c8b9388da6412a66d27abfdec8cb193fb4cab627691d106d"
+  },
+  "model_execution": false,
+  "native_rerun": false,
+  "numerical_acceptance": false,
+  "original_members": 238,
+  "pair_data_revalidated": true,
+  "performance_claim": false,
+  "report_source": {
+    "bytes": 18108,
+    "sha256": "fe83740b58d381ede99b2d296f942af78e1df505d650c0726532d2ac31b4ef8f"
+  },
+  "verifier": {
+    "bytes": 44848,
+    "sha256": "abdbf838f194e15108ae43ca6fa1e7583d876c5fd1000adf23678256572e0e4c"
+  }
+}

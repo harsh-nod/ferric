@@ -1,0 +1,12 @@
+test_csv_markdown_and_fixed_svg_preserve_original_values (test_paired_analysis.PairedAnalysisTests.test_csv_markdown_and_fixed_svg_preserve_original_values) ... ok
+test_disjoint_categories_positions_and_observed_ratio (test_paired_analysis.PairedAnalysisTests.test_disjoint_categories_positions_and_observed_ratio) ... ok
+test_integer_nanoseconds_beyond_float_precision_and_decimal_ties (test_paired_analysis.PairedAnalysisTests.test_integer_nanoseconds_beyond_float_precision_and_decimal_ties) ... ok
+test_no_nested_timers_and_sidecar_timeline_mismatch_refused (test_paired_analysis.PairedAnalysisTests.test_no_nested_timers_and_sidecar_timeline_mismatch_refused) ... ok
+test_rechecks_timeline_order_bool_gap_and_total (test_paired_analysis.PairedAnalysisTests.test_rechecks_timeline_order_bool_gap_and_total) ... ok
+test_refuses_missing_pair_parity_identity_or_false_authority (test_paired_analysis.PairedAnalysisTests.test_refuses_missing_pair_parity_identity_or_false_authority) ... ok
+test_zero_denominators_are_na_not_infinite_claims (test_paired_analysis.PairedAnalysisTests.test_zero_denominators_are_na_not_infinite_claims) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.036s
+
+OK

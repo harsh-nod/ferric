@@ -14,7 +14,9 @@ the historical Position5 run. Both cases close cleanly with 11 naturally
 retired phases. The timed parent passes 478 selected tests and the combined
 timing/parity checker passes 53 synthetic tests. All 238 original pair members
 are retained. The 950.197/495.231-second outer totals include setup and audits,
-not decode throughput; a separate tested wall-span report is next. This is one
+not decode throughput. The [tested wall-span plot and tables](../qualification/guarded-mlp-readiness40-shared-full-v1/matched-timing-report-v1/README.md)
+now show parent timelines of 943.327/488.197 seconds, with frame-wait sums
+59.987% lower. Seven report tests pass on MI350. This is one
 ordered pair with intervening host work, not a repeated controlled benchmark.
 
 The [Full2303 independent reference](../qualification/guarded-mlp-full2303-v1/README.md)

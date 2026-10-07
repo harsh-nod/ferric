@@ -1,0 +1,1458 @@
+{
+  "categories": [
+    {
+      "category": "Source preparation",
+      "change_percent": "0.565315",
+      "default_ns": 91804483949,
+      "difference_ns": 518984231,
+      "shared_ns": 92323468180,
+      "shared_over_default": "1.005653"
+    },
+    {
+      "category": "Spawn through setup",
+      "change_percent": "-36.838800",
+      "default_ns": 227087301229,
+      "difference_ns": -83656236988,
+      "shared_ns": 143431064241,
+      "shared_over_default": "0.631612"
+    },
+    {
+      "category": "Prepare/write",
+      "change_percent": "-27.084615",
+      "default_ns": 1694390,
+      "difference_ns": -458919,
+      "shared_ns": 1235471,
+      "shared_over_default": "0.729154"
+    },
+    {
+      "category": "Wait for frame",
+      "change_percent": "-59.987409",
+      "default_ns": 593931118490,
+      "difference_ns": -356283889064,
+      "shared_ns": 237647229426,
+      "shared_over_default": "0.400126"
+    },
+    {
+      "category": "Validate/retain/commit",
+      "change_percent": "-18.595047",
+      "default_ns": 22963136,
+      "difference_ns": -4270006,
+      "shared_ns": 18693130,
+      "shared_over_default": "0.814050"
+    },
+    {
+      "category": "Close and retirement",
+      "change_percent": "-52.861917",
+      "default_ns": 29865943203,
+      "difference_ns": -15787710236,
+      "shared_ns": 14078232967,
+      "shared_over_default": "0.471381"
+    },
+    {
+      "category": "Postcheck and publication",
+      "change_percent": "13.703928",
+      "default_ns": 613293530,
+      "difference_ns": 84045302,
+      "shared_ns": 697338832,
+      "shared_over_default": "1.137039"
+    }
+  ],
+  "checker_cpu": {
+    "bytes": 18199,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-matched-timing-checker-cpu-v228-v1/evidence/complete.json",
+    "sha256": "a8f05bbbb73f76f6912cc9b61d94a999d5e34943f06a77ef4b48b5b0dfff2ffd"
+  },
+  "decimal_rounding": "six_places_round_half_even",
+  "disjoint_spans_per_case": 124,
+  "exact_integer_nanoseconds": true,
+  "full2303_feasibility": false,
+  "general_speedup_claim": false,
+  "generated_tokens": 0,
+  "gpu_overlap_claim": false,
+  "gpu_timing": false,
+  "nested_timers_added": false,
+  "numerical_acceptance": false,
+  "one_ordered_pair": true,
+  "parent_host_measurement": true,
+  "performance_claim": false,
+  "positions": [
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "change_percent": "-57.391833",
+        "default_ns": 13290714219,
+        "difference_ns": -7627784518,
+        "shared_ns": 5662929701,
+        "shared_over_default": "0.426082"
+      },
+      "generation": 1,
+      "position": 0,
+      "prepare_write": {
+        "change_percent": "1.150570",
+        "default_ns": 180780,
+        "difference_ns": 2080,
+        "shared_ns": 182860,
+        "shared_over_default": "1.011506"
+      },
+      "total": {
+        "change_percent": "-57.380731",
+        "default_ns": 13293500610,
+        "difference_ns": -7627907768,
+        "shared_ns": 5665592842,
+        "shared_over_default": "0.426193"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-4.810004",
+        "default_ns": 2605611,
+        "difference_ns": -125330,
+        "shared_ns": 2480281,
+        "shared_over_default": "0.951900"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-57.590614",
+        "default_ns": 13305889338,
+        "difference_ns": -7662943330,
+        "shared_ns": 5642946008,
+        "shared_over_default": "0.424094"
+      },
+      "generation": 2,
+      "position": 1,
+      "prepare_write": {
+        "change_percent": "-25.386511",
+        "default_ns": 44630,
+        "difference_ns": -11330,
+        "shared_ns": 33300,
+        "shared_over_default": "0.746135"
+      },
+      "total": {
+        "change_percent": "-57.590525",
+        "default_ns": 13306437449,
+        "difference_ns": -7663247171,
+        "shared_ns": 5643190278,
+        "shared_over_default": "0.424095"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-58.097724",
+        "default_ns": 503481,
+        "difference_ns": -292511,
+        "shared_ns": 210970,
+        "shared_over_default": "0.419023"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.453767",
+        "default_ns": 15073150993,
+        "difference_ns": -9112287638,
+        "shared_ns": 5960863355,
+        "shared_over_default": "0.395462"
+      },
+      "generation": 3,
+      "position": 2,
+      "prepare_write": {
+        "change_percent": "-28.259321",
+        "default_ns": 42110,
+        "difference_ns": -11900,
+        "shared_ns": 30210,
+        "shared_over_default": "0.717407"
+      },
+      "total": {
+        "change_percent": "-60.453049",
+        "default_ns": 15073502414,
+        "difference_ns": -9112391858,
+        "shared_ns": 5961110556,
+        "shared_over_default": "0.395470"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-29.846982",
+        "default_ns": 309311,
+        "difference_ns": -92320,
+        "shared_ns": 216991,
+        "shared_over_default": "0.701530"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.222385",
+        "default_ns": 14940158171,
+        "difference_ns": -8997319618,
+        "shared_ns": 5942838553,
+        "shared_over_default": "0.397776"
+      },
+      "generation": 4,
+      "position": 3,
+      "prepare_write": {
+        "change_percent": "-32.267732",
+        "default_ns": 40040,
+        "difference_ns": -12920,
+        "shared_ns": 27120,
+        "shared_over_default": "0.677323"
+      },
+      "total": {
+        "change_percent": "-60.221548",
+        "default_ns": 14940587071,
+        "difference_ns": -8997452747,
+        "shared_ns": 5943134324,
+        "shared_over_default": "0.397785"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-30.913182",
+        "default_ns": 388860,
+        "difference_ns": -120209,
+        "shared_ns": 268651,
+        "shared_over_default": "0.690868"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.218919",
+        "default_ns": 14951960149,
+        "difference_ns": -9003908842,
+        "shared_ns": 5948051307,
+        "shared_over_default": "0.397811"
+      },
+      "generation": 5,
+      "position": 4,
+      "prepare_write": {
+        "change_percent": "-34.335523",
+        "default_ns": 39580,
+        "difference_ns": -13590,
+        "shared_ns": 25990,
+        "shared_over_default": "0.656645"
+      },
+      "total": {
+        "change_percent": "-60.218118",
+        "default_ns": 14952226869,
+        "difference_ns": -9003949552,
+        "shared_ns": 5948277317,
+        "shared_over_default": "0.397819"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-11.939773",
+        "default_ns": 227140,
+        "difference_ns": -27120,
+        "shared_ns": 200020,
+        "shared_over_default": "0.880602"
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "change_percent": "-60.279015",
+        "default_ns": 15006865182,
+        "difference_ns": -9045990567,
+        "shared_ns": 5960874615,
+        "shared_over_default": "0.397210"
+      },
+      "generation": 6,
+      "position": 5,
+      "prepare_write": {
+        "change_percent": "7.381083",
+        "default_ns": 36580,
+        "difference_ns": 2700,
+        "shared_ns": 39280,
+        "shared_over_default": "1.073811"
+      },
+      "total": {
+        "change_percent": "-60.269000",
+        "default_ns": 15009531424,
+        "difference_ns": -9046094507,
+        "shared_ns": 5963436917,
+        "shared_over_default": "0.397310"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-4.055274",
+        "default_ns": 2629662,
+        "difference_ns": -106640,
+        "shared_ns": 2523022,
+        "shared_over_default": "0.959447"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.159839",
+        "default_ns": 14935325388,
+        "difference_ns": -8985067770,
+        "shared_ns": 5950257618,
+        "shared_over_default": "0.398402"
+      },
+      "generation": 7,
+      "position": 6,
+      "prepare_write": {
+        "change_percent": "7.736842",
+        "default_ns": 38000,
+        "difference_ns": 2940,
+        "shared_ns": 40940,
+        "shared_over_default": "1.077368"
+      },
+      "total": {
+        "change_percent": "-60.158945",
+        "default_ns": 14935660408,
+        "difference_ns": -8985135770,
+        "shared_ns": 5950524638,
+        "shared_over_default": "0.398411"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-23.883914",
+        "default_ns": 297020,
+        "difference_ns": -70940,
+        "shared_ns": 226080,
+        "shared_over_default": "0.761161"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.988666",
+        "default_ns": 14913189735,
+        "difference_ns": -8946223606,
+        "shared_ns": 5966966129,
+        "shared_over_default": "0.400113"
+      },
+      "generation": 8,
+      "position": 7,
+      "prepare_write": {
+        "change_percent": "-36.981509",
+        "default_ns": 40020,
+        "difference_ns": -14800,
+        "shared_ns": 25220,
+        "shared_over_default": "0.630185"
+      },
+      "total": {
+        "change_percent": "-59.988087",
+        "default_ns": 14913561945,
+        "difference_ns": -8946360556,
+        "shared_ns": 5967201389,
+        "shared_over_default": "0.400119"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-36.771125",
+        "default_ns": 332190,
+        "difference_ns": -122150,
+        "shared_ns": 210040,
+        "shared_over_default": "0.632289"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.197593",
+        "default_ns": 14923473921,
+        "difference_ns": -8983572089,
+        "shared_ns": 5939901832,
+        "shared_over_default": "0.398024"
+      },
+      "generation": 9,
+      "position": 8,
+      "prepare_write": {
+        "change_percent": "-44.468864",
+        "default_ns": 40950,
+        "difference_ns": -18210,
+        "shared_ns": 22740,
+        "shared_over_default": "0.555311"
+      },
+      "total": {
+        "change_percent": "-60.198358",
+        "default_ns": 14924481832,
+        "difference_ns": -8984293010,
+        "shared_ns": 5940188822,
+        "shared_over_default": "0.398016"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-72.672114",
+        "default_ns": 966961,
+        "difference_ns": -702711,
+        "shared_ns": 264250,
+        "shared_over_default": "0.273279"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.060486",
+        "default_ns": 14922362370,
+        "difference_ns": -8962443405,
+        "shared_ns": 5959918965,
+        "shared_over_default": "0.399395"
+      },
+      "generation": 10,
+      "position": 9,
+      "prepare_write": {
+        "change_percent": "10.402950",
+        "default_ns": 37970,
+        "difference_ns": 3950,
+        "shared_ns": 41920,
+        "shared_over_default": "1.104029"
+      },
+      "total": {
+        "change_percent": "-60.059720",
+        "default_ns": 14922765810,
+        "difference_ns": -8962571435,
+        "shared_ns": 5960194375,
+        "shared_over_default": "0.399403"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-36.112403",
+        "default_ns": 365470,
+        "difference_ns": -131980,
+        "shared_ns": 233490,
+        "shared_over_default": "0.638876"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.089205",
+        "default_ns": 14882482546,
+        "difference_ns": -8942765494,
+        "shared_ns": 5939717052,
+        "shared_over_default": "0.399108"
+      },
+      "generation": 11,
+      "position": 10,
+      "prepare_write": {
+        "change_percent": "-35.837865",
+        "default_ns": 40460,
+        "difference_ns": -14500,
+        "shared_ns": 25960,
+        "shared_over_default": "0.641621"
+      },
+      "total": {
+        "change_percent": "-60.088551",
+        "default_ns": 14882796496,
+        "difference_ns": -8942856774,
+        "shared_ns": 5939939722,
+        "shared_over_default": "0.399114"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-28.074153",
+        "default_ns": 273490,
+        "difference_ns": -76780,
+        "shared_ns": 196710,
+        "shared_over_default": "0.719258"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.217846",
+        "default_ns": 14927804443,
+        "difference_ns": -8989202242,
+        "shared_ns": 5938602201,
+        "shared_over_default": "0.397822"
+      },
+      "generation": 12,
+      "position": 11,
+      "prepare_write": {
+        "change_percent": "-37.994526",
+        "default_ns": 40190,
+        "difference_ns": -15270,
+        "shared_ns": 24920,
+        "shared_over_default": "0.620055"
+      },
+      "total": {
+        "change_percent": "-60.217255",
+        "default_ns": 14928175144,
+        "difference_ns": -8989337332,
+        "shared_ns": 5938837812,
+        "shared_over_default": "0.397827"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-36.252954",
+        "default_ns": 330511,
+        "difference_ns": -119820,
+        "shared_ns": 210691,
+        "shared_over_default": "0.637470"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.165239",
+        "default_ns": 14952810749,
+        "difference_ns": -8996394307,
+        "shared_ns": 5956416442,
+        "shared_over_default": "0.398348"
+      },
+      "generation": 13,
+      "position": 12,
+      "prepare_write": {
+        "change_percent": "-42.120623",
+        "default_ns": 41120,
+        "difference_ns": -17320,
+        "shared_ns": 23800,
+        "shared_over_default": "0.578794"
+      },
+      "total": {
+        "change_percent": "-60.164483",
+        "default_ns": 14953177119,
+        "difference_ns": -8996501697,
+        "shared_ns": 5956675422,
+        "shared_over_default": "0.398355"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-27.692544",
+        "default_ns": 325250,
+        "difference_ns": -90070,
+        "shared_ns": 235180,
+        "shared_over_default": "0.723075"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.368692",
+        "default_ns": 14948691236,
+        "difference_ns": -9024329313,
+        "shared_ns": 5924361923,
+        "shared_over_default": "0.396313"
+      },
+      "generation": 14,
+      "position": 13,
+      "prepare_write": {
+        "change_percent": "-43.737166",
+        "default_ns": 38960,
+        "difference_ns": -17040,
+        "shared_ns": 21920,
+        "shared_over_default": "0.562628"
+      },
+      "total": {
+        "change_percent": "-60.367769",
+        "default_ns": 14949073757,
+        "difference_ns": -9024422274,
+        "shared_ns": 5924651483,
+        "shared_over_default": "0.396322"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-22.098259",
+        "default_ns": 343561,
+        "difference_ns": -75921,
+        "shared_ns": 267640,
+        "shared_over_default": "0.779017"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.149890",
+        "default_ns": 14912390824,
+        "difference_ns": -8969786711,
+        "shared_ns": 5942604113,
+        "shared_over_default": "0.398501"
+      },
+      "generation": 15,
+      "position": 14,
+      "prepare_write": {
+        "change_percent": "-35.292729",
+        "default_ns": 42360,
+        "difference_ns": -14950,
+        "shared_ns": 27410,
+        "shared_over_default": "0.647073"
+      },
+      "total": {
+        "change_percent": "-60.149266",
+        "default_ns": 14912785794,
+        "difference_ns": -8969931160,
+        "shared_ns": 5942854634,
+        "shared_over_default": "0.398507"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-36.725844",
+        "default_ns": 352610,
+        "difference_ns": -129499,
+        "shared_ns": 223111,
+        "shared_over_default": "0.632742"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.984639",
+        "default_ns": 14863417234,
+        "difference_ns": -8915767137,
+        "shared_ns": 5947650097,
+        "shared_over_default": "0.400154"
+      },
+      "generation": 16,
+      "position": 15,
+      "prepare_write": {
+        "change_percent": "-36.584741",
+        "default_ns": 39060,
+        "difference_ns": -14290,
+        "shared_ns": 24770,
+        "shared_over_default": "0.634153"
+      },
+      "total": {
+        "change_percent": "-59.983734",
+        "default_ns": 14863742144,
+        "difference_ns": -8915827557,
+        "shared_ns": 5947914587,
+        "shared_over_default": "0.400163"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-16.137835",
+        "default_ns": 285850,
+        "difference_ns": -46130,
+        "shared_ns": 239720,
+        "shared_over_default": "0.838622"
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "change_percent": "-60.166228",
+        "default_ns": 14927730933,
+        "difference_ns": -8981452577,
+        "shared_ns": 5946278356,
+        "shared_over_default": "0.398338"
+      },
+      "generation": 17,
+      "position": 16,
+      "prepare_write": {
+        "change_percent": "-38.959212",
+        "default_ns": 35550,
+        "difference_ns": -13850,
+        "shared_ns": 21700,
+        "shared_over_default": "0.610408"
+      },
+      "total": {
+        "change_percent": "-60.159173",
+        "default_ns": 14931248255,
+        "difference_ns": -8982515498,
+        "shared_ns": 5948732757,
+        "shared_over_default": "0.398408"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-30.130376",
+        "default_ns": 3481772,
+        "difference_ns": -1049071,
+        "shared_ns": 2432701,
+        "shared_over_default": "0.698696"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.820158",
+        "default_ns": 14913202755,
+        "difference_ns": -8921101400,
+        "shared_ns": 5992101355,
+        "shared_over_default": "0.401798"
+      },
+      "generation": 18,
+      "position": 17,
+      "prepare_write": {
+        "change_percent": "-42.076366",
+        "default_ns": 40070,
+        "difference_ns": -16860,
+        "shared_ns": 23210,
+        "shared_over_default": "0.579236"
+      },
+      "total": {
+        "change_percent": "-59.819892",
+        "default_ns": 14913787855,
+        "difference_ns": -8921411720,
+        "shared_ns": 5992376135,
+        "shared_over_default": "0.401801"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-53.842908",
+        "default_ns": 545030,
+        "difference_ns": -293460,
+        "shared_ns": 251570,
+        "shared_over_default": "0.461571"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.152907",
+        "default_ns": 14886254168,
+        "difference_ns": -8954514651,
+        "shared_ns": 5931739517,
+        "shared_over_default": "0.398471"
+      },
+      "generation": 19,
+      "position": 18,
+      "prepare_write": {
+        "change_percent": "-36.967833",
+        "default_ns": 42280,
+        "difference_ns": -15630,
+        "shared_ns": 26650,
+        "shared_over_default": "0.630322"
+      },
+      "total": {
+        "change_percent": "-60.148198",
+        "default_ns": 14886611878,
+        "difference_ns": -8954028841,
+        "shared_ns": 5932583037,
+        "shared_over_default": "0.398518"
+      },
+      "validate_retain_commit": {
+        "change_percent": "158.970295",
+        "default_ns": 315430,
+        "difference_ns": 501440,
+        "shared_ns": 816870,
+        "shared_over_default": "2.589703"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.083959",
+        "default_ns": 14916627457,
+        "difference_ns": -8962500326,
+        "shared_ns": 5954127131,
+        "shared_over_default": "0.399160"
+      },
+      "generation": 20,
+      "position": 19,
+      "prepare_write": {
+        "change_percent": "-28.746994",
+        "default_ns": 37430,
+        "difference_ns": -10760,
+        "shared_ns": 26670,
+        "shared_over_default": "0.712530"
+      },
+      "total": {
+        "change_percent": "-60.083370",
+        "default_ns": 14916973747,
+        "difference_ns": -8962620526,
+        "shared_ns": 5954353221,
+        "shared_over_default": "0.399166"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-35.433530",
+        "default_ns": 308860,
+        "difference_ns": -109440,
+        "shared_ns": 199420,
+        "shared_over_default": "0.645665"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.269865",
+        "default_ns": 14952259459,
+        "difference_ns": -9011706626,
+        "shared_ns": 5940552833,
+        "shared_over_default": "0.397301"
+      },
+      "generation": 21,
+      "position": 20,
+      "prepare_write": {
+        "change_percent": "-35.205545",
+        "default_ns": 41840,
+        "difference_ns": -14730,
+        "shared_ns": 27110,
+        "shared_over_default": "0.647945"
+      },
+      "total": {
+        "change_percent": "-60.268918",
+        "default_ns": 14952589189,
+        "difference_ns": -9011763696,
+        "shared_ns": 5940825493,
+        "shared_over_default": "0.397311"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-14.707006",
+        "default_ns": 287890,
+        "difference_ns": -42340,
+        "shared_ns": 245550,
+        "shared_over_default": "0.852930"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.059936",
+        "default_ns": 14925933693,
+        "difference_ns": -8964506228,
+        "shared_ns": 5961427465,
+        "shared_over_default": "0.399401"
+      },
+      "generation": 22,
+      "position": 21,
+      "prepare_write": {
+        "change_percent": "-32.963784",
+        "default_ns": 40590,
+        "difference_ns": -13380,
+        "shared_ns": 27210,
+        "shared_over_default": "0.670362"
+      },
+      "total": {
+        "change_percent": "-60.059601",
+        "default_ns": 14926225653,
+        "difference_ns": -8964631527,
+        "shared_ns": 5961594126,
+        "shared_over_default": "0.399404"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-44.523611",
+        "default_ns": 251370,
+        "difference_ns": -111919,
+        "shared_ns": 139451,
+        "shared_over_default": "0.554764"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.330891",
+        "default_ns": 14978804235,
+        "difference_ns": -9036846042,
+        "shared_ns": 5941958193,
+        "shared_over_default": "0.396691"
+      },
+      "generation": 23,
+      "position": 22,
+      "prepare_write": {
+        "change_percent": "-45.158792",
+        "default_ns": 38730,
+        "difference_ns": -17490,
+        "shared_ns": 21240,
+        "shared_over_default": "0.548412"
+      },
+      "total": {
+        "change_percent": "-60.330131",
+        "default_ns": 14979118315,
+        "difference_ns": -9036921692,
+        "shared_ns": 5942196623,
+        "shared_over_default": "0.396699"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-21.122208",
+        "default_ns": 275350,
+        "difference_ns": -58160,
+        "shared_ns": 217190,
+        "shared_over_default": "0.788778"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.231134",
+        "default_ns": 14966691658,
+        "difference_ns": -9014608038,
+        "shared_ns": 5952083620,
+        "shared_over_default": "0.397689"
+      },
+      "generation": 24,
+      "position": 23,
+      "prepare_write": {
+        "change_percent": "-28.858883",
+        "default_ns": 37770,
+        "difference_ns": -10900,
+        "shared_ns": 26870,
+        "shared_over_default": "0.711411"
+      },
+      "total": {
+        "change_percent": "-60.230477",
+        "default_ns": 14967037838,
+        "difference_ns": -9014718238,
+        "shared_ns": 5952319600,
+        "shared_over_default": "0.397695"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-32.197400",
+        "default_ns": 308410,
+        "difference_ns": -99300,
+        "shared_ns": 209110,
+        "shared_over_default": "0.678026"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.155130",
+        "default_ns": 14941396402,
+        "difference_ns": -8988016502,
+        "shared_ns": 5953379900,
+        "shared_over_default": "0.398449"
+      },
+      "generation": 25,
+      "position": 24,
+      "prepare_write": {
+        "change_percent": "-34.623159",
+        "default_ns": 34630,
+        "difference_ns": -11990,
+        "shared_ns": 22640,
+        "shared_over_default": "0.653768"
+      },
+      "total": {
+        "change_percent": "-60.153237",
+        "default_ns": 14941719922,
+        "difference_ns": -8987928122,
+        "shared_ns": 5953791800,
+        "shared_over_default": "0.398468"
+      },
+      "validate_retain_commit": {
+        "change_percent": "34.743328",
+        "default_ns": 288890,
+        "difference_ns": 100370,
+        "shared_ns": 389260,
+        "shared_over_default": "1.347433"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.136201",
+        "default_ns": 14928858154,
+        "difference_ns": -8977648125,
+        "shared_ns": 5951210029,
+        "shared_over_default": "0.398638"
+      },
+      "generation": 26,
+      "position": 25,
+      "prepare_write": {
+        "change_percent": "-43.360441",
+        "default_ns": 38120,
+        "difference_ns": -16529,
+        "shared_ns": 21591,
+        "shared_over_default": "0.566396"
+      },
+      "total": {
+        "change_percent": "-60.135653",
+        "default_ns": 14929251695,
+        "difference_ns": -8977802935,
+        "shared_ns": 5951448760,
+        "shared_over_default": "0.398643"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-38.906255",
+        "default_ns": 355421,
+        "difference_ns": -138281,
+        "shared_ns": 217140,
+        "shared_over_default": "0.610937"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.127290",
+        "default_ns": 14938820170,
+        "difference_ns": -8982307798,
+        "shared_ns": 5956512372,
+        "shared_over_default": "0.398727"
+      },
+      "generation": 27,
+      "position": 26,
+      "prepare_write": {
+        "change_percent": "-43.212137",
+        "default_ns": 38230,
+        "difference_ns": -16520,
+        "shared_ns": 21710,
+        "shared_over_default": "0.567879"
+      },
+      "total": {
+        "change_percent": "-60.126458",
+        "default_ns": 14939114750,
+        "difference_ns": -8982360538,
+        "shared_ns": 5956754212,
+        "shared_over_default": "0.398735"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-14.129120",
+        "default_ns": 256350,
+        "difference_ns": -36220,
+        "shared_ns": 220130,
+        "shared_over_default": "0.858709"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.221136",
+        "default_ns": 14946344865,
+        "difference_ns": -9000858609,
+        "shared_ns": 5945486256,
+        "shared_over_default": "0.397789"
+      },
+      "generation": 28,
+      "position": 27,
+      "prepare_write": {
+        "change_percent": "-28.446866",
+        "default_ns": 36700,
+        "difference_ns": -10440,
+        "shared_ns": 26260,
+        "shared_over_default": "0.715531"
+      },
+      "total": {
+        "change_percent": "-60.221131",
+        "default_ns": 14946723895,
+        "difference_ns": -9001086249,
+        "shared_ns": 5945637646,
+        "shared_over_default": "0.397789"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-63.447551",
+        "default_ns": 342330,
+        "difference_ns": -217200,
+        "shared_ns": 125130,
+        "shared_over_default": "0.365524"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.078183",
+        "default_ns": 14945818195,
+        "difference_ns": -8979175956,
+        "shared_ns": 5966642239,
+        "shared_over_default": "0.399218"
+      },
+      "generation": 29,
+      "position": 28,
+      "prepare_write": {
+        "change_percent": "-32.729694",
+        "default_ns": 37550,
+        "difference_ns": -12290,
+        "shared_ns": 25260,
+        "shared_over_default": "0.672703"
+      },
+      "total": {
+        "change_percent": "-60.076884",
+        "default_ns": 14946163125,
+        "difference_ns": -8979189116,
+        "shared_ns": 5966974009,
+        "shared_over_default": "0.399231"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-0.283037",
+        "default_ns": 307380,
+        "difference_ns": -870,
+        "shared_ns": 306510,
+        "shared_over_default": "0.997170"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.820389",
+        "default_ns": 14868640147,
+        "difference_ns": -8894478334,
+        "shared_ns": 5974161813,
+        "shared_over_default": "0.401796"
+      },
+      "generation": 30,
+      "position": 29,
+      "prepare_write": {
+        "change_percent": "-45.592186",
+        "default_ns": 40950,
+        "difference_ns": -18670,
+        "shared_ns": 22280,
+        "shared_over_default": "0.544078"
+      },
+      "total": {
+        "change_percent": "-59.819149",
+        "default_ns": 14868952677,
+        "difference_ns": -8894480944,
+        "shared_ns": 5974471733,
+        "shared_over_default": "0.401809"
+      },
+      "validate_retain_commit": {
+        "change_percent": "5.913543",
+        "default_ns": 271580,
+        "difference_ns": 16060,
+        "shared_ns": 287640,
+        "shared_over_default": "1.059135"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.966746",
+        "default_ns": 14913852675,
+        "difference_ns": -8943352164,
+        "shared_ns": 5970500511,
+        "shared_over_default": "0.400333"
+      },
+      "generation": 31,
+      "position": 30,
+      "prepare_write": {
+        "change_percent": "-17.883628",
+        "default_ns": 35060,
+        "difference_ns": -6270,
+        "shared_ns": 28790,
+        "shared_over_default": "0.821164"
+      },
+      "total": {
+        "change_percent": "-59.965730",
+        "default_ns": 14914158636,
+        "difference_ns": -8943384045,
+        "shared_ns": 5970774591,
+        "shared_over_default": "0.400343"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-9.454007",
+        "default_ns": 270901,
+        "difference_ns": -25611,
+        "shared_ns": 245290,
+        "shared_over_default": "0.905460"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.836113",
+        "default_ns": 14862689423,
+        "difference_ns": -8893255712,
+        "shared_ns": 5969433711,
+        "shared_over_default": "0.401639"
+      },
+      "generation": 32,
+      "position": 31,
+      "prepare_write": {
+        "change_percent": "-39.482030",
+        "default_ns": 37840,
+        "difference_ns": -14940,
+        "shared_ns": 22900,
+        "shared_over_default": "0.605180"
+      },
+      "total": {
+        "change_percent": "-59.835149",
+        "default_ns": 14862999623,
+        "difference_ns": -8893297992,
+        "shared_ns": 5969701631,
+        "shared_over_default": "0.401649"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-10.038185",
+        "default_ns": 272360,
+        "difference_ns": -27340,
+        "shared_ns": 245020,
+        "shared_over_default": "0.899618"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.974206",
+        "default_ns": 14903471438,
+        "difference_ns": -8938238650,
+        "shared_ns": 5965232788,
+        "shared_over_default": "0.400258"
+      },
+      "generation": 33,
+      "position": 32,
+      "prepare_write": {
+        "change_percent": "5.543823",
+        "default_ns": 37880,
+        "difference_ns": 2100,
+        "shared_ns": 39980,
+        "shared_over_default": "1.055438"
+      },
+      "total": {
+        "change_percent": "-59.973272",
+        "default_ns": 14903701359,
+        "difference_ns": -8938237421,
+        "shared_ns": 5965463938,
+        "shared_over_default": "0.400267"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-0.453549",
+        "default_ns": 192041,
+        "difference_ns": -871,
+        "shared_ns": 191170,
+        "shared_over_default": "0.995465"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.941753",
+        "default_ns": 14911481823,
+        "difference_ns": -8938203590,
+        "shared_ns": 5973278233,
+        "shared_over_default": "0.400582"
+      },
+      "generation": 34,
+      "position": 33,
+      "prepare_write": {
+        "change_percent": "10.742453",
+        "default_ns": 36770,
+        "difference_ns": 3950,
+        "shared_ns": 40720,
+        "shared_over_default": "1.107425"
+      },
+      "total": {
+        "change_percent": "-59.940513",
+        "default_ns": 14911849723,
+        "difference_ns": -8938239160,
+        "shared_ns": 5973610563,
+        "shared_over_default": "0.400595"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-11.934890",
+        "default_ns": 331130,
+        "difference_ns": -39520,
+        "shared_ns": 291610,
+        "shared_over_default": "0.880651"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.972965",
+        "default_ns": 14905442530,
+        "difference_ns": -8939235872,
+        "shared_ns": 5966206658,
+        "shared_over_default": "0.400270"
+      },
+      "generation": 35,
+      "position": 34,
+      "prepare_write": {
+        "change_percent": "-32.532254",
+        "default_ns": 39530,
+        "difference_ns": -12860,
+        "shared_ns": 26670,
+        "shared_over_default": "0.674677"
+      },
+      "total": {
+        "change_percent": "-59.972309",
+        "default_ns": 14905744680,
+        "difference_ns": -8939319222,
+        "shared_ns": 5966425458,
+        "shared_over_default": "0.400277"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-26.841063",
+        "default_ns": 262620,
+        "difference_ns": -70490,
+        "shared_ns": 192130,
+        "shared_over_default": "0.731589"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-59.920321",
+        "default_ns": 14907978311,
+        "difference_ns": -8932908477,
+        "shared_ns": 5975069834,
+        "shared_over_default": "0.400797"
+      },
+      "generation": 36,
+      "position": 35,
+      "prepare_write": {
+        "change_percent": "-34.518055",
+        "default_ns": 35170,
+        "difference_ns": -12140,
+        "shared_ns": 23030,
+        "shared_over_default": "0.654819"
+      },
+      "total": {
+        "change_percent": "-59.919291",
+        "default_ns": 14908266092,
+        "difference_ns": -8932927318,
+        "shared_ns": 5975338774,
+        "shared_over_default": "0.400807"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-2.652695",
+        "default_ns": 252611,
+        "difference_ns": -6701,
+        "shared_ns": 245910,
+        "shared_over_default": "0.973473"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.047090",
+        "default_ns": 14960606144,
+        "difference_ns": -8983408668,
+        "shared_ns": 5977197476,
+        "shared_over_default": "0.399529"
+      },
+      "generation": 37,
+      "position": 36,
+      "prepare_write": {
+        "change_percent": "-23.741896",
+        "default_ns": 32390,
+        "difference_ns": -7690,
+        "shared_ns": 24700,
+        "shared_over_default": "0.762581"
+      },
+      "total": {
+        "change_percent": "-60.046413",
+        "default_ns": 14960891064,
+        "difference_ns": -8983478418,
+        "shared_ns": 5977412646,
+        "shared_over_default": "0.399536"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-24.575298",
+        "default_ns": 252530,
+        "difference_ns": -62060,
+        "shared_ns": 190470,
+        "shared_over_default": "0.754247"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.058352",
+        "default_ns": 14917364477,
+        "difference_ns": -8959123214,
+        "shared_ns": 5958241263,
+        "shared_over_default": "0.399416"
+      },
+      "generation": 38,
+      "position": 37,
+      "prepare_write": {
+        "change_percent": "-44.638341",
+        "default_ns": 39540,
+        "difference_ns": -17650,
+        "shared_ns": 21890,
+        "shared_over_default": "0.553617"
+      },
+      "total": {
+        "change_percent": "-60.057896",
+        "default_ns": 14917713217,
+        "difference_ns": -8959264684,
+        "shared_ns": 5958448533,
+        "shared_over_default": "0.399421"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-40.045278",
+        "default_ns": 309200,
+        "difference_ns": -123820,
+        "shared_ns": 185380,
+        "shared_over_default": "0.599547"
+      }
+    },
+    {
+      "captured": false,
+      "flush_to_frame_read": {
+        "change_percent": "-60.027064",
+        "default_ns": 14934491238,
+        "difference_ns": -8964736657,
+        "shared_ns": 5969754581,
+        "shared_over_default": "0.399729"
+      },
+      "generation": 39,
+      "position": 38,
+      "prepare_write": {
+        "change_percent": "-45.078979",
+        "default_ns": 41150,
+        "difference_ns": -18550,
+        "shared_ns": 22600,
+        "shared_over_default": "0.549210"
+      },
+      "total": {
+        "change_percent": "-60.026325",
+        "default_ns": 14934732258,
+        "difference_ns": -8964770947,
+        "shared_ns": 5969961311,
+        "shared_over_default": "0.399737"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-7.875119",
+        "default_ns": 199870,
+        "difference_ns": -15740,
+        "shared_ns": 184130,
+        "shared_over_default": "0.921249"
+      }
+    },
+    {
+      "captured": true,
+      "flush_to_frame_read": {
+        "change_percent": "-60.003452",
+        "default_ns": 14925671642,
+        "difference_ns": -8955918261,
+        "shared_ns": 5969753381,
+        "shared_over_default": "0.399965"
+      },
+      "generation": 40,
+      "position": 39,
+      "prepare_write": {
+        "change_percent": "-28.986317",
+        "default_ns": 35810,
+        "difference_ns": -10380,
+        "shared_ns": 25430,
+        "shared_over_default": "0.710137"
+      },
+      "total": {
+        "change_percent": "-59.993579",
+        "default_ns": 14928194284,
+        "difference_ns": -8955957972,
+        "shared_ns": 5972236312,
+        "shared_over_default": "0.400064"
+      },
+      "validate_retain_commit": {
+        "change_percent": "-1.179452",
+        "default_ns": 2486832,
+        "difference_ns": -29331,
+        "shared_ns": 2457501,
+        "shared_over_default": "0.988205"
+      }
+    }
+  ],
+  "production_authority": false,
+  "repeated_benchmark": false,
+  "same_elf_cpu_metadata": {
+    "parent": {
+      "bytes": 13855128,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/target/debug/ferric-qwen3-guarded-mlp-readiness-engineering",
+      "sha256": "3bd47134bacc5c25d088ecb8c9a50659060b2cdc6b38a57f9204fd212ae1de9f"
+    },
+    "parent_cpu": {
+      "bytes": 3983845,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v3/evidence/complete.json",
+      "sha256": "f7134c5f22d75c8295b8ab99ad8625fac40aa615ac1682340c0b8e6ffde1f71e"
+    },
+    "worker": {
+      "bytes": 6255224,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+      "sha256": "9dbebbb014562f1bb704e8d504e46b8b719745abff5e0c7674af18412541bda8"
+    },
+    "worker_cpu": {
+      "bytes": 1746409,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-worker-cpu-v228-v1/evidence/complete.json",
+      "sha256": "4a016b7e09b0cc6f9b4bd32c98a5713f24709bd6509564a589c29b0478f7e337"
+    }
+  },
+  "schema": "ferric-readiness40-matched-parent-wall-analysis-v1",
+  "sidecars": {
+    "default": {
+      "bytes": 14577,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-matched-timing-gpu-v228-v1/default/native/host-timing.json",
+      "sha256": "a112d98992298df0526f8fa940b4aef73e2badcced9f360031a8234729d43dee"
+    },
+    "shared": {
+      "bytes": 14497,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-matched-timing-gpu-v228-v1/shared/native/host-timing.json",
+      "sha256": "5cfd4bda29b6bd36f36730e34c8f3ca47cc000ba629d991e09b7928eac325ca1"
+    }
+  },
+  "terminals": {
+    "default": {
+      "bytes": 428770,
+      "name": "complete.json",
+      "sha256": "80c4a0dee66548dde7de90d33e10feb8ff6ee3a97cfa32999ebf9e681e033daa"
+    },
+    "shared": {
+      "bytes": 607675,
+      "name": "complete.json",
+      "sha256": "b20a02956a54e1652d98e36ac0ac7eaf4000594db097044fb174b135b79992d5"
+    }
+  },
+  "tokens_per_second_claim": false,
+  "total": {
+    "change_percent": "-48.247282",
+    "default_ns": 943326797927,
+    "difference_ns": -455129535680,
+    "shared_ns": 488197262247,
+    "shared_over_default": "0.517527"
+  },
+  "ttft_claim": false
+}

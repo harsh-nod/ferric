@@ -1,0 +1,85 @@
+{
+  "actual_pair_report_rendered": false,
+  "admitted_test_count": 7,
+  "external_tools_rehashed_locally": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 10911,
+      "sha256": "3e0e6587f310a4bc8184abf4445963bdf3212d491e7e82544ac3ea54e54d2669"
+    },
+    "evidence/report-tests.command.json": {
+      "bytes": 1163,
+      "sha256": "e81f1d782488efe60c313229508ecabe1664dd73e13a2187a0b75dbe41c8bddb"
+    },
+    "evidence/report-tests.result.json": {
+      "bytes": 1797,
+      "sha256": "67383473235c6d534fc03f47ef0766e3f47864cb3aee0367e99ee38aedca52f8"
+    },
+    "evidence/report-tests.started.json": {
+      "bytes": 615,
+      "sha256": "acf008d81fedb4e0301fc8c8c3b8c0fc8508c2a76df9fb7a0d4b3ab776cd2257"
+    },
+    "evidence/report-tests.stderr": {
+      "bytes": 1238,
+      "sha256": "c466083f84a89d36a2715c6c6e7a625271668c0b749883d817d14c5cff215ae4"
+    },
+    "evidence/report-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1780,
+      "sha256": "3b66b80fc4cd4087776273788cab0378e238cd30c5b233c9fb309ba88e115cf3"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1780,
+      "sha256": "3b66b80fc4cd4087776273788cab0378e238cd30c5b233c9fb309ba88e115cf3"
+    },
+    "paired_analysis.py": {
+      "bytes": 18108,
+      "sha256": "fe83740b58d381ede99b2d296f942af78e1df505d650c0726532d2ac31b4ef8f"
+    },
+    "pure-evidence.py": {
+      "bytes": 17890,
+      "sha256": "a1e3bb7e492f0bc6e3204479f8278cd327ba540bba0d7792f3bfac4719ad361b"
+    },
+    "run_cpu.py": {
+      "bytes": 11252,
+      "sha256": "e9d542d6bc53ed3899cdb3fd83f8602e26af87a0909db45f548a96748e08aa7a"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_paired_analysis.py": {
+      "bytes": 8966,
+      "sha256": "397c13c4ec3b0fff545f05201fbfe7145768df85dd7feda5c8f343c31484c3b4"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "mode": "report",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_failure": null,
+  "original_files": 14,
+  "original_postcheck_errors": [],
+  "original_tools_rehashed_at_export": true,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-readiness40-matched-timing-report-pure-cpu-export-v1",
+  "selected_files": 15,
+  "synthetic_only": true,
+  "terminal": {
+    "bytes": 10911,
+    "sha256": "3e0e6587f310a4bc8184abf4445963bdf3212d491e7e82544ac3ea54e54d2669"
+  },
+  "terminal_name": "complete.json"
+}
