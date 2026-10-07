@@ -78,6 +78,11 @@ and 16 independent data-checker tests. Its first native GPU attempt also passes:
 40 prompt positions through all 36 layers and both ranks, with healthy Close.
 The independent BF16 reference is repeatable, but the numerical comparison
 finds one argmax mismatch in 40 positions; correctness acceptance remains open.
+The [SharedFull successor](qualification/guarded-mlp-readiness40-shared-full-v1/README.md)
+preserves all 40 records and four complete payloads in its native MI350 probe.
+Its timed parent passes 478 selected tests and the combined timing checker
+passes 53 synthetic tests. A same-binary timing comparison remains separate
+from full-workload numerical acceptance.
 These are engineering diagnostics, not an end-to-end speedup, sustained 2,048/256 decoding,
 independent full-model numerical acceptance, or a change to production status.
 

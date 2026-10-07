@@ -6,6 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
+Latest qualification: the
+[Readiness40 SharedFull route](../qualification/guarded-mlp-readiness40-shared-full-v1/README.md)
+passes one native MI350 run with all 40 semantic records and four complete
+payloads matching the historical Position5 run. Its timed parent successor
+passes 478 selected tests and the combined timing/parity checker passes 53
+synthetic tests. The untimed 495.289-second run used different binaries from
+the old Default timing probe, so those elapsed times are not a matched speedup.
+A fresh same-binary timed comparison is the next measurement gate.
+
+The [Full2303 independent reference](../qualification/guarded-mlp-full2303-v1/README.md)
+has completed two fresh-cache BF16 framework passes of the 2,048/256 workload.
+Both independently generated 256 outputs agree. The separate full-request
+admission checker passes 25 synthetic tests. Neither result executes the
+Ferric Full2303 GPU route or resolves the earlier numerical discrepancy.
+
 The new [bounded 40-position readiness route](../qualification/guarded-mlp-readiness40-v1/README.md)
 passes MI350 CPU qualification: 658 worker tests with four unchanged ignores,
 428 selected parent tests across 51 scopes, and 16 independent synthetic
@@ -1887,16 +1902,15 @@ alone is not a self-contained reproducer or proof.
    independently, including cumulative layer error and authentic KV history.
    Preserve the old bitwise-comparison mode as a separate historical check;
    do not equate native parity with an independent model reference.
-3. Extend the tiled runtime through a separately bounded long-request
-   profile, retaining two-bank retirement, exact completion and terminal
-   failure behavior. AR4 executes four forwards; the separate readiness
-   profile executes forty prompt forwards and generates zero tokens.
-   The existing backend draft needs a distinct long parent/child wire and
-   bounded capture selection: retaining every full control and payload would
-   exceed 1.95 GB, outside the current 64 MiB finite-case cap.
-   Test page transitions, multiple requests, KV lifetime and cleanup before
-   treating it as sustained decode. Production runtime and arithmetic
-   obligations remain separate from these engineering observations.
+3. Establish launch feasibility for the CPU-qualified Full2303 route before
+   running it on the GPU. The distinct long wire and bounded four-capture
+   selection are implemented; readiness still executes only forty prompt
+   forwards and generates zero tokens. Reduce the measured runtime overhead
+   without raising the one-hour abort bound or weakening retirement checks.
+   Test the actual full page transitions, KV lifetime, own-output history and
+   cleanup before treating it as sustained decode. The independent full
+   framework reference and synthetic admission checks are prerequisites,
+   not substitutes for this native run.
 4. Qualify the full target workload: single-request Qwen3-8B, BF16,
    target-only decoding, 2,048 prompt tokens and 256 generated tokens. Report
    post-first-token throughput as `255 / (last_delivery - first_delivery)`.
