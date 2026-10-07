@@ -70,6 +70,24 @@ members are retained in `checker-cpu-v1`.
 
 ## Remaining Gates
 
+The first parent CPU attempt stopped during its sixth phase when the live
+storage guard fired. Its first five phases, including compilation and the
+946-name library inventory, completed naturally. The sixth compilation was
+terminated and fully reaped; no selected tests or qualified parent products
+were published. This is a failed qualification, not a Rust test failure or a
+passing parent result. Original source/cache/tool postchecks completed cleanly.
+
+`parent-cpu-attempt-v1` retains all 165 original capsule members, including
+the failed terminal, all 34 raw bodies and 113 lineage bodies. Terminal SHA-256
+is `5d794322b863899d2feb17df4d8f344bde03f411097a95a8fb25c313deba73e9`;
+archive SHA-256 is
+`d3f907f8bafcc2cccdc0c27095876f71f7306ed565317851be795b2dd3aa4c6c`.
+The original failure and forced-termination flags remain unchanged.
+The retry uses a fresh source/target/private-cache directory, the same Rust
+proposal and tests, and unchanged 40/38-GiB initial/live space floors.
+Only disposable intermediates from completed or retained failed builds were
+removed; sources, evidence and executable products were preserved.
+
 The parent must preserve all 205 qualified worker sources and pass its own
 selected tests before the native parity probe. The probe requires unchanged
 40-record semantics and byte-exact equality of all four full captures.

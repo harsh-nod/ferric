@@ -1,0 +1,219 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling typenum v1.20.1
+   Compiling cfg-if v1.0.4
+   Compiling hybrid-array v0.4.14
+   Compiling const-oid v0.10.2
+   Compiling cpufeatures v0.3.1
+   Compiling libc v0.2.189
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling version_check v0.9.5
+   Compiling syn v3.0.4
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+   Compiling fe2o3-target-spec v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling memchr v2.8.3
+   Compiling fe2o3-amd-target v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling bitflags v2.13.1
+   Compiling serde_core v1.0.229
+   Compiling equivalent v1.0.2
+   Compiling hashbrown v0.17.1
+   Compiling const_fn v0.4.12
+   Compiling indexmap v2.14.1
+   Compiling syn v2.0.119
+   Compiling zmij v1.0.23
+   Compiling generic-array v0.14.7
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling serde_derive v1.0.229
+   Compiling scopeguard v1.2.0
+   Compiling itoa v1.0.18
+   Compiling lock_api v0.4.14
+   Compiling awint_internals v0.19.0
+   Compiling awint_core v0.19.0
+   Compiling spin v0.12.3
+   Compiling zeroize v1.9.0
+   Compiling recasting v0.2.3
+   Compiling semver v1.0.28
+   Compiling rustc_version v0.4.1
+   Compiling triple_arena v0.15.1
+   Compiling awint_ext v0.19.0
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling bytemuck v1.25.2
+   Compiling linkme-impl v0.3.37
+   Compiling safe_arch v1.2.0
+   Compiling digest v0.10.7
+   Compiling awint_macro_internals v0.19.0
+   Compiling curve25519-dalek v4.1.3
+   Compiling aho-corasick v1.1.5
+   Compiling slotmap v1.1.1
+   Compiling bytes v1.12.1
+   Compiling cpufeatures v0.2.17
+   Compiling allocator-api2 v0.2.21
+   Compiling unicode-segmentation v1.13.3
+   Compiling foldhash v0.2.0
+   Compiling linkme v0.3.37
+   Compiling smallvec v1.16.0
+   Compiling thiserror v2.0.20
+   Compiling regex-syntax v0.8.11
+   Compiling rustc_apfloat v0.2.3+llvm-462a31f5a5ab
+   Compiling regex-automata v0.4.18
+   Compiling combine v4.6.8
+   Compiling convert_case v0.11.0
+   Compiling awint_macros v0.19.0
+   Compiling wide v1.7.0
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling getrandom v0.2.17
+   Compiling thiserror-impl v2.0.20
+   Compiling rustc-hash v2.1.3
+   Compiling subtle v2.6.1
+   Compiling arrayvec v0.7.8
+   Compiling rustix v1.1.4
+   Compiling signature v2.2.0
+   Compiling ed25519 v2.2.3
+   Compiling hi_sparse_bitset v0.9.0
+   Compiling utf8-chars v3.0.7
+   Compiling pliron-derive v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=cc902cc8c669b5de2b292ae8638d9e8311bc735b#cc902cc8)
+   Compiling rand_core v0.6.4
+   Compiling awint v0.19.0
+   Compiling regex v1.13.1
+   Compiling sha2 v0.10.9
+   Compiling downcast-rs v2.0.2
+   Compiling log v0.4.34
+   Compiling linux-raw-sys v0.12.1
+   Compiling dyn-clone v1.0.20
+   Compiling once_vec v0.4.0
+   Compiling pliron v0.17.0 (https://github.com/harsh-nod/pliron.git?rev=cc902cc8c669b5de2b292ae8638d9e8311bc735b#cc902cc8)
+   Compiling ed25519-dalek v2.2.0
+   Compiling fe2o3-pliron-owner-core v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-kernel-ir v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-build-authority v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-rustc-invocation v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-compiler-lineage v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling dialect-kernel v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-mir-model v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling reserved-fe2o3-symbols v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-proof-contracts v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-functional-proof v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-compiler-ffi v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling dialect-mir v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling dialect-proof v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-kernel-analysis v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling dialect-gpu v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-pliron v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-artifact-transaction v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-llvm-handoff v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-hsaco v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-kernel-opt v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-amdgcn-model v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling object v0.39.1
+   Compiling dialect-amdgcn v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-lower-mir-kernel v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-llvm-text v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-process-identity v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-source-isa-observation v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-external-anchor-protocol v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-compiler-execution-protocol v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-hsaco-finalize v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-amdhsa-loader v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling winnow v1.0.4
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_edit v0.25.13+spec-1.1.0
+   Compiling fe2o3-runtime-protocol v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-runtime-model v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-kfd-uapi v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-drm-uapi v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-aql v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-kfd v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-artifacts v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling proc-macro-crate v3.5.0
+   Compiling fe2o3-compiler-closure-capability v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-rustc-front v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling serde_spanned v1.1.1
+   Compiling fe2o3-host-api v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling toml v1.1.5+spec-1.1.0
+   Compiling fe2o3-macros v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-compiler-execution-client v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-profiler-protocol v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-service-model v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-contracts v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-verifier v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-service-host v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-runtime v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-device v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling fe2o3-host v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling verus_syn v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling verus_prettyplease v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling synstructure v0.13.2
+   Compiling vstd v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling convert_case v0.4.0
+   Compiling verus_builtin v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.12
+   Compiling cc v1.4.5
+   Compiling pkg-config v0.3.34
+   Compiling onig_sys v69.9.3
+   Compiling verus_builtin_macros v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling verus_state_machines_macros v0.0.0-2026-08-02-0125 (https://github.com/verus-lang/verus.git?rev=b677dd5#b677dd5a)
+   Compiling ferric-qwen3-all-kernels-device-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-all-kernels-v1)
+   Compiling fe2o3-worker-v3-verification-protocol v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling once_cell v1.21.4
+   Compiling onig v6.5.3
+   Compiling fe2o3-worker-v3-verification-client v0.1.0 (https://github.com/harsh-nod/fe2o3.git?rev=faaaf15d68eff996b22951758b1a9fa83317d6d2#faaaf15d)
+   Compiling ferric-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/crates/ferric-spec)
+   Compiling ferric-generated-runner v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/crates/ferric-generated-runner)
+   Compiling ferric-kernels v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/crates/ferric-kernels)
+   Compiling ferric-qwen-kernels v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/crates/ferric-qwen-kernels)
+   Compiling ferric-qwen3-all-kernels-worker-v3-source-pin-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/adapters/qwen3-all-kernels-worker-v3-source-pin-v1)
+   Compiling unicode-normalization-alignments v0.1.12
+   Compiling ferric-qwen3-tp-split-context-attention-device-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-split-context-attention-v1)
+   Compiling ferric-qwen3-tp-peer32-kernels-device-v6 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-peer32-kernels-v6)
+   Compiling ferric-qwen3-tp-perf-kernels-device-v3 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-perf-kernels-v3)
+   Compiling ferric-qwen3-tp-wave-query-hoist-kernels-device-v14 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-wave-query-hoist-kernels-v14)
+   Compiling ferric-qwen3-tp-batch32-kernels-device-v5 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-batch32-kernels-v5)
+   Compiling ferric-qwen3-tp-fp32-head-kernels-device-v7 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-fp32-head-kernels-v7)
+   Compiling ferric-qwen3-tp-peer-tp2-kernels-device-v18 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-peer-tp2-kernels-v18)
+   Compiling ferric-qwen3-tp-batch-kernels-device-v2 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-batch-kernels-v2)
+   Compiling ferric-qwen3-tp-parallel-kv-kernels-device-v16 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-parallel-kv-kernels-v16)
+   Compiling ferric-qwen3-tp-kernels-device-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-kernels-v1)
+   Compiling ferric-qwen3-tp-fp32-argmax-kernels-device-v11 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-fp32-argmax-kernels-v11)
+   Compiling ferric-qwen3-tp-fp32-head32-kernels-device-v8 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-fp32-head32-kernels-v8)
+   Compiling ferric-qwen3-draft-batch32-kernels-device-v10 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-draft-batch32-kernels-v10)
+   Compiling ferric-qwen3-tp-large-kv-kernels-device-v9 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-large-kv-kernels-v9)
+   Compiling ferric-qwen3-tp-peer-kernels-device-v4 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-peer-kernels-v4)
+   Compiling ferric-qwen3-tp-wave-rmsnorm-kernels-device-v15 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-wave-rmsnorm-kernels-v15)
+   Compiling ferric-qwen3-tp-bf16-wave-argmax-kernels-device-v22 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-bf16-wave-argmax-kernels-v22)
+   Compiling ferric-build v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/crates/ferric-build)
+   Compiling ferric-qwen3-all-kernels-worker-v3-verifier-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/adapters/qwen3-all-kernels-worker-v3-verifier-v1)
+   Compiling ferric-non-authoritative-program-source-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/crates/ferric-non-authoritative-program-source-v1)
+   Compiling ferric-engine v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/crates/ferric-engine)
+warning: unused macro definition: `qwen_attention_emit_pair_v1`
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/device/qwen3-tp-perf-kernels-v3/src/attention_online.rs:11:14
+   |
+11 | macro_rules! qwen_attention_emit_pair_v1 {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_macros)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ferric-qwen3-tp-perf-kernels-device-v3` (lib) generated 1 warning
+   Compiling ferric-m1-engineering-execution-v1 v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1)
+warning: method `schema` is never used
+  --> src/../../tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs:42:19
+   |
+32 | impl ArenaRoute {
+   | --------------- method in this implementation
+...
+42 |     pub(crate) fn schema(self) -> &'static str {
+   |                   ^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ferric-m1-engineering-execution-v1` (lib test) generated 1 warning
+    Finished `test` profile [optimized] target(s) in 4m 53s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-shared-full-parent-cpu-v228-v1/target/debug/deps/ferric_m1_engineering_execution_v1-d0d35eb97f6f5792)
