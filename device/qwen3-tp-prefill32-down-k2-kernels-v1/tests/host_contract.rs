@@ -21,10 +21,22 @@ fn only_exact_tp1_prefill32_down_geometry_is_admitted() {
         assert!(!LaunchContract { k, ..exact }.admitted());
     }
     for world_size in [0, 2, 8, u32::MAX] {
-        assert!(!LaunchContract { world_size, ..exact }.admitted());
+        assert!(
+            !LaunchContract {
+                world_size,
+                ..exact
+            }
+            .admitted()
+        );
     }
     for projection in [0, 1, 3, 4, 5, 6, u32::MAX] {
-        assert!(!LaunchContract { projection, ..exact }.admitted());
+        assert!(
+            !LaunchContract {
+                projection,
+                ..exact
+            }
+            .admitted()
+        );
     }
 }
 
@@ -32,13 +44,31 @@ fn only_exact_tp1_prefill32_down_geometry_is_admitted() {
 fn every_slice_requires_exact_not_padded_extent() {
     let exact = LaunchContract::exact();
     for a_elements in [0, ROWS * K - 1, ROWS * K + 1, usize::MAX] {
-        assert!(!LaunchContract { a_elements, ..exact }.admitted());
+        assert!(
+            !LaunchContract {
+                a_elements,
+                ..exact
+            }
+            .admitted()
+        );
     }
     for weights_elements in [0, K * N - 1, K * N + 1, usize::MAX] {
-        assert!(!LaunchContract { weights_elements, ..exact }.admitted());
+        assert!(
+            !LaunchContract {
+                weights_elements,
+                ..exact
+            }
+            .admitted()
+        );
     }
     for output_elements in [0, ROWS * N - 1, ROWS * N + 1, usize::MAX] {
-        assert!(!LaunchContract { output_elements, ..exact }.admitted());
+        assert!(
+            !LaunchContract {
+                output_elements,
+                ..exact
+            }
+            .admitted()
+        );
     }
     assert_eq!(OUTPUT_BYTES, 524288);
 }
@@ -46,7 +76,13 @@ fn every_slice_requires_exact_not_padded_extent() {
 #[test]
 fn incomplete_excess_and_multidimensional_launches_are_refused() {
     let exact = LaunchContract::exact();
-    for grid in [[0, 1, 1], [511, 1, 1], [513, 1, 1], [512, 2, 1], [512, 1, 2]] {
+    for grid in [
+        [0, 1, 1],
+        [511, 1, 1],
+        [513, 1, 1],
+        [512, 2, 1],
+        [512, 1, 2],
+    ] {
         assert!(!LaunchContract { grid, ..exact }.admitted());
     }
     for workgroup in [[32, 1, 1], [63, 1, 1], [65, 1, 1], [64, 2, 1], [64, 1, 2]] {
@@ -80,7 +116,12 @@ fn output_boundaries_and_rejected_coordinates_are_exact() {
     assert_eq!(output_coordinate(63, 3), Some((15, 15)));
     assert_eq!(output_coordinate(256 * 64, 0), Some((16, 0)));
     assert_eq!(output_coordinate(GROUPS * LANES - 1, 3), Some((31, 4095)));
-    for (raw, component) in [(GROUPS * LANES, 0), (usize::MAX, 0), (0, 4), (0, usize::MAX)] {
+    for (raw, component) in [
+        (GROUPS * LANES, 0),
+        (usize::MAX, 0),
+        (0, 4),
+        (0, usize::MAX),
+    ] {
         assert_eq!(output_coordinate(raw, component), None);
     }
 }
@@ -88,7 +129,9 @@ fn output_boundaries_and_rejected_coordinates_are_exact() {
 #[test]
 fn paired_updates_visit_all_768_k16_steps_in_control_order() {
     let control = (0..768).map(|step| step * 16).collect::<Vec<_>>();
-    let paired = (0..384).flat_map(|pair| [pair * 32, pair * 32 + 16]).collect::<Vec<_>>();
+    let paired = (0..384)
+        .flat_map(|pair| [pair * 32, pair * 32 + 16])
+        .collect::<Vec<_>>();
     assert_eq!(control, paired);
     assert_eq!(paired.first(), Some(&0));
     assert_eq!(paired.last(), Some(&(K - 16)));
@@ -141,7 +184,10 @@ fn host_order_model_keeps_fp32_updates_without_intermediate_bf16_rounding() {
         assert_eq!(control.to_bits(), paired.to_bits());
     }
     let value = f32::from_bits(0x3f80_8000);
-    assert_ne!(value.to_bits(), fe2o3_device::Bf16::from_f32(value).to_f32().to_bits());
+    assert_ne!(
+        value.to_bits(),
+        fe2o3_device::Bf16::from_f32(value).to_f32().to_bits()
+    );
 }
 
 #[test]
@@ -165,7 +211,9 @@ fn exact_target_flags_and_non_device_fixture_are_accepted() {
         format!("-C\u{1f}target-cpu=gfx950\u{1f}-C\u{1f}target-feature={features}"),
         format!("--codegen=target-cpu=gfx950\u{1f}--codegen=target-feature={features}"),
     ] {
-        assert!(target_contract::validate_device_build("amdgpu", &flags, "gfx950", features).is_ok());
+        assert!(
+            target_contract::validate_device_build("amdgpu", &flags, "gfx950", features).is_ok()
+        );
     }
     assert!(target_contract::validate_device_build("x86_64", "", "gfx950", features).is_ok());
 }
@@ -182,25 +230,38 @@ fn missing_duplicate_or_wrong_target_flags_are_refused() {
         format!("{good}\u{1f}-Ctarget-cpu=gfx950"),
         format!("{good}\u{1f}-Ctarget-feature={features}"),
     ] {
-        assert!(target_contract::validate_device_build("amdgpu", &flags, "gfx950", features).is_err());
+        assert!(
+            target_contract::validate_device_build("amdgpu", &flags, "gfx950", features).is_err()
+        );
     }
 }
 
 #[test]
 fn selection_is_default_off_with_two_explicit_roots() {
-    assert_eq!(EXPERIMENT_ENABLED, cfg!(feature = "paired-prefill32-down-k16-r1"));
-    assert_eq!(CONTROL_ROOT, "ferric_qwen3_prefill32_down_k16_control_f32_r1");
+    assert_eq!(
+        EXPERIMENT_ENABLED,
+        cfg!(feature = "paired-prefill32-down-k16-r1")
+    );
+    assert_eq!(
+        CONTROL_ROOT,
+        "ferric_qwen3_prefill32_down_k16_control_f32_r1"
+    );
     assert_eq!(PAIRED_ROOT, "ferric_qwen3_prefill32_down_k16_paired_f32_r1");
     assert!(include_str!("../Cargo.toml").contains("default = []"));
-    assert!(include_str!("../src/lib.rs").contains(
-        "#[cfg(feature = \"paired-prefill32-down-k16-r1\")]\npub mod projection;"
-    ));
+    assert!(
+        include_str!("../src/lib.rs")
+            .contains("#[cfg(feature = \"paired-prefill32-down-k16-r1\")]\npub mod projection;")
+    );
 }
 
 #[cfg(feature = "paired-prefill32-down-k16-r1")]
 #[test]
 fn enabled_roster_has_two_distinct_source_bound_kernels() {
-    let entries = ferric_qwen3_tp_prefill32_down_k2_kernels_device_v1::compiler_expectation_roster();
+    let entries =
+        ferric_qwen3_tp_prefill32_down_k2_kernels_device_v1::compiler_expectation_roster();
     assert_eq!(entries.len(), 2);
-    assert_ne!(entries[0].kernel_binding_id(), entries[1].kernel_binding_id());
+    assert_ne!(
+        entries[0].kernel_binding_id(),
+        entries[1].kernel_binding_id()
+    );
 }

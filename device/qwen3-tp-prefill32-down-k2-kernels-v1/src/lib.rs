@@ -28,8 +28,10 @@ pub fn compiler_expectation_roster()
 -> alloc::vec::Vec<fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1> {
     use fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1 as Entry;
     let mut entries = alloc::vec![
-        Entry::for_marker::<projection::ferric_qwen3_prefill32_down_k16_control_f32_r1_gpu::Marker>(),
-        Entry::for_marker::<projection::ferric_qwen3_prefill32_down_k16_paired_f32_r1_gpu::Marker>(),
+        Entry::for_marker::<projection::ferric_qwen3_prefill32_down_k16_control_f32_r1_gpu::Marker>(
+        ),
+        Entry::for_marker::<projection::ferric_qwen3_prefill32_down_k16_paired_f32_r1_gpu::Marker>(
+        ),
     ];
     entries.sort_by_key(Entry::kernel_binding_id);
     entries

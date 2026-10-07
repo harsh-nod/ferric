@@ -19,10 +19,7 @@ pub fn ferric_qwen3_prefill32_down_k16_control_f32_r1(
     if rows != 32 || n != 4096 || k != 12288 || world_size != 1 || projection != 2 {
         fe2o3_device::trap();
     }
-    if a.len() != 32 * 12288
-        || weights_kn.len() != 12288 * 4096
-        || output.len() != 32 * 4096
-    {
+    if a.len() != 32 * 12288 || weights_kn.len() != 12288 * 4096 || output.len() != 32 * 4096 {
         fe2o3_device::trap();
     }
     if thread::grid_dim_x() != 512 || thread::block_dim_x() != 64 {
@@ -56,24 +53,16 @@ pub fn ferric_qwen3_prefill32_down_k16_control_f32_r1(
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
         fe2o3_device::trap();
     };
-    if !value_0.is_finite()
-        || !output.write_tiled_2d(&tile, 0, 32, 4096, 4096, value_0)
-    {
+    if !value_0.is_finite() || !output.write_tiled_2d(&tile, 0, 32, 4096, 4096, value_0) {
         fe2o3_device::trap();
     }
-    if !value_1.is_finite()
-        || !output.write_tiled_2d(&tile, 1, 32, 4096, 4096, value_1)
-    {
+    if !value_1.is_finite() || !output.write_tiled_2d(&tile, 1, 32, 4096, 4096, value_1) {
         fe2o3_device::trap();
     }
-    if !value_2.is_finite()
-        || !output.write_tiled_2d(&tile, 2, 32, 4096, 4096, value_2)
-    {
+    if !value_2.is_finite() || !output.write_tiled_2d(&tile, 2, 32, 4096, 4096, value_2) {
         fe2o3_device::trap();
     }
-    if !value_3.is_finite()
-        || !output.write_tiled_2d(&tile, 3, 32, 4096, 4096, value_3)
-    {
+    if !value_3.is_finite() || !output.write_tiled_2d(&tile, 3, 32, 4096, 4096, value_3) {
         fe2o3_device::trap();
     }
 }
@@ -94,10 +83,7 @@ pub fn ferric_qwen3_prefill32_down_k16_paired_f32_r1(
     if rows != 32 || n != 4096 || k != 12288 || world_size != 1 || projection != 2 {
         fe2o3_device::trap();
     }
-    if a.len() != 32 * 12288
-        || weights_kn.len() != 12288 * 4096
-        || output.len() != 32 * 4096
-    {
+    if a.len() != 32 * 12288 || weights_kn.len() != 12288 * 4096 || output.len() != 32 * 4096 {
         fe2o3_device::trap();
     }
     if thread::grid_dim_x() != 512 || thread::block_dim_x() != 64 {
@@ -136,24 +122,16 @@ pub fn ferric_qwen3_prefill32_down_k16_paired_f32_r1(
     let Some(tile) = invocation.checked_tiled_2d::<64, 16, 16, 4>() else {
         fe2o3_device::trap();
     };
-    if !value_0.is_finite()
-        || !output.write_tiled_2d(&tile, 0, 32, 4096, 4096, value_0)
-    {
+    if !value_0.is_finite() || !output.write_tiled_2d(&tile, 0, 32, 4096, 4096, value_0) {
         fe2o3_device::trap();
     }
-    if !value_1.is_finite()
-        || !output.write_tiled_2d(&tile, 1, 32, 4096, 4096, value_1)
-    {
+    if !value_1.is_finite() || !output.write_tiled_2d(&tile, 1, 32, 4096, 4096, value_1) {
         fe2o3_device::trap();
     }
-    if !value_2.is_finite()
-        || !output.write_tiled_2d(&tile, 2, 32, 4096, 4096, value_2)
-    {
+    if !value_2.is_finite() || !output.write_tiled_2d(&tile, 2, 32, 4096, 4096, value_2) {
         fe2o3_device::trap();
     }
-    if !value_3.is_finite()
-        || !output.write_tiled_2d(&tile, 3, 32, 4096, 4096, value_3)
-    {
+    if !value_3.is_finite() || !output.write_tiled_2d(&tile, 3, 32, 4096, 4096, value_3) {
         fe2o3_device::trap();
     }
 }

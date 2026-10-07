@@ -114,7 +114,7 @@ fn source_contract(source: &str) -> Result<(), String> {
     for item in parsed.items {
         match item {
             Item::Fn(function) => functions.push(function),
-            Item::Use(_) => {},
+            Item::Use(_) => {}
             _ => return Err("unexpected device item".into()),
         }
     }
@@ -125,19 +125,31 @@ fn source_contract(source: &str) -> Result<(), String> {
         let expected = expected(ROOTS[index], index == 1);
         if function.sig.to_token_stream().to_string() != expected.sig.to_token_stream().to_string()
             || function.vis.to_token_stream().to_string() != "pub"
-            || function.block.to_token_stream().to_string() != expected.block.to_token_stream().to_string()
+            || function.block.to_token_stream().to_string()
+                != expected.block.to_token_stream().to_string()
         {
             return Err("root, guard, indexing, MFMA order or FP32 store contract changed".into());
         }
-        let bound = syn::LitInt::new(if index == 0 { "768" } else { "384" }, function.sig.ident.span());
+        let bound = syn::LitInt::new(
+            if index == 0 { "768" } else { "384" },
+            function.sig.ident.span(),
+        );
         let expected_kernel: syn::Attribute = syn::parse_quote! {
             #[kernel(typed, launch(required = [64, 1, 1], max = [64, 1, 1], max_grid = [512, 1, 1]), control_flow(loop_bounds(#bound)))]
         };
-        let kernels = function.attrs.iter().filter(|attr| attr.path().is_ident("kernel")).collect::<Vec<_>>();
+        let kernels = function
+            .attrs
+            .iter()
+            .filter(|attr| attr.path().is_ident("kernel"))
+            .collect::<Vec<_>>();
         if kernels.len() != 1
-            || kernels[0].to_token_stream().to_string() != expected_kernel.to_token_stream().to_string()
-            || function.attrs.iter().any(|attr| !attr.path().is_ident("kernel")
-                && !attr.path().is_ident("allow") && !attr.path().is_ident("doc"))
+            || kernels[0].to_token_stream().to_string()
+                != expected_kernel.to_token_stream().to_string()
+            || function.attrs.iter().any(|attr| {
+                !attr.path().is_ident("kernel")
+                    && !attr.path().is_ident("allow")
+                    && !attr.path().is_ident("doc")
+            })
         {
             return Err("launch, feature or loop-bound contract changed".into());
         }
@@ -148,7 +160,10 @@ fn source_contract(source: &str) -> Result<(), String> {
 fn reject(from: &str, to: &str) {
     let changed = SOURCE.replace(from, to);
     assert_ne!(changed, SOURCE, "mutation must change source: {from}");
-    assert!(source_contract(&changed).is_err(), "mutation must be rejected: {from}");
+    assert!(
+        source_contract(&changed).is_err(),
+        "mutation must be rejected: {from}"
+    );
 }
 
 #[test]
@@ -165,7 +180,10 @@ fn wrong_shape_extent_launch_or_projection_is_rejected() {
         ("projection != 2", "projection != 1"),
         ("output.len() != 32 * 4096", "output.len() < 32 * 4096"),
         ("a.len() != 32 * 12288", "a.len() < 32 * 12288"),
-        ("weights_kn.len() != 12288 * 4096", "weights_kn.len() < 12288 * 4096"),
+        (
+            "weights_kn.len() != 12288 * 4096",
+            "weights_kn.len() < 12288 * 4096",
+        ),
         ("thread::grid_dim_x() != 512", "thread::grid_dim_x() > 512"),
         ("max_grid = [512, 1, 1]", "max_grid = [1024, 1, 1]"),
     ] {
@@ -178,8 +196,14 @@ fn operand_index_and_accumulator_mutations_are_rejected() {
     for (from, to) in [
         ("group / 256", "group / 128"),
         ("group % 256", "group % 128"),
-        ("next_reduction_base = reduction_base + 16", "next_reduction_base = reduction_base + 32"),
-        ("next_a_fragment, next_b_fragment, accumulator", "a_fragment, next_b_fragment, accumulator"),
+        (
+            "next_reduction_base = reduction_base + 16",
+            "next_reduction_base = reduction_base + 32",
+        ),
+        (
+            "next_a_fragment, next_b_fragment, accumulator",
+            "a_fragment, next_b_fragment, accumulator",
+        ),
         ("while step < 768", "while step < 767"),
         ("while pair < 384", "while pair < 383"),
         ("pair += 1", "pair += 2"),
@@ -192,14 +216,23 @@ fn operand_index_and_accumulator_mutations_are_rejected() {
 #[test]
 fn moving_an_update_before_the_second_fragment_load_is_rejected() {
     let mut parsed = syn::parse_file(SOURCE).unwrap();
-    let function = parsed.items.iter_mut().find_map(|item| match item {
-        Item::Fn(function) if function.sig.ident == ROOTS[1] => Some(function),
-        _ => None,
-    }).unwrap();
-    let repeated = function.block.stmts.iter_mut().find_map(|statement| match statement {
-        Stmt::Expr(Expr::While(repeated), _) => Some(repeated),
-        _ => None,
-    }).unwrap();
+    let function = parsed
+        .items
+        .iter_mut()
+        .find_map(|item| match item {
+            Item::Fn(function) if function.sig.ident == ROOTS[1] => Some(function),
+            _ => None,
+        })
+        .unwrap();
+    let repeated = function
+        .block
+        .stmts
+        .iter_mut()
+        .find_map(|statement| match statement {
+            Stmt::Expr(Expr::While(repeated), _) => Some(repeated),
+            _ => None,
+        })
+        .unwrap();
     repeated.body.stmts.swap(5, 6);
     assert!(source_contract(&parsed.to_token_stream().to_string()).is_err());
 }
@@ -208,10 +241,15 @@ fn moving_an_update_before_the_second_fragment_load_is_rejected() {
 fn stores_keep_finite_checks_fp32_precision_and_unique_components() {
     for (from, to) in [
         ("!value_3.is_finite()", "false"),
-        ("&tile, 2, 32, 4096, 4096, value_2", "&tile, 1, 32, 4096, 4096, value_2"),
+        (
+            "&tile, 2, 32, 4096, 4096, value_2",
+            "&tile, 1, 32, 4096, 4096, value_2",
+        ),
         ("WriteOnlyDisjointSlice<f32", "WriteOnlyDisjointSlice<u16"),
-        ("let [value_0, value_1, value_2, value_3] = accumulator.into_values();",
-         "let [value_0, value_1, value_2, value_3] = accumulator.into_values(); let value_0 = Bf16::from_f32(value_0).to_f32();"),
+        (
+            "let [value_0, value_1, value_2, value_3] = accumulator.into_values();",
+            "let [value_0, value_1, value_2, value_3] = accumulator.into_values(); let value_0 = Bf16::from_f32(value_0).to_f32();",
+        ),
     ] {
         reject(from, to);
     }
@@ -219,7 +257,11 @@ fn stores_keep_finite_checks_fp32_precision_and_unique_components() {
 
 #[test]
 fn extra_roots_helpers_or_modules_are_rejected() {
-    for suffix in ["fn extra() {}", "mod extra {}", "pub const UNCHECKED: bool = true;"] {
+    for suffix in [
+        "fn extra() {}",
+        "mod extra {}",
+        "pub const UNCHECKED: bool = true;",
+    ] {
         assert!(source_contract(&format!("{SOURCE}\n{suffix}")).is_err());
     }
 }
