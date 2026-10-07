@@ -1,0 +1,132 @@
+{
+  "admitted_test_count": 82,
+  "external_tools_rehashed_locally": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 25828,
+      "sha256": "ecaab2e083039d021095cf6778748bebf978f43b57addea7344f99741f10eace"
+    },
+    "evidence/readiness-tests.command.json": {
+      "bytes": 1269,
+      "sha256": "f495d62610a84f524e22791596067fe2316945024100ab0d1744847e43772d32"
+    },
+    "evidence/readiness-tests.result.json": {
+      "bytes": 1922,
+      "sha256": "2bfa294cf036919ebf9b89e2a08fb6931adf28e6a3a1a8e75dc5c7186c8b3fa6"
+    },
+    "evidence/readiness-tests.started.json": {
+      "bytes": 716,
+      "sha256": "51db42db1842f35a92b515a1d503b2cded8ba92a20d2a1d569232136166d6a50"
+    },
+    "evidence/readiness-tests.stderr": {
+      "bytes": 13179,
+      "sha256": "91014030f363d3245aa35d9670ac0bad1926b96b972b4b653eb09cb1318d08ce"
+    },
+    "evidence/readiness-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 5407,
+      "sha256": "81c23bed4d8d592e47ba095aa61779539b62a7e4249bd70c8fdcd6e69bcbc570"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 5407,
+      "sha256": "81c23bed4d8d592e47ba095aa61779539b62a7e4249bd70c8fdcd6e69bcbc570"
+    },
+    "pure-evidence.py": {
+      "bytes": 19479,
+      "sha256": "40d77264480a206e68e35b18f52e6a3090644643cecf46a12ba7e9cdf8e3c8ba"
+    },
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 18667,
+      "sha256": "78432e7be3cc7edcaf118fa8b33d9521225c908f11d8bee03c6329e82bb9ab9f"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_bank_scoped.py": {
+      "bytes": 14853,
+      "sha256": "3ecc622e660cb6e0790a18ff8bb022a84535c91466d02d6fdbb8625ae080a99b"
+    },
+    "test_matched.py": {
+      "bytes": 15400,
+      "sha256": "d5a6b522a1effe29e1ee08430754163cc217cf34c3713ce234926b7c860f9647"
+    },
+    "test_readiness.py": {
+      "bytes": 17802,
+      "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+    },
+    "test_scoped.py": {
+      "bytes": 15936,
+      "sha256": "4c015cdfa072943960e0ffa1f25e0e604790e8dbe222875b4bed207be6563fdc"
+    },
+    "test_scoped_pair.py": {
+      "bytes": 3629,
+      "sha256": "aa95ff79fd3c72ee3658d66e4117738a06f7984a2a77dcc6712b28a272e57f8f"
+    },
+    "test_shared.py": {
+      "bytes": 10737,
+      "sha256": "a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96"
+    },
+    "test_timing.py": {
+      "bytes": 10433,
+      "sha256": "630febf4d840081887692144cc570d70c1d67f9ad3bb5bab1fd6d7d1f61cedb1"
+    },
+    "validate_bank_pair.py": {
+      "bytes": 4428,
+      "sha256": "9d3f1470f6e9d7a17f3c91d1deb29a54c6fa7e8c766dc358e9d7d73e15c4e004"
+    },
+    "validate_bank_scoped.py": {
+      "bytes": 9534,
+      "sha256": "2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772"
+    },
+    "validate_matched.py": {
+      "bytes": 9362,
+      "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_scoped.py": {
+      "bytes": 9184,
+      "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+    },
+    "validate_scoped_pair.py": {
+      "bytes": 3233,
+      "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+    },
+    "validate_shared.py": {
+      "bytes": 8015,
+      "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "mode": "checker",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_failure": null,
+  "original_files": 26,
+  "original_postcheck_errors": [],
+  "original_tools_rehashed_at_export": true,
+  "passed": true,
+  "performance_claim": false,
+  "schema": "ferric-readiness40-bank-scoped-warm-pure-cpu-export-v1",
+  "selected_files": 27,
+  "synthetic_only": true,
+  "terminal": {
+    "bytes": 25828,
+    "sha256": "ecaab2e083039d021095cf6778748bebf978f43b57addea7344f99741f10eace"
+  },
+  "terminal_name": "complete.json"
+}
