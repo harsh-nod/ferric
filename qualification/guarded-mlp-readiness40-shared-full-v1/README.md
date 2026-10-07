@@ -1,9 +1,9 @@
 # Readiness40 Shared Full Currentness
 
 This opt-in experiment shares a fresh topology discovery across the full
-per-rank currentness checks. The worker and independent data checker are
-CPU-qualified on `mi350`. Parent qualification and native model parity remain
-pending; there is no measured speedup or numerical-acceptance claim yet.
+per-rank currentness checks. The worker, parent and independent data checker
+are CPU-qualified on `mi350`. Native model parity remains pending; there is
+no measured speedup or numerical-acceptance claim yet.
 
 ## Optimization Boundary
 
@@ -68,7 +68,32 @@ members are retained in `checker-cpu-v1`.
 | Checker terminal | `7a9029ae0e864809fa98062f4f15a13c954ce67d8b1d20e8c2cb36baa888850c` |
 | Checker archive | `cd89e1e2a519c154b9bef299c985047cc1aed86b08a29dad964815df5f941841` |
 
-## Remaining Gates
+## Parent CPU Result
+
+The fresh second attempt passed 475 selected tests in 54 scopes across 64
+natural, fully reaped phases, with no failed or ignored tests. All 466 selected
+predecessor outcomes remain present, plus nine new outcomes. Its 946-name
+library inventory is not a claim that the entire parent library suite ran.
+All seven standalone binaries built. Qualification took 408.210 seconds,
+using the same offline, two-job, opt2 build with assertions and overflow
+checks enabled and GPUs hidden.
+
+Source, dependency, private-cache, tool and product postchecks passed.
+The five parent files were integrated from the actual formatted, tested
+postimages. All 1,257 Ferric source bodies match that qualification, including
+all 205 standalone-qualified worker bodies. The six Full-only parent files
+remain unchanged. The original 455-member capsule is in
+`parent-cpu-attempt-v2`; `parent-source-integration.json` records the exact
+source composition and the pre-application integration plan.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Parent CPU terminal | `7e4ad4324ea3b0302e1f7cf738b699e0e0721025963e659f0ba7f5bc35d70a8d` |
+| Tested source map | `82c6cdd0f0af07173777b44aad9a457f8092234f3ae0415eb778bad8492f1118` |
+| Readiness parent ELF | `682d5455b9c5966fa6a3ad02f0e755117b7d7e69241ead372ee22fbd703de804` |
+| Parent archive | `e3b2b25d4c24d3375b129ac9b0fbcc5f4efbce78e3997c2536ef0280fa870ae9` |
+
+## Earlier Storage Stop
 
 The first parent CPU attempt stopped during its sixth phase when the live
 storage guard fired. Its first five phases, including compilation and the
@@ -88,9 +113,10 @@ proposal and tests, and unchanged 40/38-GiB initial/live space floors.
 Only disposable intermediates from completed or retained failed builds were
 removed; sources, evidence and executable products were preserved.
 
-The parent must preserve all 205 qualified worker sources and pass its own
-selected tests before the native parity probe. The probe requires unchanged
-40-record semantics and byte-exact equality of all four full captures.
+## Remaining Gates
+
+The native parity probe requires unchanged 40-record semantics and byte-exact
+equality of all four full captures.
 Same-side parity is not independent framework accuracy. A fair timing comparison
 also requires the same newly qualified parent/worker ELF pair and equal
 instrumentation in fresh default and SharedFull runs. The historical timing
