@@ -1,0 +1,25 @@
+test_authentic_prompt_roles_and_full_count (test_reference.ReferenceTests.test_authentic_prompt_roles_and_full_count) ... ok
+test_boolean_ids_and_wrong_model_lineage_refused (test_reference.ReferenceTests.test_boolean_ids_and_wrong_model_lineage_refused) ... ok
+test_capture_hooks_removed_even_when_removal_fails (test_reference.ReferenceTests.test_capture_hooks_removed_even_when_removal_fails) ... ok
+test_capture_missing_duplicate_and_norm_join_refused (test_reference.ReferenceTests.test_capture_missing_duplicate_and_norm_join_refused) ... ok
+test_container_exact_readonly_mounts_and_no_network (test_reference.ReferenceTests.test_container_exact_readonly_mounts_and_no_network) ... ok
+test_container_named_user_offline_and_single_gpu (test_reference.ReferenceTests.test_container_named_user_offline_and_single_gpu) ... ok
+test_forty_selected_positions_and_repeat_gate (test_reference.ReferenceTests.test_forty_selected_positions_and_repeat_gate) ... ok
+test_input_history_never_uses_previous_prediction (test_reference.ReferenceTests.test_input_history_never_uses_previous_prediction) ... ok
+test_metric_byte_difference_does_not_create_acceptance (test_reference.ReferenceTests.test_metric_byte_difference_does_not_create_acceptance) ... ok
+test_nonfinite_shape_and_argmax_refused (test_reference.ReferenceTests.test_nonfinite_shape_and_argmax_refused) ... ok
+test_prompt_mutation_and_workload_join_refused (test_reference.ReferenceTests.test_prompt_mutation_and_workload_join_refused) ... ok
+test_repeat_payload_logit_and_cache_drift_refused (test_reference.ReferenceTests.test_repeat_payload_logit_and_cache_drift_refused) ... ok
+test_retirement_ignores_failed_workload_storage (test_reference.ReferenceTests.test_retirement_ignores_failed_workload_storage) ... ok
+test_retirement_signal_deferred_and_recorded (test_reference.ReferenceTests.test_retirement_signal_deferred_and_recorded) ... ok
+test_retirement_uses_separate_deadline (test_reference.ReferenceTests.test_retirement_uses_separate_deadline) ... ok
+test_selected_byte_hash_or_role_mismatch_refused (test_reference.ReferenceTests.test_selected_byte_hash_or_role_mismatch_refused) ... ok
+test_unittest_census_accepts_both_supported_spellings (test_reference.ReferenceTests.test_unittest_census_accepts_both_supported_spellings) ... ok
+test_work_signal_raises_between_cli_calls (test_reference.ReferenceTests.test_work_signal_raises_between_cli_calls) ... ok
+test_wrong_container_owner_or_image_refused (test_reference.ReferenceTests.test_wrong_container_owner_or_image_refused) ... ok
+test_wrong_selection_and_trailing_bytes_refused (test_reference.ReferenceTests.test_wrong_selection_and_trailing_bytes_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 3.216s
+
+OK

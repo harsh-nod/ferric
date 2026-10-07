@@ -76,6 +76,8 @@ The [bounded 40-position readiness route](qualification/guarded-mlp-readiness40-
 passes MI350 CPU qualification: 658 worker tests, 428 selected parent tests,
 and 16 independent data-checker tests. Its first native GPU attempt also passes:
 40 prompt positions through all 36 layers and both ranks, with healthy Close.
+The independent BF16 reference is repeatable, but the numerical comparison
+finds one argmax mismatch in 40 positions; correctness acceptance remains open.
 These are engineering diagnostics, not an end-to-end speedup, sustained 2,048/256 decoding,
 independent full-model numerical acceptance, or a change to production status.
 

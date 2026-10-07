@@ -1,0 +1,83 @@
+{
+  "acceptance_threshold": null,
+  "changes": [
+    "reference evidence_v2 metadata-size correction only; no arithmetic/test change"
+  ],
+  "data_comparison_executed": false,
+  "files": {
+    "README.md": {
+      "bytes": 6311,
+      "sha256": "ae96e2fcdc6a57a8c155de601610c321a2b94e161c079f261a9281e19128c959"
+    },
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "compare.py": {
+      "bytes": 5867,
+      "sha256": "d12367520a03735cdfd0ca21f957daf15abbad63de73dee9763ca511855797ca"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "native_evidence.py": {
+      "bytes": 25540,
+      "sha256": "f81ff9ad0a6dd7a1652701286590779fdaa77209455ce31f5929b6efca67dd73"
+    },
+    "reference.py": {
+      "bytes": 11379,
+      "sha256": "bdaa410f15b485de29c3f1f97c4de86fc18a7b158bad58ee36bfc4df394b8568"
+    },
+    "reference_evidence.py": {
+      "bytes": 30149,
+      "sha256": "98d246d10ac9f755437d94dad9b1a0783b0e307bfae3d7a579ac3c6a086334a4"
+    },
+    "run.py": {
+      "bytes": 14743,
+      "sha256": "9d024fb4b3594145909caffc532bd6a489794c6fdafe5ee4e2f80ebac577ff10"
+    },
+    "test_compare.py": {
+      "bytes": 6698,
+      "sha256": "0f8d500634f107fa645edaf3fec2f6b2e402e79397a321bcc92585db0a45159f"
+    }
+  },
+  "frozen_reference_source": {
+    "bytes": 4695,
+    "sha256": "97dcb5a8dd5e6c986cd8fa792670ab184d77dfeaeb2c742d4a837d07723297ca"
+  },
+  "full_long_workload": false,
+  "full_model_acceptance": false,
+  "future_literal_bindings": [
+    "REFERENCE_TERMINAL",
+    "REFERENCE_ARCHIVE"
+  ],
+  "gpu_execution": false,
+  "native_archive": {
+    "bytes": 2210645,
+    "sha256": "df5c824f18d26b3c1a6cde4e7eb6827f1472a846cbb5b97a0b693001270d3c3c"
+  },
+  "native_rerun": false,
+  "new_test_count": 8,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "previous_source_manifest": {
+    "bytes": 2804,
+    "sha256": "feb4b928d60294f2c8f925bee9b33c424b79cc97bace43ce76732e7b3161ad63"
+  },
+  "production_authority": false,
+  "project_imports_executed": false,
+  "schema": "ferric-readiness40-actual-reference-comparison-source-v2",
+  "source_authored_only": true,
+  "tests": [
+    "test_compare.ComparisonTests.test_all40_input_ids_including_unselected_are_required",
+    "test_compare.ComparisonTests.test_capture_boundary_hash_and_finite_words_are_required",
+    "test_compare.ComparisonTests.test_full152_metrics_and40_argmax_records_never_accept",
+    "test_compare.ComparisonTests.test_full_prompt_and_both_model_identities_are_required",
+    "test_compare.ComparisonTests.test_native_order_selection_and_boolean_scalars_refused",
+    "test_compare.ComparisonTests.test_native_reference_ancestry_and_wire_hash_types_refused",
+    "test_compare.ComparisonTests.test_selected_argmax_and_repeat_gate_are_required",
+    "test_compare.ComparisonTests.test_unselected_argmax_difference_is_diagnostic_not_refusal"
+  ],
+  "tests_executed": false
+}

@@ -1,0 +1,124 @@
+{
+  "archive": {
+    "bytes": 3965567,
+    "sha256": "cd9103d1e73c1af63960f24e9d501f5a6747ff82a505891f38d08657693cf5bc"
+  },
+  "gpu_execution": false,
+  "manifest": {
+    "bytes": 21083,
+    "sha256": "ed1c2e1625240c210e18f3babd305a9537e1b20532582ec39ae227b7083e3495"
+  },
+  "original_receipts_modified": false,
+  "project_execution": false,
+  "schema": "ferric-readiness40-reference-local-retention-v1",
+  "verification": {
+    "external_model_and_package_rehash_performed": false,
+    "external_posthash_authority": "original authenticated owner/inner receipts only",
+    "full_model_acceptance": false,
+    "full_model_forward_calls": 80,
+    "input_files": 7,
+    "model_and_overlay_bodies_retained": false,
+    "native_receipt_authenticated": false,
+    "numerical_acceptance": false,
+    "original_files": 122,
+    "output_files": 15,
+    "owner_name": "complete.json",
+    "owner_terminal": {
+      "bytes": 4477,
+      "sha256": "8dd2b1134cdd5cf6c0888eaac08c580e30890c8a0b47203aa0edc55a02e81759"
+    },
+    "passed": true,
+    "performance_claim": false,
+    "phases": {
+      "after-0": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "after-1": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "after-2": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-0": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-1": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-2": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "cleanup-inspect": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "cpu-tests": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "create": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "created": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "execute": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "exited": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "final-inspect": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "image": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "name-after": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "name-before": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "remove": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      }
+    },
+    "raw_files": 85,
+    "repeat_gate_rechecked": true,
+    "retained_inner_readset_rows": 24,
+    "source_files": 13
+  }
+}

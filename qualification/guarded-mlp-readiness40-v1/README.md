@@ -96,6 +96,51 @@ is 169,839 bytes, SHA-256
 Its 949.65-second outer elapsed time includes setup and checks; it is not
 GPU timing or a decode-throughput measurement.
 
-The next gates remain an independent framework comparison, full bounded request execution,
-independent numerical acceptance, and then sustained matched-workload timing.
-All issue #42 M0-M7 milestones remain open.
+## Independent Framework Comparison
+
+The [independent owner receipt](reference-v1/complete.json) now passes on MI350,
+including 20 pure validation tests, 17 naturally completed supervised phases,
+six all-eight-GPU idle observations and removal of the task-owned container.
+The [framework receipt](reference-v1/output/complete.json) records two fresh-KV
+passes through all 36 layers at each of the first 40 authentic prompt positions:
+80 full-model forwards, zero generated tokens. It never consumes Ferric
+intermediate tensors. All 40 records and the eight selected reference payloads
+repeat exactly between passes.
+
+The reference uses the original Qwen3-8B checkpoint, BF16 parameters, preserved
+FP32 RoPE buffers, deterministic inference and math-only SDPA. It authenticates
+and retokenizes all 2,048 prompt IDs before executing. Its immutable image and
+package overlay, implementation sources, loader record and raw lifecycle
+evidence are preserved in the [reference manifest](reference-v1/manifest.json).
+
+The [data-only comparison](comparison-v2/output/complete.json) runs on MI350,
+passes eight focused tests, revalidates both original runs and the qualified
+16-test native checker, and rejoins all prompt, model, bundle and history IDs.
+It compares 152 selected tensors and all 40 reported argmax values.
+
+**The numerical gate remains open:** 39 of 40 observed argmax values agree.
+At position 5, with input token 271, the reference reports token 2 and Ferric
+reports token 9112. Neither run retained position-5 logits or hidden tensors,
+so the difference's margin and cause are unknown. These are teacher-forced
+prompt predictions, not 40 generated tokens or a model-accuracy benchmark.
+
+| Captured Position | Reference / Ferric Argmax | Logits Relative L2 | Maximum Absolute Logit Difference |
+|---|---|---|---|
+| 0 | 67 / 67 | 0.3045% | 0.0625 |
+| 15 | 374 / 374 | 0.6476% | 0.25 |
+| 16 | 389 / 389 | 0.6887% | 0.125 |
+| 39 | 11 / 11 | 0.6561% | 0.1875 |
+
+Only one of the 152 selected tensors is bit-identical: position 15's layer-0
+hidden state. Both argmax values are recomputed from retained logits at the
+four captured positions; elsewhere they are authenticated original records.
+No acceptance tolerance is inferred from these errors or token agreement.
+
+The next diagnostic preserves the full 40-position schedule, arithmetic and
+limits, but explicitly captures position 5 in a separately named profile.
+Common-position payloads and all 40 input/logit records must first confirm
+that changing capture selection did not change execution results.
+
+The next gates remain resolving the numerical discrepancy, full bounded
+request execution, independent numerical acceptance, and then sustained
+matched-workload timing. All issue #42 M0-M7 milestones remain open.

@@ -1,0 +1,139 @@
+{
+  "files": {
+    "output/comparison-tests.stderr": {
+      "bytes": 1298,
+      "sha256": "062a8d0ae21584648cf5ca8a74f46b6598353c3323034d0075d224cc4013e12b"
+    },
+    "output/complete.json": {
+      "bytes": 94179,
+      "sha256": "50dcd3b01a95164186e517005719de46bc321396089762cf40e9013be14c0494"
+    },
+    "retention-tool.py": {
+      "bytes": 18926,
+      "sha256": "f325c78a6d2161d37c51b189e0f1cdb0fbb01a7a6f81fc4aafb1d68c541480e9"
+    },
+    "source/README.md": {
+      "bytes": 6311,
+      "sha256": "ae96e2fcdc6a57a8c155de601610c321a2b94e161c079f261a9281e19128c959"
+    },
+    "source/common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "source/compare.py": {
+      "bytes": 5867,
+      "sha256": "d12367520a03735cdfd0ca21f957daf15abbad63de73dee9763ca511855797ca"
+    },
+    "source/diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "source/native_evidence.py": {
+      "bytes": 25540,
+      "sha256": "f81ff9ad0a6dd7a1652701286590779fdaa77209455ce31f5929b6efca67dd73"
+    },
+    "source/reference.py": {
+      "bytes": 11379,
+      "sha256": "bdaa410f15b485de29c3f1f97c4de86fc18a7b158bad58ee36bfc4df394b8568"
+    },
+    "source/reference_evidence.py": {
+      "bytes": 30149,
+      "sha256": "98d246d10ac9f755437d94dad9b1a0783b0e307bfae3d7a579ac3c6a086334a4"
+    },
+    "source/run.py": {
+      "bytes": 14743,
+      "sha256": "9d024fb4b3594145909caffc532bd6a489794c6fdafe5ee4e2f80ebac577ff10"
+    },
+    "source/run_bound.py": {
+      "bytes": 14920,
+      "sha256": "c66e8d3d71464db71b361190195421bfd920ba96360a538f1123b5d46bb30009"
+    },
+    "source/source-manifest.json": {
+      "bytes": 3046,
+      "sha256": "32c213315c2eb36c3851489cd23fb874e1ef7e80ab67913f51dd4fb807e03a8e"
+    },
+    "source/test_compare.py": {
+      "bytes": 6698,
+      "sha256": "0f8d500634f107fa645edaf3fec2f6b2e402e79397a321bcc92585db0a45159f"
+    }
+  },
+  "full_recorded_readset_rehashed": true,
+  "gpu_execution": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2",
+  "runtime_execution": false,
+  "schema": "ferric-readiness40-comparison-retention-v1",
+  "verification": {
+    "argmax_matches": 39,
+    "argmax_positions": 40,
+    "authenticated_readset": {
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-checker-evidence-v228-v1.tar.gz": {
+        "bytes": 27743,
+        "sha256": "95cebdbd242abc0d5d8256cd7f7fa11ddc45f5aa18d36e4652baae7b549a8660"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2/common.py": {
+        "bytes": 3172,
+        "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2/compare.py": {
+        "bytes": 5867,
+        "sha256": "d12367520a03735cdfd0ca21f957daf15abbad63de73dee9763ca511855797ca"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2/diagnostics.py": {
+        "bytes": 5084,
+        "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2/native_evidence.py": {
+        "bytes": 25540,
+        "sha256": "f81ff9ad0a6dd7a1652701286590779fdaa77209455ce31f5929b6efca67dd73"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2/reference.py": {
+        "bytes": 11379,
+        "sha256": "bdaa410f15b485de29c3f1f97c4de86fc18a7b158bad58ee36bfc4df394b8568"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2/reference_evidence.py": {
+        "bytes": 30149,
+        "sha256": "98d246d10ac9f755437d94dad9b1a0783b0e307bfae3d7a579ac3c6a086334a4"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2/run_bound.py": {
+        "bytes": 14920,
+        "sha256": "c66e8d3d71464db71b361190195421bfd920ba96360a538f1123b5d46bb30009"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-comparison-v228-v2/test_compare.py": {
+        "bytes": 6698,
+        "sha256": "0f8d500634f107fa645edaf3fec2f6b2e402e79397a321bcc92585db0a45159f"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-gpu-evidence-v228-v1.tar.gz": {
+        "bytes": 2210645,
+        "sha256": "df5c824f18d26b3c1a6cde4e7eb6827f1472a846cbb5b97a0b693001270d3c3c"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-reference-evidence-v228-v2.tar.gz": {
+        "bytes": 3965567,
+        "sha256": "cd9103d1e73c1af63960f24e9d501f5a6747ff82a505891f38d08657693cf5bc"
+      }
+    },
+    "comparison_tests": 8,
+    "exact_tensor_rows": 1,
+    "gpu_execution": false,
+    "metrics_recomputed": false,
+    "modules_imported": false,
+    "numerical_acceptance": false,
+    "original_capsule_bodies_retained": false,
+    "original_files": 13,
+    "output_files": 2,
+    "performance_claim": false,
+    "runner": {
+      "bytes": 14920,
+      "sha256": "c66e8d3d71464db71b361190195421bfd920ba96360a538f1123b5d46bb30009"
+    },
+    "source": {
+      "bytes": 3046,
+      "sha256": "32c213315c2eb36c3851489cd23fb874e1ef7e80ab67913f51dd4fb807e03a8e"
+    },
+    "source_files": 11,
+    "tensor_rows": 152,
+    "terminal": {
+      "bytes": 94179,
+      "sha256": "50dcd3b01a95164186e517005719de46bc321396089762cf40e9013be14c0494"
+    }
+  }
+}

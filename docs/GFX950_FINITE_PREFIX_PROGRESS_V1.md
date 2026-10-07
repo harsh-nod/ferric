@@ -19,6 +19,14 @@ captures pass the qualified independent data checker. Full 2,303-forward
 native admission remains refused. Independent framework comparison,
 full-workload numerical acceptance and performance remain separate gates.
 
+The independent BF16 reference now completes two repeatable 40-position
+full-model passes on MI350. The authenticated comparison reports 39/40 argmax
+agreement, with position 5 differing (reference token 2; Ferric token 9112).
+No position-5 tensor was retained by either run, so its cause and margin remain
+unknown. The four captured positions show 0.30-0.69% logits relative L2 error;
+these are diagnostics, not an acceptance threshold. A separately scoped
+position-5 capture investigation is required before claiming correctness.
+
 The [opt-in paired-terminal runtime API](../qualification/guarded-mlp-terminal-pair-v1/README.md)
 is integrated after 1,119 KFD tests, 658 unchanged worker tests, ten facade
 doctests and 23 clean MI350 CPU phases. It coalesces terminal validation for
