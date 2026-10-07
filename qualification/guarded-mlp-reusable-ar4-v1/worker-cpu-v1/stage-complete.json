@@ -1,0 +1,27 @@
+{
+  "archive": {
+    "bytes": 516981,
+    "sha256": "fd3b0a82618d6b82ff762b5ebc4af38905ae689f814f5164612d84ea60313585"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 13417,
+    "sha256": "949d24b260bdcf50f8dc21f4411477fd7fbe57a6340f6afd402b6dc0e9ca6b5f"
+  },
+  "copied_unchanged_files": 983,
+  "helpers": 2,
+  "input": {
+    "bytes": 206356,
+    "sha256": "cb937b1f316a7b5843a5345e44b6625b8bb3573c9e7e0f1b921556e6e9387f8d"
+  },
+  "lockfiles_changed": false,
+  "overlay_files": 12,
+  "passed": true,
+  "project_execution": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-worker-cpu-v228-v1",
+  "runtime_files": 811,
+  "schema": "ferric-guarded-mlp-reusable-ar4-worker-source-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 997,
+  "worker_files": 184
+}

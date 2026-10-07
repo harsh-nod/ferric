@@ -1,0 +1,39 @@
+{
+  "controller": {
+    "bytes": 6463,
+    "sha256": "6374616ca699a066d6814b45e2ce233f289cc09204cf7bc5af1ea7c366f3ae37"
+  },
+  "elapsed_seconds": 0.00596465403214097,
+  "errors": 0,
+  "failure": null,
+  "failures": 0,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-reusable-ar4-census-cpu-v1",
+  "sources": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-census-tests-v228-v1.py": {
+      "bytes": 4375,
+      "sha256": "d4f19ae2f4bcf9f68464a7b8951b82368183cec6db998a0ed55449d2349e7f64"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-validator-v228-v1.py": {
+      "bytes": 15574,
+      "sha256": "9d0f860d0174ef5574c3023253b4e220ff16bfba845ad13c7e0ce210cdc66ed7"
+    }
+  },
+  "stderr": {
+    "bytes": 1072,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-census-cpu-v228-v1/stderr",
+    "sha256": "c547c2fce681863473ad7e46791091aa8350a1d1e0191527982b784fb0567af9"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-census-cpu-v228-v1/stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "subprocesses_started": 0,
+  "synthetic_evidence_only": true,
+  "tests_run": 8
+}

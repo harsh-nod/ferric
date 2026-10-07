@@ -91,8 +91,11 @@ raising allocation limits or changing the fresh default. The initial Rustdoc
 parser failure remains retained; eight parser regressions and a fresh full rerun
 pass. This removes the runtime implementation blocker behind the fresh path's
 forward-38 allocation limit, but native reuse and its expected 787/783 allocation
-plateau are not yet demonstrated. The opt-in worker route, full request and
-sustained performance remain separate gates.
+plateau are not yet demonstrated. The [opt-in reusable AR4 worker](../qualification/guarded-mlp-reusable-ar4-v1/README.md)
+now passes all nine MI350 CPU phases: 615 tests pass with four unchanged ignores.
+Its twelve tested postimages are integrated, and all eight synthetic allocation
+census checks pass. The parent qualification, actual native reuse, full request
+and sustained performance remain separate gates.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials

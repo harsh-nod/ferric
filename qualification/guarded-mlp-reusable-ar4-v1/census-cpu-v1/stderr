@@ -1,0 +1,13 @@
+test_actual_width_ids_and_closed_positive_record (test_census.CensusTests.test_actual_width_ids_and_closed_positive_record) ... ok
+test_bounds_and_nonfinite_json (test_census.CensusTests.test_bounds_and_nonfinite_json) ... ok
+test_close_and_claim_flags_are_strict (test_census.CensusTests.test_close_and_claim_flags_are_strict) ... ok
+test_fresh_schema_teacher_forcing_or_changed_bootstrap_refuse (test_census.CensusTests.test_fresh_schema_teacher_forcing_or_changed_bootstrap_refuse) ... ok
+test_growth_rank_swap_or_non_integer_counts (test_census.CensusTests.test_growth_rank_swap_or_non_integer_counts) ... ok
+test_missing_extra_or_duplicate_fields (test_census.CensusTests.test_missing_extra_or_duplicate_fields) ... ok
+test_missing_extra_or_reordered_samples (test_census.CensusTests.test_missing_extra_or_reordered_samples) ... ok
+test_stale_profile_registration_session_and_devices (test_census.CensusTests.test_stale_profile_registration_session_and_devices) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.002s
+
+OK
