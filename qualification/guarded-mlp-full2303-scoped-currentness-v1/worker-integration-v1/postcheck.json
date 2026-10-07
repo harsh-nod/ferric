@@ -1,0 +1,15 @@
+{
+  "all212_worker_bodies_equal_qualified_postimages": true,
+  "full_parent_qualification": false,
+  "native_execution": false,
+  "original_runtime_cargo_identities_verified": true,
+  "passed": true,
+  "runtime_changed": false,
+  "schema": "ferric-full2303-scoped-worker-integration-postcheck-v1",
+  "source_map": {
+    "bytes": 430941,
+    "sha256": "c3dbb35ea085d4166e4b5ee58b29732ebfe2f14c63599f693ceefdc5a8959d37"
+  },
+  "unchanged_nonworker_ferric_bodies": 1054,
+  "unchanged_runtime_nonfixture_bodies": 816
+}
