@@ -1,0 +1,31 @@
+test_addition_matches_fraction_not_host_float (test_fp32_replay.Fp32ReplayTests.test_addition_matches_fraction_not_host_float) ... ok
+test_all_lanes_all_steps_and_xor_tree_fraction_reference (test_fp32_replay.Fp32ReplayTests.test_all_lanes_all_steps_and_xor_tree_fraction_reference) ... ok
+test_bf16_boundary_materializes_before_residual (test_fp32_replay.Fp32ReplayTests.test_bf16_boundary_materializes_before_residual) ... ok
+test_encoding_decoding_matches_independent_fraction (test_fp32_replay.Fp32ReplayTests.test_encoding_decoding_matches_independent_fraction) ... ok
+test_fraction_nearest_neighbor_midpoints_and_neighbors (test_fp32_replay.Fp32ReplayTests.test_fraction_nearest_neighbor_midpoints_and_neighbors) ... ok
+test_gradual_underflow_and_signed_zero (test_fp32_replay.Fp32ReplayTests.test_gradual_underflow_and_signed_zero) ... ok
+test_lane_cancellation_preserves_actual_association (test_fp32_replay.Fp32ReplayTests.test_lane_cancellation_preserves_actual_association) ... ok
+test_midpoint_distance_has_explicit_exact_scale (test_fp32_replay.Fp32ReplayTests.test_midpoint_distance_has_explicit_exact_scale) ... ok
+test_nonfinite_shape_and_overflow_refusals (test_fp32_replay.Fp32ReplayTests.test_nonfinite_shape_and_overflow_refusals) ... ok
+test_overflow_threshold_both_signs (test_fp32_replay.Fp32ReplayTests.test_overflow_threshold_both_signs) ... ok
+test_partials_are_not_individually_narrowed (test_fp32_replay.Fp32ReplayTests.test_partials_are_not_individually_narrowed) ... ok
+test_product_underflow_and_subnormal_counters (test_fp32_replay.Fp32ReplayTests.test_product_underflow_and_subnormal_counters) ... ok
+test_all_rows_and_independent_rank_residuals (test_r2.R2Tests.test_all_rows_and_independent_rank_residuals) ... ok
+test_capture_closes_all_parts_and_actual_output_join (test_r2.R2Tests.test_capture_closes_all_parts_and_actual_output_join) ... ok
+test_failed_admission_identity_and_saved_observations_refuse (test_r2.R2Tests.test_failed_admission_identity_and_saved_observations_refuse) ... ok
+test_framework_control_is_separate_and_reports_mismatch (test_r2.R2Tests.test_framework_control_is_separate_and_reports_mismatch) ... ok
+test_materialization_zero_and_overflow_boundaries (test_r2.R2Tests.test_materialization_zero_and_overflow_boundaries) ... ok
+test_nonfinite_all_operand_and_output_roles_refuse (test_r2.R2Tests.test_nonfinite_all_operand_and_output_roles_refuse) ... ok
+test_one_mutated_output_remains_an_exact_mismatch (test_r2.R2Tests.test_one_mutated_output_remains_an_exact_mismatch) ... ok
+test_role_extent_and_bytes_type_are_closed (test_r2.R2Tests.test_role_extent_and_bytes_type_are_closed) ... ok
+test_body_part_and_comparison_hash_drift_refuse (test_position5.Position5Tests.test_body_part_and_comparison_hash_drift_refuse) ... ok
+test_full4096_rows_own_operands_and_separate_framework_control (test_position5.Position5Tests.test_full4096_rows_own_operands_and_separate_framework_control) ... ok
+test_missing_duplicate_scalar_boundary_extent_and_gap_refuse (test_position5.Position5Tests.test_missing_duplicate_scalar_boundary_extent_and_gap_refuse) ... ok
+test_observed_output_error_is_reported_without_acceptance (test_position5.Position5Tests.test_observed_output_error_is_reported_without_acceptance) ... ok
+test_repeat_complete_capture_pin_and_prior_admission_refuse (test_position5.Position5Tests.test_repeat_complete_capture_pin_and_prior_admission_refuse) ... ok
+test_wrong_position_generation_layer_and_boolean_rank_refuse (test_position5.Position5Tests.test_wrong_position_generation_layer_and_boolean_rank_refuse) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.960s
+
+OK

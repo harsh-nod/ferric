@@ -265,6 +265,20 @@ policy also has an absolute cancellation bound, so these counts do not imply
 a failed component check. Separate 80/160-digit calculations agree on all six
 selected rounded words but are not rigorous rounding proofs or pass criteria.
 
+## Position-Five Residual Replay
+
+The [captured R2 boundary replay](position5-r2-replay-v1/RESULTS.md) passed
+26 tests on `mi350`. Across all 4,096 rows, both native ranks' final BF16
+encodings reproduce exactly from their own captured FP32 Down partials and
+first residuals: 8,192 of 8,192 words. The separate framework control also
+reproduces all 4,096 words from its own captured BF16 projection and residual.
+
+The replay preserves FP32 rank-addition order, BF16 materialization before
+the residual addition, and final BF16 narrowing. Fourteen final-hidden rows
+still differ between native and framework. This boundary check does not replay
+the Down dot products or explain the argmax difference. It changes no arithmetic,
+input history, tolerance or numerical-acceptance gate.
+
 ## Remaining Gates
 
 Both native and framework instrumentation preserve their own prior histories
