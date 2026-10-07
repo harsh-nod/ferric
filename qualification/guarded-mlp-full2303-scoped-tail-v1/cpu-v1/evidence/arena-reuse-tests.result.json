@@ -1,0 +1,55 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/fe2o3/Cargo.toml",
+    "-p",
+    "fe2o3-kfd",
+    "--features",
+    "engineering-gfx950",
+    "--lib",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::arena::retired::reuse::tests::",
+    "--",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2550,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/evidence/arena-reuse-tests.command.json",
+    "sha256": "dcb79ee6b58a9caa158359964d71b9a510e6570e27e99817cfdcae8fd0513358"
+  },
+  "elapsed_ns": 124073546,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "arena-reuse-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 2429131,
+  "pid": 2429131,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 3962,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/evidence/arena-reuse-tests.stderr",
+    "sha256": "22f594be11c2f369f33966d5d6bac18c55a072458837436a3759c0a5ca6f63d2"
+  },
+  "stdout": {
+    "bytes": 1261,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/evidence/arena-reuse-tests.stdout",
+    "sha256": "bcf88b3f4b22900ba046053d60526f5521d5b79b51b06161c4af67461aa34cd5"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

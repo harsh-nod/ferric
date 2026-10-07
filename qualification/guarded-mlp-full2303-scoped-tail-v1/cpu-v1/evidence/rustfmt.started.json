@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_bank_scoped_census_tail_v1.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_full2303_bank_scoped_census_tail_v1_tests.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_forward.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_bank_census_tail_v1.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_bank_census_tail_v1_tests.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_cli_v1_tests.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_full2303_v1.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-full2303-scoped-tail-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs"
+  ],
+  "pgid": 2417417,
+  "pid": 2417417
+}

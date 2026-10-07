@@ -83,9 +83,15 @@ The parent failure is a shared test's backend-specific module reference. The
 [test-only repair passed a fresh complete runtime/worker qualification](../qualification/guarded-mlp-scoped-tail-v1/cpu-attempt-v2/README.md)
 and is integrated. The [fresh parent retry also passed](../qualification/guarded-mlp-scoped-tail-v1/parent-cpu-v2/README.md),
 and its seven tested source files are integrated. The native pair is retained
-separately from CPU qualification. Tail remains a distinct Readiness40 route,
-not Full2303 activation. Both the original failure and measured regressions
+separately from CPU qualification. This measured Tail experiment remains a
+distinct Readiness40 route, not Full2303 activation. Both the original failure and measured regressions
 remain visible. The report's data-only reproduction needs no new GPU launch.
+
+The [new full-request scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)
+has since passed a separate 27-phase MI350 CPU qualification: 1,180 runtime
+and 838 worker tests, with existing skips unchanged. Its tested source is
+integrated. Parent qualification and native Full2303 execution are separate
+pending gates; this does not turn the short ablation into a decode demo.
 
 ## Still Open
 

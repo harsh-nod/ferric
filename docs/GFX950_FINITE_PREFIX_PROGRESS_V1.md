@@ -6,7 +6,17 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest implementation: the [opt-in scoped tail runtime and worker](../qualification/guarded-mlp-scoped-tail-v1/README.md)
+Latest implementation: the [Full2303 scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)
+passes all 27 MI350 CPU phases in 186.074 seconds: 1,180 runtime and 838 worker
+passes, with eight/four existing ignores unchanged. Its twelve actual tested
+Rust postimages are integrated after independent original-data review and a
+complete 1,294-Ferric/825-runtime source postcheck. Parent qualification is
+pending. This adds an explicit full-request selector but does not demonstrate
+native Full2303 execution, one-hour feasibility or independent numerical
+acceptance. Repeated immutable kernel-admission work is the next host-overhead
+measurement candidate; no saving is asserted before measurement.
+
+The preceding [opt-in scoped tail runtime and worker](../qualification/guarded-mlp-scoped-tail-v1/README.md)
 passed all 27 MI350 CPU phases in 173.159 seconds: 1,180 runtime passes and
 820 worker passes, with the existing eight/four ignores unchanged. All nineteen
 actual tested Rust postimages are integrated with a complete 825-runtime and
@@ -33,8 +43,9 @@ show warm-forward parent wall time falling from 72.284347 to 68.373602 seconds
 time rises 1.119270%. This is one ordered pair, not sustained throughput or
 GPU time. The [community demo runbook](GFX950_COMMUNITY_DEMO_V1.md) now includes
 both retained ablations with their limits; their gains are not multiplied.
-The tail path remains Readiness40-only and does not resolve the independent
-position-5 discrepancy or admit Full2303 execution.
+That measured tail path is Readiness40-only. The separate CPU-qualified Full
+worker does not resolve the independent position-5 discrepancy or admit
+Full2303 execution.
 
 The [first selected Down-dot diagnostic attempt](../qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/RESULTS.md)
 ran all 48 synthetic tests on MI350: 47 passed and one failed because a fixture
