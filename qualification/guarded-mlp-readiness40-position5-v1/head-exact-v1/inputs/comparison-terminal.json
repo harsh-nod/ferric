@@ -1,0 +1,937 @@
+{
+  "acceptance_threshold": null,
+  "checks": {
+    "both_native_structural_admissions_rechecked": true,
+    "diagnostic": {
+      "acceptance_threshold": null,
+      "all40_native_pins_unchanged": true,
+      "all40_reference_pins_unchanged": true,
+      "common_payloads_equal": [
+        0,
+        16,
+        39
+      ],
+      "diagnostic_native_frames": {
+        "bytes": 134227,
+        "sha256": "24842304b8f67b82e46cf135cae1841c14765ec3482c0368bb77153e6666f9f2"
+      },
+      "first_nonidentical_layer_hidden": 0,
+      "full_model_acceptance": false,
+      "input_token": 271,
+      "native": {
+        "targets": [
+          {
+            "bf16_word": 16797,
+            "rank": 2,
+            "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+            "token": 2,
+            "value": 19.625
+          },
+          {
+            "bf16_word": 16798,
+            "rank": 1,
+            "signed_units_2_pow_minus133": 215058455894033108908852751896877509640192,
+            "token": 9112,
+            "value": 19.75
+          }
+        ],
+        "tie_break": "lowest token ID among equal finite values; signed zeros equal",
+        "token2_minus_token9112_units_2_pow_minus133": -1361129467683753853853498429727072845824,
+        "top_two": [
+          {
+            "bf16_word": 16798,
+            "rank": 1,
+            "signed_units_2_pow_minus133": 215058455894033108908852751896877509640192,
+            "token": 9112,
+            "value": 19.75
+          },
+          {
+            "bf16_word": 16797,
+            "rank": 2,
+            "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+            "token": 2,
+            "value": 19.625
+          }
+        ],
+        "top_two_margin_units_2_pow_minus133": 1361129467683753853853498429727072845824
+      },
+      "native_structural_admission": false,
+      "note": "First byte difference is not by itself an arithmetic bug; association can differ.",
+      "numerical_acceptance": false,
+      "original_native_frames": {
+        "bytes": 133572,
+        "sha256": "91f6d3d009669abe84184be5b1f28079bcaec8bc85845aed5e88be83bb7ae29e"
+      },
+      "performance_claim": false,
+      "position": 5,
+      "prompt": {
+        "bytes": 8192,
+        "sha256": "2e81cc60562760f972450ef9205a4e764fa3cce6289d85754e7dfbd7de4d4d02"
+      },
+      "receipt_authentication": false,
+      "reference": {
+        "targets": [
+          {
+            "bf16_word": 16797,
+            "rank": 1,
+            "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+            "token": 2,
+            "value": 19.625
+          },
+          {
+            "bf16_word": 16797,
+            "rank": 2,
+            "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+            "token": 9112,
+            "value": 19.625
+          }
+        ],
+        "tie_break": "lowest token ID among equal finite values; signed zeros equal",
+        "token2_minus_token9112_units_2_pow_minus133": 0,
+        "top_two": [
+          {
+            "bf16_word": 16797,
+            "rank": 1,
+            "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+            "token": 2,
+            "value": 19.625
+          },
+          {
+            "bf16_word": 16797,
+            "rank": 2,
+            "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+            "token": 9112,
+            "value": 19.625
+          }
+        ],
+        "top_two_margin_units_2_pow_minus133": 0
+      },
+      "schema": "ferric-readiness40-position5-conditional-diagnostic-v1",
+      "tensors": {
+        "final-norm": {
+          "elements": 4096,
+          "exact_words": 562,
+          "max_abs_error": 1.5,
+          "max_bf16_steps": 30582,
+          "relative_l2": 0.010212657130020985,
+          "rmse": 0.02870166393148669,
+          "zero_reference_norm": false
+        },
+        "layer0-hidden": {
+          "elements": 4096,
+          "exact_words": 4082,
+          "max_abs_error": 0.00048828125,
+          "max_bf16_steps": 8,
+          "relative_l2": 8.693674506518034e-05,
+          "rmse": 1.3963779486488846e-05,
+          "zero_reference_norm": false
+        },
+        "layer1-hidden": {
+          "elements": 4096,
+          "exact_words": 1971,
+          "max_abs_error": 0.0078125,
+          "max_bf16_steps": 29312,
+          "relative_l2": 0.0016421810288794279,
+          "rmse": 0.0003607365777368862,
+          "zero_reference_norm": false
+        },
+        "layer10-hidden": {
+          "elements": 4096,
+          "exact_words": 553,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 30883,
+          "relative_l2": 0.011346437311819493,
+          "rmse": 0.010011561491091737,
+          "zero_reference_norm": false
+        },
+        "layer11-hidden": {
+          "elements": 4096,
+          "exact_words": 457,
+          "max_abs_error": 0.0625,
+          "max_bf16_steps": 30848,
+          "relative_l2": 0.01194964356067847,
+          "rmse": 0.011544097488407509,
+          "zero_reference_norm": false
+        },
+        "layer12-hidden": {
+          "elements": 4096,
+          "exact_words": 419,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30960,
+          "relative_l2": 0.011331072057433727,
+          "rmse": 0.012020915293139093,
+          "zero_reference_norm": false
+        },
+        "layer13-hidden": {
+          "elements": 4096,
+          "exact_words": 471,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30944,
+          "relative_l2": 0.011915339266900266,
+          "rmse": 0.01339132647143061,
+          "zero_reference_norm": false
+        },
+        "layer14-hidden": {
+          "elements": 4096,
+          "exact_words": 441,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31104,
+          "relative_l2": 0.011154631676289897,
+          "rmse": 0.013923368655362273,
+          "zero_reference_norm": false
+        },
+        "layer15-hidden": {
+          "elements": 4096,
+          "exact_words": 435,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31014,
+          "relative_l2": 0.011382022267551431,
+          "rmse": 0.01487238108154803,
+          "zero_reference_norm": false
+        },
+        "layer16-hidden": {
+          "elements": 4096,
+          "exact_words": 460,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31088,
+          "relative_l2": 0.011136070105362874,
+          "rmse": 0.016163629368558422,
+          "zero_reference_norm": false
+        },
+        "layer17-hidden": {
+          "elements": 4096,
+          "exact_words": 440,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31152,
+          "relative_l2": 0.01092510847677229,
+          "rmse": 0.017101888930048728,
+          "zero_reference_norm": false
+        },
+        "layer18-hidden": {
+          "elements": 4096,
+          "exact_words": 470,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30944,
+          "relative_l2": 0.010598694963093253,
+          "rmse": 0.01786785032481459,
+          "zero_reference_norm": false
+        },
+        "layer19-hidden": {
+          "elements": 4096,
+          "exact_words": 516,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 30984,
+          "relative_l2": 0.010532733831492676,
+          "rmse": 0.019829901163236133,
+          "zero_reference_norm": false
+        },
+        "layer2-hidden": {
+          "elements": 4096,
+          "exact_words": 1376,
+          "max_abs_error": 0.0078125,
+          "max_bf16_steps": 29648,
+          "relative_l2": 0.0022501609759188585,
+          "rmse": 0.0006313274116297631,
+          "zero_reference_norm": false
+        },
+        "layer20-hidden": {
+          "elements": 4096,
+          "exact_words": 506,
+          "max_abs_error": 0.25,
+          "max_bf16_steps": 31031,
+          "relative_l2": 0.010470361109640468,
+          "rmse": 0.021025112875383372,
+          "zero_reference_norm": false
+        },
+        "layer21-hidden": {
+          "elements": 4096,
+          "exact_words": 526,
+          "max_abs_error": 0.5,
+          "max_bf16_steps": 31216,
+          "relative_l2": 0.010984377829647892,
+          "rmse": 0.024223856657364002,
+          "zero_reference_norm": false
+        },
+        "layer22-hidden": {
+          "elements": 4096,
+          "exact_words": 607,
+          "max_abs_error": 0.75,
+          "max_bf16_steps": 31004,
+          "relative_l2": 0.01054196628135623,
+          "rmse": 0.027097879778271685,
+          "zero_reference_norm": false
+        },
+        "layer23-hidden": {
+          "elements": 4096,
+          "exact_words": 637,
+          "max_abs_error": 1.5,
+          "max_bf16_steps": 31448,
+          "relative_l2": 0.011815848933378777,
+          "rmse": 0.03833455913815694,
+          "zero_reference_norm": false
+        },
+        "layer24-hidden": {
+          "elements": 4096,
+          "exact_words": 644,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31168,
+          "relative_l2": 0.011621330197852098,
+          "rmse": 0.05139918951599389,
+          "zero_reference_norm": false
+        },
+        "layer25-hidden": {
+          "elements": 4096,
+          "exact_words": 558,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31324,
+          "relative_l2": 0.011384172368219717,
+          "rmse": 0.059422720176297836,
+          "zero_reference_norm": false
+        },
+        "layer26-hidden": {
+          "elements": 4096,
+          "exact_words": 565,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31440,
+          "relative_l2": 0.010763288016808507,
+          "rmse": 0.06540514046049252,
+          "zero_reference_norm": false
+        },
+        "layer27-hidden": {
+          "elements": 4096,
+          "exact_words": 531,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31584,
+          "relative_l2": 0.010286057203067273,
+          "rmse": 0.07157894991221699,
+          "zero_reference_norm": false
+        },
+        "layer28-hidden": {
+          "elements": 4096,
+          "exact_words": 480,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31668,
+          "relative_l2": 0.009787208582824386,
+          "rmse": 0.07963566662227327,
+          "zero_reference_norm": false
+        },
+        "layer29-hidden": {
+          "elements": 4096,
+          "exact_words": 488,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31656,
+          "relative_l2": 0.009317326336960764,
+          "rmse": 0.08733306760249729,
+          "zero_reference_norm": false
+        },
+        "layer3-hidden": {
+          "elements": 4096,
+          "exact_words": 1288,
+          "max_abs_error": 0.03125,
+          "max_bf16_steps": 29872,
+          "relative_l2": 0.0031075108672717353,
+          "rmse": 0.0010882184914527472,
+          "zero_reference_norm": false
+        },
+        "layer30-hidden": {
+          "elements": 4096,
+          "exact_words": 454,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31344,
+          "relative_l2": 0.008661743710589543,
+          "rmse": 0.09487460169374616,
+          "zero_reference_norm": false
+        },
+        "layer31-hidden": {
+          "elements": 4096,
+          "exact_words": 461,
+          "max_abs_error": 2.0,
+          "max_bf16_steps": 31827,
+          "relative_l2": 0.008407136664360677,
+          "rmse": 0.10376272709210553,
+          "zero_reference_norm": false
+        },
+        "layer32-hidden": {
+          "elements": 4096,
+          "exact_words": 435,
+          "max_abs_error": 4.0,
+          "max_bf16_steps": 31866,
+          "relative_l2": 0.009330931969489847,
+          "rmse": 0.1279400587996606,
+          "zero_reference_norm": false
+        },
+        "layer33-hidden": {
+          "elements": 4096,
+          "exact_words": 429,
+          "max_abs_error": 1.0,
+          "max_bf16_steps": 31648,
+          "relative_l2": 0.00820082262609055,
+          "rmse": 0.12391574049836317,
+          "zero_reference_norm": false
+        },
+        "layer34-hidden": {
+          "elements": 4096,
+          "exact_words": 495,
+          "max_abs_error": 1.5,
+          "max_bf16_steps": 31776,
+          "relative_l2": 0.006005124966376192,
+          "rmse": 0.13809117633064122,
+          "zero_reference_norm": false
+        },
+        "layer35-hidden": {
+          "elements": 4096,
+          "exact_words": 586,
+          "max_abs_error": 8.0,
+          "max_bf16_steps": 31616,
+          "relative_l2": 0.006278410811533813,
+          "rmse": 0.2101684789330218,
+          "zero_reference_norm": false
+        },
+        "layer4-hidden": {
+          "elements": 4096,
+          "exact_words": 1156,
+          "max_abs_error": 0.01171875,
+          "max_bf16_steps": 30080,
+          "relative_l2": 0.0025774371497207372,
+          "rmse": 0.0012869733534064279,
+          "zero_reference_norm": false
+        },
+        "layer5-hidden": {
+          "elements": 4096,
+          "exact_words": 1108,
+          "max_abs_error": 0.015625,
+          "max_bf16_steps": 30160,
+          "relative_l2": 0.002755235376457313,
+          "rmse": 0.0017238843779813584,
+          "zero_reference_norm": false
+        },
+        "layer6-hidden": {
+          "elements": 4096,
+          "exact_words": 1010,
+          "max_abs_error": 0.03125,
+          "max_bf16_steps": 30204,
+          "relative_l2": 0.004598945903768339,
+          "rmse": 0.002857272839500578,
+          "zero_reference_norm": false
+        },
+        "layer7-hidden": {
+          "elements": 4096,
+          "exact_words": 824,
+          "max_abs_error": 0.03125,
+          "max_bf16_steps": 30400,
+          "relative_l2": 0.006859121302738833,
+          "rmse": 0.0045027706338522586,
+          "zero_reference_norm": false
+        },
+        "layer8-hidden": {
+          "elements": 4096,
+          "exact_words": 695,
+          "max_abs_error": 0.046875,
+          "max_bf16_steps": 30624,
+          "relative_l2": 0.009095091496254273,
+          "rmse": 0.0071839898582315405,
+          "zero_reference_norm": false
+        },
+        "layer9-hidden": {
+          "elements": 4096,
+          "exact_words": 609,
+          "max_abs_error": 0.125,
+          "max_bf16_steps": 30756,
+          "relative_l2": 0.010936286788398883,
+          "rmse": 0.009095772621392108,
+          "zero_reference_norm": false
+        },
+        "logits": {
+          "elements": 151936,
+          "exact_words": 25042,
+          "max_abs_error": 0.1875,
+          "max_bf16_steps": 30915,
+          "relative_l2": 0.007778832371887847,
+          "rmse": 0.04755121396667008,
+          "zero_reference_norm": false
+        }
+      }
+    },
+    "diagnostic_checker": {
+      "original_bytes_rechecked": true,
+      "terminal": {
+        "bytes": 10980,
+        "sha256": "7df4ccb245eae6f517182cc9cd04977ff2ec6180f5c16bb11e9269a5e4ae6468"
+      },
+      "tests": {
+        "errors": 0,
+        "failed": 0,
+        "names": [
+          "test_readiness.ReadinessTests.test_all144_pages_and_page_boundary_are_closed",
+          "test_readiness.ReadinessTests.test_authentic_prompt_only_not_argmax_feedback",
+          "test_readiness.ReadinessTests.test_bank_retirement_local_generation_and_bool_are_checked",
+          "test_readiness.ReadinessTests.test_capture_path_digest_order_and_truncation",
+          "test_readiness.ReadinessTests.test_close_generated_tokens_and_native_retirement",
+          "test_readiness.ReadinessTests.test_complete40_original_chain_and_four_selected_payloads",
+          "test_readiness.ReadinessTests.test_extra_fields_authority_and_observer_stderr_refused",
+          "test_readiness.ReadinessTests.test_frame_order_missing_and_extra_are_refused",
+          "test_readiness.ReadinessTests.test_full2303_and_legacy_profiles_are_refused",
+          "test_readiness.ReadinessTests.test_marker_alone_never_substitutes_owned_lineage",
+          "test_readiness.ReadinessTests.test_original_readiness_profile_and_schema_are_refused",
+          "test_readiness.ReadinessTests.test_payload_finite_lowest_tie_and_signed_zero",
+          "test_readiness.ReadinessTests.test_readiness_marker_is_distinct_and_unique",
+          "test_readiness.ReadinessTests.test_selected_guard_and_queue_words_are_independently_checked",
+          "test_readiness.ReadinessTests.test_stream_and_retention_accounting_are_exact",
+          "test_readiness.ReadinessTests.test_strict_json_scalars_and_boolean_identity",
+          "test_readiness.ReadinessTests.test_unselected_hashes_and_chains_remain_authenticated"
+        ],
+        "passed": 17,
+        "skipped": 0
+      }
+    },
+    "diagnostic_function_gate": {
+      "original_bytes_rechecked": true,
+      "terminal": {
+        "bytes": 10052,
+        "sha256": "3219e672554998322798e4ff4e5625bc4ddf8b3fcbb6a33e42627bc7e31fc2e0"
+      },
+      "tests": {
+        "errors": 0,
+        "failed": 0,
+        "names": [
+          "test_compare.DiagnosticTests.test_all40_logit_pins_must_agree_not_only_selected",
+          "test_compare.DiagnosticTests.test_authentic_history_and_boolean_ids_refused",
+          "test_compare.DiagnosticTests.test_common_payload_bytes_and_selection_are_not_assumed",
+          "test_compare.DiagnosticTests.test_complete_parity_reports_no_acceptance",
+          "test_compare.DiagnosticTests.test_exact_bf16_integer_units_include_subnormal_and_signed_zero",
+          "test_compare.DiagnosticTests.test_reference_all40_logits_and_repeats_must_agree",
+          "test_compare.DiagnosticTests.test_top_two_ties_use_lowest_token_and_zero_margin"
+        ],
+        "passed": 7,
+        "skipped": 0
+      }
+    },
+    "diagnostic_native": {
+      "checker_cpu": {
+        "bytes": 10980,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-checker-cpu-v228-v1/evidence/complete.json",
+        "sha256": "7df4ccb245eae6f517182cc9cd04977ff2ec6180f5c16bb11e9269a5e4ae6468"
+      },
+      "cpu_and_elf_metadata": {
+        "parent": {
+          "bytes": 13610016,
+          "sha256": "6ba5a365c42efa7696f96435b425cecdc2b55eb5ff3f02b9af7643b3b11cbbdc"
+        },
+        "parent_cpu": {
+          "bytes": 3906702,
+          "sha256": "31c4eb476bf489a7f993e1e5886d9f58d3fe041016f359b06902bd4973c72778"
+        },
+        "worker": {
+          "bytes": 6110696,
+          "sha256": "820e4e9160f269f9898784ecf1e8ad8ebff5408ad1001dbb0d19f6efbf6ed1ef"
+        },
+        "worker_cpu": {
+          "bytes": 1704432,
+          "sha256": "728339a954436b3e191e5efac8c42146521f7acd57c73ac81dc0d4ad55cdd421"
+        }
+      },
+      "data_only": true,
+      "full_long_workload": false,
+      "gpu_execution": false,
+      "model_execution": false,
+      "native_rerun": false,
+      "numerical_acceptance": false,
+      "original_passed": true,
+      "original_raw_files": 70,
+      "original_terminal": {
+        "bytes": 171456,
+        "name": "complete.json",
+        "sha256": "5b9617aba0b588c33923c5cc458b013d0929828be5635ea75f3fd702a12c2cd9"
+      },
+      "performance_claim": false,
+      "production_authority": false,
+      "readiness_completed_forwards": 40,
+      "retained_success_revalidated": true,
+      "selected_original_bodies": 81
+    },
+    "diagnostic_reference": {
+      "external_model_and_package_rehash_performed": false,
+      "external_posthash_authority": "original authenticated owner/inner receipts only",
+      "full_model_acceptance": false,
+      "full_model_forward_calls": 80,
+      "input_files": 7,
+      "model_and_overlay_bodies_retained": false,
+      "native_receipt_authenticated": false,
+      "numerical_acceptance": false,
+      "original_files": 122,
+      "output_files": 15,
+      "owner_name": "complete.json",
+      "owner_terminal": {
+        "bytes": 4508,
+        "sha256": "36365edf95b99eeac27ec91973862959f8b354d876258e29467b19753bd802ae"
+      },
+      "passed": true,
+      "performance_claim": false,
+      "phases": {
+        "after-0": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "after-1": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "after-2": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "before-0": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "before-1": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "before-2": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "cleanup-inspect": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "cpu-tests": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "create": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "created": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "execute": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "exited": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "final-inspect": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "image": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "name-after": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "name-before": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "remove": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        }
+      },
+      "raw_files": 85,
+      "repeat_gate_rechecked": true,
+      "retained_inner_readset_rows": 24,
+      "source_files": 13
+    },
+    "full_original_receipts_authenticated": true,
+    "full_prompt_and_model_bundle_joined": true,
+    "original_checker": {
+      "original_bytes_rechecked": true,
+      "terminal": {
+        "bytes": 10645,
+        "sha256": "f639b7100ee8ec82f5442f0ae9136ea5f367793803ea78b6ca502328e7c69856"
+      },
+      "tests": 16
+    },
+    "original_native": {
+      "checker_cpu": {
+        "bytes": 10645,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-checker-cpu-v228-v1/evidence/complete.json",
+        "sha256": "f639b7100ee8ec82f5442f0ae9136ea5f367793803ea78b6ca502328e7c69856"
+      },
+      "cpu_and_elf_metadata": {
+        "parent": {
+          "bytes": 13582216,
+          "sha256": "3ea6325efb597d422635bd6fdc38e0b88333ef8a7b427ada7ae68946da37c1c1"
+        },
+        "parent_cpu": {
+          "bytes": 3854671,
+          "sha256": "12728ea998174d0645f7b70ddfb46af8454ff50f2856ad2df3fd6c31ac22fc66"
+        },
+        "worker": {
+          "bytes": 6102600,
+          "sha256": "583030e3cc02b389b3924a34d03e1a52f00638243d45bd2cf24db3bce7b7076c"
+        },
+        "worker_cpu": {
+          "bytes": 1675803,
+          "sha256": "2b785c1b8384358f11d547be93614660171c94108aba5e50cdb8db7e4b462b77"
+        }
+      },
+      "data_only": true,
+      "full_long_workload": false,
+      "gpu_execution": false,
+      "model_execution": false,
+      "native_rerun": false,
+      "numerical_acceptance": false,
+      "original_passed": true,
+      "original_raw_files": 70,
+      "original_terminal": {
+        "bytes": 169839,
+        "name": "complete.json",
+        "sha256": "65c85efb646a6980be5a036220e5cfc70acd811b656dc5c821c7f67eae3dd131"
+      },
+      "performance_claim": false,
+      "production_authority": false,
+      "readiness_completed_forwards": 40,
+      "retained_success_revalidated": true,
+      "selected_original_bodies": 81
+    },
+    "original_reference": {
+      "external_model_and_package_rehash_performed": false,
+      "external_posthash_authority": "original authenticated owner/inner receipts only",
+      "full_model_acceptance": false,
+      "full_model_forward_calls": 80,
+      "input_files": 7,
+      "model_and_overlay_bodies_retained": false,
+      "native_receipt_authenticated": false,
+      "numerical_acceptance": false,
+      "original_files": 122,
+      "output_files": 15,
+      "owner_name": "complete.json",
+      "owner_terminal": {
+        "bytes": 4477,
+        "sha256": "8dd2b1134cdd5cf6c0888eaac08c580e30890c8a0b47203aa0edc55a02e81759"
+      },
+      "passed": true,
+      "performance_claim": false,
+      "phases": {
+        "after-0": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "after-1": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "after-2": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "before-0": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "before-1": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "before-2": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "cleanup-inspect": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "cpu-tests": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "create": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "created": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "execute": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "exited": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "final-inspect": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "image": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "name-after": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "name-before": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        },
+        "remove": {
+          "clean": true,
+          "exit_code": 0,
+          "result_present": true
+        }
+      },
+      "raw_files": 85,
+      "repeat_gate_rechecked": true,
+      "retained_inner_readset_rows": 24,
+      "source_files": 13
+    }
+  },
+  "elapsed_seconds": 2.1625531510217115,
+  "error": null,
+  "full_long_workload": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "inputs": [
+    {
+      "bytes": 20762,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/run_bound.py",
+      "sha256": "ffd32c787344001250aa9fe2e88452ad83cf1a4c633eca648c240bfc639b1884"
+    },
+    {
+      "bytes": 2210645,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-gpu-evidence-v228-v1.tar.gz",
+      "sha256": "df5c824f18d26b3c1a6cde4e7eb6827f1472a846cbb5b97a0b693001270d3c3c"
+    },
+    {
+      "bytes": 25540,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/native_evidence.py",
+      "sha256": "f81ff9ad0a6dd7a1652701286590779fdaa77209455ce31f5929b6efca67dd73"
+    },
+    {
+      "bytes": 2196714,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-gpu-evidence-v228-v1.tar.gz",
+      "sha256": "eabac40bfc4ecc4a11390c34a9263a784b6c1941ac6888f58af0ce386be0c349"
+    },
+    {
+      "bytes": 25681,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/new_native_evidence_bound.py",
+      "sha256": "432fb0d7716757209b4cd9d7a15c3851c0c6579d916f9f9e0ca9d6a3abd215b3"
+    },
+    {
+      "bytes": 27743,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-checker-evidence-v228-v1.tar.gz",
+      "sha256": "95cebdbd242abc0d5d8256cd7f7fa11ddc45f5aa18d36e4652baae7b549a8660"
+    },
+    {
+      "bytes": 3965567,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-reference-evidence-v228-v2.tar.gz",
+      "sha256": "cd9103d1e73c1af63960f24e9d501f5a6747ff82a505891f38d08657693cf5bc"
+    },
+    {
+      "bytes": 30149,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/reference_evidence.py",
+      "sha256": "98d246d10ac9f755437d94dad9b1a0783b0e307bfae3d7a579ac3c6a086334a4"
+    },
+    {
+      "bytes": 3928908,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-reference-evidence-v228-v1.tar.gz",
+      "sha256": "3747e54a97c0ca99590fd5a30aa0f59866a71c766cd74ac40872d4b2a8ae9a2f"
+    },
+    {
+      "bytes": 30237,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/new_reference_evidence.py",
+      "sha256": "d7c9b3b45e1addedb5d8518a5f410eb660628b95a85ee13d2801c80ca76d7fa5"
+    },
+    {
+      "bytes": 15079,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/pure_evidence.py",
+      "sha256": "71048139b433d903a37c2344491dfa098ac9e4326e1b8860f462ac80ab9d5145"
+    },
+    {
+      "bytes": 31883,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-checker-evidence-v228-v1.tar.gz",
+      "sha256": "9c5a2d73f3c73a2d63d208d3c018855c56e6cc2bd6416f600c5e29abba7f9564"
+    },
+    {
+      "bytes": 26801,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-diagnostic-evidence-v228-v1.tar.gz",
+      "sha256": "4aac3791a482fa1f72839ee50ca0f7cab1a26ab79a768962861e26b66da5f17b"
+    },
+    {
+      "bytes": 3172,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/common.py",
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    {
+      "bytes": 5084,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/diagnostics.py",
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    {
+      "bytes": 11379,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/reference.py",
+      "sha256": "bdaa410f15b485de29c3f1f97c4de86fc18a7b158bad58ee36bfc4df394b8568"
+    },
+    {
+      "bytes": 8676,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/compare.py",
+      "sha256": "f3e9d141379c7de13726adf83273955a72dcae521c3389778bf12060c217fd7a"
+    }
+  ],
+  "limits": {
+    "address_space_bytes": 1073741824,
+    "affinity": [
+      8,
+      9
+    ],
+    "input_bytes": 134217728,
+    "nice": 10,
+    "output_file_bytes": 8388608,
+    "seconds": 180
+  },
+  "model_execution": false,
+  "native_rerun": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "postcheck_errors": [],
+  "production_authority": false,
+  "schema": "ferric-readiness40-position5-comparison-data-v1"
+}

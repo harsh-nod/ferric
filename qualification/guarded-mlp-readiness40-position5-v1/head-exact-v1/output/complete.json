@@ -1,0 +1,303 @@
+{
+  "diagnostic": {
+    "dot_count": 4,
+    "exact_product_unit": "2^-266",
+    "framework_accumulation_emulation": false,
+    "full_model_acceptance": false,
+    "inputs": {
+      "native": {
+        "dots": {
+          "2": {
+            "exact_decimal": "19.68111478225910104811191558837890625",
+            "exact_minus_19_6875_midpoint_units_2_pow_minus266": "-757102287312758741251088731666532558986259779623068674956100505676839364067328",
+            "exact_units_2_pow_minus266": "2333611416736981740997939969043481689762936631079690702360508793093851854177042432",
+            "nearest_bf16_is_finite": true,
+            "nearest_bf16_word": 16797,
+            "observed_bf16_word": 16797,
+            "observed_decimal": "19.625",
+            "observed_matches_nearest": true,
+            "observed_minus_exact_units_2_pow_minus266": "-6653591423875477765857454308889493543623019238977927423569184870829600932888576"
+          },
+          "9112": {
+            "exact_decimal": "19.742494957710732705891132354736328125",
+            "exact_minus_19_6875_midpoint_units_2_pow_minus266": "6520812596063838071959640844894495622785334815421697501178673874673384772599808",
+            "exact_units_2_pow_minus266": "2340889331620358337811150698620042717944708225674735468536643567474202078313709568",
+            "nearest_bf16_is_finite": true,
+            "nearest_bf16_word": 16798,
+            "observed_bf16_word": 16798,
+            "observed_decimal": "19.75",
+            "observed_matches_nearest": true,
+            "observed_minus_exact_units_2_pow_minus266": "889881115124398435148902195661530479823944203179298597346611501833055524356096"
+          }
+        },
+        "exact_dot_winner_among_two": 9112,
+        "exact_token2_minus_token9112_decimal": "-0.061380175451631657779216766357421875",
+        "exact_token2_minus_token9112_units_2_pow_minus266": "-7277914883376596813210729576561028181771594595044766176134774380350224136667136",
+        "input_pins": {
+          "final_norm": {
+            "bytes": 8192,
+            "sha256": "234c448c444debeefa286567f35abdc99ad6b54c27135a3f2a22126366db65e9"
+          },
+          "logits": {
+            "bytes": 303872,
+            "sha256": "f8d3a7dcc920e482e5059f25256505d525bcf757ef992498ab4df98951203b7e"
+          },
+          "payload": {
+            "bytes": 606976,
+            "sha256": "ee58e231bd29e526a89dc0495dc4990086fc503d97632c544de4651101094b8c"
+          }
+        },
+        "observed_token2_minus_token9112_units_2_pow_minus266": "-14821387422376473014217086081112052205218558037201992197050570753012880593911808"
+      },
+      "reference": {
+        "dots": {
+          "2": {
+            "exact_decimal": "19.6147026113976608030498027801513671875",
+            "exact_minus_19_6875_midpoint_units_2_pow_minus266": "-8631666398500500686155912155335587663683757519022110336795712391993030460047360",
+            "exact_units_2_pow_minus266": "2325736852625793999053035145619812634658239133340291660698669181207535663081062400",
+            "nearest_bf16_is_finite": true,
+            "nearest_bf16_word": 16797,
+            "observed_bf16_word": 16797,
+            "observed_decimal": "19.625",
+            "observed_matches_nearest": true,
+            "observed_minus_exact_units_2_pow_minus266": "1220972687312264179047369114779561561074478500421114238270427015486590163091456"
+          },
+          "9112": {
+            "exact_decimal": "19.6302838144474662840366363525390625",
+            "exact_minus_19_6875_midpoint_units_2_pow_minus266": "-6784186023237453502778280305381666308399895560934966965917247445922721266925568",
+            "exact_units_2_pow_minus266": "2327584333001057046236412777469766556013522995298378804069547646153605972274184192",
+            "nearest_bf16_is_finite": true,
+            "nearest_bf16_word": 16797,
+            "observed_bf16_word": 16797,
+            "observed_decimal": "19.625",
+            "observed_matches_nearest": true,
+            "observed_minus_exact_units_2_pow_minus266": "-626507687950783004330262735174359794209383457666029132608037930583719030030336"
+          }
+        },
+        "exact_dot_winner_among_two": 9112,
+        "exact_token2_minus_token9112_decimal": "-0.0155812030498054809868335723876953125",
+        "exact_token2_minus_token9112_units_2_pow_minus266": "-1847480375263047183377631849953921355283861958087143370878464946070309193121792",
+        "input_pins": {
+          "final_norm": {
+            "bytes": 8192,
+            "sha256": "bd72437a0771ce8b97b0cf9dd9205aeb8a74d4317211ad04825400a532b128b6"
+          },
+          "logits": {
+            "bytes": 303872,
+            "sha256": "3ed0219567d33985718fa3d8ed57f3e597b1ae64559657607a2afbc96497f152"
+          },
+          "payload": {
+            "bytes": 606976,
+            "sha256": "64dcde3a548c3bc93d0086a212465828be460a902034e43809f68ba7b6c5df8e"
+          }
+        },
+        "observed_token2_minus_token9112_units_2_pow_minus266": "0"
+      }
+    },
+    "margin_change_units_2_pow_minus266": "-5430434508113549629833097726607106826487732636957622805256309434279914943545344",
+    "mfma_emulation": false,
+    "midpoint_units_2_pow_minus266": "2334368519024294499739191057775148222321922890859313771035464893599528693541109760",
+    "native_minus_reference_exact_units_2_pow_minus266": {
+      "2": "7874564111187741944904823423669055104697497739399041661839611886316191095980032",
+      "9112": "13304998619301291574737921150276161931185230376356664467095921320596106039525376"
+    },
+    "numerical_acceptance": false,
+    "performance_claim": false,
+    "position": 5,
+    "row_pins": {
+      "2": {
+        "bytes": 8192,
+        "sha256": "c1c41aa0e094b188369487caba4833e6c8abb6472634c79631378d673188e26b"
+      },
+      "9112": {
+        "bytes": 8192,
+        "sha256": "d09815fe29f83b2c827e7141f0397e8d238962cbaf6862f2a434f85983c37189"
+      }
+    },
+    "schema": "ferric-position5-exact-head-diagnostic-v1",
+    "terms_per_dot": 4096,
+    "tokens": [
+      2,
+      9112
+    ],
+    "tolerance_applied": false
+  },
+  "elapsed_seconds": 2.3165666160639375,
+  "error": null,
+  "full_capsule_revalidated": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "inputs": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/README.md": {
+      "bytes": 5804,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/README.md",
+      "sha256": "64d579e9bea3ecbdafa37f7ac7a33057aabd973c7fa85ac61d4c9846c1dde29c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/head.py": {
+      "bytes": 7310,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/head.py",
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/comparison-terminal.json": {
+      "bytes": 32247,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/comparison-terminal.json",
+      "sha256": "e6dbc4712f6a04e11be40b70b09f46bf388cdbd26150e6e2fec1c6e2cac12578"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/native-capture-5.bin": {
+      "bytes": 849800,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/native-capture-5.bin",
+      "sha256": "f0fbe98f9b1c01fafd0f70fef346408d108cf2616e73690b7b3b697a6ebead3b"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/native-request.json": {
+      "bytes": 9173,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/native-request.json",
+      "sha256": "d0ad15ae0ccb90109fe92da6fab8281745da479cf77e68af5a10abeb0988eee4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/native-summary.json": {
+      "bytes": 21394,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/native-summary.json",
+      "sha256": "1ac8dda60bc2234fa640b5cb1c851868bebb1e44898ae4a76ea8cf45138f6078"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/native-terminal.json": {
+      "bytes": 171456,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/native-terminal.json",
+      "sha256": "5b9617aba0b588c33923c5cc458b013d0929828be5635ea75f3fd702a12c2cd9"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/reference-pass1-pos5.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/reference-pass1-pos5.bf16",
+      "sha256": "64dcde3a548c3bc93d0086a212465828be460a902034e43809f68ba7b6c5df8e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/reference-pass2-pos5.bf16": {
+      "bytes": 606976,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/reference-pass2-pos5.bf16",
+      "sha256": "64dcde3a548c3bc93d0086a212465828be460a902034e43809f68ba7b6c5df8e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/reference-terminal.json": {
+      "bytes": 222675,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/inputs/reference-terminal.json",
+      "sha256": "d256b149229d4ba94a1e4f9a3aa2d6f9354c56a721bfe1dc0cb69bbb7c49674f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/run.py": {
+      "bytes": 16325,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/run.py",
+      "sha256": "6f869fca157108fe5054908dea7b675bf9b18ca1b7d45c439e4f5e03060e6f94"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/source-manifest.json": {
+      "bytes": 1246,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/source-manifest.json",
+      "sha256": "6f3ea976217c46a273046e73e13000de66bb171e63f00b978a07e3de78542df4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/test_head.py": {
+      "bytes": 5523,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/test_head.py",
+      "sha256": "fd5b69d14c7fb005642a42a979fac5cc662e83cd20df320d38c66e3efe263f9f"
+    },
+    "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model/target/model.safetensors.index.json": {
+      "bytes": 32878,
+      "path": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model/target/model.safetensors.index.json",
+      "sha256": "f9fdbcb91c23971c13ec5d5f2573d2349e8f61f2f049371ec699281748fdb1bc"
+    }
+  },
+  "limits": {
+    "address_space_bytes": 536870912,
+    "affinity": [
+      8,
+      9
+    ],
+    "cpu_seconds": 120,
+    "nice": 10,
+    "wall_seconds": 180
+  },
+  "mfma_emulation": false,
+  "model_execution": false,
+  "model_shard": {
+    "bytes": 1244659840,
+    "header": {
+      "bytes": 120,
+      "sha256": "205a19ce27198b75abaeedc42f7a64387e19628b7804aff215887b255f1b8dd7"
+    },
+    "path": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model/target/model-00005-of-00005.safetensors",
+    "rows": {
+      "2": {
+        "bytes": 8192,
+        "file_offset": 16512,
+        "sha256": "c1c41aa0e094b188369487caba4833e6c8abb6472634c79631378d673188e26b"
+      },
+      "9112": {
+        "bytes": 8192,
+        "file_offset": 74645632,
+        "sha256": "d09815fe29f83b2c827e7141f0397e8d238962cbaf6862f2a434f85983c37189"
+      }
+    },
+    "sha256": "20c2d6366ab85c90786ccdd829cd2b9e7d30ef3b2ebbb998280e7e4014b542ff",
+    "stable_stat": [
+      66307,
+      110541489,
+      33024,
+      1,
+      9661,
+      9661,
+      1244659840,
+      1787465993000000000,
+      1789675775985034496
+    ],
+    "tensor": {
+      "bytes": 1244659712,
+      "sha256": "6e46ee56769d64b9a338f350100bdfca5f26a91c3fb5bf479ffcb36c733f7939"
+    },
+    "tensor_file_offset": 128
+  },
+  "native_rerun": false,
+  "native_weight_upload_revalidated": false,
+  "numerical_acceptance": false,
+  "original_full_head_shard_rehashed": true,
+  "passed": true,
+  "performance_claim": false,
+  "postcheck_errors": [],
+  "production_authority": false,
+  "reused_prior_native_and_reference_admission": true,
+  "schema": "ferric-position5-exact-head-cpu-v1",
+  "source_pins": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/README.md": {
+      "bytes": 5804,
+      "sha256": "64d579e9bea3ecbdafa37f7ac7a33057aabd973c7fa85ac61d4c9846c1dde29c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/head.py": {
+      "bytes": 7310,
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/run.py": {
+      "bytes": 16325,
+      "sha256": "6f869fca157108fe5054908dea7b675bf9b18ca1b7d45c439e4f5e03060e6f94"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-head-exact-v228-v1/test_head.py": {
+      "bytes": 5523,
+      "sha256": "fd5b69d14c7fb005642a42a979fac5cc662e83cd20df320d38c66e3efe263f9f"
+    }
+  },
+  "tests": {
+    "errors": 0,
+    "failures": 0,
+    "names": [
+      "test_decimal_is_exact_not_float",
+      "test_dot_cancellation_and_exact_products",
+      "test_exact_decode_matches_fraction",
+      "test_four_dots_and_delta_decomposition",
+      "test_fraction_nearest_independent_local_oracle",
+      "test_header_rejects_shape_dtype_extent_and_duplicate",
+      "test_overflow_boundary",
+      "test_payload_extent_and_nonfinite",
+      "test_roundtrip_finite_samples",
+      "test_shard_layout_two_row_offsets",
+      "test_subnormal_normal_and_signed_underflow",
+      "test_ties_even_and_signs"
+    ],
+    "passed": 12,
+    "skipped": 0,
+    "stderr": {
+      "bytes": 1319,
+      "sha256": "a2b16311b0ab041c91914e27518e67968b37b4302cdbe84aa71b5edc921628db"
+    }
+  }
+}

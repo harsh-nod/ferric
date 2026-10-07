@@ -42,6 +42,13 @@ comparison now has a
 rendered on MI350 after ten passing tests. These add diagnostic visibility,
 not numerical acceptance or a performance claim.
 
+The [exact two-row head check](../qualification/guarded-mlp-readiness40-position5-v1/head-exact-v1/RESULTS.md)
+now passes 12 synthetic tests and four exact 4,096-term dots on MI350. All
+four observed BF16 values match exact-dot rounding on their respective
+captured inputs. The head inputs already differ; final rounding of these
+two rows does not explain the upstream discrepancy. Operation-level
+diagnosis and full-model acceptance remain open.
+
 The [opt-in paired-terminal runtime API](../qualification/guarded-mlp-terminal-pair-v1/README.md)
 is integrated after 1,119 KFD tests, 658 unchanged worker tests, ten facade
 doctests and 23 clean MI350 CPU phases. It coalesces terminal validation for

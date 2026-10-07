@@ -1,0 +1,88 @@
+{
+  "checks": {
+    "arithmetic_reexecuted": false,
+    "checkpoint_bodies_retained": false,
+    "external_checkpoint_rehashed": false,
+    "input_members": 8,
+    "numerical_acceptance": false,
+    "original_members": 15,
+    "original_passed": true,
+    "original_receipt_and_body_joins_verified": true,
+    "output_members": 2,
+    "performance_claim": false,
+    "source_members": 5,
+    "terminal": {
+      "bytes": 15728,
+      "sha256": "fb88929815dbfdec7a66cfb87aaa8ae7fe5567c5e059d77d431c8e28053c2597"
+    }
+  },
+  "files": {
+    "README.md": {
+      "bytes": 5804,
+      "sha256": "64d579e9bea3ecbdafa37f7ac7a33057aabd973c7fa85ac61d4c9846c1dde29c"
+    },
+    "head.py": {
+      "bytes": 7310,
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "inputs/comparison-terminal.json": {
+      "bytes": 32247,
+      "sha256": "e6dbc4712f6a04e11be40b70b09f46bf388cdbd26150e6e2fec1c6e2cac12578"
+    },
+    "inputs/native-capture-5.bin": {
+      "bytes": 849800,
+      "sha256": "f0fbe98f9b1c01fafd0f70fef346408d108cf2616e73690b7b3b697a6ebead3b"
+    },
+    "inputs/native-request.json": {
+      "bytes": 9173,
+      "sha256": "d0ad15ae0ccb90109fe92da6fab8281745da479cf77e68af5a10abeb0988eee4"
+    },
+    "inputs/native-summary.json": {
+      "bytes": 21394,
+      "sha256": "1ac8dda60bc2234fa640b5cb1c851868bebb1e44898ae4a76ea8cf45138f6078"
+    },
+    "inputs/native-terminal.json": {
+      "bytes": 171456,
+      "sha256": "5b9617aba0b588c33923c5cc458b013d0929828be5635ea75f3fd702a12c2cd9"
+    },
+    "inputs/reference-pass1-pos5.bf16": {
+      "bytes": 606976,
+      "sha256": "64dcde3a548c3bc93d0086a212465828be460a902034e43809f68ba7b6c5df8e"
+    },
+    "inputs/reference-pass2-pos5.bf16": {
+      "bytes": 606976,
+      "sha256": "64dcde3a548c3bc93d0086a212465828be460a902034e43809f68ba7b6c5df8e"
+    },
+    "inputs/reference-terminal.json": {
+      "bytes": 222675,
+      "sha256": "d256b149229d4ba94a1e4f9a3aa2d6f9354c56a721bfe1dc0cb69bbb7c49674f"
+    },
+    "output/complete.json": {
+      "bytes": 15728,
+      "sha256": "fb88929815dbfdec7a66cfb87aaa8ae7fe5567c5e059d77d431c8e28053c2597"
+    },
+    "output/tests.stderr": {
+      "bytes": 1319,
+      "sha256": "a2b16311b0ab041c91914e27518e67968b37b4302cdbe84aa71b5edc921628db"
+    },
+    "retention-tool.py": {
+      "bytes": 17099,
+      "sha256": "b9b10f1d3b214944a383cb7538ab1c74b7c9f8a16e56036b5213b56fe360a0b2"
+    },
+    "run.py": {
+      "bytes": 16325,
+      "sha256": "6f869fca157108fe5054908dea7b675bf9b18ca1b7d45c439e4f5e03060e6f94"
+    },
+    "source-manifest.json": {
+      "bytes": 1246,
+      "sha256": "6f3ea976217c46a273046e73e13000de66bb171e63f00b978a07e3de78542df4"
+    },
+    "test_head.py": {
+      "bytes": 5523,
+      "sha256": "fd5b69d14c7fb005642a42a979fac5cc662e83cd20df320d38c66e3efe263f9f"
+    }
+  },
+  "schema": "ferric-position5-exact-head-evidence-v1",
+  "terminal_name": "complete.json",
+  "terminal_sha256": "fb88929815dbfdec7a66cfb87aaa8ae7fe5567c5e059d77d431c8e28053c2597"
+}

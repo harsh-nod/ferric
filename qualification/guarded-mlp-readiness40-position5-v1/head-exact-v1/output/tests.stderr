@@ -1,0 +1,17 @@
+test_decimal_is_exact_not_float (test_head.HeadTests.test_decimal_is_exact_not_float) ... ok
+test_dot_cancellation_and_exact_products (test_head.HeadTests.test_dot_cancellation_and_exact_products) ... ok
+test_exact_decode_matches_fraction (test_head.HeadTests.test_exact_decode_matches_fraction) ... ok
+test_four_dots_and_delta_decomposition (test_head.HeadTests.test_four_dots_and_delta_decomposition) ... ok
+test_fraction_nearest_independent_local_oracle (test_head.HeadTests.test_fraction_nearest_independent_local_oracle) ... ok
+test_header_rejects_shape_dtype_extent_and_duplicate (test_head.HeadTests.test_header_rejects_shape_dtype_extent_and_duplicate) ... ok
+test_overflow_boundary (test_head.HeadTests.test_overflow_boundary) ... ok
+test_payload_extent_and_nonfinite (test_head.HeadTests.test_payload_extent_and_nonfinite) ... ok
+test_roundtrip_finite_samples (test_head.HeadTests.test_roundtrip_finite_samples) ... ok
+test_shard_layout_two_row_offsets (test_head.HeadTests.test_shard_layout_two_row_offsets) ... ok
+test_subnormal_normal_and_signed_underflow (test_head.HeadTests.test_subnormal_normal_and_signed_underflow) ... ok
+test_ties_even_and_signs (test_head.HeadTests.test_ties_even_and_signs) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.090s
+
+OK

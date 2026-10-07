@@ -96,6 +96,17 @@ distinguish an implementation bug from floating-point association effects.
 The [comparison manifest](comparison-v1/manifest.json) retains the original
 receipt and source bodies; all 17 recorded runtime inputs were rehashed.
 
+## Exact Head Boundary
+
+The [exact two-row head diagnostic](head-exact-v1/RESULTS.md) passes 12
+synthetic tests and four exact-real, 4,096-term BF16 dot products on MI350.
+Each observed head value matches exact-dot round-to-nearest-even on its own
+captured input. The reference's two unequal exact dots both narrow to 19.625;
+on the native input, token 9112 crosses the 19.6875 midpoint and narrows to
+19.75. With common authenticated weights, the already-different head inputs
+explain this two-token rounding outcome. This does not establish the internal
+accumulation order, correctness of other head rows or upstream correctness.
+
 ## Remaining Gates
 
 Next, isolate arithmetic differences at operation boundaries, establish
