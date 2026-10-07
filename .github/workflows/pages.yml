@@ -70,18 +70,18 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 888395
+          test "$total" -eq 900185
           test "$total" -le 2097152
 
-          # Completed V17 a004 within-native comparison: admitted artifact manifest SHA256: 8a969fa08faa8be4c08bc99626c74fb447adc38f87ef49f9ad5eebd1cef869fb.
-          # Existing deploy-only protections retained; remote QA approval is recorded externally.
+          # October 7 native wait attribution: artifact manifest SHA256: c7733f01dd5f847a0692d975844ce6a47d8f6210049179ad783eedbc99e52e24.
+          # Validated and staged on mi300x-2; no build or test runs in this deploy-only job.
           sha256sum --check --strict <<'SHA256'
-          768c214d52a667992faa6a06922f9f61a23eea348c2f8e1942999fc04fb4048d  public/app.js
+          ee2fcba689d979e9aee595dcfae1751865d44035b25ed97af5bd30c9b0088091  public/app.js
           07291c88f57be83ac12bccc73876fb67158ed96ca8efc2e5717d50d98ad9cb69  public/assets/architecture.svg
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
-          05ad1f50575547c0b0c8244b2912e1d7518258772527f7ff236fdb8d2e42102f  public/data/performance.js
-          e0415969c3dcf279a079df8060a640bcca933cbfbec4a995af7432db069ee9e1  public/data/project.js
-          9a54f6060c0a204ad4826cf066dbf26a9d2f15868cdcbd00c334618f55835571  public/index.html
+          43fe0f336555f2f08740a8538013a80c3d853893ffb88ca9108820b30a9ae7fe  public/data/performance.js
+          f928034b11502c635871a1ae010c07fb66f66ad1a3cdc55d7c453c45421dc499  public/data/project.js
+          b71965abbd0e9304327dd2992ae4f930930f26d056730e03e4ccefd8498948b1  public/index.html
           41921ee0f120656ab2b13075077948324e6c56d124497886169dbd20d51fdc58  public/styles.css
           SHA256
 

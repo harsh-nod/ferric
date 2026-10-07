@@ -1,5 +1,94 @@
 window.FERRIC_PERFORMANCE = {
-  updated: "2026-09-11",
+  updated: "2026-10-06",
+  matchedHttpWidth55c: {
+    "date": "2026-10-06",
+    "measuredRequestsPerEngine": 30,
+    "excludedWarmupsPerEngine": 10,
+    "untimedDiagnosticsPerEngine": 2,
+    "order": [
+      "ferric",
+      "vllm"
+    ],
+    "scope": "Same-plan Width55c HTTP pair: one sequential Ferric-then-vLLM cohort, not cross-engine ABBA. TP1/C1, 128 input and 128 output tokens, context 8192, greedy, prefix caching and speculation off; BF16 decoder and configured FP32 head. Vendor head weights remain BF16. SSE TTFT/TPOT are not true token interarrival or shader durations; finite closed-loop output rate includes drain and is not sustained throughput.",
+    "correctness": "Ferric internal token IDs and UTF-8 match all 42 requests, totaling 5,376 output token IDs. Vendor token IDs match only two untimed diagnostics; warmup/timed streams retain exact UTF-8 and usage, not token IDs. Both engines have normal, unsignaled owned teardown and complete raw archive custody. Root-visible finite descriptor samples and paired endpoints do not prove continuous isolation; clock, power, temperature and throttle equivalence is not established.",
+    "interpretation": "Ferric remains 22.72 times slower on median TTFT and 12.20 times slower on median TPOT in this cohort. No vendor win, default promotion, formal proof or stable-tail claim. This current55c native-prefill32 B comparison uses unchanged 652-command decode and V19 KV, with no split-K, paired-load or fence composition. Historical R6 results are not pooled; this is not an isolated cross-revision width speedup or evidence of a reliable decode gain. The observer repair is not a speedup; earlier failures remain failed.",
+    "limits": {
+      "crossEngineAbba": false,
+      "continuousIsolation": false,
+      "clockPowerEquivalence": false,
+      "vendorTimedTokenIdsRetained": false,
+      "sustainedThroughput": false,
+      "defaultPromotion": false,
+      "formalProof": false
+    },
+    "engines": [
+      {
+        "id": "ferric",
+        "name": "Ferric 55c prefill32",
+        "medianTtftMs": 431.032717,
+        "p95TtftMs": 435.8653761,
+        "medianTpotMs": 53.11882012992126,
+        "p95TpotMs": 53.390301768897636,
+        "finiteOutputTokensPerSecond": 17.901873571425067,
+        "measuredWindowSeconds": 214.502687927,
+        "archiveSha256": "7a27aae681a8ba1bb84990d1ca3df1e066bd15cc0026bb7f3783cbeb7d59c3b6"
+      },
+      {
+        "id": "vllm",
+        "name": "vLLM 0.28.0",
+        "medianTtftMs": 18.9687665,
+        "p95TtftMs": 19.7419725,
+        "medianTpotMs": 4.352391988188977,
+        "p95TpotMs": 4.357501377952756,
+        "finiteOutputTokensPerSecond": 223.76761319585998,
+        "measuredWindowSeconds": 17.160660317,
+        "archiveSha256": "7298b68214141e964440124851c3ecc290ea56a53b16e322e8d45a2c5461fc09"
+      }
+    ],
+    "pins": {
+      "planSha256": "8f765017de3d9fe6138e42f09aad0818172c42b0af1d14dc182febac0a565cf6",
+      "pairedReviewSha256": "dd84f4503d4fbef3a0fd0eee2c7025a1bb910eac4fe81fd7f09bbb13a6d7b134",
+      "vendorImageSha256": "c5f9efa2623d9c8b2e483d2a139202e496baf5a04900a4f32907149f41a42dba",
+      "vendorRepoDigest": "vllm/vllm-openai-rocm@sha256:e0a3b2bd3fe7ec563916c3a5d949898d133458c18d6b2f460c906885cfb32032"
+    }
+  },
+  matchedHttpR6: {
+    date: "2026-10-06",
+    measuredRequestsPerEngine: 30,
+    excludedWarmupsPerEngine: 10,
+    untimedDiagnosticsPerEngine: 2,
+    order: ["ferric", "vllm"],
+    scope: "Same-plan R6 HTTP pair: one sequential Ferric-then-vLLM cohort, not cross-engine ABBA. TP1/C1, 128 input and 128 output tokens, context 8192, greedy, prefix caching and speculation off; BF16 decoder and configured FP32 head. Vendor head weights remain BF16. SSE TTFT/TPOT are not true token interarrival or shader durations; finite closed-loop output rate includes drain and is not sustained throughput.",
+    correctness: "Ferric internal token IDs and UTF-8 match all 42 requests. Vendor token IDs match only two untimed diagnostics; warmup/timed streams retain exact UTF-8 and usage, not token IDs. Both engines have normal, unsignaled owned teardown and complete raw archive custody. Root-visible finite descriptor samples and paired endpoints do not prove continuous isolation; clock, power, temperature and throttle equivalence is not established.",
+    interpretation: "Ferric remains 40.56 times slower on median TTFT and 12.14 times slower on median TPOT in this cohort. No vendor win, default promotion, formal proof or stable-tail claim. This standalone V17 native-prefill16 result is separate from its earlier within-native TTFT gain and from the pending prefill-width comparison. The observer repair is not a speedup; earlier failures remain failed.",
+    limits: {
+      crossEngineAbba: false,
+      continuousIsolation: false,
+      clockPowerEquivalence: false,
+      vendorTimedTokenIdsRetained: false,
+      sustainedThroughput: false,
+      defaultPromotion: false,
+      formalProof: false,
+    },
+    engines: [
+      { id: "ferric", name: "Ferric V17 prefill16", medianTtftMs: 783.7669659999999,
+        p95TtftMs: 789.9687716000001, medianTpotMs: 53.399712629921254,
+        p95TpotMs: 54.4087667527559, finiteOutputTokensPerSecond: 16.932224938670075,
+        measuredWindowSeconds: 226.786498166,
+        archiveSha256: "9f9bbfea428513e65db180622b8094625759484ae56ce8be1b01656c65e10880" },
+      { id: "vllm", name: "vLLM 0.28.0", medianTtftMs: 19.322446999999997,
+        p95TtftMs: 20.687245, medianTpotMs: 4.397164220472441,
+        p95TpotMs: 4.4020235078740155, finiteOutputTokensPerSecond: 221.37967662907252,
+        measuredWindowSeconds: 17.345765693,
+        archiveSha256: "70392889d4b8fa250bea544caa2d14f1041cdd9a5c18aa5837471557ae2e4976" },
+    ],
+    pins: {
+      planSha256: "eb91e12ee440c45135f4a7755d780cb8bf1d8aae19c383b601df3dcda850ef4a",
+      pairedReviewSha256: "1a13f8834e46cd8ccac63ee656bc1593f636eb08a1374bbc130e49375144a360",
+      vendorImageSha256: "c5f9efa2623d9c8b2e483d2a139202e496baf5a04900a4f32907149f41a42dba",
+      vendorRepoDigest: "vllm/vllm-openai-rocm@sha256:e0a3b2bd3fe7ec563916c3a5d949898d133458c18d6b2f460c906885cfb32032",
+    },
+  },
   fp32HeadV7: {
     "scope": "Three opt-in TP1 Qwen3-8B observations, n=1 per profile, on one fixed four-request workload with eight outputs including the cancelled request's output. All three pass the unchanged reference token IDs and decoded bytes, exact dispatch schedule, original host-timing sidecar, cleanup and all-eight-card idle checks. Prefix cache is on; row/chunk capacity is 16; each case executes 34 physical rows in five batches.",
     "interpretation": "The precision-only pair shows no throughput gain: baseline projection with an FP32 head is 2.70% below its explicit BF16-head control. Under the same FP32 head, MFMA projection reaches 2.541x baseline projection's workload rate (+154.05%) and lowers reuse-prefix TTFT/TPOT. However, setup rises from 103.747 to 122.058 seconds and whole-process time from 115.498 to 128.707 seconds: a slower fresh full process. These are single observations, not a statistically established effect.",
