@@ -279,6 +279,14 @@ still differ between native and framework. This boundary check does not replay
 the Down dot products or explain the argmax difference. It changes no arithmetic,
 input history, tolerance or numerical-acceptance gate.
 
+## Selected Down Diagnostic
+
+The [first selected Down-dot attempt](position5-down-dot-v1/RESULTS.md) stopped
+at its synthetic tests: 47 passed and one fixture compared an API-returned tuple
+with a list containing the same values. No model-shard read or selected-dot
+analysis ran. Its original failed evidence is retained; a separate test-only
+repair and fresh qualification are required.
+
 ## Remaining Gates
 
 Both native and framework instrumentation preserve their own prior histories

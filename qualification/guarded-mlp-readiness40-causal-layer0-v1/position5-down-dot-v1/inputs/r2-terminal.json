@@ -1,0 +1,425 @@
+{
+  "captured_boundary_replay_only": true,
+  "current_machine_instruction_order_independently_proven": false,
+  "dedicated_down_dot_products_replayed": false,
+  "diagnostic": {
+    "acceptance_threshold": null,
+    "all_observed_boundaries_exact": true,
+    "current_machine_instruction_order_independently_proven": false,
+    "dedicated_down_dot_products_replayed": false,
+    "framework_boundary_exact": true,
+    "framework_inputs_not_substituted_for_native": true,
+    "framework_matched_words": 4096,
+    "framework_words_checked": 4096,
+    "full_model_acceptance": false,
+    "gate_up_or_silu_replayed": false,
+    "gpu_execution": false,
+    "independent_model_reference": false,
+    "input_token": 271,
+    "layer": 0,
+    "mismatch_explains_position5_argmax": false,
+    "model_execution": false,
+    "native_boundary_exact": true,
+    "native_matched_words": 8192,
+    "native_mismatch_rows": [],
+    "native_projection_is_derived_not_directly_captured": true,
+    "native_reference_different_rows": [
+      [
+        219,
+        955,
+        1352,
+        1408,
+        1953,
+        2040,
+        2070,
+        2208,
+        2210,
+        2328,
+        2706,
+        2850,
+        3704,
+        4017
+      ],
+      [
+        219,
+        955,
+        1352,
+        1408,
+        1953,
+        2040,
+        2070,
+        2208,
+        2210,
+        2328,
+        2706,
+        2850,
+        3704,
+        4017
+      ]
+    ],
+    "native_words_checked": 8192,
+    "numerical_acceptance": false,
+    "order": "FP32(+0 + rank0), FP32(+ rank1), BF16-RNE, FP32(+ BF16 residual), BF16-RNE",
+    "original_sidecars": {
+      "native": {
+        "bytes": 1666665,
+        "sha256": "6577294939bca22bb62bab672e053b45d5c19798fdfc7f5cd10b8f4b6f7e93a2"
+      },
+      "reference": {
+        "bytes": 1855037,
+        "sha256": "d3b7af6a85243168c440f2332905ca493248f9631fc894732dc5cc860c6bb273"
+      },
+      "repeat": {
+        "bytes": 1855037,
+        "sha256": "14a4139ae3653edb35d04c28009c26147069b9e42dd5cfe41823921c0dd87d9c"
+      }
+    },
+    "performance_claim": false,
+    "position": 5,
+    "retained_outputs": {
+      "derived-down.bf16": {
+        "bytes": 8192,
+        "sha256": "968bc3d6a1ac14ba80885fd9ee8cacb3426a17dde254135d565ee92b324cea10"
+      },
+      "derived-ordered-sum.f32": {
+        "bytes": 16384,
+        "sha256": "0797e1c13dff8e02d8788e52f8fa75d913fbab6dbd2dbb094f2581bfdcb35992"
+      },
+      "replay.json": {
+        "bytes": 1008054,
+        "sha256": "eee5940bdf309285cc68e03dd2e8889cf074024965c0466836c13d0e67409bdd"
+      },
+      "replayed-final-rank0.bf16": {
+        "bytes": 8192,
+        "sha256": "34cbc034d55fd73faa4aa5cc84f0175f4617da1efcea277443b30da55b7dfe50"
+      },
+      "replayed-final-rank1.bf16": {
+        "bytes": 8192,
+        "sha256": "34cbc034d55fd73faa4aa5cc84f0175f4617da1efcea277443b30da55b7dfe50"
+      }
+    },
+    "rows_per_rank": 4096,
+    "schema": "ferric-causal-position5-r2-boundary-diagnostic-v1",
+    "selected_parts": [
+      {
+        "bytes": 8192,
+        "offset": 120968,
+        "rank": 0,
+        "role": "first_residual",
+        "sha256": "7ba2d753877a7a2855f5b0c2472864603df8c339bab8c0320a735df0494d7a3b",
+        "side": "native"
+      },
+      {
+        "bytes": 8192,
+        "offset": 129160,
+        "rank": 1,
+        "role": "first_residual",
+        "sha256": "7ba2d753877a7a2855f5b0c2472864603df8c339bab8c0320a735df0494d7a3b",
+        "side": "native"
+      },
+      {
+        "bytes": 16384,
+        "offset": 182408,
+        "rank": 0,
+        "role": "down_partial",
+        "sha256": "c5b88623af011828fcce7ff5f93e29b1679000d30bb78a35b3e9d7094bdff102",
+        "side": "native"
+      },
+      {
+        "bytes": 16384,
+        "offset": 243848,
+        "rank": 1,
+        "role": "down_partial",
+        "sha256": "d6e47d98483aab95eeae47cc9a0d0f2f2624c1d64678ff42b18a1496335c63f6",
+        "side": "native"
+      },
+      {
+        "bytes": 8192,
+        "offset": 260232,
+        "rank": 0,
+        "role": "final_hidden",
+        "sha256": "34cbc034d55fd73faa4aa5cc84f0175f4617da1efcea277443b30da55b7dfe50",
+        "side": "native"
+      },
+      {
+        "bytes": 8192,
+        "offset": 268424,
+        "rank": 1,
+        "role": "final_hidden",
+        "sha256": "34cbc034d55fd73faa4aa5cc84f0175f4617da1efcea277443b30da55b7dfe50",
+        "side": "native"
+      },
+      {
+        "bytes": 8192,
+        "offset": 1616896,
+        "role": "first-residual",
+        "sha256": "7ba2d753877a7a2855f5b0c2472864603df8c339bab8c0320a735df0494d7a3b",
+        "side": "framework"
+      },
+      {
+        "bytes": 8192,
+        "offset": 1772544,
+        "role": "down-projection",
+        "sha256": "8688cfddb333c8005ae11aaafde1694137fe9cc70e7e3dcfedf24ea5c88a7104",
+        "side": "framework"
+      },
+      {
+        "bytes": 8192,
+        "offset": 1780736,
+        "role": "mlp-output",
+        "sha256": "8688cfddb333c8005ae11aaafde1694137fe9cc70e7e3dcfedf24ea5c88a7104",
+        "side": "framework"
+      },
+      {
+        "bytes": 8192,
+        "offset": 1788928,
+        "role": "layer0-hidden",
+        "sha256": "0e22caf9bf742464465195b3c9533591e260afe235040d171289984eb9c81000",
+        "side": "framework"
+      }
+    ],
+    "semantic_bug_claimed": false,
+    "source_boundary_replayed": true
+  },
+  "elapsed_seconds": 1.0496188909746706,
+  "error": null,
+  "full_capsule_revalidated": false,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "inputs": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/README.md": {
+      "bytes": 6963,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/README.md",
+      "sha256": "76e3335f375fe5ac3ec6121c8325ac560926af44069961a5cf2fb1618d02b021"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/arithmetic.rs": {
+      "bytes": 7432,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/arithmetic.rs",
+      "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/capture.py": {
+      "bytes": 6716,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/capture.py",
+      "sha256": "ab101bd82fad89c889880c77c6c7fdaf2bfcf0ac97322fb6c937ddc600ef38b1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/exact_bf16.py": {
+      "bytes": 2554,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/exact_bf16.py",
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/fp32_replay.py": {
+      "bytes": 4657,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/fp32_replay.py",
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/head.py": {
+      "bytes": 7310,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/head.py",
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/kernels.rs": {
+      "bytes": 2520,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/kernels.rs",
+      "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/position5.py": {
+      "bytes": 9386,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/position5.py",
+      "sha256": "2c8138368a6ce10537523c9dd92dcf1e734c7928d74a247808989f2536db33b5"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/qkv.py": {
+      "bytes": 10530,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/qkv.py",
+      "sha256": "9e653d8b58850375b3ddb10a53c7810a3306fa156a402e311cfdd2de11577cc6"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/r2.py": {
+      "bytes": 8835,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/r2.py",
+      "sha256": "c9e2d565a5bfa384bf15330653f83422089ad47d245a9bcee159e88caa3dadfd"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/run.py": {
+      "bytes": 16043,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/run.py",
+      "sha256": "61fb1f06b8861603f7c89e064df65cdb7dd8fdf0b33e2fe67b5b2f25f574138f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/source-manifest.json": {
+      "bytes": 10034,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/source-manifest.json",
+      "sha256": "2ef18416c88ddec78c3ffe05bb1017bc546987f0283813d8ddac378b363eafea"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_fp32_replay.py": {
+      "bytes": 9013,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_fp32_replay.py",
+      "sha256": "87a358807c4f76fbd7b0fc7603dc08de7e34c66871b06aa6d8ac89f165798adb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_position5.py": {
+      "bytes": 8543,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_position5.py",
+      "sha256": "c13f4c6e5664f13d6164e282c1aacd072c3a416328b22a9e1cf46cbd6939792e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_r2.py": {
+      "bytes": 10893,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_r2.py",
+      "sha256": "ca5829ccb77ccf14b25ea5e12dc43090abe4aff1efd318de0b593b6c6437af77"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/comparison.json": {
+      "bytes": 285894,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/comparison.json",
+      "sha256": "3f94fe36125e3cbbf92e33caca6049b94fd33963956ef1477bf304dcec6bf38f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/native-sidecar.bin": {
+      "bytes": 1666665,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/native-sidecar.bin",
+      "sha256": "6577294939bca22bb62bab672e053b45d5c19798fdfc7f5cd10b8f4b6f7e93a2"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/native-summary.json": {
+      "bytes": 21934,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/native-summary.json",
+      "sha256": "5a414a72e6d0e4b76031d57de909f954c7cd0853a39888b5f3a167fe6e94d8f4"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/native-terminal.json": {
+      "bytes": 278903,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/native-terminal.json",
+      "sha256": "00aa0447a23f57c6d9bb2ed39cd4e5b2b9da692f15bceb33107ac3822f95516f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/reference-inner.json": {
+      "bytes": 285346,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/reference-inner.json",
+      "sha256": "5ebd12d258fc9c76190b4ec4c7270d9732d15e635c7944d966bd50ffc81fa027"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/reference-sidecar1.bin": {
+      "bytes": 1855037,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/reference-sidecar1.bin",
+      "sha256": "d3b7af6a85243168c440f2332905ca493248f9631fc894732dc5cc860c6bb273"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/reference-sidecar2.bin": {
+      "bytes": 1855037,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/reference-sidecar2.bin",
+      "sha256": "14a4139ae3653edb35d04c28009c26147069b9e42dd5cfe41823921c0dd87d9c"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/uploads.json": {
+      "bytes": 178103,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-qkv-exact-v228-v1/inputs/uploads.json",
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    }
+  },
+  "limits": {
+    "address_space_bytes": 536870912,
+    "affinity": [
+      8,
+      9
+    ],
+    "cpu_seconds": 120,
+    "nice": 10,
+    "wall_seconds": 180
+  },
+  "mismatch_explains_position5_argmax": false,
+  "model_execution": false,
+  "native_rerun": false,
+  "numerical_acceptance": false,
+  "original_model_shards_rehashed": false,
+  "passed": true,
+  "performance_claim": false,
+  "policy_changed": false,
+  "postcheck_errors": [],
+  "production_authority": false,
+  "reused_prior_native_reference_comparison_admission": true,
+  "schema": "ferric-causal-position5-r2-replay-cpu-v1",
+  "semantic_bug_claimed": false,
+  "source_pins": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/README.md": {
+      "bytes": 6963,
+      "sha256": "76e3335f375fe5ac3ec6121c8325ac560926af44069961a5cf2fb1618d02b021"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/arithmetic.rs": {
+      "bytes": 7432,
+      "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/capture.py": {
+      "bytes": 6716,
+      "sha256": "ab101bd82fad89c889880c77c6c7fdaf2bfcf0ac97322fb6c937ddc600ef38b1"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/exact_bf16.py": {
+      "bytes": 2554,
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/fp32_replay.py": {
+      "bytes": 4657,
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/head.py": {
+      "bytes": 7310,
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/kernels.rs": {
+      "bytes": 2520,
+      "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/position5.py": {
+      "bytes": 9386,
+      "sha256": "2c8138368a6ce10537523c9dd92dcf1e734c7928d74a247808989f2536db33b5"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/qkv.py": {
+      "bytes": 10530,
+      "sha256": "9e653d8b58850375b3ddb10a53c7810a3306fa156a402e311cfdd2de11577cc6"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/r2.py": {
+      "bytes": 8835,
+      "sha256": "c9e2d565a5bfa384bf15330653f83422089ad47d245a9bcee159e88caa3dadfd"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/run.py": {
+      "bytes": 16043,
+      "sha256": "61fb1f06b8861603f7c89e064df65cdb7dd8fdf0b33e2fe67b5b2f25f574138f"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_fp32_replay.py": {
+      "bytes": 9013,
+      "sha256": "87a358807c4f76fbd7b0fc7603dc08de7e34c66871b06aa6d8ac89f165798adb"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_position5.py": {
+      "bytes": 8543,
+      "sha256": "c13f4c6e5664f13d6164e282c1aacd072c3a416328b22a9e1cf46cbd6939792e"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-causal-position5-r2-replay-v228-v1/test_r2.py": {
+      "bytes": 10893,
+      "sha256": "ca5829ccb77ccf14b25ea5e12dc43090abe4aff1efd318de0b593b6c6437af77"
+    }
+  },
+  "tests": {
+    "errors": 0,
+    "failures": 0,
+    "names": [
+      "test_fp32_replay.Fp32ReplayTests.test_addition_matches_fraction_not_host_float",
+      "test_fp32_replay.Fp32ReplayTests.test_all_lanes_all_steps_and_xor_tree_fraction_reference",
+      "test_fp32_replay.Fp32ReplayTests.test_bf16_boundary_materializes_before_residual",
+      "test_fp32_replay.Fp32ReplayTests.test_encoding_decoding_matches_independent_fraction",
+      "test_fp32_replay.Fp32ReplayTests.test_fraction_nearest_neighbor_midpoints_and_neighbors",
+      "test_fp32_replay.Fp32ReplayTests.test_gradual_underflow_and_signed_zero",
+      "test_fp32_replay.Fp32ReplayTests.test_lane_cancellation_preserves_actual_association",
+      "test_fp32_replay.Fp32ReplayTests.test_midpoint_distance_has_explicit_exact_scale",
+      "test_fp32_replay.Fp32ReplayTests.test_nonfinite_shape_and_overflow_refusals",
+      "test_fp32_replay.Fp32ReplayTests.test_overflow_threshold_both_signs",
+      "test_fp32_replay.Fp32ReplayTests.test_partials_are_not_individually_narrowed",
+      "test_fp32_replay.Fp32ReplayTests.test_product_underflow_and_subnormal_counters",
+      "test_position5.Position5Tests.test_body_part_and_comparison_hash_drift_refuse",
+      "test_position5.Position5Tests.test_full4096_rows_own_operands_and_separate_framework_control",
+      "test_position5.Position5Tests.test_missing_duplicate_scalar_boundary_extent_and_gap_refuse",
+      "test_position5.Position5Tests.test_observed_output_error_is_reported_without_acceptance",
+      "test_position5.Position5Tests.test_repeat_complete_capture_pin_and_prior_admission_refuse",
+      "test_position5.Position5Tests.test_wrong_position_generation_layer_and_boolean_rank_refuse",
+      "test_r2.R2Tests.test_all_rows_and_independent_rank_residuals",
+      "test_r2.R2Tests.test_capture_closes_all_parts_and_actual_output_join",
+      "test_r2.R2Tests.test_failed_admission_identity_and_saved_observations_refuse",
+      "test_r2.R2Tests.test_framework_control_is_separate_and_reports_mismatch",
+      "test_r2.R2Tests.test_materialization_zero_and_overflow_boundaries",
+      "test_r2.R2Tests.test_nonfinite_all_operand_and_output_roles_refuse",
+      "test_r2.R2Tests.test_one_mutated_output_remains_an_exact_mismatch",
+      "test_r2.R2Tests.test_role_extent_and_bytes_type_are_closed"
+    ],
+    "passed": 26,
+    "skipped": 0,
+    "stderr": {
+      "bytes": 3687,
+      "sha256": "3d988ebd349614b17ab39472e4e3467a02f0d964aeeda2f1313d525f3fd102ce"
+    }
+  }
+}

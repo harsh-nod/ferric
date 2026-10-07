@@ -1,0 +1,230 @@
+{
+  "checks": {
+    "arithmetic_reexecuted": false,
+    "checkpoint_bodies_rehashed": false,
+    "complete_output_joins_verified": false,
+    "full_capsule_revalidated": false,
+    "full_model_acceptance": false,
+    "independent_dot_terms_recomputed": false,
+    "input_members": 13,
+    "model_bodies_retained": false,
+    "native_rerun": false,
+    "numerical_acceptance": false,
+    "original_members": 34,
+    "original_passed": false,
+    "original_receipt_and_body_joins_verified": true,
+    "original_test_census": {
+      "errors": 0,
+      "failures": 1,
+      "names": [
+        "test_down.DownTests.test_exact_6144_term_dot_against_independent_fraction",
+        "test_down.DownTests.test_exact_error_terms_reconcile_without_floating_threshold",
+        "test_down.DownTests.test_full_shard_layout_transpose_gap_dtype_and_index_refusal",
+        "test_down.DownTests.test_original_registration_and_current_upload_roles",
+        "test_down.DownTests.test_partition_byte_hash_and_complete_extent",
+        "test_down.DownTests.test_product_halves_and_exact_seven_original_coordinates",
+        "test_down.DownTests.test_product_role_scalar_extent_identity_and_hash_refusals",
+        "test_down.DownTests.test_reuse_complete_original_boundary_rows_without_dot_reexecution",
+        "test_down.DownTests.test_reuse_failure_pin_row_order_operand_and_output_drift_refuse",
+        "test_down.DownTests.test_row_major_column_halves_not_contiguous_tensor_halves",
+        "test_down.DownTests.test_selected_row_bounds_sparse_delta_and_nonclaims",
+        "test_down.DownTests.test_signed_zero_and_own_input_counterfactual_is_not_model_feedback",
+        "test_down.DownTests.test_strict_finite_operands_sum_join_and_ideal_overflow",
+        "test_down.DownTests.test_tp_sum_rounding_and_bf16_projection_rounding_are_distinct",
+        "test_fp32_replay.Fp32ReplayTests.test_addition_matches_fraction_not_host_float",
+        "test_fp32_replay.Fp32ReplayTests.test_all_lanes_all_steps_and_xor_tree_fraction_reference",
+        "test_fp32_replay.Fp32ReplayTests.test_bf16_boundary_materializes_before_residual",
+        "test_fp32_replay.Fp32ReplayTests.test_encoding_decoding_matches_independent_fraction",
+        "test_fp32_replay.Fp32ReplayTests.test_fraction_nearest_neighbor_midpoints_and_neighbors",
+        "test_fp32_replay.Fp32ReplayTests.test_gradual_underflow_and_signed_zero",
+        "test_fp32_replay.Fp32ReplayTests.test_lane_cancellation_preserves_actual_association",
+        "test_fp32_replay.Fp32ReplayTests.test_midpoint_distance_has_explicit_exact_scale",
+        "test_fp32_replay.Fp32ReplayTests.test_nonfinite_shape_and_overflow_refusals",
+        "test_fp32_replay.Fp32ReplayTests.test_overflow_threshold_both_signs",
+        "test_fp32_replay.Fp32ReplayTests.test_partials_are_not_individually_narrowed",
+        "test_fp32_replay.Fp32ReplayTests.test_product_underflow_and_subnormal_counters",
+        "test_gateup.GateUpTests.test_exact_seven_dots_bounds_midpoints_and_nonclaims",
+        "test_gateup.GateUpTests.test_extraction_closes_seven_rows_and_repetition",
+        "test_gateup.GateUpTests.test_original_shard_transpose_and_extent_refusals",
+        "test_gateup.GateUpTests.test_partition_pin_wrong_role_rank_and_mutated_bytes_refused",
+        "test_gateup.GateUpTests.test_rank_and_partition_boundary_coordinates",
+        "test_gateup.GateUpTests.test_registration_reconstruction_and_four_source_roles",
+        "test_gateup.GateUpTests.test_wrong_input_and_comparison_pin_refused",
+        "test_gateup.GateUpTests.test_wrong_role_rank_alias_extent_and_upload_refused",
+        "test_position5.Position5Tests.test_body_part_and_comparison_hash_drift_refuse",
+        "test_position5.Position5Tests.test_full4096_rows_own_operands_and_separate_framework_control",
+        "test_position5.Position5Tests.test_missing_duplicate_scalar_boundary_extent_and_gap_refuse",
+        "test_position5.Position5Tests.test_observed_output_error_is_reported_without_acceptance",
+        "test_position5.Position5Tests.test_repeat_complete_capture_pin_and_prior_admission_refuse",
+        "test_position5.Position5Tests.test_wrong_position_generation_layer_and_boolean_rank_refuse",
+        "test_r2.R2Tests.test_all_rows_and_independent_rank_residuals",
+        "test_r2.R2Tests.test_capture_closes_all_parts_and_actual_output_join",
+        "test_r2.R2Tests.test_failed_admission_identity_and_saved_observations_refuse",
+        "test_r2.R2Tests.test_framework_control_is_separate_and_reports_mismatch",
+        "test_r2.R2Tests.test_materialization_zero_and_overflow_boundaries",
+        "test_r2.R2Tests.test_nonfinite_all_operand_and_output_roles_refuse",
+        "test_r2.R2Tests.test_one_mutated_output_remains_an_exact_mismatch",
+        "test_r2.R2Tests.test_role_extent_and_bytes_type_are_closed"
+      ],
+      "passed": 47,
+      "skipped": 0,
+      "stderr": {
+        "bytes": 7579,
+        "sha256": "fcb93b4469a8f622359d7143efa8d2a726ee182fd7ed8b33b6cb028b65068964"
+      }
+    },
+    "output_members": 2,
+    "performance_claim": false,
+    "reported_integer_totals_checked": false,
+    "source_members": 19,
+    "terminal": {
+      "bytes": 17135,
+      "sha256": "f96283daae1281a78d6590b2f3706f4c81921c3bbecbe1fde00170d076fce9f1"
+    }
+  },
+  "files": {
+    "README.md": {
+      "bytes": 10005,
+      "sha256": "42a192cbe2bcb5e684a07aceab43eb0e8fbe38103b6083dc6cbd023baf568c64"
+    },
+    "arithmetic.rs": {
+      "bytes": 7432,
+      "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+    },
+    "capture.py": {
+      "bytes": 6716,
+      "sha256": "ab101bd82fad89c889880c77c6c7fdaf2bfcf0ac97322fb6c937ddc600ef38b1"
+    },
+    "down.py": {
+      "bytes": 17217,
+      "sha256": "6cb36e872be8edf36c969df7f7ed9f4eb16394594cf446e77a66ce952d649f83"
+    },
+    "exact_bf16.py": {
+      "bytes": 2554,
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "fp32_replay.py": {
+      "bytes": 4657,
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "gateup.py": {
+      "bytes": 14551,
+      "sha256": "b443db824dfaab875ef671fc57ad0cc7173c6a7e5eb3dcf3fef81bef2fd3f91d"
+    },
+    "head.py": {
+      "bytes": 7310,
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "inputs/comparison.json": {
+      "bytes": 285894,
+      "sha256": "3f94fe36125e3cbbf92e33caca6049b94fd33963956ef1477bf304dcec6bf38f"
+    },
+    "inputs/native-sidecar.bin": {
+      "bytes": 1666665,
+      "sha256": "6577294939bca22bb62bab672e053b45d5c19798fdfc7f5cd10b8f4b6f7e93a2"
+    },
+    "inputs/native-summary.json": {
+      "bytes": 21934,
+      "sha256": "5a414a72e6d0e4b76031d57de909f954c7cd0853a39888b5f3a167fe6e94d8f4"
+    },
+    "inputs/native-terminal.json": {
+      "bytes": 278903,
+      "sha256": "00aa0447a23f57c6d9bb2ed39cd4e5b2b9da692f15bceb33107ac3822f95516f"
+    },
+    "inputs/r2-derived-down.bf16": {
+      "bytes": 8192,
+      "sha256": "968bc3d6a1ac14ba80885fd9ee8cacb3426a17dde254135d565ee92b324cea10"
+    },
+    "inputs/r2-derived-ordered-sum.f32": {
+      "bytes": 16384,
+      "sha256": "0797e1c13dff8e02d8788e52f8fa75d913fbab6dbd2dbb094f2581bfdcb35992"
+    },
+    "inputs/r2-replay.json": {
+      "bytes": 1008054,
+      "sha256": "eee5940bdf309285cc68e03dd2e8889cf074024965c0466836c13d0e67409bdd"
+    },
+    "inputs/r2-terminal.json": {
+      "bytes": 21551,
+      "sha256": "bf16c755ede242da389e99a2a907e2907e8cf442c2e82fd62a41c0a7e9d2528b"
+    },
+    "inputs/reference-inner.json": {
+      "bytes": 285346,
+      "sha256": "5ebd12d258fc9c76190b4ec4c7270d9732d15e635c7944d966bd50ffc81fa027"
+    },
+    "inputs/reference-sidecar1.bin": {
+      "bytes": 1855037,
+      "sha256": "d3b7af6a85243168c440f2332905ca493248f9631fc894732dc5cc860c6bb273"
+    },
+    "inputs/reference-sidecar2.bin": {
+      "bytes": 1855037,
+      "sha256": "14a4139ae3653edb35d04c28009c26147069b9e42dd5cfe41823921c0dd87d9c"
+    },
+    "inputs/registration-original.json": {
+      "bytes": 122075,
+      "sha256": "3ecdd5afb99848539310b8eb6201f09645cc27df1275d5bd2b6db0d40550f20e"
+    },
+    "inputs/uploads.json": {
+      "bytes": 178103,
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    },
+    "kernels.rs": {
+      "bytes": 2520,
+      "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+    },
+    "output/failed.json": {
+      "bytes": 17135,
+      "sha256": "f96283daae1281a78d6590b2f3706f4c81921c3bbecbe1fde00170d076fce9f1"
+    },
+    "output/tests.stderr": {
+      "bytes": 7579,
+      "sha256": "fcb93b4469a8f622359d7143efa8d2a726ee182fd7ed8b33b6cb028b65068964"
+    },
+    "position5.py": {
+      "bytes": 9386,
+      "sha256": "2c8138368a6ce10537523c9dd92dcf1e734c7928d74a247808989f2536db33b5"
+    },
+    "qkv.py": {
+      "bytes": 10530,
+      "sha256": "9e653d8b58850375b3ddb10a53c7810a3306fa156a402e311cfdd2de11577cc6"
+    },
+    "r2.py": {
+      "bytes": 8835,
+      "sha256": "c9e2d565a5bfa384bf15330653f83422089ad47d245a9bcee159e88caa3dadfd"
+    },
+    "retention-tool.py": {
+      "bytes": 32562,
+      "sha256": "febf1371c951d0f1cbf8c6b0b41bd7b21b0c983fba9cdcf6b52c310ed83a4e1f"
+    },
+    "run.py": {
+      "bytes": 22684,
+      "sha256": "828daddb2eafcc984b76137053dee0eb6cf86ce4fed212f6fe8a5129a5835b56"
+    },
+    "source-manifest.json": {
+      "bytes": 17799,
+      "sha256": "b78906d6f27235f2534964ebad48272a12973b998560d0137a15b0d10b454c4c"
+    },
+    "test_down.py": {
+      "bytes": 17122,
+      "sha256": "9d8ab9f74efd6b51c2afef1e0536a127fae6542eca06c6d47817f3f5288377d9"
+    },
+    "test_fp32_replay.py": {
+      "bytes": 9013,
+      "sha256": "87a358807c4f76fbd7b0fc7603dc08de7e34c66871b06aa6d8ac89f165798adb"
+    },
+    "test_gateup.py": {
+      "bytes": 12392,
+      "sha256": "58ad332b73b97a963ebeea6d54da3ce890239106a2d1ecdbb76e215dbe57782b"
+    },
+    "test_position5.py": {
+      "bytes": 8543,
+      "sha256": "c13f4c6e5664f13d6164e282c1aacd072c3a416328b22a9e1cf46cbd6939792e"
+    },
+    "test_r2.py": {
+      "bytes": 10893,
+      "sha256": "ca5829ccb77ccf14b25ea5e12dc43090abe4aff1efd318de0b593b6c6437af77"
+    }
+  },
+  "schema": "ferric-position5-selected-down-exact-evidence-v1",
+  "terminal_name": "failed.json",
+  "terminal_sha256": "f96283daae1281a78d6590b2f3706f4c81921c3bbecbe1fde00170d076fce9f1"
+}

@@ -25,6 +25,7 @@ The exporter checked live sources, dependencies, tools and products before
 export. Local retention does not claim to rehash remote executable bodies.
 
 The [original parent failure](../parent-cpu-failed-v1/README.md) remains retained
-and failed. A fresh parent qualification and same-binary GPU comparison remain
-required. This CPU result grants no native, numerical, Full2303 or performance
+and failed. The [fresh parent qualification](../parent-cpu-v2/README.md) has
+since passed; the same-binary GPU comparison remains required. This CPU result
+grants no native, numerical, Full2303 or performance
 acceptance. Storage floors, resource limits and deadlines were unchanged.

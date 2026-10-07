@@ -27,6 +27,13 @@ Census experiment and its limits.
 The tail path remains Readiness40-only and does not resolve the independent
 position-5 discrepancy or admit Full2303 execution.
 
+The [first selected Down-dot diagnostic attempt](../qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/RESULTS.md)
+ran all 48 synthetic tests on MI350: 47 passed and one failed because a fixture
+expected a list where the API returns an identical-valued tuple. It stopped
+before model-shard reading or real-data dot analysis; the original failed
+capsule is retained. A test-only correction and separate fresh attempt are
+pending, with no numerical acceptance or arithmetic change claimed.
+
 The preceding
 [scoped allocation census runtime and worker](../qualification/guarded-mlp-scoped-capacity-census-v1/README.md)
 are integrated after a fresh MI350 coupled CPU run: all 26 phases passed in
