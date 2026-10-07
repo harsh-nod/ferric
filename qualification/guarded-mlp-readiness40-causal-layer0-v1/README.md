@@ -1,8 +1,9 @@
 # Causal Layer-Zero Diagnostic
 
 The worker, corrected parent source and independent data checker are CPU-qualified on MI350.
-Native causal capture and its cross-framework comparison have not yet run. This is diagnostic
-instrumentation, not numerical acceptance or a performance route.
+Native causal capture and its authenticated cross-framework comparison have also completed.
+The native argmax agreement remains 39/40. This is diagnostic instrumentation,
+not numerical acceptance or a performance route.
 
 ## Scope
 
@@ -120,8 +121,7 @@ No native intermediates or historical payloads were supplied as model inputs.
 | Retained archive | `aab3837ab2d3d7fcff0d69424246272f3969c1f0a827a2bf853f770bc2d204bf` |
 
 This establishes repeatability and unchanged reference behavior, not agreement
-with Ferric. Native causal capture and the cross-framework comparison remain
-separate gates.
+with Ferric. The separate native and comparison results follow below.
 
 ## Comparison Tests And Launch Preflight
 
@@ -145,16 +145,75 @@ The unchanged ten-file archive is 43,361 bytes with SHA-256
 
 The corrected V3 deployment uses a fresh directory, compact CPU/product pins
 and a fresh request. Worker/parent binaries, validators, kernel images and
-acceptance checks are unchanged. Native results remain pending.
+acceptance checks are unchanged.
+
+## Native Capture Result
+
+`gpu-v3` retains all 157 original archive members. The MI350 run completed forty
+genuine forwards through all 36 layers, zero generated tokens, healthy Close,
+and all eleven owned phases with clean postchecks. All forty semantic records,
+logit hashes and observation hashes match the prior Position5 run. All four
+606,976-byte ordinary capture payloads also match byte-for-byte.
+
+The six additional snapshots contain 204 parts. Their cache prefixes and the
+selected final hidden outputs pass the required joins. Independent retention
+and audit rechecked the raw files, parent/worker ownership and admission pins.
+The owner took 944.92 seconds with diagnostic readbacks; this is not a decode
+throughput measurement.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Native V3 terminal | `00aa0447a23f57c6d9bb2ed39cd4e5b2b9da692f15bceb33107ac3822f95516f` |
+| Native V3 archive | `6d346693b1024978d9c445d945ee2e01cace16187e5251932ef9ae52f3d06c0f` |
+
+## Cross-Framework Findings
+
+`comparison-v1` retains the six executed source files and original terminal.
+The CPU-only comparison on MI350 authenticated the native, repeated reference
+and passing comparator-test archives before inspecting their captures. All nine
+input posthashes passed. A separate data audit recomputed every metric from the
+original captured bytes, without importing the comparator implementation.
+
+Of 204 comparable stage/rank rows, 132 are bit-exact and 72 differ. Of the
+differing rows, 23 have identical captured prerequisites and 49 already have
+different inputs. Another 36 rows are deliberately noncomparable: native rank
+partials are not equivalent to framework materialized full projections.
+
+| Observation at layer zero | Result | Interpretation |
+| --- | --- | --- |
+| Embeddings, input normalization, V projections and used K/V caches | Exact at all six positions and both ranks | These captured boundaries agree |
+| Q/K projections | Five differing scalars across six positions | Differences occur with identical normalized inputs |
+| First difference, position 0 / rank 0 / Q row 168 | One BF16 step; absolute difference `4.76837158203125e-7` | Earliest observed difference, not proof of downstream causation |
+| Position 0 attention outputs | Exact | Its Q difference cannot explain the position-zero output-projection/residual difference |
+| Position 0 first residual, both ranks | Two differing words per rank with identical captured attention and residual inputs | Isolates the output-projection/TP-reduction/residual composite, not one operation within it |
+| Rank 1 attention at positions 2, 3, 4, 5 | Respectively 2, 2, 1, 1 differing words with matching captured inputs | Additional independent operation-level differences |
+| Final layer-zero hidden at positions 0 through 5 | Respectively 289, 14, 649, 510, 10, 14 differing words per rank | Downstream differences, not isolated operation tests |
+
+The full-model argmax ledger still matches at 39 of 40 positions. At position 5,
+Ferric selects token 9112 with BF16 logit 19.75; token 2 has logit 19.625.
+The reference ties both at 19.625 and selects token 2. The previous exact-dot
+head diagnosis showed that those selected head outputs correctly round their
+respective inputs, so this investigation remains upstream of the head.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Comparison terminal | `3f94fe36125e3cbbf92e33caca6049b94fd33963956ef1477bf304dcec6bf38f` |
+| Seven-member comparison archive | `99d3f7ee62c5d107a6d6b6df193d532eb41685387a4f7793cb0391deff29bb98` |
+
+The comparison's passing status means authenticated inputs and successful
+diagnostic processing. It does not mean numerical acceptance. In particular,
+the first Q difference has not been shown to cause the position-five argmax
+difference, and matching inputs alone do not identify an arithmetic bug.
 
 ## Remaining Gates
 
-The CPU prerequisites have passed; native diagnostic validation is still
-pending. Both native and framework instrumentation must preserve their
-own prior forty-record histories and selected payloads. Cross-framework
-stage comparisons then distinguish same-input operation differences from
-upstream propagated differences; native FP32 rank partials are not treated
-as framework BF16 full projections.
+Both native and framework instrumentation preserve their own prior histories
+and selected payloads. The next diagnostic is an independent exact BF16 dot
+reference for the five differing Q/K projection scalars, including a join from
+the original checkpoint rows to the actual native packed upload hashes.
+The independently observed attention and output-projection/residual differences
+also remain to be resolved. No arithmetic change or tolerance relaxation follows
+from this comparison alone.
 
 Full 2,048-prompt/256-generated megakernel correctness, sustained decode
 throughput, the 700 tokens/s target, and issue #42 milestones remain open.
