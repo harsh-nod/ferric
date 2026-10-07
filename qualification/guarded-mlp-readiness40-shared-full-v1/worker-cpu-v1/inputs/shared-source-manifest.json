@@ -1,0 +1,313 @@
+{
+  "base": {
+    "ferric_commit": "2acc55e4d509f8fadc70beb7aa3f39e79660580c",
+    "parent_complete": {
+      "bytes": 3969572,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-host-timing-v1/parent-cpu-v1/evidence/complete.json",
+      "sha256": "d7239641f355b945bf6baac1ba7e8e6a887cedd5c4857d30ac36c5b896e54d3f"
+    },
+    "parent_sources": {
+      "bytes": 505505,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-host-timing-v1/parent-cpu-v1/evidence/sources-after.json",
+      "sha256": "1896bde4efb77b0da0635af6371c5877ce2c6f93b5bfbdafea1fd6e629b44e3f"
+    },
+    "worker_complete": {
+      "bytes": 1691615,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-full2303-v1/worker-cpu-v1/evidence/complete.json",
+      "sha256": "0b91b220824f093b0297134ff21e4ddc2dde64fd17909439bb15421fb862e55f"
+    },
+    "worker_sources": {
+      "bytes": 412019,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-full2303-v1/worker-cpu-v1/evidence/sources-after.json",
+      "sha256": "0fc0a33c61dd0e6f70903bb246654bfeb99095fd515be53c828d8d91f646e7cb"
+    }
+  },
+  "conditional_census": {
+    "parent": {
+      "library_inventory": 946,
+      "new_library": 8,
+      "new_readiness_binary": 1,
+      "new_scope": "finite_guarded_mlp_readiness_shared_v1::",
+      "passed": 475,
+      "phases": 64,
+      "products": 7,
+      "selected_scopes": 54,
+      "source_rows": 1260
+    },
+    "worker": {
+      "ignored": 4,
+      "inventory": 708,
+      "new_library": 9,
+      "new_readiness_integration": 1,
+      "passed": 704,
+      "phases": 9,
+      "runtime_sources": 815,
+      "source_rows": 1022,
+      "worker_sources": 205
+    }
+  },
+  "files": [
+    {
+      "after": {
+        "bytes": 8041,
+        "sha256": "bae3f43e53f59326443e6836262f81842bb98792b4087b9beb111837f7251934"
+      },
+      "before": {
+        "bytes": 6381,
+        "sha256": "5ea139a5aa72871972332d127bafd9073536381103104b0116a69d8c2ad02c25"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 90553,
+        "sha256": "5be9ce92931903006ded71dbc599c2e0676970d26f561a2783623221248af6ca"
+      },
+      "before": {
+        "bytes": 90354,
+        "sha256": "668e79e3402c8431150a6b126a94c2dbfc2f433e1a148728da61886e1494b4da"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 25085,
+        "sha256": "2d967be13a023f0c4f0a509aa6413fa65ab479e55550b2ba5db38baa358a8ce9"
+      },
+      "before": {
+        "bytes": 24101,
+        "sha256": "7f5dac3a7b6d0e43685b6eaba8b5ff97ccc6123b07f90ba44e7dfb855d3db0fa"
+      },
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 2272,
+        "sha256": "093aae15a5374f5519d8c3cf8430413103ecccd7fd67335c738ae8a8eb84a771"
+      },
+      "before": null,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_shared_full.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 2502,
+        "sha256": "aad442732a959b170480b21fb827b55155bbd865ffe0b37c617664af6d942a93"
+      },
+      "before": null,
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_shared_full_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 3972,
+        "sha256": "89675167e3f46535332a5430ff54fc8d7841c69581eb9c5b49c671fab9ab0aff"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 4400,
+        "sha256": "04ebcf404343d10f3302fcaf1fbe4e43a3ccede67ca53a2c20a8fd3d23143487"
+      },
+      "before": null,
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 2814,
+        "sha256": "d912bd3c469a26b408db0812514e71ebe2a9a69dce212c0f94cc3ba135d80367"
+      },
+      "before": {
+        "bytes": 2766,
+        "sha256": "f7ca0368b21c305739195e19d699efb618866cbddcb0ccf3891fb4ff032cbb76"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 20036,
+        "sha256": "8203598f3b92fa3c8773e8791da94355b3dd14bd591b6238830dcbdb1db13279"
+      },
+      "before": {
+        "bytes": 19519,
+        "sha256": "1d24ff765c8396272c516588b2553d587a3ecda342f60d9a86b8c45629d7ad3f"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 14314,
+        "sha256": "5063fceb00ef30fe2279c55723b9fe92fc15e31af443efe3563db9ab3ea3fd16"
+      },
+      "before": {
+        "bytes": 11190,
+        "sha256": "fb1d4230bc8a951003edd0ed8773c265dd7737e339128881a45871d23b41d21a"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 14090,
+        "sha256": "9efa6c6f6e840473e6a8f6362ce1c4aec1c976940534aecb20e321b27ac1f7ad"
+      },
+      "before": {
+        "bytes": 9535,
+        "sha256": "378b558097ff7c755956ca14fbccede48fec927fba081e88e101d02dbe4df438"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs",
+      "repository": "ferric"
+    },
+    {
+      "after": {
+        "bytes": 8694,
+        "sha256": "7d01af4e9b88915e4bb60daa6c9b9cebb4a1562cdad8f447e761e47637a4b376"
+      },
+      "before": {
+        "bytes": 7008,
+        "sha256": "e1e276285d58891b9b57c11c373b2e3a4879553e74dda7e768c5a23a42f41c15"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs",
+      "repository": "ferric"
+    }
+  ],
+  "future_actual_parent_terminal": null,
+  "future_actual_worker_terminal": null,
+  "new_tests": {
+    "parent_library": [
+      "shared_full_parent_entry_preserves_existing_public_signatures_and_refuses_other_modes",
+      "shared_full_parent_reads_retained_bytes_and_rejects_changed_or_absent_policy",
+      "shared_full_policy_exact_closed_record_roundtrips",
+      "shared_full_policy_refuses_boolean_integer_substitution",
+      "shared_full_policy_refuses_every_policy_and_authority_drift",
+      "shared_full_policy_refuses_other_profiles_and_missing_identity",
+      "shared_full_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "shared_full_policy_requires_one_exact_bounded_record"
+    ],
+    "parent_readiness_binary": [
+      "shared_full_parent_selector_is_separate_from_default_timing_and_full"
+    ],
+    "worker_library": [
+      "shared_full_cli_is_explicit_and_never_selects_causal_or_full",
+      "shared_full_configures_fresh_group_before_install_with_only_shared_true",
+      "shared_full_policy_exact_closed_record_roundtrips",
+      "shared_full_policy_refuses_boolean_integer_substitution",
+      "shared_full_policy_refuses_every_policy_and_authority_drift",
+      "shared_full_policy_refuses_other_profiles_and_missing_identity",
+      "shared_full_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "shared_full_policy_requires_one_exact_bounded_record",
+      "shared_full_policy_uses_actual_closed_forty_frame_digest"
+    ],
+    "worker_readiness_cli_integration": [
+      "shared_full_executable_routes_selector_without_fallback_or_stdin_relock"
+    ]
+  },
+  "patch": {
+    "bytes": 37658,
+    "sha256": "c8beae8f9c8567cd3cf62e3f0c6847612f3196a80f3e968562dcfa4cc10d714b"
+  },
+  "readme": {
+    "bytes": 6476,
+    "sha256": "326a838d8a3259ae414477a6e3ee31a052d1c28d49f1bca0639f086180cc64a2"
+  },
+  "schema": "ferric-readiness40-position5-shared-full-source-v1",
+  "scope": {
+    "cache_kernel_admission": false,
+    "compiled": false,
+    "deadline_changed": false,
+    "default_policy_changed": false,
+    "full2303_native_enabled_by_this_proposal": false,
+    "host_observer": false,
+    "native_execution": false,
+    "numerical_acceptance": false,
+    "operational_currentness": false,
+    "ordinary_observation_schema_changed": false,
+    "paired_hidden_reads": false,
+    "paired_terminal": false,
+    "performance_claim": false,
+    "policy_record_max_bytes": 4096,
+    "pure_long_profile_changed": false,
+    "retention_cap_changed": false,
+    "runtime_changed": false,
+    "selected_currentness_policy_changed": true,
+    "shared_full_currentness": true,
+    "tests_executed": false,
+    "wire_changed": false
+  },
+  "test_roster": [
+    {
+      "name": "shared_full_parent_selector_is_separate_from_default_timing_and_full",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs",
+      "target": "parent_readiness_binary"
+    },
+    {
+      "name": "shared_full_parent_entry_preserves_existing_public_signatures_and_refuses_other_modes",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_shared_full_tests.rs",
+      "target": "parent_library"
+    },
+    {
+      "name": "shared_full_parent_reads_retained_bytes_and_rejects_changed_or_absent_policy",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_shared_full_tests.rs",
+      "target": "parent_library"
+    },
+    {
+      "name": "shared_full_policy_exact_closed_record_roundtrips",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_policy_refuses_every_policy_and_authority_drift",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_policy_requires_one_exact_bounded_record",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_policy_refuses_other_profiles_and_missing_identity",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_policy_refuses_boolean_integer_substitution",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_shared_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_cli_is_explicit_and_never_selects_causal_or_full",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_configures_fresh_group_before_install_with_only_shared_true",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_policy_uses_actual_closed_forty_frame_digest",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs",
+      "target": "worker_library"
+    },
+    {
+      "name": "shared_full_executable_routes_selector_without_fallback_or_stdin_relock",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/readiness_cli.rs",
+      "target": "worker_readiness_cli_integration"
+    }
+  ]
+}

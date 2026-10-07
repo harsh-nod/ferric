@@ -1,0 +1,86 @@
+{
+  "archive": {
+    "bytes": 37149,
+    "sha256": "cd89e1e2a519c154b9bef299c985047cc1aed86b08a29dad964815df5f941841"
+  },
+  "external_tools_rehashed_locally": false,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 13382,
+      "sha256": "7a9029ae0e864809fa98062f4f15a13c954ce67d8b1d20e8c2cb36baa888850c"
+    },
+    "evidence/readiness-tests.command.json": {
+      "bytes": 1168,
+      "sha256": "d7482c8491cb23cabf024c7b463efcc6826f5065c19afc54045c56fb011338b3"
+    },
+    "evidence/readiness-tests.result.json": {
+      "bytes": 1811,
+      "sha256": "254ef0749d9e4edecfb5851ce3d95f89ee0404502565e2d2489a4e108bf5754f"
+    },
+    "evidence/readiness-tests.started.json": {
+      "bytes": 622,
+      "sha256": "1bf2bfbc5a8e2bc6924360e35b045df7f850fcc48ec6769a6325b7f75b0fe001"
+    },
+    "evidence/readiness-tests.stderr": {
+      "bytes": 4356,
+      "sha256": "73a4fd92387cf2ed6ffcfc475c7a534a451c423f98667c34f87e7c098ec8dee7"
+    },
+    "evidence/readiness-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 2057,
+      "sha256": "81ff15b253c47b1007273fa121bd8d7668b25b56f9f8aa49dd7df9c2bf327320"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 2057,
+      "sha256": "81ff15b253c47b1007273fa121bd8d7668b25b56f9f8aa49dd7df9c2bf327320"
+    },
+    "manifest.json": {
+      "bytes": 2777,
+      "sha256": "12a270ad013953e69bc4fd5dca3b22dfbfc8ff02f2a44e183d29daca9a5ed7e9"
+    },
+    "pure-evidence.py": {
+      "bytes": 14901,
+      "sha256": "45f3ebd088e7f6310006493516d4dbe6e0d99a65d0e9c7a9263d264e1c483c0b"
+    },
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 12928,
+      "sha256": "f58d38c9168d06daa571e59d36550a45beb27f4f5376550553fe8cca287ffe34"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_readiness.py": {
+      "bytes": 17802,
+      "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+    },
+    "test_shared.py": {
+      "bytes": 10737,
+      "sha256": "a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_shared.py": {
+      "bytes": 8015,
+      "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+    }
+  },
+  "mode": "checker",
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "original_files": 15,
+  "original_terminal_unchanged": true,
+  "performance_claim": false,
+  "schema": "ferric-readiness40-shared-full-pure-cpu-retention-v1",
+  "tests_passed": 29
+}
