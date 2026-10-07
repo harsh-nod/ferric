@@ -219,6 +219,16 @@ None is an exact midpoint tie. This is not an accumulation-order emulator or
 a full-projection exactness claim. It rules out treating framework agreement
 alone as evidence that a numerical change improves these selected results.
 
+## Exact Gate/Up Diagnostic
+
+The [seven-dot follow-up](gate-up-exact-v1/RESULTS.md) passed 20 tests on MI350.
+Position-5 post-normalized inputs are byte-identical on both sides. The original
+checkpoint's four rank-specific Gate/Up partitions join the current native
+uploads. Native matches once-rounded exact BF16 in six selected differing
+scalars; the framework matches in one. None is a midpoint tie. All 18 original
+files are retained. This does not diagnose SiLU/down-projection, establish
+full-model acceptance or justify forcing equality with the framework.
+
 ## Position-Zero Residual Diagnosis
 
 The [current O replay join](current-o-replay-join-v1/README.md) reuses the

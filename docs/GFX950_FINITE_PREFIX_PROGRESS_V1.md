@@ -64,6 +64,13 @@ captured inputs. The head inputs already differ; final rounding of these
 two rows does not explain the upstream discrepancy. Operation-level
 diagnosis and full-model acceptance remain open.
 
+The [seven Gate/Up exact-dot diagnostic](../qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/RESULTS.md)
+passes 20 tests and original-weight/input checks on MI350. Among the seven
+selected differing position-5 scalars with identical captured inputs, native
+matches once-rounded exact BF16 in six cases and the framework in one. This
+does not justify a framework-equality math patch or establish numerical
+acceptance. All 18 original diagnostic files are retained.
+
 The [opt-in paired-terminal runtime API](../qualification/guarded-mlp-terminal-pair-v1/README.md)
 is integrated after 1,119 KFD tests, 658 unchanged worker tests, ten facade
 doctests and 23 clean MI350 CPU phases. It coalesces terminal validation for
