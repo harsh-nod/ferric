@@ -1,0 +1,296 @@
+warning: unused import: `session::Session`
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:10:16
+   |
+10 | pub(super) use session::Session;
+   |                ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `RetainedPair` and `rearm_pairs`
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:24:27
+   |
+24 | pub(super) use retained::{RetainedPair, UnboundPair, rearm_pairs};
+   |                           ^^^^^^^^^^^^               ^^^^^^^^^^^
+
+warning: unused import: `prefix::Transaction`
+ --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_resident_layer_tp2_v1.rs:7:5
+  |
+7 | use prefix::Transaction as _;
+  |     ^^^^^^^^^^^^^^^^^^^
+
+warning: variable does not need to be mutable
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_v1.rs:181:9
+    |
+181 |         mut self,
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs:48:9
+   |
+48 |         mut self,
+   |         ----^^^^
+   |         |
+   |         help: remove this `mut`
+
+warning: variable does not need to be mutable
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950.rs:815:9
+    |
+815 |         mut bytes: Vec<u8>,
+    |         ----^^^^^
+    |         |
+    |         help: remove this `mut`
+
+warning: methods `generation`, `submit`, and `complete_quiescent` are never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs:151:19
+    |
+146 | impl CombinedMlpStateV1 {
+    | ----------------------- methods in this implementation
+...
+151 |     pub(super) fn generation(&self) -> u64 {
+    |                   ^^^^^^^^^^
+...
+228 |     pub(super) fn submit(&mut self, group: &mut Gfx950EngineeringPeerGroupV1) -> Result<()> {
+    |                   ^^^^^^
+...
+253 |     pub(super) unsafe fn complete_quiescent(
+    |                          ^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `coordinate` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:109:4
+    |
+109 | fn coordinate(backend: &mut impl CoordinatorBackend, timeout_ms: u32) -> Result<Completion> {
+    |    ^^^^^^^^^^
+
+warning: function `coordinate_until` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:113:4
+    |
+113 | fn coordinate_until(
+    |    ^^^^^^^^^^^^^^^^
+
+warning: function `dispatch` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs:408:22
+    |
+408 | pub(super) unsafe fn dispatch(
+    |                      ^^^^^^^^
+
+warning: method `publish` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_arena_v1.rs:465:19
+    |
+319 | impl Staged {
+    | ----------- method in this implementation
+...
+465 |     pub(super) fn publish(
+    |                   ^^^^^^^
+
+warning: method `recheck` is never used
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retired_v1.rs:91:29
+   |
+83 | impl Retired {
+   | ------------ method in this implementation
+...
+91 |     pub(in super::super) fn recheck(
+   |                             ^^^^^^^
+
+warning: method `prepare` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_reuse_v1.rs:180:36
+    |
+168 | impl Reusable {
+    | ------------- method in this implementation
+...
+180 |     pub(in super::super::super) fn prepare(
+    |                                    ^^^^^^^
+
+warning: enum `Custody` is never used
+ --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:4:6
+  |
+4 | enum Custody {
+  |      ^^^^^^^
+
+warning: methods `begin_run`, `complete`, `begin_rearm`, and `transfer` are never used
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:15:8
+   |
+14 | impl Custody {
+   | ------------ methods in this implementation
+15 |     fn begin_run(&mut self) -> Result<()> {
+   |        ^^^^^^^^^
+...
+22 |     fn complete(&mut self, generation: u64, result: &Completion) -> Result<()> {
+   |        ^^^^^^^^
+...
+36 |     fn begin_rearm(&mut self) -> Result<(u64, [CombinedMlpSnapshotV1; 2])> {
+   |        ^^^^^^^^^^^
+...
+43 |     fn transfer(&self, write: bool) -> Result<()> {
+   |        ^^^^^^^^
+
+warning: trait `RearmBackend` is never used
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:52:7
+   |
+52 | trait RearmBackend {
+   |       ^^^^^^^^^^^^
+
+warning: function `rearm_pair` is never used
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:65:4
+   |
+65 | fn rearm_pair(
+   |    ^^^^^^^^^^
+
+warning: struct `Session` is never constructed
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:141:29
+    |
+141 | pub(in super::super) struct Session<'group, 'kernel> {
+    |                             ^^^^^^^
+
+warning: multiple associated items are never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_session_v1.rs:152:36
+    |
+146 | impl<'group, 'kernel> Session<'group, 'kernel> {
+    | ---------------------------------------------- associated items in this implementation
+...
+152 |     pub(in super::super) unsafe fn new(
+    |                                    ^^^
+...
+174 |     fn outcome<T>(&mut self, result: Result<T>) -> Result<T> {
+    |        ^^^^^^^
+...
+182 |     pub(in super::super) fn run(&mut self, timeout_ms: u32) -> Result<Completion> {
+    |                             ^^^
+...
+193 |     pub(in super::super) fn rearm_next(&mut self, timeout_ms: u32) -> Result<u64> {
+    |                             ^^^^^^^^^^
+...
+209 |     fn bound_payload(&self, buffer: Gfx950EngineeringPeerBufferV1) -> Result<()> {
+    |        ^^^^^^^^^^^^^
+...
+223 |     pub(in super::super) fn read(
+    |                             ^^^^
+...
+240 |     pub(in super::super) fn write(
+    |                             ^^^^^
+
+warning: associated function `capture` is never used
+  --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:27:8
+   |
+26 | impl Binding {
+   | ------------ associated function in this implementation
+27 |     fn capture(group: &Gfx950EngineeringPeerGroupV1, inputs: &Inputs<'_>) -> Self {
+   |        ^^^^^^^
+
+warning: fields `owner_ids` and `arena_ids` are never read
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:337:5
+    |
+333 | struct Operation<'a> {
+    |        --------- fields in this struct
+...
+337 |     owner_ids: BTreeSet<(u64, u64)>,
+    |     ^^^^^^^^^
+338 |     arena_ids: BTreeSet<(u64, u64)>,
+    |     ^^^^^^^^^
+
+warning: associated functions `allocate`, `allocate_exact_own_residual`, and `allocate_with_policy` are never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:406:36
+    |
+399 | impl RetainedPair {
+    | ----------------- associated functions in this implementation
+...
+406 |     pub(in super::super) unsafe fn allocate(
+    |                                    ^^^^^^^^
+...
+423 |     pub(in super::super) unsafe fn allocate_exact_own_residual(
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+439 |     unsafe fn allocate_with_policy(
+    |               ^^^^^^^^^^^^^^^^^^^^
+
+warning: trait `RearmBackend` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:554:7
+    |
+554 | trait RearmBackend {
+    |       ^^^^^^^^^^^^
+
+warning: function `rearm_all` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:563:4
+    |
+563 | fn rearm_all(
+    |    ^^^^^^^^^
+
+warning: function `rearm_pairs` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs:712:25
+    |
+712 | pub(in super::super) fn rearm_pairs(
+    |                         ^^^^^^^^^^^
+
+warning: function `gfx942_cwsr_header_bytes` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:406:15
+    |
+406 | pub(crate) fn gfx942_cwsr_header_bytes(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `initialize_gfx942_cwsr_headers` is never used
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/fe2o3/crates/fe2o3-kfd/src/queue_submit.rs:415:15
+    |
+415 | pub(crate) fn initialize_gfx942_cwsr_headers(
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `fe2o3-kfd` (lib) generated 27 warnings (run `cargo fix --lib -p fe2o3-kfd` to apply 5 suggestions)
+warning: trait `capture_v1::Reader<B>` is more private than the item `causal_v1::Collector::observe_guarded`
+   --> src/resident_layer/capture_v1/causal_v1.rs:152:5
+    |
+152 | /     pub(crate) fn observe_guarded<B: Allocation>(
+153 | |         &mut self,
+154 | |         boundary: Boundary,
+155 | |         reader: &mut impl Reader<B>,
+156 | |         roots: &LayerBindings<B>,
+157 | |         down: [B; 2],
+158 | |     ) -> Result<()> {
+    | |___________________^ method `causal_v1::Collector::observe_guarded` is reachable at visibility `pub(crate)`
+    |
+note: but trait `capture_v1::Reader<B>` is only usable at visibility `pub(in crate::resident_layer)`
+   --> src/resident_layer/capture_v1.rs:207:1
+    |
+207 | pub(super) trait Reader<B: Allocation> {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: `#[warn(private_bounds)]` on by default
+
+warning: function `admitted_arena_mode` is never used
+   --> src/native_guarded_mlp_decode_cli_v1.rs:140:4
+    |
+140 | fn admitted_arena_mode(options: &NativeOptions, b: &Bootstrap, reusable: bool) -> io::Result<Mode> {
+    |    ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `prepare` is never used
+   --> src/native_guarded_mlp_decode_cli_v1.rs:156:4
+    |
+156 | fn prepare(
+    |    ^^^^^^^
+
+warning: function `encode_closed` is never used
+   --> src/native_prefix_layer_cli_v1.rs:174:4
+    |
+174 | fn encode_closed(b: &Bootstrap, closed: ClosedRun) -> io::Result<(wire::Control, Vec<u8>)> {
+    |    ^^^^^^^^^^^^^
+
+warning: field `policy` is never read
+  --> src/native_projection_residual_mlp_ordered_v1.rs:27:5
+   |
+24 | pub struct Options {
+   |            ------- field in this struct
+...
+27 |     policy: Policy,
+   |     ^^^^^^
+
+warning: `ferric-tp-peer-finite-engineering-worker-v1` (lib) generated 5 warnings
+warning: `ferric-tp-peer-finite-engineering-worker-v1` (lib test) generated 1 warning (1 duplicate)
+    Finished `test` profile [optimized] target(s) in 0.03s
+     Running unittests src/lib.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-652c6d68a45bb4e8)
+     Running unittests src/main.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-7c317a35829a5178)
+     Running tests/readiness_cli.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/target/debug/deps/readiness_cli-d5e5e9ff45fad2f9)
+     Running tests/shared_wire.rs (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2/target/debug/deps/shared_wire-2f7411a9b1daa211)

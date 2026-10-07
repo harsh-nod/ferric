@@ -1,0 +1,224 @@
+{
+  "schema": "ferric-scoped-bank-rearm-runtime-source-v1",
+  "status": "source-only-uncompiled-unexecuted",
+  "runtime_head": "9c7a7a3e43a78683f2a9e519672007ba7447508e",
+  "baseline": {
+    "capsule": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-scoped-currentness-v1/cpu-attempt-v3",
+    "terminal": {
+      "bytes": 2364691,
+      "sha256": "335cf93cc109390f3b7590f7dbe35ed852adca223a042894dcc18418a738ffbd"
+    },
+    "sources": {
+      "bytes": 420283,
+      "sha256": "e5ca47a688908d4c78d1e3157211aee4c29bf12f626c01258f06a8ca8eefbda3"
+    },
+    "runtime_map_rows": 820,
+    "runtime_passed": 1143,
+    "runtime_ignored": 8
+  },
+  "files": [
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "before": {
+        "bytes": 83303,
+        "sha256": "84e4a99cdee9c1d87947d182519fd3de790ff2da56ba20986dfa68b3df973b65"
+      },
+      "after": {
+        "bytes": 83358,
+        "sha256": "2dfa8495ec54d8bf6f64ed6074fe9ad7c4c8d17d59387a1233bbcb50e32f5269"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "before": {
+        "bytes": 35789,
+        "sha256": "baf0cb55f48316430f1563a722d66632f654436a6d2d7fdfe2a489e621e9bcdb"
+      },
+      "after": {
+        "bytes": 35844,
+        "sha256": "f25d425303d6923eaa2167e05bcaef0fffa413f6d1bc576bbeb50dbc5c4e6c1d"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs",
+      "before": {
+        "bytes": 15876,
+        "sha256": "5662245f3c86bc80d49c5b2290b4baa90046ccb327126d4be9905d65b858aa7b"
+      },
+      "after": {
+        "bytes": 17483,
+        "sha256": "2e8c803a749e73068764a8d7de4537a38486518d438257e670935e79d3762f0e"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs",
+      "before": {
+        "bytes": 15592,
+        "sha256": "d58eb67efd99706f1d7791097e0b96a4729322e84d3a65fc4c56ca11f4cd144c"
+      },
+      "after": {
+        "bytes": 15676,
+        "sha256": "ef0f31eb3a194bde13ef5f3c61db96c736642246d5f62b06902880248967b4b6"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1_tests.rs",
+      "before": {
+        "bytes": 21293,
+        "sha256": "7cae8ab448a3d913ad12927287a0a719bffd19395fc37f47937a04ae402b9484"
+      },
+      "after": {
+        "bytes": 21416,
+        "sha256": "1c4f9c2b9bb18f34d21b27970114f99352a6654fc94e205a841c9669dd996bc3"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_retained_v1.rs",
+      "before": {
+        "bytes": 28414,
+        "sha256": "dee071df136739d34e9cddebce1db395943934cb9b7c242b847bda6d176c56cd"
+      },
+      "after": {
+        "bytes": 29031,
+        "sha256": "86e62f94fc65df1a68bf745492dfe03090f37d6deda59da14271076a7362843d"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs",
+      "before": {
+        "bytes": 15262,
+        "sha256": "4f8bb7e88424aa080a5474673cf7bd9e09c8e7d706c93f428e46528b5b4ddf6e"
+      },
+      "after": {
+        "bytes": 15331,
+        "sha256": "35b1865ae5837639b687cd93181466e8a59a4281a64ab58fc988009625ae6b20"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_state_v1.rs",
+      "before": {
+        "bytes": 16007,
+        "sha256": "0a887632ef2e8ada664999b813e9e62099a72fadee58d85293f11371b06f85c7"
+      },
+      "after": {
+        "bytes": 16629,
+        "sha256": "a2a003893c73613526062032e590d243d0d5a118ca0d74d1c5a20b0aab0e518d"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_bank_rearm_v1.rs",
+      "before": null,
+      "after": {
+        "bytes": 11633,
+        "sha256": "4ea10e7e039b70fcca18ec8a8a02f5254e64b4e7ef8e81de559252cc0eab20d6"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_bank_rearm_v1_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 10057,
+        "sha256": "c84e6538fdb53c7e7f95f54f3a8186cf889b3bb1f594edf0f723ede78a5402f6"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_wave_qkv_attention_output_tiles_state_v6.rs",
+      "before": {
+        "bytes": 16102,
+        "sha256": "478b92b5a1b3c23bfc95519f45879474dd79af5a61725578fe1f86640fcab12a"
+      },
+      "after": {
+        "bytes": 18613,
+        "sha256": "ef617e4b61e21b88e134f03d7202a15d550cb4ce82f92dd57631d5e5f6cef911"
+      }
+    },
+    {
+      "repository": "fe2o3",
+      "path": "crates/fe2o3-kfd/src/lib.rs",
+      "before": {
+        "bytes": 21048,
+        "sha256": "1a354cf351d9f9b358c93f6b5a3c560973bdb7c45e8b0df68edd45a575876e70"
+      },
+      "after": {
+        "bytes": 21103,
+        "sha256": "200451bc27a24ded72f7688debfb134c2f07235f8f8a67318730a12f5cf204b4"
+      }
+    }
+  ],
+  "interface": {
+    "bytes": 5546,
+    "sha256": "555fe051aa13b4c6a3ee9effbee6c69ed542d946f0ecf3949ccbf76c35c91505"
+  },
+  "readme": {
+    "bytes": 6742,
+    "sha256": "f237861719ab9e0e7f1dbe8af1ef04679a7c433ebce5467c9b8ca09665f84521"
+  },
+  "patch": {
+    "bytes": 35909,
+    "sha256": "08877d9c5e22f2bb5e1150b6c05023fb9912fc550fc062766c44d04e85e3ba9c"
+  },
+  "new_tests": [
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::scoped::custody_tests::scoped_bank_outer_owner_quarantines_partial_commit_and_unwind",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_admission_requires_fixed_completed_reusable_exact_roster",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_counts_are_separate_exact_window_data",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_every_effect_deadline_including_exit_and_commit_is_fail_stop",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_every_effect_error_and_unwind_quarantines_the_whole_roster",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_facade_requires_concrete_exclusive_typed_roster",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_native_first_use_and_invalid_deadline_quarantine_every_owner",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_stale_generation_duplicate_and_last_rank_refuse_before_stores",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::scoped_bank_tests::scoped_bank_validates_all_36_before_first_reset_and_commits_after_exit"
+  ],
+  "preserved_mixed_bank_tests": [
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_bounds_timeouts_and_outer_deadline_refuse_before_effects",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_cross_kind_identity_collisions_refuse_before_atomic_reads",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_every_deadline_boundary_blocks_the_next_operation",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_every_error_boundary_quarantines_without_later_effects",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_every_unwind_boundary_quarantines_without_publishing",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_generations_require_one_common_nonzero_successor",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_initial_validation_has_no_stores_or_retired_arenas",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_last_invalid_prefix_or_pair_performs_zero_stores",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_native_prefix_metadata_rejects_wrong_phase_rank_group_and_extent",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_native_refuses_context_free_custody_and_quarantines_all_entries",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_native_unwind_keeps_group_and_typed_owners_quarantined",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_reuse_custody_is_unavailable_until_all_36_pairs_pass",
+    "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::tests::mixed_bank_validates_every_owner_before_stores_and_publishes_last"
+  ],
+  "conditional": {
+    "replacement_rows": 10,
+    "added_rows": 2,
+    "runtime_map_rows": 822,
+    "runtime_passed": 1152,
+    "runtime_ignored": 8,
+    "runtime_inventory": 1160,
+    "mixed_bank_scope_passed": 22
+  },
+  "successful_bank_window": {
+    "entries": 36,
+    "full_discoveries": 2,
+    "local_checkpoints": 361,
+    "before_calls": 726,
+    "after_calls": 726,
+    "generation_probes": 725
+  },
+  "scope": {
+    "ordinary_rearm_unchanged": true,
+    "fixed_roster_no_user_callback": true,
+    "shader_execution_in_scope": false,
+    "global_policy_changed": false,
+    "worker_selector_added": false,
+    "temporal_equivalence_claim": false,
+    "performance_claim": false,
+    "native_execution": false
+  }
+}

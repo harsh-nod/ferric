@@ -1,0 +1,18 @@
+{
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "original_runtime_cargo_identities_equal": 2,
+  "passed": true,
+  "performance_claim": false,
+  "qualified_runtime_nonfixture_bodies_equal": 818,
+  "qualified_worker_bodies_equal": 216,
+  "runtime_fixtures_copied": false,
+  "schema": "ferric-bank-rearm-integration-postcheck-v1",
+  "sources": {
+    "bytes": 423235,
+    "sha256": "73e3ad534a3d48bddd717780215142dd588f4a776dd25f003305854f70d7c285"
+  },
+  "tested_runtime_postimages_copied": 12,
+  "tested_worker_postimages_copied": 11,
+  "unchanged_nonworker_ferric_bodies": 1055
+}

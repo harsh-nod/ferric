@@ -1,0 +1,27 @@
+{
+  "archive": {
+    "bytes": 658378,
+    "sha256": "39cec2a81b4b78375183336a1c8d435d043a47aa5c054c604c2a6296aed14161"
+  },
+  "canonical_changed": false,
+  "controller": {
+    "bytes": 24469,
+    "sha256": "3052abbf80b16af2bbe919c612a7df06409436092c809a17b4a089a3d5022cf1"
+  },
+  "copied_unchanged_files": 1015,
+  "helpers": 4,
+  "input": {
+    "bytes": 215797,
+    "sha256": "4cc0f3d97d2125e04eec2d6750ab6d74642808586a3a6142730a39a0ae5bcfdb"
+  },
+  "lockfiles_changed": false,
+  "overlay_files": 23,
+  "passed": true,
+  "project_execution": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-scoped-bank-rearm-cpu-v228-v2",
+  "runtime_files": 822,
+  "schema": "ferric-guarded-mlp-scoped-bank-rearm-stage-v1",
+  "shared_cache_changed": false,
+  "source_files": 1042,
+  "worker_files": 216
+}
