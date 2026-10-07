@@ -1,0 +1,313 @@
+{
+  "accepted": true,
+  "archive_bytes": 3746384,
+  "archive_sha256": "46896f2639b0a09a67adee1274014a7d62239b0e2202e72e05b2d95de7323000",
+  "audit_source_sha256": "f57987b63a9c5e97d02b15b27dda256bdaab49d4ef42ba6810018e2c8a41a86c",
+  "cell_result_sha256": "62ff73e4bde19b3a21ef64910de8c462891e1d7f4a12cf2cd71038497da1e0c7",
+  "clean_reaped_unsignaled": true,
+  "completion_wait_percent_of_registered_span": 88.97719571922518,
+  "cpu_qualification": {
+    "broad_native_filter": "Explicitly interrupted; incomplete and not qualified. Focused cohorts subsequently passed.",
+    "capture_tests_passed": 42,
+    "feature_off_library_checks": [
+      "default",
+      "engineering-gfx950"
+    ],
+    "host": "mi300x-2",
+    "release_worker_built": true,
+    "runtime_tests_passed": 27,
+    "strict_library_clippy": true,
+    "worker_check": true
+  },
+  "decode": {
+    "by_role": {
+      "argmax": {
+        "sum_ticks": 12870096,
+        "window_percent": 2.219486106606927
+      },
+      "attention_merge": {
+        "sum_ticks": 4353640,
+        "window_percent": 0.7507980898641458
+      },
+      "attention_partial": {
+        "sum_ticks": 35237312,
+        "window_percent": 6.076778636163519
+      },
+      "attention_residual": {
+        "sum_ticks": 5180852,
+        "window_percent": 0.8934532449786476
+      },
+      "down": {
+        "sum_ticks": 96003400,
+        "window_percent": 16.556070171273586
+      },
+      "embedding": {
+        "sum_ticks": 133956,
+        "window_percent": 0.023101108250990324
+      },
+      "feed_forward_residual": {
+        "sum_ticks": 4957716,
+        "window_percent": 0.854972782060279
+      },
+      "final_norm": {
+        "sum_ticks": 860372,
+        "window_percent": 0.14837369515453616
+      },
+      "gate": {
+        "sum_ticks": 65018136,
+        "window_percent": 11.212569784209823
+      },
+      "head": {
+        "sum_ticks": 11002536,
+        "window_percent": 1.8974198630253074
+      },
+      "input_norm": {
+        "sum_ticks": 30711040,
+        "window_percent": 5.29620964749988
+      },
+      "key": {
+        "sum_ticks": 33764580,
+        "window_percent": 5.8228016485205805
+      },
+      "key_norm": {
+        "sum_ticks": 18651832,
+        "window_percent": 3.21656357394432
+      },
+      "kv_copy": {
+        "sum_ticks": 3447548,
+        "window_percent": 0.5945398455349905
+      },
+      "output": {
+        "sum_ticks": 42278668,
+        "window_percent": 7.291081296662192
+      },
+      "post_attention_norm": {
+        "sum_ticks": 30610216,
+        "window_percent": 5.278822250606139
+      },
+      "query": {
+        "sum_ticks": 37297480,
+        "window_percent": 6.432060698805179
+      },
+      "query_norm": {
+        "sum_ticks": 19497960,
+        "window_percent": 3.3624808491853986
+      },
+      "rope": {
+        "sum_ticks": 20892348,
+        "window_percent": 3.6029471823984083
+      },
+      "swiglu": {
+        "sum_ticks": 8936276,
+        "window_percent": 1.541087216972191
+      },
+      "up": {
+        "sum_ticks": 65077444,
+        "window_percent": 11.222797624158385
+      },
+      "value": {
+        "sum_ticks": 33084876,
+        "window_percent": 5.7055846841245765
+      }
+    },
+    "equal_adjacent_boundaries": 82677,
+    "normalization_percent": 17.302450016390274,
+    "overlap_ticks": 0,
+    "projection_percent": 64.24296590775432,
+    "uncovered_ticks": 0,
+    "window_sum_ticks": 579868284
+  },
+  "decode_mean_ms": {
+    "completion_wait": 45.720171055118115,
+    "currentness_nested": 0.008882133858267716,
+    "execution_return": 47.332439763779526,
+    "max_inter_read": 0.11331034645669291,
+    "outside_completion_wait": 5.663973708661418,
+    "pause_elapsed": 45.59428213385827,
+    "post_read": 0.052679716535433074,
+    "publication_to_signal_lower": 45.61859691338582,
+    "publication_to_signal_upper": 45.71848711811024,
+    "registered_span": 51.38414476377953,
+    "retirement_signals": 0.0015862992125984252,
+    "signal_observation_uncertainty": 0.09989020472440945,
+    "signal_to_execution_return_lower": 0.02403955118110236,
+    "signal_to_execution_return_upper": 0.12392975590551182
+  },
+  "exact_output_tokens": 128,
+  "exact_utf8": true,
+  "finished_utc": "2026-10-07T20:43:56.833591+00:00",
+  "gpu_clock_calibrated": false,
+  "limitations": [
+    "Exactly touching firmware intervals do not establish zero device dispatch or fence overhead; these costs can remain inside packet intervals.",
+    "Raw GPU clock not calibrated to host nanoseconds; no shader-only times claimed.",
+    "Added profiling raises observed host overhead; do not compare registered span to an uninstrumented run as a speedup or regression.",
+    "One cold instrumented request; no new matched HTTP or vendor comparison.",
+    "Isolation is sampled, not continuous.",
+    "Roles follow the fixed 36-layer, 18-packet baseline order and validate every observed symbol position; symbols alone cannot distinguish reused projection kernels."
+  ],
+  "maximum_post_signal_tail_upper_ms": 0.15245,
+  "native_records": 131,
+  "next_steps": [
+    {
+      "owner": "Ferric",
+      "priority": 1,
+      "status": "pending",
+      "work": "Rebind and finish the standalone native688 split-K8 down ABBA using a current uninstrumented worker in both arms."
+    },
+    {
+      "owner": "fe2o3 compiler; Ferric kernels and measurement",
+      "priority": 2,
+      "status": "design-only",
+      "work": "Implement bounded checked-load grouping; require independent loads before wait/use in emitted ISA, no spills, numerical parity, component timing, then full-model ABBA."
+    },
+    {
+      "owner": "Ferric",
+      "priority": 3,
+      "status": "pending",
+      "work": "Optimize prefill32 MFMA down and gate/up loading, tiling and occupancy; qualify independently of decode."
+    },
+    {
+      "owner": "Ferric kernels; fe2o3 diagnostic support",
+      "priority": 4,
+      "status": "pending",
+      "work": "Measure normalization and fusion candidates, with native shader-entry/exit observations or a qualified device trace to separate packet overhead."
+    }
+  ],
+  "outer_sha256": "a8876f829cd3e1177ffa6814089ef47897d806492ca456457be09d5a75558f0f",
+  "performance_qualified": false,
+  "plan_sha256": "f763e448a53021dceb22b0743b593b313abe42eb2efb86e031fc8999ebac145b",
+  "post_signal_tail_upper_percent_of_registered_span": 0.2411828716333319,
+  "prefill": {
+    "by_role": {
+      "attention": {
+        "sum_ticks": 2584380,
+        "window_percent": 7.184510693339003
+      },
+      "attention_residual": {
+        "sum_ticks": 342256,
+        "window_percent": 0.9514629783001857
+      },
+      "down": {
+        "sum_ticks": 8256032,
+        "window_percent": 22.951559054221512
+      },
+      "embedding": {
+        "sum_ticks": 8196,
+        "window_percent": 0.02278467162050723
+      },
+      "feed_forward_residual": {
+        "sum_ticks": 349760,
+        "window_percent": 0.9723239075144714
+      },
+      "gate": {
+        "sum_ticks": 3824744,
+        "window_percent": 10.63269107766048
+      },
+      "input_norm": {
+        "sum_ticks": 898916,
+        "window_percent": 2.498963625478267
+      },
+      "key": {
+        "sum_ticks": 2864868,
+        "window_percent": 7.964260202061896
+      },
+      "key_norm": {
+        "sum_ticks": 836460,
+        "window_percent": 2.3253375333930544
+      },
+      "kv_copy": {
+        "sum_ticks": 327576,
+        "window_percent": 0.9106529515323665
+      },
+      "kv_copy_second": {
+        "sum_ticks": 323656,
+        "window_percent": 0.8997554511965455
+      },
+      "output": {
+        "sum_ticks": 2924696,
+        "window_percent": 8.130580520962788
+      },
+      "post_attention_norm": {
+        "sum_ticks": 904420,
+        "window_percent": 2.5142646055416233
+      },
+      "query": {
+        "sum_ticks": 2992964,
+        "window_percent": 8.3203638252806
+      },
+      "query_norm": {
+        "sum_ticks": 834364,
+        "window_percent": 2.319510706682881
+      },
+      "rope": {
+        "sum_ticks": 652148,
+        "window_percent": 1.8129548594400375
+      },
+      "swiglu": {
+        "sum_ticks": 356000,
+        "window_percent": 0.9896709488653701
+      },
+      "up": {
+        "sum_ticks": 3830724,
+        "window_percent": 10.649315325621759
+      },
+      "value": {
+        "sum_ticks": 2859392,
+        "window_percent": 7.949037061286652
+      }
+    },
+    "equal_adjacent_boundaries": 2592,
+    "normalization_percent": 9.658076471095827,
+    "overlap_ticks": 0,
+    "projection_percent": 76.59780706709569,
+    "uncovered_ticks": 0,
+    "window_sum_ticks": 35971552
+  },
+  "prefill_sum_ms": {
+    "currentness_nested": 0.03704,
+    "execution_return": 372.557431,
+    "max_inter_read": 0.45097,
+    "pause_elapsed": 359.188913,
+    "post_read": 0.29304,
+    "publication_to_signal_lower": 359.634333,
+    "publication_to_signal_upper": 360.040883,
+    "retirement_signals": 0.00657,
+    "signal_observation_uncertainty": 0.40655,
+    "signal_to_execution_return_lower": 0.09422,
+    "signal_to_execution_return_upper": 0.50077
+  },
+  "raw_audit_sha256": "c82fc24465b0a249f1dd8869ae9ead9ccbe926c26ccff2b4cd35d74545b1ba11",
+  "raw_gpu_ticks_measured": true,
+  "raw_stderr_sha256": "d3f04192be9044ef7bf0a9aa08c3054bc299b854cf326cb307cb13fff722a338",
+  "retained_bytes_verified": 13445102,
+  "retained_files_verified": 180,
+  "runtime": {
+    "base_revision": "179629a7310e31dde354afa6465f304f09ec87fb",
+    "default_enabled": false,
+    "feature": "engineering-native-packet-diagnostics",
+    "formatted_source_roster_sha256": "5e3ec3e9e7c568fb3459120b9b7dc2171b55163389e56dc531da59095420b295",
+    "published_revision": "1736eff451d445f1f194abe145af242cf51ec322",
+    "worker_sha256": "31f68f35260dece113115d7f8b42922781bfb72055ae234c29e710dadf877c46"
+  },
+  "schema": "FerricNativePacketAttributionCheckpointV1",
+  "scope": "One instrumented request. Per-packet-family raw-tick attribution, not shader-only durations or TTFT/TPOT. Exact touching intervals do not establish absence of device dispatch or fence overhead.",
+  "started_utc": "2026-10-07T20:41:24.974921+00:00",
+  "workload": {
+    "concurrency": 1,
+    "configured_head": "FP32",
+    "context": 8192,
+    "decode_programs": 127,
+    "decoder": "BF16",
+    "excluded_head_singletons": 3,
+    "gpu_host": "mi350",
+    "input_tokens": 128,
+    "model": "Qwen3-8B",
+    "native_dispatches": 85400,
+    "output_tokens": 128,
+    "prefill_programs": 4,
+    "prefix_caching": false,
+    "requests": 1,
+    "speculation": false,
+    "tensor_parallel": 1
+  }
+}
