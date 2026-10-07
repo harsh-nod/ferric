@@ -1,0 +1,177 @@
+{
+  "archive": {
+    "bytes": 9927249,
+    "sha256": "aab3837ab2d3d7fcff0d69424246272f3969c1f0a827a2bf853f770bc2d204bf"
+  },
+  "gpu_execution": false,
+  "manifest": {
+    "bytes": 25766,
+    "sha256": "5294b9adcc07e52ea9f3bb25fe7d2fed7b776319241f65d32cf520d386660d2c"
+  },
+  "original_receipts_modified": false,
+  "project_execution": false,
+  "schema": "ferric-readiness40-causal-layer0-reference-local-retention-v1",
+  "verification": {
+    "causal_repeat_gate_rechecked": true,
+    "external_model_and_package_rehash_performed": false,
+    "external_posthash_authority": "original authenticated owner/inner receipts only",
+    "full_model_acceptance": false,
+    "full_model_forward_calls": 80,
+    "historical_reference_files": 10,
+    "input_files": 7,
+    "model_and_overlay_bodies_retained": false,
+    "native_receipt_authenticated": false,
+    "numerical_acceptance": false,
+    "original_files": 141,
+    "output_files": 17,
+    "owner_name": "complete.json",
+    "owner_terminal": {
+      "bytes": 10632,
+      "sha256": "2d4687d2fae7045a572054c5f46018c859e62a30f5b63c08a7f6060adbd7046c"
+    },
+    "parity": {
+      "baseline_inner": {
+        "bytes": 222675,
+        "sha256": "d256b149229d4ba94a1e4f9a3aa2d6f9354c56a721bfe1dc0cb69bbb7c49674f"
+      },
+      "baseline_owner": {
+        "bytes": 4508,
+        "sha256": "36365edf95b99eeac27ec91973862959f8b354d876258e29467b19753bd802ae"
+      },
+      "causal_positions": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "exact_case_records": 80,
+      "exact_selected_payloads": 8,
+      "historical_inputs_mounted_in_container": false,
+      "native_intermediates_used": false,
+      "numerical_acceptance": false,
+      "passes": 2,
+      "performance_claim": false,
+      "positions_per_pass": 40,
+      "schema": "ferric-readiness40-causal-same-side-reference-parity-v1",
+      "selected_positions": [
+        0,
+        5,
+        16,
+        39
+      ],
+      "sidecars": [
+        {
+          "bytes": 1855037,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-causal-layer0-reference-v228-v1/output/pass1-causal-layer0.bin",
+          "sha256": "d3b7af6a85243168c440f2332905ca493248f9631fc894732dc5cc860c6bb273"
+        },
+        {
+          "bytes": 1855037,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-causal-layer0-reference-v228-v1/output/pass2-causal-layer0.bin",
+          "sha256": "14a4139ae3653edb35d04c28009c26147069b9e42dd5cfe41823921c0dd87d9c"
+        }
+      ]
+    },
+    "passed": true,
+    "performance_claim": false,
+    "phases": {
+      "after-0": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "after-1": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "after-2": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-0": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-1": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "before-2": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "cleanup-inspect": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "cpu-tests": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "create": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "created": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "execute": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "exited": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "final-inspect": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "image": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "name-after": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "name-before": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "observer-tests": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      },
+      "remove": {
+        "clean": true,
+        "exit_code": 0,
+        "result_present": true
+      }
+    },
+    "raw_files": 90,
+    "repeat_gate_rechecked": true,
+    "retained_inner_readset_rows": 26,
+    "same_side_reference_parity_rechecked": true,
+    "source_files": 15
+  }
+}

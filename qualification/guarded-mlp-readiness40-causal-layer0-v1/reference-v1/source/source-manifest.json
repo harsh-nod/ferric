@@ -1,0 +1,180 @@
+{
+  "schema": "ferric-readiness40-causal-layer0-reference-source-v1",
+  "files": {
+    "README.md": {
+      "bytes": 1712,
+      "sha256": "5314863579b1b73acf7f88f0c21c4c531ef7d69c070bd10a0f7cd2200cee76da"
+    },
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "framework_reference.py": {
+      "bytes": 23768,
+      "sha256": "613579c7c84ed9b6f94abf6864c9934b72331dd001bf6badb973ab4576f4db97"
+    },
+    "inputs.json": {
+      "bytes": 3780,
+      "sha256": "22bdc4f09fa6f6eddc6e583a98d9c13caec56718ab2979612c0cf2e6eac5c592"
+    },
+    "launch.py": {
+      "bytes": 30868,
+      "sha256": "d706d30fb403053f946daf6c9510de9ee057341646057ee62e8043b3e9590e28"
+    },
+    "long_reference.py": {
+      "bytes": 23875,
+      "sha256": "242abaa1662372ec999d6d056272646ede14ed8285223bebb293d1a64c17c9cf"
+    },
+    "observer.py": {
+      "bytes": 10055,
+      "sha256": "a96312f8d4c25f49b4585bc6f8ccca583f5097403c36608969709799a5b13fe9"
+    },
+    "owned.py": {
+      "bytes": 30433,
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "prompt-workload.json": {
+      "bytes": 11462,
+      "sha256": "2fafb955e87c60c992e65922afc938d8dc14d9e6fbcd4d0d91d68eddcd73aee8"
+    },
+    "reference.py": {
+      "bytes": 11388,
+      "sha256": "466028fe6061de915bd852328030e9ea81a0b0874e4305563ecc78f0073b1d7b"
+    },
+    "run.py": {
+      "bytes": 17780,
+      "sha256": "2b2b9a3173367e134ee4c59af0227424e6db58c8b528e5f1f707c1ca6991d2ed"
+    },
+    "test_observer.py": {
+      "bytes": 4665,
+      "sha256": "1f6eff31d5f5ea5177e80de9ff7923aef135a5d4d0d500408e138c04ff4080a2"
+    },
+    "test_reference.py": {
+      "bytes": 14785,
+      "sha256": "c6279daff8b22f8b831e4236d9832e9cd0abfd7c1b8a2ecb38dcdd970d21d0b3"
+    }
+  },
+  "predecessor_owner": {
+    "bytes": 22083,
+    "sha256": "980977204c036815186a757865361340ff88b52004daf0a0d729ebff9dbdfa54"
+  },
+  "predecessor_source_manifest": {
+    "bytes": 4576,
+    "sha256": "47278b4c53f95a2b47c7d594a897b9ff29e055de4d2c9e151d6c592920225d26"
+  },
+  "causal_proposal_manifest": {
+    "bytes": 8279,
+    "sha256": "9cce663d74160516c14033e8417c54dbce666b25e61dc232c11b494c055f558c"
+  },
+  "baseline_owner": {
+    "bytes": 4508,
+    "sha256": "36365edf95b99eeac27ec91973862959f8b354d876258e29467b19753bd802ae"
+  },
+  "baseline_inner": {
+    "bytes": 222675,
+    "sha256": "d256b149229d4ba94a1e4f9a3aa2d6f9354c56a721bfe1dc0cb69bbb7c49674f"
+  },
+  "changed_owner_functions": [
+    "main"
+  ],
+  "unchanged_owner_functions": [
+    "OwnerSignals",
+    "leaf_guard",
+    "test_census",
+    "container_environment",
+    "build_command",
+    "idle",
+    "topology",
+    "tree",
+    "writable_bounds",
+    "command",
+    "owned_container"
+  ],
+  "added_owner_functions": [
+    "baseline_reference",
+    "causal_and_baseline_gate",
+    "causal_sidecar",
+    "observer_test_census"
+  ],
+  "unchanged_helpers": [
+    "common.py",
+    "owned.py",
+    "long_reference.py",
+    "framework_reference.py",
+    "diagnostics.py",
+    "reference.py",
+    "test_reference.py",
+    "inputs.json",
+    "prompt-workload.json"
+  ],
+  "tests": [
+    "test_observer.ObserverTests.test_binary_roster_has_six_real_positions_and_no_native_data_authority",
+    "test_observer.ObserverTests.test_cache_layout_is_token_then_four_rank_heads_not_head_major",
+    "test_observer.ObserverTests.test_changed_completed_cache_and_wrong_appended_row_refuse",
+    "test_observer.ObserverTests.test_restoration_removes_hooks_and_rejects_callable_replacement",
+    "test_observer.ObserverTests.test_roster_nonfinite_and_producer_consumer_mismatch_refuse",
+    "test_observer.ObserverTests.test_rotary_returns_identical_original_objects_without_recomputation",
+    "test_observer.ObserverTests.test_six_complete_shapes_and_closed_integer_position",
+    "test_reference.ReferenceTests.test_authentic_prompt_roles_and_full_count",
+    "test_reference.ReferenceTests.test_boolean_ids_and_wrong_model_lineage_refused",
+    "test_reference.ReferenceTests.test_capture_hooks_removed_even_when_removal_fails",
+    "test_reference.ReferenceTests.test_capture_missing_duplicate_and_norm_join_refused",
+    "test_reference.ReferenceTests.test_container_exact_readonly_mounts_and_no_network",
+    "test_reference.ReferenceTests.test_container_named_user_offline_and_single_gpu",
+    "test_reference.ReferenceTests.test_forty_selected_positions_and_repeat_gate",
+    "test_reference.ReferenceTests.test_input_history_never_uses_previous_prediction",
+    "test_reference.ReferenceTests.test_metric_byte_difference_does_not_create_acceptance",
+    "test_reference.ReferenceTests.test_nonfinite_shape_and_argmax_refused",
+    "test_reference.ReferenceTests.test_prompt_mutation_and_workload_join_refused",
+    "test_reference.ReferenceTests.test_repeat_payload_logit_and_cache_drift_refused",
+    "test_reference.ReferenceTests.test_retirement_ignores_failed_workload_storage",
+    "test_reference.ReferenceTests.test_retirement_signal_deferred_and_recorded",
+    "test_reference.ReferenceTests.test_retirement_uses_separate_deadline",
+    "test_reference.ReferenceTests.test_selected_byte_hash_or_role_mismatch_refused",
+    "test_reference.ReferenceTests.test_unittest_census_accepts_both_supported_spellings",
+    "test_reference.ReferenceTests.test_work_signal_raises_between_cli_calls",
+    "test_reference.ReferenceTests.test_wrong_container_owner_or_image_refused",
+    "test_reference.ReferenceTests.test_wrong_selection_and_trailing_bytes_refused"
+  ],
+  "tests_executed": false,
+  "source_only": true,
+  "prompt_tokens": 2048,
+  "positions_per_pass": 40,
+  "reference_passes": 2,
+  "framework_forward_calls_planned": 80,
+  "generated_tokens": 0,
+  "selected_positions": [
+    0,
+    5,
+    16,
+    39
+  ],
+  "causal_positions": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "causal_parts_per_position": 33,
+  "causal_payload_bytes_per_pass": 1821696,
+  "additional_output_names": [
+    "pass1-causal-layer0.bin",
+    "pass2-causal-layer0.bin"
+  ],
+  "same_side_case_records_required": 80,
+  "same_side_selected_payloads_required": 8,
+  "historical_reference_inputs_mounted_in_container": false,
+  "actual_reference_terminal": null,
+  "native_captures": null,
+  "native_receipt": null,
+  "numerical_acceptance": false,
+  "acceptance_threshold": null,
+  "gpu_execution": false,
+  "performance_claim": false
+}

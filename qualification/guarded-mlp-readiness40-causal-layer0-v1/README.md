@@ -71,6 +71,32 @@ data tests, not native execution or numerical acceptance.
 | Failed parent terminal | `060c05edc7ec35703e54c8120fa630553fc7c263205e2b45fdddb0c03a69225b` |
 | Checker terminal | `99054dc3eaf5d7455bf6cf1c9eb8b82db947f1ba27194f5b03f4238684faec27` |
 
+## Independent Reference Result
+
+`reference-v1` retains 143 original archive members plus a separate local
+retention record. On MI350, the independent framework completed two fresh
+40-forward passes through all 36 Qwen3-8B layers, with zero generated tokens.
+The owner completed in 55.22 seconds, including its test, container and idle
+checks; this duration is not decode throughput. Its 20 existing pure tests and
+seven new observer tests passed. The container exited and was removed cleanly.
+
+Each pass captures 33 layer-zero stages at positions 0..5 in its actual growing
+KV cache. All captured stage bytes repeat across the two passes. Instrumentation
+also preserves all 80 historical reference records and all eight selected full
+payloads at positions 0, 5, 16 and 39. Export and local retention independently
+rechecked those bytes, producer/consumer joins and unchanged cache prefixes.
+No native intermediates or historical payloads were supplied as model inputs.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Reference owner terminal | `2d4687d2fae7045a572054c5f46018c859e62a30f5b63c08a7f6060adbd7046c` |
+| Reference inner terminal | `5ebd12d258fc9c76190b4ec4c7270d9732d15e635c7944d966bd50ffc81fa027` |
+| Retained archive | `aab3837ab2d3d7fcff0d69424246272f3969c1f0a827a2bf853f770bc2d204bf` |
+
+This establishes repeatability and unchanged reference behavior, not agreement
+with Ferric. Native causal capture and the cross-framework comparison remain
+separate gates.
+
 ## Remaining Gates
 
 The parent suite must pass before the native diagnostic. Both native and

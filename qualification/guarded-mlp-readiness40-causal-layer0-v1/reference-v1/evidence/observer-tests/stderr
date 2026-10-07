@@ -1,0 +1,12 @@
+test_binary_roster_has_six_real_positions_and_no_native_data_authority (test_observer.ObserverTests.test_binary_roster_has_six_real_positions_and_no_native_data_authority) ... ok
+test_cache_layout_is_token_then_four_rank_heads_not_head_major (test_observer.ObserverTests.test_cache_layout_is_token_then_four_rank_heads_not_head_major) ... ok
+test_changed_completed_cache_and_wrong_appended_row_refuse (test_observer.ObserverTests.test_changed_completed_cache_and_wrong_appended_row_refuse) ... ok
+test_restoration_removes_hooks_and_rejects_callable_replacement (test_observer.ObserverTests.test_restoration_removes_hooks_and_rejects_callable_replacement) ... ok
+test_roster_nonfinite_and_producer_consumer_mismatch_refuse (test_observer.ObserverTests.test_roster_nonfinite_and_producer_consumer_mismatch_refuse) ... ok
+test_rotary_returns_identical_original_objects_without_recomputation (test_observer.ObserverTests.test_rotary_returns_identical_original_objects_without_recomputation) ... ok
+test_six_complete_shapes_and_closed_integer_position (test_observer.ObserverTests.test_six_complete_shapes_and_closed_integer_position) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.199s
+
+OK
