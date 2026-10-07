@@ -1,0 +1,32 @@
+{
+  "address_space_bytes": 12884901888,
+  "affinity": [
+    8,
+    9
+  ],
+  "argv": [
+    "/usr/bin/readelf",
+    "-l",
+    "-d",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-host-timing-parent-cpu-v228-v1/target/debug/ferric-qwen3-guarded-mlp-readiness-engineering"
+  ],
+  "cwd": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220",
+  "deadline_seconds": 30,
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PATH": "/usr/bin:/bin",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TZ": "UTC"
+  },
+  "file_cap_bytes": 67108864,
+  "gpu_execution_requested": false,
+  "nice": 10,
+  "stream_cap_bytes": 8388608
+}

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="540" viewBox="0 0 1060 540">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="sans-serif" fill="#20252b">
+<text x="24" y="30" font-size="21">Readiness40 parent time breakdown</text>
+<text x="24" y="54" font-size="13">One completed probe; 40 prompt positions, zero generated tokens.</text>
+<line x1="180.0" y1="100" x2="180.0" y2="475" stroke="#dfe4e8"/>
+<text x="180.0" y="495" text-anchor="middle" font-size="12">0.00</text>
+<line x1="380.0" y1="100" x2="380.0" y2="475" stroke="#dfe4e8"/>
+<text x="380.0" y="495" text-anchor="middle" font-size="12">148.33</text>
+<line x1="580.0" y1="100" x2="580.0" y2="475" stroke="#dfe4e8"/>
+<text x="580.0" y="495" text-anchor="middle" font-size="12">296.67</text>
+<line x1="780.0" y1="100" x2="780.0" y2="475" stroke="#dfe4e8"/>
+<text x="780.0" y="495" text-anchor="middle" font-size="12">445.00</text>
+<line x1="980.0" y1="100" x2="980.0" y2="475" stroke="#dfe4e8"/>
+<text x="980.0" y="495" text-anchor="middle" font-size="12">593.33</text>
+<text x="170" y="136.71428571428572" text-anchor="end" font-size="12">Source preparation</text>
+<rect x="180" y="111.34285714285714" width="123.07227584609831" height="40.17142857142857" fill="#147d92"/>
+<text x="309.0722758460983" y="136.71428571428572" font-size="11">91.278</text>
+<text x="170" y="189.57142857142858" text-anchor="end" font-size="12">Spawn through setup</text>
+<rect x="180" y="164.20000000000002" width="301.4068255924906" height="40.17142857142857" fill="#147d92"/>
+<text x="487.4068255924906" y="189.57142857142858" font-size="11">223.543</text>
+<text x="170" y="242.42857142857144" text-anchor="end" font-size="12">Prepare/write</text>
+<rect x="180" y="217.05714285714288" width="0.001688890041006645" height="40.17142857142857" fill="#147d92"/>
+<text x="186.001688890041" y="242.42857142857144" font-size="11">0.001</text>
+<text x="170" y="295.2857142857143" text-anchor="end" font-size="12">Wait for frame</text>
+<rect x="180" y="269.9142857142857" width="800.0" height="40.17142857142857" fill="#147d92"/>
+<text x="986.0" y="295.2857142857143" font-size="11">593.332</text>
+<text x="170" y="348.14285714285717" text-anchor="end" font-size="12">Validate/retain/commit</text>
+<rect x="180" y="322.7714285714286" width="0.02803991680155267" height="40.17142857142857" fill="#147d92"/>
+<text x="186.02803991680156" y="348.14285714285717" font-size="11">0.021</text>
+<text x="170" y="401.0" text-anchor="end" font-size="12">Close and retirement</text>
+<rect x="180" y="375.62857142857143" width="40.198242991491874" height="40.17142857142857" fill="#147d92"/>
+<text x="226.19824299149187" y="401.0" font-size="11">29.814</text>
+<text x="170" y="453.85714285714283" text-anchor="end" font-size="12">Postcheck and publication</text>
+<rect x="180" y="428.48571428571427" width="0.7348624217024867" height="40.17142857142857" fill="#147d92"/>
+<text x="186.73486242170247" y="453.85714285714283" font-size="11">0.545</text>
+<rect x="24" y="74" width="11" height="11" fill="#147d92"/>
+<text x="41" y="84" font-size="12">Measured interval</text>
+<text x="580.0" y="526" text-anchor="middle" font-size="13">Parent wall time (seconds), not GPU kernel time</text>
+</g></svg>

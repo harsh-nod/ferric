@@ -1,0 +1,37 @@
+{
+  "analysis_source": {
+    "bytes": 8323,
+    "sha256": "bb4a85dda56a5828664f9ba101f097648bb484c1a4a7d093c93052cbcd640c78"
+  },
+  "categories_ns": {
+    "Close and retirement": 29813638641,
+    "Postcheck and publication": 545021898,
+    "Prepare/write": 1252591,
+    "Source preparation": 91278426263,
+    "Spawn through setup": 223542958931,
+    "Validate/retain/commit": 20796231,
+    "Wait for frame": 593332174191
+  },
+  "forward_ns": {
+    "max": 15021949202,
+    "median_twice_ns": 29853823256,
+    "min": 12913555375,
+    "total": 593354223013
+  },
+  "full2303_feasibility": false,
+  "generated_tokens": 0,
+  "gpu_timing": false,
+  "numerical_acceptance": false,
+  "parent_host_measurement": true,
+  "schema": "ferric-readiness40-host-timing-analysis-v1",
+  "sidecar": {
+    "bytes": 14559,
+    "sha256": "2e6c68cba709702aaa3234958ea3d5f015f9aa125a5397cd5728f856c2389fdf"
+  },
+  "terminal": {
+    "bytes": 302250,
+    "sha256": "2de63391171568e6d0fe9d4641e9084e0c0f1e68bf97ae73b14d7853b5350b54"
+  },
+  "throughput_claim": false,
+  "total_ns": 938534268746
+}

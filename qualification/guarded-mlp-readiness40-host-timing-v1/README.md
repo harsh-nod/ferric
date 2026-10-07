@@ -2,7 +2,8 @@
 
 This diagnostic partitions parent wall time for the existing Position5 request.
 The standalone data validator and instrumented Rust parent passed their MI350
-CPU qualifications. No native timing result is claimed yet.
+CPU qualifications. The subsequent native probe also completed successfully
+on `mi350`, preserving all 40 completion records and all four full captures.
 
 ## Measurement Scope
 
@@ -76,11 +77,60 @@ worker files and seven previously qualified Full2303 parent files are unchanged.
 | Readiness parent ELF | `2e21c44c6857ee1696ddac53eaebc66c3f920f075266d729a142c1f9567621eb` |
 | Retained archive | `0ffdc7452a16db111737998925c53fb41c1ad7bc8241a6a08dfbc3cc67d8c9c8` |
 
+## Native Result
+
+The single native attempt completed 40 prompt forwards through all 36 layers,
+with zero generated tokens, healthy Close and natural worker retirement.
+All 11 supervised phases and six idle-device checks passed. The retained data
+validator independently rechecked byte-exact parity of all four captures and
+semantic parity of all 40 records against the original Position5 run.
+
+The parent timeline totals **938.534269 seconds**. The enclosing controller
+took 945.240124 seconds; its audits and wrapper overhead are not GPU work.
+
+| Parent interval | Seconds | Share |
+| --- | ---: | ---: |
+| Source preparation | 91.278426 | 9.726% |
+| Spawn through setup | 223.542959 | 23.818% |
+| Prepare/write | 0.001253 | 0.000% |
+| Wait for frame | 593.332174 | 63.219% |
+| Validate/retain/commit | 0.020796 | 0.002% |
+| Close and retirement | 29.813639 | 3.177% |
+| Postcheck and publication | 0.545022 | 0.058% |
+| Total | 938.534269 | 100% |
+
+![Parent wall-time breakdown](analysis-v1/overview.svg)
+
+![Per-forward parent intervals](analysis-v1/forwards.svg)
+
+The 40 forward intervals total 593.354223 seconds, with a median of
+14.926912 seconds and a range of 12.913555 to 15.021949 seconds. The wait
+includes worker execution, pipe wait and framing; it cannot identify GPU
+occupancy, kernel overlap, or individual worker-side costs by itself.
+Parent-side validation is not the dominant interval. The next experiment
+will test shared topology discovery while preserving full currentness checks,
+using a separate explicit selector and requiring unchanged model outputs.
+This run alone does not show that the proposed optimization is faster.
+
+[Exact nanosecond rows](analysis-v1/forwards.csv),
+[machine-readable summary](analysis-v1/summary.json), and
+[analysis source](analysis.py) accompany the plots. The 158-member
+`gpu-v1` capsule retains 72 current raw files, the actual terminal, all input
+scripts, the historical parity baseline, and the executed retention tool.
+Its exporter and local retainer both revalidated the original data without
+replaying the model. See [the preflight note](PREFLIGHT.md) for an earlier
+space-floor refusal before any native attempt.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Native terminal | `2de63391171568e6d0fe9d4641e9084e0c0f1e68bf97ae73b14d7853b5350b54` |
+| Timing sidecar | `2e6c68cba709702aaa3234958ea3d5f015f9aa125a5397cd5728f856c2389fdf` |
+| Retained archive | `5d73e2e938aee7c5297bfb554568f565df80d28ecaee58bf2346eddf1bf9255e` |
+| Analysis source | `bb4a85dda56a5828664f9ba101f097648bb484c1a4a7d093c93052cbcd640c78` |
+
 ## Remaining Gates
 
-The owned GPU attempt must preserve all 40 semantic
-completion records and all four original Position5 payloads. Same-side parity
-is not independent model accuracy. A timing result can guide optimization;
+Same-side parity is not independent model accuracy. A timing result can guide optimization;
 it does not by itself establish Full2303 completion feasibility or throughput.
 The requested BF16 target-only 2,048/256 acceptance, 700 tokens/s and M0-M7
 remain open.
