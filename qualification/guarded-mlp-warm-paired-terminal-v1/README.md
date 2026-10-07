@@ -43,6 +43,7 @@ machine. The original failed receipts are preserved rather than rewritten.
 | [Worker V1](worker-cpu-attempt-v1/evidence/failed.json) | Rustfmt failed before tests | Rename the new test parameter `gen`, reserved in Rust 2024 |
 | [Worker V2](worker-cpu-attempt-v2/evidence/failed.json) | Raw output: 672 passed, one failed, four ignored; qualification refused | Use the existing stdin lock in the new CLI branch; the real-executable EOF test caught nested-lock blocking |
 | [Worker V3](worker-cpu-attempt-v3/evidence/complete.json) | 673 passed, four unchanged ignores; all nine phases clean | Both corrections, unchanged tests and deadlines |
+| [Parent V3](parent-cpu-attempt-v3/evidence/complete.json) | 438 selected passes across 51 scopes and 60 clean phases | Not the entire 913-test library inventory |
 | [Comparison checker](checker-cpu-v1/complete.json) | 20 synthetic tests passed | No GPU execution |
 
 V2's original structured admitted-test field is empty because the gate
@@ -57,8 +58,15 @@ integration and full-map verification occurred afterward. The worker's five
 products include the same actual CLI ELF before and after its executable
 tests. No dependency lock or runtime source was changed by this worker patch.
 
-Parent qualification and the matched same-ELF native control/candidate run
-are pending. The candidate must preserve all four complete control payloads,
+The three qualified parent changes are also integrated. The
+[parent integration record](parent-source-integration.json) reconciles all
+1,237 composed Ferric source bodies. It explicitly records ten formatter
+differences between the worker inputs compiled by the parent and the separately
+qualified worker postimages. The retained parent capsule includes every raw
+test/command/result body and all six original product pins.
+
+The matched same-ELF native control/candidate run is pending.
+The candidate must preserve all four complete control payloads,
 the own-output recurrence, exact allocation/call census and healthy Close.
 Host timing brackets are not GPU timings or tokens/s. Full-model numerical
 acceptance and all issue #42 M0-M7 milestones remain open.

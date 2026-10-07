@@ -1,0 +1,91 @@
+{
+  "parent_source": {
+    "bytes": 495873,
+    "sha256": "c94ec9acdf28551c8904c3e1e6257a04c648b9c6f6555b28f21981c76d128b52"
+  },
+  "rows": [
+    {
+      "after": {
+        "bytes": 18949,
+        "sha256": "8f5de0a9416228f64e56ab6e51ec59d466500cbe2824da4eb00a8e89f1643867"
+      },
+      "before": {
+        "bytes": 18878,
+        "sha256": "4b30751189a724c14eea0a63bbb0f6dc53bec3a4130447fe51106f29097df91f"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_long_wire_v2_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 7781,
+        "sha256": "dd0dd2f840437da5633dfa23ea7d1d352ede43b28c51ff3654b3110db8bb8034"
+      },
+      "before": {
+        "bytes": 7653,
+        "sha256": "3c406c68acc402d902aa37fe8303a13ede9719e6db35b18a12d4de521249c35b"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_wire_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 3785,
+        "sha256": "75ab758d218cb237f5e006fc1854811588f173bb1b637f53be9545e7ac784129"
+      },
+      "before": {
+        "bytes": 3745,
+        "sha256": "b021b660430d56101f2d93f50d02c9af50b1acd963e1f57e4d68b9722515a5c1"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_wire_v1_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 17520,
+        "sha256": "63e2ed8e92e52bdf7f2f46076c49893190285384d8d2e6ad4a5e51594171619f"
+      },
+      "before": {
+        "bytes": 17496,
+        "sha256": "7335c76446024cb0d619d91eeb8b4c9298fe35cc0f18da4217b52f85dc167a3a"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs"
+    },
+    {
+      "after": {
+        "bytes": 8307,
+        "sha256": "8d482c5701500cc74c1234e87c2232dd4b87018cb718b2337f6a2e9378f969b5"
+      },
+      "before": {
+        "bytes": 8238,
+        "sha256": "856fc6d43dfbf1ba156b684378f9f3846f0a482565fdc7e372d9ccf7e805f2b5"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 9535,
+        "sha256": "378b558097ff7c755956ca14fbccede48fec927fba081e88e101d02dbe4df438"
+      },
+      "before": {
+        "bytes": 9282,
+        "sha256": "82e5ffa7b13d9b341d7e16728d6b8d66246d0ba46758371ce1f5b9b228f3049b"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 16630,
+        "sha256": "fcf013ba4a1126a9a57f62db174c19bfc8641f806fc11f92a105c09b9d5f78b2"
+      },
+      "before": {
+        "bytes": 16560,
+        "sha256": "88ef194f01d31c2a6eb51616f128a3e2ca2b784636472287cb24d4a1825a164e"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs"
+    }
+  ],
+  "schema": "ferric-warm-paired-terminal-inherited-worker-transitions-v1",
+  "worker_files": 195,
+  "worker_source": {
+    "bytes": 420819,
+    "sha256": "c75c35bd7c987a4e52f1897a3d7afd2923e32b6d4768e5420473aa3c4527ce6c"
+  }
+}

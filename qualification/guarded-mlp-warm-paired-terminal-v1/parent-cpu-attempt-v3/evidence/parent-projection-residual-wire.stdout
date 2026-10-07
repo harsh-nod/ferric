@@ -1,0 +1,9 @@
+
+running 4 tests
+test finite_projection_residual_layer_wire_v1::tests::projection_begin_and_run_close_fit_original_closed_budget ... ok
+test finite_projection_residual_layer_wire_v1::tests::projection_bootstrap_rejects_profile_schema_bounds_and_extra_fields ... ok
+test finite_projection_residual_layer_wire_v1::tests::projection_bootstrap_roundtrip_preserves_original_copy_image ... ok
+test finite_projection_residual_layer_wire_v1::tests::projection_profile_joins_both_identities_and_cannot_alias_old_profile ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 909 filtered out; finished in 0.00s
+

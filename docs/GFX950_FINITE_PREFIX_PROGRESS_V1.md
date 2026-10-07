@@ -55,9 +55,10 @@ doctests and 23 clean MI350 CPU phases. It coalesces terminal validation for
 retired reusable arenas while preserving queue/signal/ownership checks.
 The new [warm-only worker caller](../qualification/guarded-mlp-warm-paired-terminal-v1/README.md)
 now selects it through a separate reusable AR4 profile, after 673 passing
-worker tests and four unchanged ignores on MI350. Twenty synthetic native
-comparison tests also pass. Parent and native qualification remain pending;
-the existing entries retain their behavior. Both earlier failed worker
+worker tests and four unchanged ignores on MI350. The parent also passes
+438 selected tests across 51 scopes and 60 phases; its three changes are
+integrated. Twenty synthetic native comparison tests pass. Native qualification
+remains pending; the existing entries retain their behavior. Both earlier failed worker
 attempts are preserved. Fewer source-level full checks are not a measured
 speedup.
 

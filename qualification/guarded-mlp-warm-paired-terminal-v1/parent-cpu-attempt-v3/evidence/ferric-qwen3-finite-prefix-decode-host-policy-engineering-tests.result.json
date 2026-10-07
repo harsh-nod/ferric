@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-parent-cpu-v228-v3/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering",
+    "--bin",
+    "ferric-qwen3-finite-prefix-decode-host-policy-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2619,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests.command.json",
+    "sha256": "713e66cf400c7f7f0e298e2141849c49252f194c6b16e0d1bc17aef8f36bcece"
+  },
+  "elapsed_ns": 531965479,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1546730,
+  "pid": 1546730,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2413,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests.stderr",
+    "sha256": "a8855b7d9c9810079770857e72ea0f352c3bd77e46f668b3c47f890373accca9"
+  },
+  "stdout": {
+    "bytes": 197,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests.stdout",
+    "sha256": "cf8ebfd61fa202231439c8d9e1bcb6244a69fcd5e6cbf0e84fb81270a44c3a8b"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
