@@ -14,7 +14,7 @@ sustained benchmark, production admission, or a 700 tokens/s result. All issue
 | Census validator | 8 passes | [Synthetic checks](census-cpu-v1/complete.json), not observed GPU allocations |
 | Parent | 396 selected passes; 55 clean phases | [Actual CPU receipt](parent-cpu-v1/evidence/complete.json) |
 | Payload comparison | 4 passes | [Separate synthetic checks](comparison-cpu-v1/complete.json) |
-| Native reusable AR4 | Pending | Actual storage reuse and complete payload equality |
+| Native reusable AR4 | Passed in one attempt | [Actual GPU receipt](gpu-attempt-v1/ar4/complete.json), storage reuse and complete payload equality |
 | Sustained 2,048/256 | Pending | Independent numerical acceptance and performance |
 
 The worker's twelve changed files are integrated from the exact formatted
@@ -55,33 +55,76 @@ policy; it is not the earlier shared-full observation experiment.
 
 After setup and each completed forward, the worker reads the actual live
 allocation census from the Group and checks it against its ledger. The
-expected sequence is:
+sequence observed on MI350 is:
 
 ```text
 [715, 711] -> [751, 747] -> [787, 783] -> [787, 783] -> [787, 783]
 ```
 
-These numbers are an expectation until the native gate passes. The worker
-emits the five observed samples only after healthy Close, in a bounded
+The [original native census](gpu-attempt-v1/ar4/native/child-stderr.bin)
+contains these actual counts. The worker emits the five observed samples only after healthy Close, in a bounded
 4,096-byte record bound to the profile, registration, session and device order.
 The parent and publication validator must authenticate that record. The eight
 synthetic tests reject stale identity, changed profile, missing or extra
 samples, continued allocation growth, invalid types and incomplete Close.
 
-## Next Demo Gate
+## Native Result
 
 The separate parent selector is `--observe-guarded-reusable-ar4`, with request
-schema `FerricFiniteGuardedMlpReusableAr4RequestV1`. Run the same four-step
-autoregressive workload on MI350 with unchanged kernel images. Acceptance requires the actual
-five-sample plateau, all four complete 606,976-byte observation payloads and
-input histories equal to ordinary AR4, healthy Close, and clean device/process
-postchecks. Payload equality is regression evidence, not an independent
-full-model numerical acceptance decision or a speedup measurement.
+schema `FerricFiniteGuardedMlpReusableAr4RequestV1`. The actual MI350 run uses
+unchanged kernel images and the conservative currentness policy. It completed
+all 36 layers on both ranks for four autoregressive steps, producing
+`9112 -> 67 -> 25 -> 576 -> 2701`.
+
+All four complete 606,976-byte observation payloads and their input histories
+match ordinary AR4 byte-for-byte. Independent rechecking of the retained data
+decodes all four controls, 288 generation guards, queue frontiers, 1,213,952
+finite BF16 words, the argmax decisions and the transcript through healthy
+Close. All eleven owned phases exited naturally; the parent and worker were
+reaped, process groups were absent, and all six pre/postflight samples showed
+all eight GPUs idle. Source, CPU-product and library checks remained clean.
+
+![Observed reusable arena allocation counts](plots-v1/allocations.svg)
+
+| Completed forwards | Rank 0 allocations | Rank 1 allocations | Added by this forward, per rank |
+| --- | ---: | ---: | ---: |
+| Setup | 715 | 711 | Not applicable |
+| 1 | 751 | 747 | 36 |
+| 2 | 787 | 783 | 36 |
+| 3 | 787 | 783 | 0 |
+| 4 | 787 | 783 | 0 |
+
+The plot and [CSV](plots-v1/allocations.csv) were generated on MI350 by the
+[hash-bound renderer](plots-v1/render.py). Its vertical axis starts at 650,
+explicitly labeled. The first use of each bank adds its arenas; subsequent
+uses do not. No hypothetical fresh-policy curve is presented as a measurement.
+This isolates allocation reuse, not an optimization's latency contribution.
+
+Payload equality is regression evidence, not independent full-model numerical
+acceptance. The complete supervised attempt took 407.722 seconds including
+setup, capture, checks and teardown. No decode throughput or speedup is derived
+from that total. The sustained 700 tokens/s target remains unmet.
+
+## Next Gates
 
 Long-request framing, bounded output capture, independent numerical acceptance,
-and sustained throughput remain separate work. Storage reuse removes the
-fresh path's forward-38 capacity obstacle only if its native gate passes; it
-does not by itself remove the measured host dispatch and observation costs.
+and sustained throughput remain separate work. This four-step run demonstrates
+actual bank reuse, not 2,303-forward completion or deadline feasibility. Current
+AR4 sequence and bank checks still reject a fifth forward by design.
+
+A separately named, fixed-length readiness profile must first exercise more
+reuses and KV page crossings without skipping genuine prompt history. A long
+protocol must keep all 256 output tokens but stream compact per-forward records
+and retain only selected full control/payload captures: all 256 logits rows
+alone occupy 77,791,232 bytes, beyond the existing retention bounds. Unselected
+data must still pass the existing finite-value, rank-equality and argmax checks
+before being discarded. The draft long wire also needs bounded-header and
+selected-control decoding fixes before it can be registered or qualified.
+
+The one-hour limit allows only about 1.563 seconds per forward across 2,303
+forwards, even before setup and cleanup. Existing host observations do not establish
+that budget is feasible. Reduce and measure host costs before admitting the
+full workload; do not silently raise the deadline or infer speed from reuse.
 
 ## Reproduction Records
 
@@ -94,3 +137,6 @@ does not by itself remove the measured host dispatch and observation costs.
 - Parent terminal SHA-256: `f24fab8b524afc87726d6aec918abce01dc39643f56c7ac7f323af4c4ce953f2`.
 - [Parent capsule manifest](parent-cpu-v1/manifest.json): 416 members, 415 pinned bodies, 279 raw files; archive SHA-256 `85affe2ec5a0a0011397cce1e2841dc878f6c53e5d4b08527ec67612a97bcb76`.
 - [Comparison test output](comparison-cpu-v1/stderr): four synthetic tests cover changed bytes in every frame, changed input history, and tampered hashes or extents. This is separate from the eight census tests.
+- GPU terminal SHA-256: `05d695b62b76c00a6598ff69a08d9d3290710ffdc189f63d3ef2b738d521afbd`.
+- [GPU capsule manifest](gpu-attempt-v1/manifest.json): 96 members, 95 pinned bodies, 78 raw files; archive SHA-256 `ab90e2c2e049959d3b61e6ac16b5ed397551177b7d87c79e180fdf7a65649b77`.
+- The GPU capsule retains the four ordinary reference payloads as well as the current payloads, so byte equality can be rechecked offline without another model run.

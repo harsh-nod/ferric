@@ -1,0 +1,29 @@
+{
+  "mode": "ar4",
+  "parent": {
+    "bytes": 13859224,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/target/debug/ferric-qwen3-finite-guarded-mlp-decode-engineering",
+    "sha256": "3d02886f0d36ebcd73d34797e0046eeb850eff0c49a1cff0e7ac16dd46c6fa91"
+  },
+  "parent_cpu": {
+    "bytes": 3796001,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/evidence/complete.json",
+    "sha256": "f24fab8b524afc87726d6aec918abce01dc39643f56c7ac7f323af4c4ce953f2"
+  },
+  "request": {
+    "bytes": 9332,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-gpu-v228-v1/ar4-request.json",
+    "sha256": "a90d75ed02d7f69802917651615a7903ccbd56c76a6ab1cef3b0f596b930302e"
+  },
+  "schema": "ferric-guarded-mlp-reusable-ar4-gpu-input-v1",
+  "worker": {
+    "bytes": 5912952,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-worker-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+    "sha256": "a5c5c8b323e2d88ec27df1065709171fb9bd46114aff99b083b63d3644743fb8"
+  },
+  "worker_cpu": {
+    "bytes": 1631185,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-worker-cpu-v228-v1/evidence/complete.json",
+    "sha256": "24feb83a0bde60dc9c6b8db28f2ce8252379b40d8e0d40483690f58038881b2a"
+  }
+}

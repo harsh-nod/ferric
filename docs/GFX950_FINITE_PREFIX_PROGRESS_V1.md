@@ -90,15 +90,19 @@ retirement proofs permit completed signal/kernarg arenas to be reused without
 raising allocation limits or changing the fresh default. The initial Rustdoc
 parser failure remains retained; eight parser regressions and a fresh full rerun
 pass. This removes the runtime implementation blocker behind the fresh path's
-forward-38 allocation limit, but native reuse and its expected 787/783 allocation
-plateau are not yet demonstrated. The [opt-in reusable AR4 worker](../qualification/guarded-mlp-reusable-ar4-v1/README.md)
+forward-38 allocation limit. The [opt-in reusable AR4 worker](../qualification/guarded-mlp-reusable-ar4-v1/README.md)
 now passes all nine MI350 CPU phases: 615 tests pass with four unchanged ignores.
 Its twelve tested postimages are integrated, and all eight synthetic allocation
 census checks pass. The parent also passes all 55 phases and 396 selected tests;
 its three tested postimages are integrated. All 1,222 composed Ferric source
 files join the actual CPU maps, and four separate payload-comparison checks
-pass. Actual native reuse, the full request and sustained performance remain
-separate gates.
+pass. The native MI350 run now passes in one attempt: actual allocation counts
+plateau at 787/783 after both banks' first use, all four complete payloads and
+input histories match ordinary AR4, and healthy Close plus all eleven owned
+phases and device postchecks pass. The [allocation plot and table](../qualification/guarded-mlp-reusable-ar4-v1/README.md#native-result)
+show measured capacity reuse, not throughput. The four-forward sequence limit,
+bounded long-request transport, numerical acceptance and sustained performance
+remain separate gates; no full 2,048/256 or 700 tokens/s claim is made.
 
 The [historical O-projection replay](../qualification/o-projection-exact-replay-v1/README.md)
 now completes on MI350 with 18 passing tests. All 8,192 captured FP32 partials
