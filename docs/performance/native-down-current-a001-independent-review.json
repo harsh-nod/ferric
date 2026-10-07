@@ -1,0 +1,3073 @@
+{
+  "accepted": true,
+  "archive_bytes": 293456887,
+  "archive_sha256": "39d315bc138cfd6ec04984984c742e59c937417d85314e16f67183e44cb6b09d",
+  "bundle": {
+    "bytes": 2101365,
+    "members": {
+      "audit-input/full-member-roster.json": {
+        "bytes": 605013,
+        "sha256": "65c2a78c5d325abcf8e241e6ff53f83473c9b954ce6874effbaf6545903d454a"
+      },
+      "audit-input/session-receipt.json": {
+        "bytes": 757853,
+        "sha256": "b832f7a795e8412388a2913edeed3ddc2b523bf7b28faf677b516662b39b79bc"
+      },
+      "ferric-native-down-current-a001/campaign-report.json": {
+        "bytes": 21806,
+        "sha256": "62142d5b5ee6fb2b49f82785e910083c2bf2f7d97cb0bf65320cce94c3a9355f"
+      },
+      "ferric-native-down-current-a001/cells/block1-A1/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block1-A1/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block1-A1/cell-results/stdout.raw": {
+        "bytes": 487745,
+        "sha256": "e9736db7507c7aa43d9e79dba82f191f53a730345baeff10828e454d7f6d2607"
+      },
+      "ferric-native-down-current-a001/cells/block1-A2/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block1-A2/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block1-A2/cell-results/stdout.raw": {
+        "bytes": 487646,
+        "sha256": "991577f1d8d9ee46884b1c84e2d21c8a4d27b3b2dbce16b51614b2c78c306c4f"
+      },
+      "ferric-native-down-current-a001/cells/block1-B1/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block1-B1/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block1-B1/cell-results/stdout.raw": {
+        "bytes": 487644,
+        "sha256": "3f4ca3065d8f82706113fc45e03fd43641c687cc1d6fa750fc70f3222796b26f"
+      },
+      "ferric-native-down-current-a001/cells/block1-B2/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block1-B2/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block1-B2/cell-results/stdout.raw": {
+        "bytes": 487716,
+        "sha256": "da0a1b34974d129dadda827b59779fc6912da929b439c003c3c97469a996dea7"
+      },
+      "ferric-native-down-current-a001/cells/block2-A1/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block2-A1/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block2-A1/cell-results/stdout.raw": {
+        "bytes": 487696,
+        "sha256": "7c5056cc10b3159a690eeaf958cfdfdab6a03b9c9a1e7e8eb1bbf0c9e4982ef2"
+      },
+      "ferric-native-down-current-a001/cells/block2-A2/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block2-A2/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block2-A2/cell-results/stdout.raw": {
+        "bytes": 487720,
+        "sha256": "0a6a786a344a0ea13bc7c0a03107a9a77a7c9235d01dfb792528984ec3c7f593"
+      },
+      "ferric-native-down-current-a001/cells/block2-B1/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block2-B1/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block2-B1/cell-results/stdout.raw": {
+        "bytes": 487595,
+        "sha256": "d2f468f466b67e33840ae91d73c33dabc9e615bebbf72fb90c335467ef0e514c"
+      },
+      "ferric-native-down-current-a001/cells/block2-B2/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block2-B2/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block2-B2/cell-results/stdout.raw": {
+        "bytes": 487554,
+        "sha256": "cfd697ac31f22382ded4d645aa7494dd07fae69ab2725b9c473af57bd26513c4"
+      },
+      "ferric-native-down-current-a001/cells/block3-A1/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block3-A1/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block3-A1/cell-results/stdout.raw": {
+        "bytes": 487625,
+        "sha256": "a61006c0a52761e6e442a8c6ff89b7c635257438b8c08c9cbae5cf5fbe452b3b"
+      },
+      "ferric-native-down-current-a001/cells/block3-A2/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block3-A2/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block3-A2/cell-results/stdout.raw": {
+        "bytes": 487643,
+        "sha256": "a1f7e1b432d4d55791752d278fd5756b7d9b7e2f34b9fd87d1b81b5ec5031707"
+      },
+      "ferric-native-down-current-a001/cells/block3-B1/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block3-B1/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block3-B1/cell-results/stdout.raw": {
+        "bytes": 487601,
+        "sha256": "db302776348a5caf0f86304217298b6a38d15f8f8918d2400a7d29f1cdf8b3b1"
+      },
+      "ferric-native-down-current-a001/cells/block3-B2/cell-results/stderr.raw": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/cells/block3-B2/cell-results/stdin.raw": {
+        "bytes": 5245,
+        "sha256": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5"
+      },
+      "ferric-native-down-current-a001/cells/block3-B2/cell-results/stdout.raw": {
+        "bytes": 487654,
+        "sha256": "86ff38caea36561c834bb7ba94818cf5519ef27dff0c9f472800e0d1c4b3db68"
+      },
+      "ferric-native-down-current-a001/cells/counter-A/cell-results/stderr.raw": {
+        "bytes": 2607,
+        "sha256": "c7ea20632cc94f741b573ce8ff89ce9da0ee4156a1f01941a8928d2af6d71279"
+      },
+      "ferric-native-down-current-a001/cells/counter-A/cell-results/stdin.raw": {
+        "bytes": 919,
+        "sha256": "005f42186d9f3820fd1485a2475346509962e281f5acb19c06282bb6e073e800"
+      },
+      "ferric-native-down-current-a001/cells/counter-A/cell-results/stdout.raw": {
+        "bytes": 99166,
+        "sha256": "c45e6597ec49890b80c86887bd654fc56a83fb0f5170f20823b131a82b8abf1d"
+      },
+      "ferric-native-down-current-a001/cells/counter-B/cell-results/stderr.raw": {
+        "bytes": 2605,
+        "sha256": "6bada70f116b0bf1cad9ee8878483e5375ecaf5bca06a6071ecf96a3bb830257"
+      },
+      "ferric-native-down-current-a001/cells/counter-B/cell-results/stdin.raw": {
+        "bytes": 919,
+        "sha256": "005f42186d9f3820fd1485a2475346509962e281f5acb19c06282bb6e073e800"
+      },
+      "ferric-native-down-current-a001/cells/counter-B/cell-results/stdout.raw": {
+        "bytes": 99161,
+        "sha256": "40b293bb1f2911dc22cbe7eb1e74201736795ad7d17f4dbff5eab4652fb77ff0"
+      },
+      "ferric-native-down-current-a001/harness-cpu/receipt.json": {
+        "bytes": 1322,
+        "sha256": "12f2016496ce155ee50fb840e082438b8e3e10690ecdd0efef7dd78151b964e5"
+      },
+      "ferric-native-down-current-a001/harness-cpu/result.json": {
+        "bytes": 2771,
+        "sha256": "54776e8f754b7b798acebb8800e48845c4fc5181fb374b6469db407493e155b6"
+      },
+      "ferric-native-down-current-a001/harness-cpu/stderr": {
+        "bytes": 123,
+        "sha256": "b5037e2a75b4d09ea5a77c68071295ce7fc39b55b2518ea6f1e2f407338b0ed7"
+      },
+      "ferric-native-down-current-a001/harness-cpu/stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "ferric-native-down-current-a001/native-inputs/matched128-reference.json": {
+        "bytes": 4755,
+        "sha256": "cd7f512537e44d677244c606cba919e57747e8c26caf3c0df4a0aca7acc0eb8b"
+      },
+      "ferric-native-down-current-a001/plan.json": {
+        "bytes": 483584,
+        "sha256": "723298e87e8f5e12949267d761986fbd5d3aa6c8c8a90a728c6f93219b19c54a"
+      },
+      "ferric-native-down-current-a001/worker-cpu/receipt.json": {
+        "bytes": 1137,
+        "sha256": "40ed1047ec98e024af2b5cd0609ff67b2f1a80aa92eb14b7054816da3f29ed32"
+      },
+      "ferric-native-down-current-a001/worker-cpu/result.json": {
+        "bytes": 2708,
+        "sha256": "1652d371b6b3fa01bae76b6d9d3409467fda45ac997f0ce292fa2c0a23cf6e98"
+      },
+      "ferric-native-down-current-a001/worker-cpu/source.json": {
+        "bytes": 2219651,
+        "sha256": "5e3ec3e9e7c568fb3459120b9b7dc2171b55163389e56dc531da59095420b295"
+      },
+      "ferric-native-down-current-a001/worker-cpu/stderr": {
+        "bytes": 10429,
+        "sha256": "2d6c8426f9e5a9182fcfb61c76c6d8be1ffb63668a841436a21571ced22e080d"
+      },
+      "ferric-native-down-current-a001/worker-cpu/stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "path": "/home/harmenon/ferric-native-down-current-retained-20261007-a001/audit-raw-subset-a001.tar.gz",
+    "sha256": "2457bac76f35861419d68084dcf9235b17f1b7f3e9de6fa057e7f1026069c2ae",
+    "uncompressed_bytes": 10231308
+  },
+  "cells": [
+    {
+      "admission": {
+        "accepted_admission_records": 47,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "A",
+      "cell_id": "counter-A",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 128,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.1,
+            "cpu_seconds_per_token": 0.00078125,
+            "observed_interval_seconds": 8.025454174,
+            "system_seconds": 0.01,
+            "system_ticks": 1,
+            "user_seconds": 0.09,
+            "user_ticks": 9
+          },
+          "worker": {
+            "cpu_seconds": 0.24,
+            "cpu_seconds_per_token": 0.001875,
+            "observed_interval_seconds": 8.025454974,
+            "system_seconds": 0.13,
+            "system_ticks": 13,
+            "user_seconds": 0.11,
+            "user_ticks": 11
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 808227010027069,
+      "mechanism": {
+        "delta": {
+          "dispatches": 85400,
+          "executions": 131,
+          "final_waits": 131,
+          "kernarg_initialized_bytes": 28689496,
+          "publications": 131,
+          "retirement_signals": 85400,
+          "staging_ns": 1876972
+        },
+        "end": {
+          "authority": "none",
+          "backend": "native-whole-program-slots512-v1",
+          "counters": {
+            "dispatches": 85400,
+            "executions": 131,
+            "final_waits": 131,
+            "kernarg_initialized_bytes": 28689496,
+            "publications": 131,
+            "retirement_signals": 85400,
+            "staging_ns": 1876972
+          },
+          "device_unique_id": 16366993098680759275,
+          "down_splitk8": {
+            "decode_dispatches": 652,
+            "enabled": false,
+            "prefill_unchanged": true,
+            "scratch_bytes": 131072
+          },
+          "kernarg_bytes_scope": "initialized stores; baseline includes slot clear and exact copy",
+          "latency_sample_admitted": false,
+          "live_profile": "prefill32-native649-decode652-down-control-counters-r1",
+          "ordinal": 1,
+          "performance_qualified": false,
+          "phase": "before_close",
+          "process_id": 2944956,
+          "program_phases": {
+            "decode_c1": {
+              "command_family": "legacy256-v1",
+              "dispatches_per_execution": 652,
+              "dynamic_slots": 180,
+              "executions": 127
+            },
+            "prefill": {
+              "command_family": "slots512-v1",
+              "dispatches_per_execution": 649,
+              "dynamic_slots": 396,
+              "executions": 4,
+              "rows": 32
+            },
+            "registrations": 2,
+            "releases": 2,
+            "transition_policy": "idle-explicit-shape-release-register-v1"
+          },
+          "runtime_profiling": true,
+          "schema": "FerricNativeDownProgramCountersR1",
+          "scope": "successful prefill649 and explicitly selected decode programs; excludes head singletons, registration and readback",
+          "staging_scope": "host staging wall time; not GPU time",
+          "worker_entry": "--diagnostic-token-program-native-slots512-v1"
+        },
+        "latency_admitted": false,
+        "mechanism_qualified": true,
+        "start": {
+          "authority": "none",
+          "backend": "native-whole-program-slots512-v1",
+          "counters": {
+            "dispatches": 0,
+            "executions": 0,
+            "final_waits": 0,
+            "kernarg_initialized_bytes": 0,
+            "publications": 0,
+            "retirement_signals": 0,
+            "staging_ns": 0
+          },
+          "device_unique_id": 16366993098680759275,
+          "down_splitk8": {
+            "decode_dispatches": 652,
+            "enabled": false,
+            "prefill_unchanged": true,
+            "scratch_bytes": 131072
+          },
+          "kernarg_bytes_scope": "initialized stores; baseline includes slot clear and exact copy",
+          "latency_sample_admitted": false,
+          "live_profile": "prefill32-native649-decode652-down-control-counters-r1",
+          "ordinal": 0,
+          "performance_qualified": false,
+          "phase": "worker_start",
+          "process_id": 2944956,
+          "program_phases": {
+            "decode_c1": {
+              "command_family": "legacy256-v1",
+              "dispatches_per_execution": 652,
+              "dynamic_slots": 180,
+              "executions": 0
+            },
+            "prefill": {
+              "command_family": "slots512-v1",
+              "dispatches_per_execution": 649,
+              "dynamic_slots": 396,
+              "executions": 0,
+              "rows": 32
+            },
+            "registrations": 0,
+            "releases": 0,
+            "transition_policy": "idle-explicit-shape-release-register-v1"
+          },
+          "runtime_profiling": true,
+          "schema": "FerricNativeDownProgramCountersR1",
+          "scope": "successful prefill649 and explicitly selected decode programs; excludes head singletons, registration and readback",
+          "staging_scope": "host staging wall time; not GPU time",
+          "worker_entry": "--diagnostic-token-program-native-slots512-v1"
+        }
+      },
+      "mode": "counters",
+      "raw_sha256": {
+        "stderr.raw": "c7ea20632cc94f741b573ce8ff89ce9da0ee4156a1f01941a8928d2af6d71279",
+        "stdin.raw": "005f42186d9f3820fd1485a2475346509962e281f5acb19c06282bb6e073e800",
+        "stdout.raw": "c45e6597ec49890b80c86887bd654fc56a83fb0f5170f20823b131a82b8abf1d"
+      },
+      "requests": [
+        {
+          "arrival_ns": 807460431,
+          "batches": 131,
+          "completed_ns": 8040291984,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 17.69708019080145,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 53586707,
+          "ttft_ns": 427319705,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "905b44f80be7ff483840b17c72653a741e40d19c0928ed426447afc5609cd034",
+      "started_ns": 808090955100840,
+      "summary": {
+        "finite_output_tokens_per_second": 17.69708019080145,
+        "requests": [
+          {
+            "completed_ns": 8040291984,
+            "output_tokens": 128,
+            "started_ns": 807460431,
+            "tpot_ms": 53.586707,
+            "ttft_ms": 427.319705
+          }
+        ],
+        "warmups_excluded": 0,
+        "window_ns": 7232831553
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 46,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "B",
+      "cell_id": "counter-B",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 128,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.09,
+            "cpu_seconds_per_token": 0.000703125,
+            "observed_interval_seconds": 6.714316292,
+            "system_seconds": 0.01,
+            "system_ticks": 1,
+            "user_seconds": 0.08,
+            "user_ticks": 8
+          },
+          "worker": {
+            "cpu_seconds": 0.18,
+            "cpu_seconds_per_token": 0.00140625,
+            "observed_interval_seconds": 6.714318592,
+            "system_seconds": 0.1,
+            "system_ticks": 10,
+            "user_seconds": 0.08,
+            "user_ticks": 8
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 808381902542565,
+      "mechanism": {
+        "delta": {
+          "dispatches": 89972,
+          "executions": 131,
+          "final_waits": 131,
+          "kernarg_initialized_bytes": 30006232,
+          "publications": 131,
+          "retirement_signals": 89972,
+          "staging_ns": 1693280
+        },
+        "end": {
+          "authority": "none",
+          "backend": "native-whole-program-slots512-v1",
+          "counters": {
+            "dispatches": 89972,
+            "executions": 131,
+            "final_waits": 131,
+            "kernarg_initialized_bytes": 30006232,
+            "publications": 131,
+            "retirement_signals": 89972,
+            "staging_ns": 1693280
+          },
+          "device_unique_id": 16366993098680759275,
+          "down_splitk8": {
+            "decode_dispatches": 688,
+            "enabled": true,
+            "prefill_unchanged": true,
+            "scratch_bytes": 131072
+          },
+          "kernarg_bytes_scope": "initialized stores; baseline includes slot clear and exact copy",
+          "latency_sample_admitted": false,
+          "live_profile": "prefill32-native649-decode688-down-splitk8-counters-r1",
+          "ordinal": 1,
+          "performance_qualified": false,
+          "phase": "before_close",
+          "process_id": 2958330,
+          "program_phases": {
+            "decode_c1": {
+              "command_family": "legacy256-v1",
+              "dispatches_per_execution": 688,
+              "dynamic_slots": 180,
+              "executions": 127
+            },
+            "prefill": {
+              "command_family": "slots512-v1",
+              "dispatches_per_execution": 649,
+              "dynamic_slots": 396,
+              "executions": 4,
+              "rows": 32
+            },
+            "registrations": 2,
+            "releases": 2,
+            "transition_policy": "idle-explicit-shape-release-register-v1"
+          },
+          "runtime_profiling": true,
+          "schema": "FerricNativeDownProgramCountersR1",
+          "scope": "successful prefill649 and explicitly selected decode programs; excludes head singletons, registration and readback",
+          "staging_scope": "host staging wall time; not GPU time",
+          "worker_entry": "--diagnostic-token-program-native-slots512-v1"
+        },
+        "latency_admitted": false,
+        "mechanism_qualified": true,
+        "start": {
+          "authority": "none",
+          "backend": "native-whole-program-slots512-v1",
+          "counters": {
+            "dispatches": 0,
+            "executions": 0,
+            "final_waits": 0,
+            "kernarg_initialized_bytes": 0,
+            "publications": 0,
+            "retirement_signals": 0,
+            "staging_ns": 0
+          },
+          "device_unique_id": 16366993098680759275,
+          "down_splitk8": {
+            "decode_dispatches": 688,
+            "enabled": true,
+            "prefill_unchanged": true,
+            "scratch_bytes": 131072
+          },
+          "kernarg_bytes_scope": "initialized stores; baseline includes slot clear and exact copy",
+          "latency_sample_admitted": false,
+          "live_profile": "prefill32-native649-decode688-down-splitk8-counters-r1",
+          "ordinal": 0,
+          "performance_qualified": false,
+          "phase": "worker_start",
+          "process_id": 2958330,
+          "program_phases": {
+            "decode_c1": {
+              "command_family": "legacy256-v1",
+              "dispatches_per_execution": 688,
+              "dynamic_slots": 180,
+              "executions": 0
+            },
+            "prefill": {
+              "command_family": "slots512-v1",
+              "dispatches_per_execution": 649,
+              "dynamic_slots": 396,
+              "executions": 0,
+              "rows": 32
+            },
+            "registrations": 0,
+            "releases": 0,
+            "transition_policy": "idle-explicit-shape-release-register-v1"
+          },
+          "runtime_profiling": true,
+          "schema": "FerricNativeDownProgramCountersR1",
+          "scope": "successful prefill649 and explicitly selected decode programs; excludes head singletons, registration and readback",
+          "staging_scope": "host staging wall time; not GPU time",
+          "worker_entry": "--diagnostic-token-program-native-slots512-v1"
+        }
+      },
+      "mode": "counters",
+      "raw_sha256": {
+        "stderr.raw": "6bada70f116b0bf1cad9ee8878483e5375ecaf5bca06a6071ecf96a3bb830257",
+        "stdin.raw": "005f42186d9f3820fd1485a2475346509962e281f5acb19c06282bb6e073e800",
+        "stdout.raw": "40b293bb1f2911dc22cbe7eb1e74201736795ad7d17f4dbff5eab4652fb77ff0"
+      },
+      "requests": [
+        {
+          "arrival_ns": 792030191,
+          "batches": 131,
+          "completed_ns": 6696860711,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.6771674591602,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43446480,
+          "ttft_ns": 387127530,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "474e6655edc885776eaf24908bbbaeb5734536504d98f2145df2aeccccf64fb8",
+      "started_ns": 808249975207745,
+      "summary": {
+        "finite_output_tokens_per_second": 21.6771674591602,
+        "requests": [
+          {
+            "completed_ns": 6696860711,
+            "output_tokens": 128,
+            "started_ns": 792030191,
+            "tpot_ms": 43.44648,
+            "ttft_ms": 387.12753
+          }
+        ],
+        "warmups_excluded": 0,
+        "window_ns": 5904830520
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 56,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "A",
+      "cell_id": "block1-A1",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.49,
+            "cpu_seconds_per_token": 0.0006380208333333333,
+            "observed_interval_seconds": 43.556988431,
+            "system_seconds": 0.03,
+            "system_ticks": 3,
+            "user_seconds": 0.46,
+            "user_ticks": 46
+          },
+          "worker": {
+            "cpu_seconds": 1.55,
+            "cpu_seconds_per_token": 0.002018229166666667,
+            "observed_interval_seconds": 43.556991131,
+            "system_seconds": 0.93,
+            "system_ticks": 93,
+            "user_seconds": 0.62,
+            "user_ticks": 62
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 808574679763715,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "e9736db7507c7aa43d9e79dba82f191f53a730345baeff10828e454d7f6d2607"
+      },
+      "requests": [
+        {
+          "arrival_ns": 864657946,
+          "batches": 131,
+          "completed_ns": 7923713422,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.132737507898288,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 52277907,
+          "ttft_ns": 419761261,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7924165103,
+          "batches": 131,
+          "completed_ns": 15094991538,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 17.850104330408325,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 53132041,
+          "ttft_ns": 423057132,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 15095435378,
+          "batches": 131,
+          "completed_ns": 22179113679,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.069708216694465,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 52431516,
+          "ttft_ns": 424875653,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 22179520299,
+          "batches": 131,
+          "completed_ns": 29370527017,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 17.80001118335765,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 53279862,
+          "ttft_ns": 424464183,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 29370972177,
+          "batches": 131,
+          "completed_ns": 36543120773,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 17.84681372488396,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 53109366,
+          "ttft_ns": 427259075,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 36543559203,
+          "batches": 131,
+          "completed_ns": 43624796123,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.07593806648119,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 52425132,
+          "ttft_ns": 423245123,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "d5bd7cc760a443acd050fa278554e2ebbe943d3589b149bb23158d822e152a0c",
+      "started_ns": 808405009192759,
+      "summary": {
+        "finite_output_tokens_per_second": 17.946423846518613,
+        "requests": [
+          {
+            "completed_ns": 22179113679,
+            "output_tokens": 128,
+            "started_ns": 15095435378,
+            "tpot_ms": 52.431516,
+            "ttft_ms": 424.875653
+          },
+          {
+            "completed_ns": 29370527017,
+            "output_tokens": 128,
+            "started_ns": 22179520299,
+            "tpot_ms": 53.279862,
+            "ttft_ms": 424.464183
+          },
+          {
+            "completed_ns": 36543120773,
+            "output_tokens": 128,
+            "started_ns": 29370972177,
+            "tpot_ms": 53.109366,
+            "ttft_ms": 427.259075
+          },
+          {
+            "completed_ns": 43624796123,
+            "output_tokens": 128,
+            "started_ns": 36543559203,
+            "tpot_ms": 52.425132,
+            "ttft_ms": 423.245123
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 28529360745
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 54,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "B",
+      "cell_id": "block1-B1",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.62,
+            "cpu_seconds_per_token": 0.0008072916666666667,
+            "observed_interval_seconds": 37.959453651,
+            "system_seconds": 0.03,
+            "system_ticks": 3,
+            "user_seconds": 0.59,
+            "user_ticks": 59
+          },
+          "worker": {
+            "cpu_seconds": 1.71,
+            "cpu_seconds_per_token": 0.0022265625,
+            "observed_interval_seconds": 37.959455741,
+            "system_seconds": 1.06,
+            "system_ticks": 106,
+            "user_seconds": 0.65,
+            "user_ticks": 65
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 808762646013363,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "3f4ca3065d8f82706113fc45e03fd43641c687cc1d6fa750fc70f3222796b26f"
+      },
+      "requests": [
+        {
+          "arrival_ns": 833314456,
+          "batches": 131,
+          "completed_ns": 7299589155,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.7950142792101,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47687307,
+          "ttft_ns": 409986615,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7300025715,
+          "batches": 131,
+          "completed_ns": 13561984637,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.440887842668605,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 46057408,
+          "ttft_ns": 412667996,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 13562397357,
+          "batches": 131,
+          "completed_ns": 19706476156,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.83306614180031,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 45259008,
+          "ttft_ns": 396184686,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 19706863516,
+          "batches": 131,
+          "completed_ns": 25728707789,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.255946550114317,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44309668,
+          "ttft_ns": 394516394,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 25729068089,
+          "batches": 131,
+          "completed_ns": 31840702998,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.943659414522138,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 45011794,
+          "ttft_ns": 395136995,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 31841076048,
+          "batches": 131,
+          "completed_ns": 37841379037,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.33225609350975,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44129617,
+          "ttft_ns": 395841505,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "4535300445f8d28c7710706d39bc0a120672a36e368d192c158f58e22989034d",
+      "started_ns": 808598043584028,
+      "summary": {
+        "finite_output_tokens_per_second": 21.088199115935904,
+        "requests": [
+          {
+            "completed_ns": 19706476156,
+            "output_tokens": 128,
+            "started_ns": 13562397357,
+            "tpot_ms": 45.259008,
+            "ttft_ms": 396.184686
+          },
+          {
+            "completed_ns": 25728707789,
+            "output_tokens": 128,
+            "started_ns": 19706863516,
+            "tpot_ms": 44.309668,
+            "ttft_ms": 394.516394
+          },
+          {
+            "completed_ns": 31840702998,
+            "output_tokens": 128,
+            "started_ns": 25729068089,
+            "tpot_ms": 45.011794,
+            "ttft_ms": 395.136995
+          },
+          {
+            "completed_ns": 37841379037,
+            "output_tokens": 128,
+            "started_ns": 31841076048,
+            "tpot_ms": 44.129617,
+            "ttft_ms": 395.841505
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 24278981680
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 55,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "B",
+      "cell_id": "block1-B2",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.74,
+            "cpu_seconds_per_token": 0.0009635416666666667,
+            "observed_interval_seconds": 42.166297588,
+            "system_seconds": 0.05,
+            "system_ticks": 5,
+            "user_seconds": 0.69,
+            "user_ticks": 69
+          },
+          "worker": {
+            "cpu_seconds": 2.04,
+            "cpu_seconds_per_token": 0.00265625,
+            "observed_interval_seconds": 42.166297858,
+            "system_seconds": 1.21,
+            "system_ticks": 121,
+            "user_seconds": 0.83,
+            "user_ticks": 83
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 808954228545793,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "da0a1b34974d129dadda827b59779fc6912da929b439c003c3c97469a996dea7"
+      },
+      "requests": [
+        {
+          "arrival_ns": 813923164,
+          "batches": 131,
+          "completed_ns": 7638588275,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.75549904913129,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 50415422,
+          "ttft_ns": 421906442,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7639704365,
+          "batches": 131,
+          "completed_ns": 14582924579,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.435249935167906,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 50817036,
+          "ttft_ns": 489456564,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 14583323180,
+          "batches": 131,
+          "completed_ns": 21356825518,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.897166283077468,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 49970327,
+          "ttft_ns": 427270784,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 21357232829,
+          "batches": 131,
+          "completed_ns": 28056215721,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.107378248847155,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 49374995,
+          "ttft_ns": 428358485,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 28056556741,
+          "batches": 131,
+          "completed_ns": 35080590936,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.22314590824682,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 51943298,
+          "ttft_ns": 427235275,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 35081660406,
+          "batches": 131,
+          "completed_ns": 42182025198,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.027242789584268,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 51953378,
+          "ttft_ns": 502285762,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "4535300445f8d28c7710706d39bc0a120672a36e368d192c158f58e22989034d",
+      "started_ns": 808784974455325,
+      "summary": {
+        "finite_output_tokens_per_second": 18.551597088372898,
+        "requests": [
+          {
+            "completed_ns": 21356825518,
+            "output_tokens": 128,
+            "started_ns": 14583323180,
+            "tpot_ms": 49.970327,
+            "ttft_ms": 427.270784
+          },
+          {
+            "completed_ns": 28056215721,
+            "output_tokens": 128,
+            "started_ns": 21357232829,
+            "tpot_ms": 49.374995,
+            "ttft_ms": 428.358485
+          },
+          {
+            "completed_ns": 35080590936,
+            "output_tokens": 128,
+            "started_ns": 28056556741,
+            "tpot_ms": 51.943298,
+            "ttft_ms": 427.235275
+          },
+          {
+            "completed_ns": 42182025198,
+            "output_tokens": 128,
+            "started_ns": 35081660406,
+            "tpot_ms": 51.953378,
+            "ttft_ms": 502.285762
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 27598702018
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 55,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "A",
+      "cell_id": "block1-A2",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.75,
+            "cpu_seconds_per_token": 0.0009765625,
+            "observed_interval_seconds": 40.445458791,
+            "system_seconds": 0.09,
+            "system_ticks": 9,
+            "user_seconds": 0.66,
+            "user_ticks": 66
+          },
+          "worker": {
+            "cpu_seconds": 1.96,
+            "cpu_seconds_per_token": 0.0025520833333333333,
+            "observed_interval_seconds": 40.445460281,
+            "system_seconds": 1.19,
+            "system_ticks": 119,
+            "user_seconds": 0.77,
+            "user_ticks": 77
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 809145489259083,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "991577f1d8d9ee46884b1c84e2d21c8a4d27b3b2dbce16b51614b2c78c306c4f"
+      },
+      "requests": [
+        {
+          "arrival_ns": 799971256,
+          "batches": 131,
+          "completed_ns": 7205722437,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.982043695305997,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47397224,
+          "ttft_ns": 386303679,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7206464857,
+          "batches": 131,
+          "completed_ns": 13941977132,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.003751277403765,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 49574602,
+          "ttft_ns": 439537753,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 13942316663,
+          "batches": 131,
+          "completed_ns": 20350882605,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.97326721117478,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47340908,
+          "ttft_ns": 396270565,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 20351901156,
+          "batches": 131,
+          "completed_ns": 27142980905,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.848254582616004,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 49844973,
+          "ttft_ns": 460768135,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 27144015146,
+          "batches": 131,
+          "completed_ns": 33994778753,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 18.684048573681867,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 50335676,
+          "ttft_ns": 458132694,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 33995110683,
+          "batches": 131,
+          "completed_ns": 40434897595,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.876434072916727,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47586590,
+          "ttft_ns": 396289866,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "d5bd7cc760a443acd050fa278554e2ebbe943d3589b149bb23158d822e152a0c",
+      "started_ns": 808977108516376,
+      "summary": {
+        "finite_output_tokens_per_second": 19.326165363585346,
+        "requests": [
+          {
+            "completed_ns": 20350882605,
+            "output_tokens": 128,
+            "started_ns": 13942316663,
+            "tpot_ms": 47.340908,
+            "ttft_ms": 396.270565
+          },
+          {
+            "completed_ns": 27142980905,
+            "output_tokens": 128,
+            "started_ns": 20351901156,
+            "tpot_ms": 49.844973,
+            "ttft_ms": 460.768135
+          },
+          {
+            "completed_ns": 33994778753,
+            "output_tokens": 128,
+            "started_ns": 27144015146,
+            "tpot_ms": 50.335676,
+            "ttft_ms": 458.132694
+          },
+          {
+            "completed_ns": 40434897595,
+            "output_tokens": 128,
+            "started_ns": 33995110683,
+            "tpot_ms": 47.58659,
+            "ttft_ms": 396.289866
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 26492580932
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 55,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "A",
+      "cell_id": "block2-A1",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.57,
+            "cpu_seconds_per_token": 0.0007421874999999999,
+            "observed_interval_seconds": 39.661057515,
+            "system_seconds": 0.03,
+            "system_ticks": 3,
+            "user_seconds": 0.54,
+            "user_ticks": 54
+          },
+          "worker": {
+            "cpu_seconds": 1.45,
+            "cpu_seconds_per_token": 0.0018880208333333333,
+            "observed_interval_seconds": 39.661059295,
+            "system_seconds": 0.92,
+            "system_ticks": 92,
+            "user_seconds": 0.53,
+            "user_ticks": 53
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 809333465203287,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "7c5056cc10b3159a690eeaf958cfdfdab6a03b9c9a1e7e8eb1bbf0c9e4982ef2"
+      },
+      "requests": [
+        {
+          "arrival_ns": 1154035995,
+          "batches": 131,
+          "completed_ns": 7659633358,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.675364591111723,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47350920,
+          "ttft_ns": 492030515,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7660126638,
+          "batches": 131,
+          "completed_ns": 14172627445,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.654508121122756,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 48153305,
+          "ttft_ns": 397030956,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 14173131155,
+          "batches": 131,
+          "completed_ns": 20569281730,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.01203669286663,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47229365,
+          "ttft_ns": 398021137,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 20569639111,
+          "batches": 131,
+          "completed_ns": 27062477735,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.714027625276767,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47997584,
+          "ttft_ns": 397145426,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 27062873076,
+          "batches": 131,
+          "completed_ns": 33577872674,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.646969746443872,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 48162324,
+          "ttft_ns": 398384407,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 33578219644,
+          "batches": 131,
+          "completed_ns": 40007702230,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.908289397768346,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47504956,
+          "ttft_ns": 396353146,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "d5bd7cc760a443acd050fa278554e2ebbe943d3589b149bb23158d822e152a0c",
+      "started_ns": 809168112906538,
+      "summary": {
+        "finite_output_tokens_per_second": 19.81840528776807,
+        "requests": [
+          {
+            "completed_ns": 20569281730,
+            "output_tokens": 128,
+            "started_ns": 14173131155,
+            "tpot_ms": 47.229365,
+            "ttft_ms": 398.021137
+          },
+          {
+            "completed_ns": 27062477735,
+            "output_tokens": 128,
+            "started_ns": 20569639111,
+            "tpot_ms": 47.997584,
+            "ttft_ms": 397.145426
+          },
+          {
+            "completed_ns": 33577872674,
+            "output_tokens": 128,
+            "started_ns": 27062873076,
+            "tpot_ms": 48.162324,
+            "ttft_ms": 398.384407
+          },
+          {
+            "completed_ns": 40007702230,
+            "output_tokens": 128,
+            "started_ns": 33578219644,
+            "tpot_ms": 47.504956,
+            "ttft_ms": 396.353146
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 25834571075
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 55,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "B",
+      "cell_id": "block2-B1",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.67,
+            "cpu_seconds_per_token": 0.0008723958333333334,
+            "observed_interval_seconds": 38.153707241,
+            "system_seconds": 0.05,
+            "system_ticks": 5,
+            "user_seconds": 0.62,
+            "user_ticks": 62
+          },
+          "worker": {
+            "cpu_seconds": 1.99,
+            "cpu_seconds_per_token": 0.0025911458333333333,
+            "observed_interval_seconds": 38.153709701,
+            "system_seconds": 1.27,
+            "system_ticks": 127,
+            "user_seconds": 0.72,
+            "user_ticks": 72
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 809525610167696,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "d2f468f466b67e33840ae91d73c33dabc9e615bebbf72fb90c335467ef0e514c"
+      },
+      "requests": [
+        {
+          "arrival_ns": 812040303,
+          "batches": 131,
+          "completed_ns": 6699473953,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.741221661156214,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43270036,
+          "ttft_ns": 392139033,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 6699896893,
+          "batches": 131,
+          "completed_ns": 13174330476,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.770069205141155,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47446677,
+          "ttft_ns": 448705588,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 13175435297,
+          "batches": 131,
+          "completed_ns": 19608061105,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.89856146160585,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47053061,
+          "ttft_ns": 456886963,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 19608452775,
+          "batches": 131,
+          "completed_ns": 25441573201,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.943658051266162,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 42849584,
+          "ttft_ns": 391223132,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 25441913841,
+          "batches": 131,
+          "completed_ns": 31385576295,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.535543276664008,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43720538,
+          "ttft_ns": 391154052,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 31385964055,
+          "batches": 131,
+          "completed_ns": 37342472968,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.48909736719133,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43794479,
+          "ttft_ns": 394609985,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "4535300445f8d28c7710706d39bc0a120672a36e368d192c158f58e22989034d",
+      "started_ns": 809357231062530,
+      "summary": {
+        "finite_output_tokens_per_second": 21.185881652942122,
+        "requests": [
+          {
+            "completed_ns": 19608061105,
+            "output_tokens": 128,
+            "started_ns": 13175435297,
+            "tpot_ms": 47.053061,
+            "ttft_ms": 456.886963
+          },
+          {
+            "completed_ns": 25441573201,
+            "output_tokens": 128,
+            "started_ns": 19608452775,
+            "tpot_ms": 42.849584,
+            "ttft_ms": 391.223132
+          },
+          {
+            "completed_ns": 31385576295,
+            "output_tokens": 128,
+            "started_ns": 25441913841,
+            "tpot_ms": 43.720538,
+            "ttft_ms": 391.154052
+          },
+          {
+            "completed_ns": 37342472968,
+            "output_tokens": 128,
+            "started_ns": 31385964055,
+            "tpot_ms": 43.794479,
+            "ttft_ms": 394.609985
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 24167037671
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 54,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "B",
+      "cell_id": "block2-B2",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.9,
+            "cpu_seconds_per_token": 0.001171875,
+            "observed_interval_seconds": 36.811630789,
+            "system_seconds": 0.06,
+            "system_ticks": 6,
+            "user_seconds": 0.84,
+            "user_ticks": 84
+          },
+          "worker": {
+            "cpu_seconds": 1.5,
+            "cpu_seconds_per_token": 0.001953125,
+            "observed_interval_seconds": 36.811630629,
+            "system_seconds": 0.97,
+            "system_ticks": 97,
+            "user_seconds": 0.53,
+            "user_ticks": 53
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 809714262483449,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "cfd697ac31f22382ded4d645aa7494dd07fae69ab2725b9c473af57bd26513c4"
+      },
+      "requests": [
+        {
+          "arrival_ns": 822577600,
+          "batches": 131,
+          "completed_ns": 6726674050,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.679862631647897,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43390563,
+          "ttft_ns": 393494834,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 6727094220,
+          "batches": 131,
+          "completed_ns": 12777175660,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.156739999189167,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44511292,
+          "ttft_ns": 397147296,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 12777725481,
+          "batches": 131,
+          "completed_ns": 18791581049,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.284182593458652,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44199274,
+          "ttft_ns": 400547678,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 18792136959,
+          "batches": 131,
+          "completed_ns": 24717158512,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.603296942471054,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43530228,
+          "ttft_ns": 396682496,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 24717582122,
+          "batches": 131,
+          "completed_ns": 30809369658,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.011894988715838,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44843466,
+          "ttft_ns": 396667326,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 30809912889,
+          "batches": 131,
+          "completed_ns": 36829859360,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.26264753625581,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44275840,
+          "ttft_ns": 396914696,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "4535300445f8d28c7710706d39bc0a120672a36e368d192c158f58e22989034d",
+      "started_ns": 809548219504511,
+      "summary": {
+        "finite_output_tokens_per_second": 21.287092553855647,
+        "requests": [
+          {
+            "completed_ns": 18791581049,
+            "output_tokens": 128,
+            "started_ns": 12777725481,
+            "tpot_ms": 44.199274,
+            "ttft_ms": 400.547678
+          },
+          {
+            "completed_ns": 24717158512,
+            "output_tokens": 128,
+            "started_ns": 18792136959,
+            "tpot_ms": 43.530228,
+            "ttft_ms": 396.682496
+          },
+          {
+            "completed_ns": 30809369658,
+            "output_tokens": 128,
+            "started_ns": 24717582122,
+            "tpot_ms": 44.843466,
+            "ttft_ms": 396.667326
+          },
+          {
+            "completed_ns": 36829859360,
+            "output_tokens": 128,
+            "started_ns": 30809912889,
+            "tpot_ms": 44.27584,
+            "ttft_ms": 396.914696
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 24052133879
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 54,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "A",
+      "cell_id": "block2-A2",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.48,
+            "cpu_seconds_per_token": 0.000625,
+            "observed_interval_seconds": 39.128970165,
+            "system_seconds": 0.03,
+            "system_ticks": 3,
+            "user_seconds": 0.45,
+            "user_ticks": 45
+          },
+          "worker": {
+            "cpu_seconds": 1.37,
+            "cpu_seconds_per_token": 0.0017838541666666669,
+            "observed_interval_seconds": 39.128971565,
+            "system_seconds": 0.84,
+            "system_ticks": 84,
+            "user_seconds": 0.53,
+            "user_ticks": 53
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 809902528832343,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "0a6a786a344a0ea13bc7c0a03107a9a77a7c9235d01dfb792528984ec3c7f593"
+      },
+      "requests": [
+        {
+          "arrival_ns": 1477991176,
+          "batches": 131,
+          "completed_ns": 7849912806,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.088131561028003,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47125467,
+          "ttft_ns": 386987270,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7850337956,
+          "batches": 131,
+          "completed_ns": 14350009705,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.69330220709889,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 48037132,
+          "ttft_ns": 398955967,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 14350407925,
+          "batches": 131,
+          "completed_ns": 20648490290,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.323646561265637,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 46466193,
+          "ttft_ns": 396875846,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 20648825170,
+          "batches": 131,
+          "completed_ns": 27055882051,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.977971536288596,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47352807,
+          "ttft_ns": 393250284,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 27056257762,
+          "batches": 131,
+          "completed_ns": 33477204192,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.934755942201498,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47441829,
+          "ttft_ns": 395834045,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 33477607772,
+          "batches": 131,
+          "completed_ns": 39790111805,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.27721476784045,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 46597049,
+          "ttft_ns": 394678805,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "d5bd7cc760a443acd050fa278554e2ebbe943d3589b149bb23158d822e152a0c",
+      "started_ns": 809737252724700,
+      "summary": {
+        "finite_output_tokens_per_second": 20.12602042913402,
+        "requests": [
+          {
+            "completed_ns": 20648490290,
+            "output_tokens": 128,
+            "started_ns": 14350407925,
+            "tpot_ms": 46.466193,
+            "ttft_ms": 396.875846
+          },
+          {
+            "completed_ns": 27055882051,
+            "output_tokens": 128,
+            "started_ns": 20648825170,
+            "tpot_ms": 47.352807,
+            "ttft_ms": 393.250284
+          },
+          {
+            "completed_ns": 33477204192,
+            "output_tokens": 128,
+            "started_ns": 27056257762,
+            "tpot_ms": 47.441829,
+            "ttft_ms": 395.834045
+          },
+          {
+            "completed_ns": 39790111805,
+            "output_tokens": 128,
+            "started_ns": 33477607772,
+            "tpot_ms": 46.597049,
+            "ttft_ms": 394.678805
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 25439703880
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 54,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "A",
+      "cell_id": "block3-A1",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.5,
+            "cpu_seconds_per_token": 0.0006510416666666666,
+            "observed_interval_seconds": 39.375855749,
+            "system_seconds": 0.04,
+            "system_ticks": 4,
+            "user_seconds": 0.46,
+            "user_ticks": 46
+          },
+          "worker": {
+            "cpu_seconds": 1.44,
+            "cpu_seconds_per_token": 0.001875,
+            "observed_interval_seconds": 39.375855819,
+            "system_seconds": 0.89,
+            "system_ticks": 89,
+            "user_seconds": 0.55,
+            "user_ticks": 55
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 810090720263731,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "a61006c0a52761e6e442a8c6ff89b7c635257438b8c08c9cbae5cf5fbe452b3b"
+      },
+      "requests": [
+        {
+          "arrival_ns": 808204081,
+          "batches": 131,
+          "completed_ns": 7174602838,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.105558084821674,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47013303,
+          "ttft_ns": 395709256,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7174989398,
+          "batches": 131,
+          "completed_ns": 13658084677,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.74365553667193,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47924352,
+          "ttft_ns": 396702566,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 13658473837,
+          "batches": 131,
+          "completed_ns": 20006618112,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.16337286222122,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 46871192,
+          "ttft_ns": 395502875,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 20006976372,
+          "batches": 131,
+          "completed_ns": 26475706372,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.78750079227298,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47829339,
+          "ttft_ns": 394403925,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 26476099843,
+          "batches": 131,
+          "completed_ns": 32962802464,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.73267582602196,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47951409,
+          "ttft_ns": 396873576,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 32963165764,
+          "batches": 131,
+          "completed_ns": 39351732484,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.035792942301775,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47194929,
+          "ttft_ns": 394810665,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "d5bd7cc760a443acd050fa278554e2ebbe943d3589b149bb23158d822e152a0c",
+      "started_ns": 809925305925352,
+      "summary": {
+        "finite_output_tokens_per_second": 19.927406135374824,
+        "requests": [
+          {
+            "completed_ns": 20006618112,
+            "output_tokens": 128,
+            "started_ns": 13658473837,
+            "tpot_ms": 46.871192,
+            "ttft_ms": 395.502875
+          },
+          {
+            "completed_ns": 26475706372,
+            "output_tokens": 128,
+            "started_ns": 20006976372,
+            "tpot_ms": 47.829339,
+            "ttft_ms": 394.403925
+          },
+          {
+            "completed_ns": 32962802464,
+            "output_tokens": 128,
+            "started_ns": 26476099843,
+            "tpot_ms": 47.951409,
+            "ttft_ms": 396.873576
+          },
+          {
+            "completed_ns": 39351732484,
+            "output_tokens": 128,
+            "started_ns": 32963165764,
+            "tpot_ms": 47.194929,
+            "ttft_ms": 394.810665
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 25693258647
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 54,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "B",
+      "cell_id": "block3-B1",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.51,
+            "cpu_seconds_per_token": 0.0006640625,
+            "observed_interval_seconds": 36.45822913,
+            "system_seconds": 0.04,
+            "system_ticks": 4,
+            "user_seconds": 0.47,
+            "user_ticks": 47
+          },
+          "worker": {
+            "cpu_seconds": 1.45,
+            "cpu_seconds_per_token": 0.0018880208333333333,
+            "observed_interval_seconds": 36.45822943,
+            "system_seconds": 0.94,
+            "system_ticks": 94,
+            "user_seconds": 0.51,
+            "user_ticks": 51
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 810275621804179,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "db302776348a5caf0f86304217298b6a38d15f8f8918d2400a7d29f1cdf8b3b1"
+      },
+      "requests": [
+        {
+          "arrival_ns": 1151038403,
+          "batches": 131,
+          "completed_ns": 7028415037,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.77842394165002,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43213369,
+          "ttft_ns": 389278752,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7028809207,
+          "batches": 131,
+          "completed_ns": 13023722793,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.351433705219716,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44117450,
+          "ttft_ns": 391997323,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 13024127063,
+          "batches": 131,
+          "completed_ns": 18983033167,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.480452580730915,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43804560,
+          "ttft_ns": 395726876,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 18983413887,
+          "batches": 131,
+          "completed_ns": 24835927785,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.870943363969094,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 42988262,
+          "ttft_ns": 393004524,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 24836280666,
+          "batches": 131,
+          "completed_ns": 30808952548,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.430944563647806,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43935489,
+          "ttft_ns": 392864683,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 30809335578,
+          "batches": 131,
+          "completed_ns": 36810342658,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.32975320535699,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44142088,
+          "ttft_ns": 394961855,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "4535300445f8d28c7710706d39bc0a120672a36e368d192c158f58e22989034d",
+      "started_ns": 810113293973504,
+      "summary": {
+        "finite_output_tokens_per_second": 21.525071861688893,
+        "requests": [
+          {
+            "completed_ns": 18983033167,
+            "output_tokens": 128,
+            "started_ns": 13024127063,
+            "tpot_ms": 43.80456,
+            "ttft_ms": 395.726876
+          },
+          {
+            "completed_ns": 24835927785,
+            "output_tokens": 128,
+            "started_ns": 18983413887,
+            "tpot_ms": 42.988262,
+            "ttft_ms": 393.004524
+          },
+          {
+            "completed_ns": 30808952548,
+            "output_tokens": 128,
+            "started_ns": 24836280666,
+            "tpot_ms": 43.935489,
+            "ttft_ms": 392.864683
+          },
+          {
+            "completed_ns": 36810342658,
+            "output_tokens": 128,
+            "started_ns": 30809335578,
+            "tpot_ms": 44.142088,
+            "ttft_ms": 394.961855
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 23786215595
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 55,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "B",
+      "cell_id": "block3-B2",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.71,
+            "cpu_seconds_per_token": 0.0009244791666666667,
+            "observed_interval_seconds": 37.101628599,
+            "system_seconds": 0.04,
+            "system_ticks": 4,
+            "user_seconds": 0.67,
+            "user_ticks": 67
+          },
+          "worker": {
+            "cpu_seconds": 1.62,
+            "cpu_seconds_per_token": 0.002109375,
+            "observed_interval_seconds": 37.101628809,
+            "system_seconds": 1.03,
+            "system_ticks": 103,
+            "user_seconds": 0.59,
+            "user_ticks": 59
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 810466448418530,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "86ff38caea36561c834bb7ba94818cf5519ef27dff0c9f472800e0d1c4b3db68"
+      },
+      "requests": [
+        {
+          "arrival_ns": 1430687297,
+          "batches": 131,
+          "completed_ns": 7493336065,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.112883971707596,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44595919,
+          "ttft_ns": 398967028,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7493835976,
+          "batches": 131,
+          "completed_ns": 13565649830,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.081015175667144,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44482823,
+          "ttft_ns": 422495282,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 13566257610,
+          "batches": 131,
+          "completed_ns": 19738631236,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 20.73756511770825,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 45480411,
+          "ttft_ns": 396361346,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 19738977406,
+          "batches": 131,
+          "completed_ns": 25635815462,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.706548286460183,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 43280931,
+          "ttft_ns": 400159698,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 25636241192,
+          "batches": 131,
+          "completed_ns": 31676422416,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.191417153413543,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44421514,
+          "ttft_ns": 398648877,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 31676804817,
+          "batches": 131,
+          "completed_ns": 37707020455,
+          "dispatches": 89975,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 21.226438270863042,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 44347986,
+          "ttft_ns": 398021376,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "4535300445f8d28c7710706d39bc0a120672a36e368d192c158f58e22989034d",
+      "started_ns": 810299321106940,
+      "summary": {
+        "finite_output_tokens_per_second": 21.208940383838975,
+        "requests": [
+          {
+            "completed_ns": 19738631236,
+            "output_tokens": 128,
+            "started_ns": 13566257610,
+            "tpot_ms": 45.480411,
+            "ttft_ms": 396.361346
+          },
+          {
+            "completed_ns": 25635815462,
+            "output_tokens": 128,
+            "started_ns": 19738977406,
+            "tpot_ms": 43.280931,
+            "ttft_ms": 400.159698
+          },
+          {
+            "completed_ns": 31676422416,
+            "output_tokens": 128,
+            "started_ns": 25636241192,
+            "tpot_ms": 44.421514,
+            "ttft_ms": 398.648877
+          },
+          {
+            "completed_ns": 37707020455,
+            "output_tokens": 128,
+            "started_ns": 31676804817,
+            "tpot_ms": 44.347986,
+            "ttft_ms": 398.021376
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 24140762845
+      }
+    },
+    {
+      "admission": {
+        "accepted_admission_records": 55,
+        "foreign_users": [],
+        "phases": [
+          "active",
+          "monitor",
+          "postflight",
+          "preflight"
+        ],
+        "positive_active_samples": 2,
+        "root_visible": true
+      },
+      "arm": "A",
+      "cell_id": "block3-A2",
+      "cpu_cost": {
+        "clock_ticks_per_second": 100,
+        "output_tokens": 768,
+        "roles": {
+          "controller": {
+            "cpu_seconds": 0.7,
+            "cpu_seconds_per_token": 0.0009114583333333332,
+            "observed_interval_seconds": 40.279326439,
+            "system_seconds": 0.03,
+            "system_ticks": 3,
+            "user_seconds": 0.67,
+            "user_ticks": 67
+          },
+          "worker": {
+            "cpu_seconds": 1.39,
+            "cpu_seconds_per_token": 0.0018098958333333333,
+            "observed_interval_seconds": 40.279328289,
+            "system_seconds": 0.87,
+            "system_ticks": 87,
+            "user_seconds": 0.52,
+            "user_ticks": 52
+          }
+        },
+        "scope": "All requests including excluded warmups; excludes setup/teardown; not GPU time"
+      },
+      "finished_ns": 810658602637764,
+      "mechanism": null,
+      "mode": "latency",
+      "raw_sha256": {
+        "stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdin.raw": "438a13445e515a1a4c98123ad4ca581eb34d766b0695eae1e65541a4c07634a5",
+        "stdout.raw": "a1f7e1b432d4d55791752d278fd5756b7d9b7e2f34b9fd87d1b81b5ec5031707"
+      },
+      "requests": [
+        {
+          "arrival_ns": 826072422,
+          "batches": 131,
+          "completed_ns": 7272018258,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.857442686708918,
+          "name": "warmup-0",
+          "output_tokens": 128,
+          "request_id": 1,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47660760,
+          "ttft_ns": 393029224,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 7272808238,
+          "batches": 131,
+          "completed_ns": 13856730089,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.441300017945792,
+          "name": "warmup-1",
+          "output_tokens": 128,
+          "request_id": 2,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 48689222,
+          "ttft_ns": 400390548,
+          "warmup": true
+        },
+        {
+          "arrival_ns": 13857450410,
+          "batches": 131,
+          "completed_ns": 20261679160,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.986793882089238,
+          "name": "measured-0",
+          "output_tokens": 128,
+          "request_id": 3,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47268460,
+          "ttft_ns": 401134239,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 20262076910,
+          "batches": 131,
+          "completed_ns": 26771007165,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.665289838015017,
+          "name": "measured-1",
+          "output_tokens": 128,
+          "request_id": 4,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 48129301,
+          "ttft_ns": 396508936,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 26771390115,
+          "batches": 131,
+          "completed_ns": 33278202949,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.671689237957263,
+          "name": "measured-2",
+          "output_tokens": 128,
+          "request_id": 5,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 48115929,
+          "ttft_ns": 396089756,
+          "warmup": false
+        },
+        {
+          "arrival_ns": 33278580479,
+          "batches": 131,
+          "completed_ns": 39689716533,
+          "dispatches": 85403,
+          "exact_reference_match": true,
+          "ingress_output_tokens_per_second": 19.965260278658253,
+          "name": "measured-3",
+          "output_tokens": 128,
+          "request_id": 6,
+          "streamed_utf8_sha256": "e2d8244fc49a2ffff5d742c46cc37341356002a99ff564a8e99a0e10bac77f13",
+          "tpot_ns": 47361661,
+          "ttft_ns": 396205045,
+          "warmup": false
+        }
+      ],
+      "spec_sha256": "d5bd7cc760a443acd050fa278554e2ebbe943d3589b149bb23158d822e152a0c",
+      "started_ns": 810489417937029,
+      "summary": {
+        "finite_output_tokens_per_second": 19.820173637191512,
+        "requests": [
+          {
+            "completed_ns": 20261679160,
+            "output_tokens": 128,
+            "started_ns": 13857450410,
+            "tpot_ms": 47.26846,
+            "ttft_ms": 401.134239
+          },
+          {
+            "completed_ns": 26771007165,
+            "output_tokens": 128,
+            "started_ns": 20262076910,
+            "tpot_ms": 48.129301,
+            "ttft_ms": 396.508936
+          },
+          {
+            "completed_ns": 33278202949,
+            "output_tokens": 128,
+            "started_ns": 26771390115,
+            "tpot_ms": 48.115929,
+            "ttft_ms": 396.089756
+          },
+          {
+            "completed_ns": 39689716533,
+            "output_tokens": 128,
+            "started_ns": 33278580479,
+            "tpot_ms": 47.361661,
+            "ttft_ms": 396.205045
+          }
+        ],
+        "warmups_excluded": 2,
+        "window_ns": 25832266123
+      }
+    }
+  ],
+  "comparison": {
+    "block_means": [
+      {
+        "block": 1,
+        "cells": [
+          "block1-A1",
+          "block1-B1",
+          "block1-B2",
+          "block1-A2"
+        ],
+        "mean_latency_comparison": {
+          "tpot_ms": {
+            "A_mean_ms": 50.794252875,
+            "A_over_B_speedup": 1.0638874323725709,
+            "B_mean_ms": 47.744010625,
+            "B_reduction_percent": 6.005093248455418
+          },
+          "ttft_ms": {
+            "A_mean_ms": 426.41316175,
+            "A_over_B_speedup": 1.0132098767998163,
+            "B_mean_ms": 420.85373575,
+            "B_reduction_percent": 1.303765103587351
+          }
+        },
+        "requests_per_arm": 8
+      },
+      {
+        "block": 2,
+        "cells": [
+          "block2-A1",
+          "block2-B1",
+          "block2-B2",
+          "block2-A2"
+        ],
+        "mean_latency_comparison": {
+          "tpot_ms": {
+            "A_mean_ms": 47.344013375,
+            "A_over_B_speedup": 1.0691164393853023,
+            "B_mean_ms": 44.28330875,
+            "B_reduction_percent": 6.464818689444285
+          },
+          "ttft_ms": {
+            "A_mean_ms": 396.317887,
+            "A_over_B_speedup": 0.9832097678680021,
+            "B_mean_ms": 403.085791,
+            "B_reduction_percent": -1.7076958224699013
+          }
+        },
+        "requests_per_arm": 8
+      },
+      {
+        "block": 3,
+        "cells": [
+          "block3-A1",
+          "block3-B1",
+          "block3-B2",
+          "block3-A2"
+        ],
+        "mean_latency_comparison": {
+          "tpot_ms": {
+            "A_mean_ms": 47.5902775,
+            "A_over_B_speedup": 1.0803657186893958,
+            "B_mean_ms": 44.050155125,
+            "B_reduction_percent": 7.4387512764555686
+          },
+          "ttft_ms": {
+            "A_mean_ms": 396.441127125,
+            "A_over_B_speedup": 1.0005614898429023,
+            "B_mean_ms": 396.218654375,
+            "B_reduction_percent": 0.05611747489805419
+          }
+        },
+        "requests_per_arm": 8
+      }
+    ],
+    "checks": {
+      "faster_adjacent_pairs": true,
+      "median_tpot_gain": true,
+      "positive_both_orders": true,
+      "regression_limits": true
+    },
+    "matched_arms": {
+      "A": {
+        "finite_output_tokens_per_second": 19.46499875562183,
+        "requests": 24,
+        "tpot_ms": {
+          "mean": 48.57618125,
+          "median": 47.7079645,
+          "p95": 53.0076885
+        },
+        "ttft_ms": {
+          "mean": 406.3907252916667,
+          "median": 396.691256,
+          "p95": 453.50165114999993
+        }
+      },
+      "B": {
+        "finite_output_tokens_per_second": 20.753414659392387,
+        "requests": 24,
+        "tpot_ms": {
+          "mean": 45.35915816666667,
+          "median": 44.292754,
+          "p95": 51.64735234999999
+        },
+        "ttft_ms": {
+          "mean": 406.7193937083333,
+          "median": 396.514336,
+          "p95": 452.60769129999994
+        }
+      }
+    },
+    "median_tpot_gain_percent": 7.158575168303393,
+    "median_ttft_gain_percent": 0.044598915989213506,
+    "pairs": [
+      {
+        "cells": [
+          "block1-A1",
+          "block1-B1"
+        ],
+        "order": "AB",
+        "tpot_gain_percent": 15.367902648378484
+      },
+      {
+        "cells": [
+          "block1-B2",
+          "block1-A2"
+        ],
+        "order": "BA",
+        "tpot_gain_percent": -4.600215640592764
+      },
+      {
+        "cells": [
+          "block2-A1",
+          "block2-B1"
+        ],
+        "order": "AB",
+        "tpot_gain_percent": 8.36367598181159
+      },
+      {
+        "cells": [
+          "block2-B2",
+          "block2-A2"
+        ],
+        "order": "BA",
+        "tpot_gain_percent": 5.827302172767556
+      },
+      {
+        "cells": [
+          "block3-A1",
+          "block3-B1"
+        ],
+        "order": "AB",
+        "tpot_gain_percent": 7.6656407392688415
+      },
+      {
+        "cells": [
+          "block3-B2",
+          "block3-A2"
+        ],
+        "order": "BA",
+        "tpot_gain_percent": 7.025826688754922
+      }
+    ],
+    "regressions_percent": {
+      "finite_output_rate": -6.619141978616572,
+      "tpot_ms_p95": -2.566299698203234,
+      "ttft_ms_median": -0.044598915989213506,
+      "ttft_ms_p95": -0.1971238357640126
+    },
+    "status": "experimental-gates-passed"
+  },
+  "data_only": true,
+  "default_promotion": false,
+  "elapsed_seconds": 2.6199839739128947,
+  "errors": [],
+  "exact_output_tokens_checked": 9472,
+  "input_directory": "/home/harmenon/ferric-native-down-current-retained-20261007-a001",
+  "latency_semantics": "native ingress event observations; not HTTP or calibrated GPU time",
+  "measured_requests": 48,
+  "member_count": 3084,
+  "member_roster_sha256": "e7f0cf217694ceb6e7590f7254f3414c21951f6367df8f8586dded0b868c523f",
+  "native_executed": false,
+  "plan_sha256": "723298e87e8f5e12949267d761986fbd5d3aa6c8c8a90a728c6f93219b19c54a",
+  "project_code_imported": false,
+  "rate_semantics": "finite measured windows; not steady loaded throughput",
+  "schema": "FerricCurrentDownIndependentDataAuditV1",
+  "session_receipt_sha256": "b832f7a795e8412388a2913edeed3ddc2b523bf7b28faf677b516662b39b79bc",
+  "stage_bytes": {
+    "ferric-native-down-a002": 297186561,
+    "ferric-native-down-current-a001": 423191125
+  },
+  "standalone_hashes": {
+    "block1-A1.json": "5517851c4cfcd2aa1fd61d7d500bc6bce39e25f87da3a84e31b49c47f247bf08",
+    "block1-A1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block1-A1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block1-A2.json": "00c32253cad1278e8cbd869d14838e2df3ae18e8d30b634fa1cea71200dd0f71",
+    "block1-A2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block1-A2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block1-B1.json": "dfd10a0702aa48762fd9345d519de4014fd4ecbd4fa6bdc8cf160b8b6dbe7c1b",
+    "block1-B1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block1-B1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block1-B2.json": "876382a0a056cc7150ca663aae9ee0fb121219ab13826b3d45ef0e8705334341",
+    "block1-B2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block1-B2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block2-A1.json": "841901090922e4f591f3482d566ab890385d3da23ce8e5b24c493e8af46472d6",
+    "block2-A1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block2-A1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block2-A2.json": "977abfdc382e9f8af36994fcbfbf5312cabf6b26b2611c9ca53b6de9ab5d2608",
+    "block2-A2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block2-A2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block2-B1.json": "ebaa990f6e5b5ed5f9c477263ce303d75d4d8a00b972a26c09b02356b406b97c",
+    "block2-B1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block2-B1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block2-B2.json": "4880feb681adedef35218fb01c0c00653f583018f6cbb4c0a06a97161cf2bb13",
+    "block2-B2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block2-B2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block3-A1.json": "bc1f84892c340538b274abee294057006fe210773cdf4551087aee8797d16b9f",
+    "block3-A1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block3-A1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block3-A2.json": "de27c1538640231bbe3b9dcc442da003f27c2c0e0aa031e866ec64a01858e09e",
+    "block3-A2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block3-A2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block3-B1.json": "3478fd2275b9aebf9a22b7aaea50ba9ca817b0b8e9358620cf14fc474267ef11",
+    "block3-B1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block3-B1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block3-B2.json": "eabf65d45e913af8d2a5f1f9686006e382dfb5e65c220f070986eb01379077bb",
+    "block3-B2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "block3-B2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "counter-A.json": "177a85df1c691e4dbff49579d95f3829e368540cce45ecea8a062363a227d6dd",
+    "counter-A.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "counter-A.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "counter-B.json": "359c322cda91065dc51d38941d7161eb1e9a0168f956fbdc91646945ec927e20",
+    "counter-B.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "counter-B.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summarize.json": "5a36231e66503993d81526bc723b7e3c89783e68017414b85bc1f40a6a6ebcd7",
+    "summarize.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summarize.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validate.json": "884369135e308e50e9012ff691c65bb31da3e77a59e4b75db1d6515a871e9879",
+    "validate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validate.stdout": "78759f34e1591b72a8d477a1b4eefd89708f5fa0f6cba093b293889bfa1838a3"
+  },
+  "total_requests": 74,
+  "vendor_comparison_performed": false,
+  "verified_source_roster": {
+    "counter-support/process_evidence.py": "e8d70b045e3c4b2d8a025df31d0e61193dceaa35d97b83b1d541ae1f1d72bc2d",
+    "counter-support/run_counter_diagnostic.py": "9758475fcf059295c27199fbdb929ed0bc71cd5e56db4e28ade9bfc2c25f8e93",
+    "cpu-checkpoint-a009.json": "4af074ac6a1867aeb73d4f64e965514d8b5e11798ccb86cf51adf5ceea39d3a2",
+    "cpu_binding_a009.py": "caf13a29274f8df7b026b36bfaf7d1d9b0abd7f92835a937f5fe2aaa22a6995a",
+    "cpu_binding_down_r1.py": "5340edac91aa67da6ef4ae489c323a9ab20e9988c3628206c4d485a026c858a8",
+    "current_binding.py": "f5cc7a96ef4cbe9f055c86d6c0bea557c20ee369692fb26038c401729f3465b1",
+    "fixtures/frozen_run_v17_native.py": "810a22cb4e805662a7575e2e4ec261fe161a43405f675a7b639f45a62664301f",
+    "launch_contract.py": "207af7b843cefba73da7beff658a213ee280bd21d2ea55a7ec6e6d84c5508739",
+    "measurement/abba_ledger.py": "40830085bf64a167c0711cdc78fde03a2469e5b5c6807d55fa7bec51478c172a",
+    "measurement/gpu_activity.py": "c08462f1c740759af8a9119f699955ed9789abddaac264b48bd35ef005e10730",
+    "measurement/native_campaign_replay.py": "023503f46deaec44032f3507d7dd3533854bc78476b1d5f2a42b885c90903b57",
+    "measurement/native_lifecycle.py": "0b4ad2aa60bfe50d962f304ae5794ad66ec507ee32b1a453ac1aa5e9a3128ac3",
+    "measurement/native_token_cell.py": "e59c15758711f40b0f0dac40af246f9471c8dc8938803c430775712fc548e9a3",
+    "measurement/test_abba_ledger.py": "acfba81b21d76b489c389d0844cee3ee7b68a875f494ba4237b5a2c9447b99c8",
+    "measurement/test_gpu_activity.py": "397038b2b050c60b1a4a935a3f416f3d1af6847de045ef659972f7d316fbd5bd",
+    "measurement/test_native_campaign_replay.py": "3077d76615d4ff06c6a013da08fe6d50359d046beafccc992c2d8fd334838485",
+    "measurement/test_native_lifecycle.py": "73c96e5624b7aab39da1dc66d1a113ec516fc68cc4b7ddf17cf81fc6fab50bfc",
+    "measurement/test_native_token_cell.py": "09b2facea96451e8c3edee6eb0a31377a2ec018d2d0d8ec230a0de095c714018",
+    "native_cpu_contract_a009.py": "ea1432c77663a52e0e4fad7230f58c6d0a6b8437817e39548c3542e0d9f94552",
+    "native_cpu_contract_down_r1.py": "c81842ad2d8269c062d0ba20eec9f8d22277fddfe3fa21432396c619780f5d4f",
+    "prepare_stage.py": "6680f7a5893b70fe662e0f2fda52b46fc7e5f16264637b477ea152b238a7132b",
+    "qualify_cpu.py": "9767441f4d1f97c2d19841310776eb78d5d4ec6bf8e0c5f18c3fe029a55cc5e0",
+    "run_stage.py": "c55ba9a727a679a5c0489fb8b44082ee90643e966bed9d4de894ce08700e148f",
+    "test_cpu_binding.py": "9715d01278fbbebef44b0b05a2accc45417af5ee896e72d2486d54911ac14695",
+    "test_cpu_binding_a009.py": "0dc069887b8169108f29b755169db5111b6ab184bf34cf21d31ddf571f0f3861",
+    "test_cpu_binding_down_r1.py": "6bd8120fe4ad3f53dbe825def41240ee6a713454856be6986ba6241e8b1fad2a",
+    "test_current_binding.py": "a819e936ac47d486d3029bb7b3f8e7be69025ed5f5d290bbec32a56fbf4b3b19",
+    "test_native_launch.py": "4622b0fb07bec73a354a2f7026f5c35cf000dc3df49b62fbbc5a08e1a5a1c1f9",
+    "test_prefill_width.py": "c2f47bb15318bb89a8425d207fc7bcee891ed5fbe875370044255c7fcfd70ae1",
+    "v25-native/README.md": "a521992a47ba3ca7378c030d9042573507997bb30da5f27886f1eab9f173119a",
+    "v25-native/composition_build.py": "e8ae4f1f176a3417afa0a5e872f540bf167fe859b1b3b5739e85b61c65714f0b",
+    "v25-native/composition_build_frozen.py": "bd935ee13f36dd8f94ebaef3aa404ac551ff06c3db342201f4df06eb1caafc40",
+    "v25-native/fake_ordered64_controller.py": "c284d072f02260325a00d3eb136a97617b4a4ff63cd13ae45610fc0d866e5a53",
+    "v25-native/four_core_receipt.py": "1402be2a972c47219ad877a9fb931eb45b2453a415547ce8d9e5dde10478df95",
+    "v25-native/harness-phase.sh": "6416172f1b351465c7c1d3383a37372edaa3a1bd0b35504781ddff0ce91035e0",
+    "v25-native/native_supervisor.py": "0c2a7cacbffbe74827ade03fd09f05a927cb9ba051ff475744be8d79f3a96436",
+    "v25-native/prepare_composed_plan.py": "2e39432f1df0109ee5cb802ed96622c17ce212fc7ff5a93b919d4468141c9294",
+    "v25-native/prepare_v25_plan.py": "a8d564f9e37feaf9a0be7fe7e0795c1ef074b9d3791c5dd9e4b289229f31ddf2",
+    "v25-native/profile_v17.py": "37e1aeda338331733617ead881192b20ed769e498e1e991e271295bdb1174158",
+    "v25-native/run_composed.py": "43516022b76fdcc7f4bbade37f3a637f6122bf276ffc028f87dc4b83105d98b7",
+    "v25-native/run_composed_frozen.py": "526fd9153093eac0a0a7424da230ed9a0a0edd3b70898c0300ba6124011d21d6",
+    "v25-native/run_composition.py": "9c9141d2a9f556f51a61a25ca3f0c56d6a0e4d66fdaea4a43af8e547cc5def22",
+    "v25-native/run_partial_frozen.py": "2f3d77860ed54f1922acdd7360a86090093ffd8e29789cd13a3efd07607a17bc",
+    "v25-native/run_v17_native.py": "810a22cb4e805662a7575e2e4ec261fe161a43405f675a7b639f45a62664301f",
+    "v25-native/run_v25_native.py": "8c3f6cf9677df9530bc59ebc0a3cbba2355215e002a60a01f9d002c456ea0920",
+    "v25-native/run_v28_native.py": "3361111bfeaeb48a1e7eafbf28195ad8fbcd072c6cc3e0e6977de5c7e54a1e90",
+    "v25-native/runtime_profile_v17.py": "0447f2629d94967baa819fae3c490deb89b23b69f12c19ec30290fd9dd19bc4c",
+    "v25-native/test_ordered64.py": "2e05c5f374bf6dca864546dd2ffd9db660f87d834cb4f5c20998bc81a37f7f78",
+    "v25-native/test_partial_frozen.py": "236045c11e347b5b48eb8c8faffc6977979115425a30b59657bcd51e2f9af67d",
+    "v25-native/test_run_v25_native.py": "3cc0c88a6b3b445476e248466bb6f114c090939058b9d57e54938b4ab9a7bb3c",
+    "v25-native/worker_admission.py": "c9f3d851c999a4aa8d00e9bd3427d55046554b1033fd4ba808f8c63d504144a9",
+    "v25-native/worker_receipt.py": "d0a54b17944569aaf35bfb6bc97f7e5168d883f38c14d9cc921195938012dd53"
+  },
+  "worker_refresh": {
+    "historical_runtime_is_ancestry_only": true,
+    "packet_diagnostics": false,
+    "parent_plan": {
+      "path": "/dev/shm/ferric-native-down-a002/plan.json",
+      "sha256": "40af41015d4bb1401ef92f0b38ab992ae3b2d77d18bc9a651ff972767e047068"
+    },
+    "runtime_main": "1736eff451d445f1f194abe145af242cf51ec322",
+    "schema": "FerricNativeDownWorkerRefreshV1",
+    "source_sha256": "5e3ec3e9e7c568fb3459120b9b7dc2171b55163389e56dc531da59095420b295",
+    "wait_diagnostics": false,
+    "worker_sha256": "8f764849a5a1c6a23c567f8aefe253de5e6ef2320977a79db7c472ad3417a8b5"
+  }
+}

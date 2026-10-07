@@ -3,8 +3,8 @@
 Default-off candidate. CPU qualification on mi300x-2 passed 18 API/source tests,
 18 full-host default tests and 19 full-host enabled-feature tests on October 7,
 2026. The path-bound fixtures retained the exact current SDK source; they do
-not qualify Git fetching or an emitted device artifact. Strict Clippy's remote
-outcome remains unknown after SSH loss. No compiler emission, ISA, device
+not qualify Git fetching or an emitted device artifact. Strict all-target Clippy
+also passed for the full-host default and enabled configurations. No compiler emission, ISA, device
 parity, timing or serving improvement is claimed. The SDK pin
 is fe2o3 `1736eff451d445f1f194abe145af242cf51ec322`. Generate the lockfile and
 run all qualification remotely; no local build is needed.
@@ -51,7 +51,8 @@ Extra live fragments can increase registers and reduce occupancy.
    source/lock roster. Run `cargo test --locked --no-default-features` and the
    same command with `--features paired-prefill32-down-k16-r1`; repeat both
    profiles with `cargo clippy --locked --all-targets ... -- -D warnings`.
-   The 18 default and 19 enabled tests have passed in path-bound host fixtures;
+   The 18 default and 19 enabled tests and both strict Clippy configurations
+   have passed in path-bound host fixtures;
    managed emission and native qualification below remain outstanding.
 2. Emit both roots together with the current compiler, gfx950, Wave64, xnack
    disabled, normal bounds/race checks and engineering artifact custody. Keep
