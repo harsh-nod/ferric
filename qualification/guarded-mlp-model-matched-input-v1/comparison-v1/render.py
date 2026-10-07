@@ -65,7 +65,7 @@ def main():
     text(470, 531, 'Different BF16 words (linear scale)', **{'text-anchor': 'middle'})
     ET.ElementTree(svg).write(ROOT / 'different-words.svg', encoding='utf-8', xml_declaration=True)
     with (ROOT / 'comparison.csv').open('w', newline='') as stream:
-        writer = csv.writer(stream)
+        writer = csv.writer(stream, lineterminator='\n')
         writer.writerow(('stage', 'rank', 'original_different_words', 'matched_different_words',
                          'matched_max_bf16_steps', 'matched_relative_l2'))
         writer.writerows(table)
