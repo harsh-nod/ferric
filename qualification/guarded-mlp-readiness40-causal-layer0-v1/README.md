@@ -270,6 +270,10 @@ failure against a tensor tolerance this diagnostic never declared. Actual
 generated-token agreement and full-model numerical acceptance need their own
 explicit gates.
 
+[The decode-gate inventory](DECODE-GATES.md) records the existing behavioral
+requirement and the distinction from conditional component checks and aggregate
+tensor acceptance. It introduces no new tolerance.
+
 The next runtime work is a separately selected guarded Full2303 transport and
 native owner for the actual 2,048-prompt/256-generated request. Existing
 Readiness40 and four-forward autoregressive entry points remain unchanged.
