@@ -8,7 +8,7 @@ are default-off experiments, not a new serving-performance result.
 |---|---|---|---|
 | Decode down | Current-worker binding for the split-K8 native688 experiment; fresh three-block ABBA campaign | 24 adapter tests; all 14 native cells independently audited; median TPOT reduced 7.1586% | Matched HTTP integration measurement, then a fresh vendor comparison |
 | Checked loads | Explicit fe2o3 gfx950 API groups independent checked scalar loads, retaining original fallbacks | 19 focused tests and seven LLVM assembler fixtures passed; 112 baseline tests passed, 11 explicitly ignored; raw logs retained | Additive physical-profile integration; actual ISA, parity and timings |
-| Prefill down | Exact M32/N4096/K12288 control and paired-K16 roots in one opt-in Ferric crate | 18 API/source, 18 full-host default and 19 enabled-feature tests; strict Clippy passed in both full-host configurations | Current emitter/worker qualification, image/ABI/ISA, native output parity and matched component timings |
+| Prefill down | Exact M32/N4096/K12288 control and paired-K16 roots in one opt-in Ferric crate | 18 API/source, 18 full-host default and 19 enabled-feature tests; strict Clippy passed in both full-host configurations; matching compiler tools and focused LLVM-worker checks passed | Genuine Git/vendor emission closure, image/ABI/ISA, native output parity and matched component timings |
 
 Checked-load tests exercise all 256 guard masks, invalid-pointer non-access,
 overflow and nonzero address offsets, successor/backedge PHIs and conservative
@@ -85,8 +85,29 @@ partial local full-archive transfer is not accepted as complete custody.
 All compiler baseline raw logs and both prefill Clippy receipts have also been
 recovered. The current emitter rebuild's first offline attempt stopped on a
 missing dependency before compilation; a bounded dependency fetch subsequently
-passed. Compiler tools, LLVM worker and emitted kernel images require their own
-fresh qualification and must not be inferred from host tests.
+passed. A later attempt stopped on a disk-census error, and a successful compile
+could not retain the entire quartet inside that phase's allowance. Those failed
+attempts remain separate. The fresh a004 warm build and complete retention pass
+without increasing its 1,536 MiB allowance. All four tools are retained with
+exact hashes; receipt SHA-256 is
+`b0bd1b0d852623fb0f222cb621280aaf0ffe26aa0aba432623ba4be8ae8fe117`.
+
+The matching LLVM worker is freshly built, not a relabeled historical binary.
+Its codec, pipeline, machine-effect, device-library-policy and gfx950-provider
+profile checks pass, with the full SDK and provider inputs unchanged. Worker
+SHA-256 is `43364734eb2d063ad07071c522897f9a7409c3ab0a7da3e3587b38171dcfc2c3`;
+focused-test receipt SHA-256 is
+`664a43946dc49d6a0b6057dfd34bb260556cbdb1bc82b41b1786b16ca3d82272`.
+A wrapper output-directory collision was fixed in a separate retry, preserving
+the accepted configure evidence; 31 allocation and ancestry controls pass.
+All build/test phases use the same G56 four-core, 8 GiB RSS profile and clean,
+unsignaled owned-process completion. There are no local or GitHub CI builds.
+
+These tools are attributed to the frozen fe2o3 `1736eff` SDK, LLVM development
+build 7.2.4 and the separately pinned ROCm 7.2.1 gfx950 device-library profile.
+They do not establish candidate kernel emission, numerical parity, a GPU
+speedup or protected proof-runtime qualification. Later upstream changes,
+including the default-off checked-load pass, do not relabel these binaries.
 
 ## Comparison Boundary
 
