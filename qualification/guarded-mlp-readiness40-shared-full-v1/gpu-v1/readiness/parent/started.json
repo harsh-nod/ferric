@@ -1,0 +1,13 @@
+{
+  "command_sha256": "d02830ea26fcb4df14a30933a584d2e994eebfbb2d129acb0679c55a587eb427",
+  "parent": {
+    "pgid": 2924682,
+    "pid": 2924682,
+    "ppid": 2924586,
+    "sid": 2924682,
+    "starttime": 76266791,
+    "state": "R",
+    "uid": 9661
+  },
+  "supervisor_pid": 2924586
+}

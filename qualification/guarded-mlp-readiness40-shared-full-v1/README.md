@@ -2,8 +2,9 @@
 
 This opt-in experiment shares a fresh topology discovery across the full
 per-rank currentness checks. The worker, parent and independent data checker
-are CPU-qualified on `mi350`. Native model parity remains pending; there is
-no measured speedup or numerical-acceptance claim yet.
+are CPU-qualified on `mi350`. The native probe completed all 40 forwards and
+preserved same-side model parity. There is no matched speedup or independent
+numerical-acceptance claim yet.
 
 ## Optimization Boundary
 
@@ -113,10 +114,49 @@ proposal and tests, and unchanged 40/38-GiB initial/live space floors.
 Only disposable intermediates from completed or retained failed builds were
 removed; sources, evidence and executable products were preserved.
 
+## Native Parity Result
+
+The one-shot native run on `mi350` completed 40 authentic prompt forwards
+through all 36 layers, with zero generated tokens and a healthy Close. All
+11 owned command phases exited naturally and were reaped. Six idle-device
+observations and source/input/executable postchecks passed.
+
+| Same-side check against the historical Position5 run | Result |
+| --- | --- |
+| Forty semantic records, including bank history and choices | Exact match |
+| Forty logit hashes | Exact match |
+| Forty observation hashes | Exact match |
+| Four complete observation payloads at positions 0/5/16/39 | Byte-exact match |
+| Original worker policy record and owned-child identity | Authenticated |
+
+Each retained capture file is 849,800 bytes; its complete 606,976-byte
+observation payload matches. Run-specific control bytes are independently
+validated, not claimed byte-equal. The worker's original 1,205-byte
+policy record is retained without sanitization. Its policy selects shared
+full currentness only: no operational-currentness reduction, kernel-admission
+cache, paired reads, paired terminal, host observer or host timing.
+
+`gpu-v1` retains 157 original archive members, with 156 manifest pins and
+8,243,200 expanded bytes. These include all ten deployed/prepared root bodies,
+72 current case bodies, 73 historical baseline bodies, the collector and its
+manifest. Export and local retention independently revalidated both transcripts,
+the original policy bytes and all selected capture payloads without rerunning
+the model. External source/product metadata is not a local executable rehash.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Native terminal | `6593530adae2bc8d4057a9dc5fbf0f908815fc8f7a37e9e3f15d4b02441e1ba9` |
+| Original policy record | `16a5a07fc48edf83740c84e958561e24b16136d54ac5699c97a427b1b84306a2` |
+| Retained archive | `f2dcbbed4668467dacebd9d76e89b9dbe052dcc3ba004917a5aafedfdb24d7a8` |
+| Bound collector | `1a2536727593f57428eb25597adfb665d4ba2ef197345d60f82a7ea4ae781c3e` |
+
+The outer controller took 495.289 seconds, including setup and audits. This
+untimed run has neither the 124-span parent sidecar nor GPU kernel timings.
+Its historical comparator used different executable builds. The elapsed value
+therefore establishes neither a controlled speedup nor decode throughput.
+
 ## Remaining Gates
 
-The native parity probe requires unchanged 40-record semantics and byte-exact
-equality of all four full captures.
 Same-side parity is not independent framework accuracy. A fair timing comparison
 also requires the same newly qualified parent/worker ELF pair and equal
 instrumentation in fresh default and SharedFull runs. The historical timing
