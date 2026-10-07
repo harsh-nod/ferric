@@ -1,0 +1,13 @@
+
+running 8 tests
+test finite_rearm_smoke_wire_v1::tests::annex_must_be_declared_exact_hashed_and_bounded ... ok
+test finite_rearm_smoke_wire_v1::tests::entire_smoke_binary_stream_and_annex_fit_unchanged_budget ... ok
+test finite_rearm_smoke_wire_v1::tests::four_forward_close_is_not_accepted_as_long_close ... ok
+test finite_rearm_smoke_wire_v1::tests::smoke_bootstrap_is_distinct_and_binds_first_four_prompt_and_capture_flag ... ok
+test finite_rearm_smoke_wire_v1::tests::all_four_captures_roundtrip_and_only_generation_one_can_have_annex ... ok
+test finite_rearm_smoke_wire_v1::tests::stage_final_rows_join_both_ranks_to_main_observation ... ok
+test finite_rearm_smoke_wire_v1::tests::transcript_binds_optional_annex_without_trusting_claimed_chain ... ok
+test finite_rearm_smoke_wire_v1::tests::strict_stage_roster_hashes_scope_and_false_authority_are_checked ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 905 filtered out; finished in 0.10s
+

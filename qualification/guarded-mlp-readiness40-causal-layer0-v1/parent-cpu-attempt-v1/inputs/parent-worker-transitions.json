@@ -1,0 +1,124 @@
+{
+  "parent_source": {
+    "bytes": 494635,
+    "sha256": "a8ce9773a765fbb63fa18735818ac7defebb52d5c9b8e34140a1718a4b4042b5"
+  },
+  "rows": [
+    {
+      "after": {
+        "bytes": 24424,
+        "sha256": "362d613e91b8833ea638e23145654af0909514dae6157763c87fcacd36637b1e"
+      },
+      "before": {
+        "bytes": 24361,
+        "sha256": "81e6ffbf3db817eae250d072f1523f32dd099be3fbdfc513e98aa07c02737165"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 18261,
+        "sha256": "69edcf7757c2e09f18fd8e51f0956cc4c09c17186e365484f8bd9f1715de5120"
+      },
+      "before": {
+        "bytes": 18145,
+        "sha256": "d7bd5a2a0f43c59fbeec755338a1eb8bbd401726ae0abb198af2daddbce69d00"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 18305,
+        "sha256": "c03ef2bd44bcd62ab4128d6b73a6f69ed0fcc6a7f4b9aa71cbcbe33a7fc7a408"
+      },
+      "before": {
+        "bytes": 18253,
+        "sha256": "32d19403eedc169e24a7dc03e3a771237c9a6f132f9ee8b181ea6b9062b11e88"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/main.rs"
+    },
+    {
+      "after": {
+        "bytes": 28202,
+        "sha256": "0652d78fe2ccacc1b4a57f1427a063bc29ea31dc2c96ec8dc392b7668982c7a4"
+      },
+      "before": {
+        "bytes": 27735,
+        "sha256": "f8369ad1a21642a3bf1c9a3ee9940a28751529f43049ae894fbcc6ba7645bdc0"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 21309,
+        "sha256": "08f584a460cd7f5c883cb62060d96f8019544d847bb0f619fd73c0c54f83656c"
+      },
+      "before": {
+        "bytes": 20984,
+        "sha256": "80eaf5e659de578aebee805a419c143274999b9802c9d62f3f6b94800e6b25c9"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 20195,
+        "sha256": "2e3362050411aa735c4d7c5723f6f1855f142197b96ec53e399a1dc544c2e06c"
+      },
+      "before": {
+        "bytes": 20163,
+        "sha256": "20569c224c68b74bc6b06e5ebe6ce88dc60302a39a32debbfe7b1ee91af11628"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 10410,
+        "sha256": "02f6ba652ebc8011ecb70c78f3c2b58b03366407e16fbae32c588db72c025aa8"
+      },
+      "before": {
+        "bytes": 10222,
+        "sha256": "bf6aaa5d37ad8d8b2f602616e9b8295a013635176cffaefd3efed289be8fc120"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1/tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 21006,
+        "sha256": "139ce89e10b5cbacebf236e796447e20c0dd968e2df1760e6dfb41eeedbd7c09"
+      },
+      "before": {
+        "bytes": 20763,
+        "sha256": "cf1ddeb13401bddbb334475f3604858b82059dbfcb5b97405034ab60e645aee0"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs"
+    },
+    {
+      "after": {
+        "bytes": 22235,
+        "sha256": "2d3aa7bd3be105dc4e61d25bec39a45938f2562398255a96d95968b5b6c08606"
+      },
+      "before": {
+        "bytes": 21432,
+        "sha256": "cb21e458ad32d5b2c17f76f23294efcf1ba31ec8b6702ecda5465a434b5e7f99"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs"
+    },
+    {
+      "after": {
+        "bytes": 4445,
+        "sha256": "012e76136a7c52ff98b7dc2c659d20d8d2143b569ebda985fd4c8fc88d204d64"
+      },
+      "before": {
+        "bytes": 4334,
+        "sha256": "232beca71045611ff4f57a0234e11bff1e72681419ebc08b6ff22a1cc6a923b9"
+      },
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/tests/shared_wire.rs"
+    }
+  ],
+  "schema": "ferric-causal-layer0-parent-worker-transitions-v1",
+  "worker_files": 195,
+  "worker_source": {
+    "bytes": 420673,
+    "sha256": "8672f496167bbe2879a2d2d81fa7cf4d292cb9d91fabc598b7dcf7b6a113c31f"
+  }
+}

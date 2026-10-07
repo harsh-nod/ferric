@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-causal-layer0-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering",
+    "--bin",
+    "ferric-qwen3-finite-rearm-smoke-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2635,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-causal-layer0-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-rearm-smoke-engineering-tests.command.json",
+    "sha256": "af370565605ccdc6ad44d77f13fa6a8a261ab29a2fdedd910ddac11e41bc596e"
+  },
+  "elapsed_ns": 421187941,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-rearm-smoke-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 1819882,
+  "pid": 1819882,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2400,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-causal-layer0-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-rearm-smoke-engineering-tests.stderr",
+    "sha256": "24fc9cc9363369b2e8bb5f69951c02306d02faf1e5d4df361537e4fd0a7a5c00"
+  },
+  "stdout": {
+    "bytes": 194,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-causal-layer0-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-rearm-smoke-engineering-tests.stdout",
+    "sha256": "077c873c577668d233282771bc539b61564a9586e42cc2c0ed73e16b000426a6"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

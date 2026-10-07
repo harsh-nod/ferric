@@ -1,7 +1,7 @@
 # Causal Layer-Zero Diagnostic
 
-The worker source is CPU-qualified on MI350. Native causal capture and its
-independent framework comparison have not yet run. This is diagnostic
+The worker source and independent data checker are CPU-qualified on MI350.
+Native causal capture and its cross-framework comparison have not yet run. This is diagnostic
 instrumentation, not numerical acceptance or a performance route.
 
 ## Scope
@@ -46,10 +46,35 @@ the actual tested postimages, not the unformatted proposal. The complete
 | Source map | `00b15b5478ebbeb6fbd00a2de68e24bb6381a6f28a521fc566b95539aa3e35a5` |
 | Worker ELF | `44be19f70ff77cbb95651667af4038be4c861502774ae47600aa2da08396494e` |
 
+## Parent Attempt And Checker
+
+`parent-cpu-attempt-v1` preserves the original failed qualification, including
+all 297 archive members. It stopped naturally in phase 33: the parent-client
+scope passed 228 tests and failed one positive causal-sidecar test. Earlier
+selected scopes passed 27 tests. This is not a successful parent qualification;
+the original `failed.json` and raw test output remain unchanged.
+
+The failure exposed a byte-retention API error: `FilePin::read(..., false)`
+authenticates a file but returns an empty buffer. The new parent consumer
+needed the authenticated bytes. The reviewed retry changes that argument,
+shares the file-backed validator with the post-Close path, and adds a regression
+covering valid contents, mutation, a wrong digest, and a missing file. The retry
+must pass the entire selected parent qualification before integration.
+
+`checker-cpu-v1` retains the original MI350 data-checker evidence. All 29 tests
+passed, including the 12 new causal capture/parity tests. The owned test process
+exited naturally and all source/tool postchecks passed. These are synthetic
+data tests, not native execution or numerical acceptance.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Failed parent terminal | `060c05edc7ec35703e54c8120fa630553fc7c263205e2b45fdddb0c03a69225b` |
+| Checker terminal | `99054dc3eaf5d7455bf6cf1c9eb8b82db947f1ba27194f5b03f4238684faec27` |
+
 ## Remaining Gates
 
-The parent suite and independent data checker must pass before the native
-diagnostic. Both native and framework instrumentation must preserve their
+The parent suite must pass before the native diagnostic. Both native and
+framework instrumentation must preserve their
 own prior forty-record histories and selected payloads. Cross-framework
 stage comparisons then distinguish same-input operation differences from
 upstream propagated differences; native FP32 rank partials are not treated
