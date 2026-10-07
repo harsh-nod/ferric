@@ -12,9 +12,12 @@ passes MI350 CPU qualification: 658 worker tests with four unchanged ignores,
 data-checker tests. All nine worker and 60 parent supervised phases pass.
 The explicit route accepts the authentic full prompt and 144-page KV mapping,
 but executes only 40 prompt positions, generating zero tokens. Complete
-captures are selected at positions 0, 15, 16 and 39. Native execution is
-pending; full 2,303-forward native admission remains refused. This CPU result
-does not establish GPU correctness, full-workload acceptance, or performance.
+captures are selected at positions 0, 15, 16 and 39. The first native attempt
+now passes all 40 positions, all 11 supervised phases, healthy Close and clean
+owned-process/device postchecks. The retained original transcript and four
+captures pass the qualified independent data checker. Full 2,303-forward
+native admission remains refused. Independent framework comparison,
+full-workload numerical acceptance and performance remain separate gates.
 
 Current GPU bring-up: the guarded parent and worker completed both four-step
 teacher-forced and autoregressive runs on MI350, through all 36 layers and

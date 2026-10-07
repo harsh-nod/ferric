@@ -62,16 +62,40 @@ image changes are part of this integration.
 
 ## Native Gate
 
-Native execution is pending. A successful attempt must establish all 40
-authentic prompt inputs, the fixed page map, bank generations through 20,
-queue progression, the exact chained completion transcript, bounded stream
-accounting, healthy Close, and clean owned-process/device postchecks.
+The first native attempt completed all 40 positions on `mi350`, with all 36
+layers and both ranks at each position. All 11 supervised phases passed;
+the original parent and worker closed naturally, and all six before/after
+observations found all eight GPUs idle. No retry or allocation-limit increase
+was needed. The qualified checker revalidated the retained original evidence.
 
-The independent checker must inspect the four retained control/payload bodies,
-finite BF16 values and lowest-index argmax. It does not independently compute
-model outputs or inspect the 36 unretained payloads. A separate framework
-reference and full-workload numerical gate are still required.
+| Captured Position | Prompt Token | Bank-Local Generation | Observed Argmax |
+|---|---|---|---|
+| 0 | 9112 | 1 | 67 |
+| 15 | 5269 | 8 | 374 |
+| 16 | 13352 | 9 | 389 |
+| 39 | 9104 | 20 | 11 |
 
-The next gates remain native readiness, full bounded request execution,
+All 40 compact transitions pass the chained-history, page-map, bank-generation,
+queue-progression, framing and healthy-Close checks. The four selected
+849,800-byte captures each contain the original 242,824-byte control body and
+606,976-byte BF16 payload. Their finite values and lowest-index argmax pass
+independent data checks. This does not independently compute model outputs or
+inspect the 36 unretained payloads. The argmax values above are observations,
+not an assertion of agreement with a framework reference.
+
+Close also checks the actual reusable-allocation ceiling of 787/783 across the
+two ranks. The transcript is not a 40-sample allocation census, so this result
+must not be plotted as one. The conservative currentness policy is unchanged.
+
+The [original terminal](gpu-v1/readiness/complete.json),
+[checked observation](gpu-v1/readiness/observation.json), and
+[closed evidence manifest](gpu-v1/manifest.json) preserve all 70 raw bodies,
+source and preparation inputs, and original process identities. The terminal
+is 169,839 bytes, SHA-256
+`65c85efb646a6980be5a036220e5cfc70acd811b656dc5c821c7f67eae3dd131`.
+Its 949.65-second outer elapsed time includes setup and checks; it is not
+GPU timing or a decode-throughput measurement.
+
+The next gates remain an independent framework comparison, full bounded request execution,
 independent numerical acceptance, and then sustained matched-workload timing.
 All issue #42 M0-M7 milestones remain open.

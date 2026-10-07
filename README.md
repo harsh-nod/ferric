@@ -74,7 +74,8 @@ retain the failed attempt, the corrected worker's 623 passing CPU tests, and a
 fresh four-run GPU comparison showing 71.9% lower hidden-read host time.
 The [bounded 40-position readiness route](qualification/guarded-mlp-readiness40-v1/README.md)
 passes MI350 CPU qualification: 658 worker tests, 428 selected parent tests,
-and 16 independent data-checker tests. Its first native GPU attempt is pending.
+and 16 independent data-checker tests. Its first native GPU attempt also passes:
+40 prompt positions through all 36 layers and both ranks, with healthy Close.
 These are engineering diagnostics, not an end-to-end speedup, sustained 2,048/256 decoding,
 independent full-model numerical acceptance, or a change to production status.
 
