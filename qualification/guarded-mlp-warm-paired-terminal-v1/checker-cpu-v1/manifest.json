@@ -1,0 +1,96 @@
+{
+  "audit": {
+    "gpu_execution": false,
+    "new_project_execution": false,
+    "numerical_acceptance": false,
+    "original_controller": {
+      "bytes": 9393,
+      "sha256": "4137a9b689c0865ee7d8996bccd4a8a3fb50ad3b731b1342da2cb2fbbc8d912b"
+    },
+    "original_output_files": 3,
+    "original_terminal": {
+      "bytes": 4147,
+      "sha256": "ca0ddb8f614a17e09c787d75f3a5d0d912456642be59b179cc57ea766fff6adc"
+    },
+    "original_test_run_repeated": false,
+    "original_test_sources": 6,
+    "original_tests_failed": 0,
+    "original_tests_passed": 20,
+    "performance_claim": false,
+    "schema": "ferric-warm-paired-terminal-checker-data-audit-v1",
+    "subprocesses_started": 0,
+    "tests": [
+      "test_census.CensusTests.test_actual_width_ids_and_closed_positive_record",
+      "test_census.CensusTests.test_bounds_and_nonfinite_json",
+      "test_census.CensusTests.test_close_and_claim_flags_are_strict",
+      "test_census.CensusTests.test_fresh_schema_teacher_forcing_or_changed_bootstrap_refuse",
+      "test_census.CensusTests.test_growth_rank_swap_or_non_integer_counts",
+      "test_census.CensusTests.test_missing_extra_or_duplicate_fields",
+      "test_census.CensusTests.test_missing_extra_or_reordered_samples",
+      "test_census.CensusTests.test_stale_profile_registration_session_and_devices",
+      "test_comparison.ComparisonTests.test_all_four_equal_payloads_and_histories",
+      "test_comparison.ComparisonTests.test_history_difference_is_not_hidden_by_equal_payloads",
+      "test_comparison.ComparisonTests.test_one_changed_byte_in_each_frame_is_reported",
+      "test_comparison.ComparisonTests.test_tampered_hash_or_wrong_extent_is_refused",
+      "test_terminal.TerminalTests.test_case_exception_restores_outer_handlers_and_remaining_timer",
+      "test_terminal.TerminalTests.test_control_requires_same_elf_policy_success_and_distinct_session",
+      "test_terminal.TerminalTests.test_distinct_profile_and_nested_census_preserve_legacy",
+      "test_terminal.TerminalTests.test_nested_close_plateau_and_cadence_flags_are_strict",
+      "test_terminal.TerminalTests.test_only_two_warm_generations_may_report_paired_dispatches",
+      "test_terminal.TerminalTests.test_profile_schema_and_unknown_fields_cannot_cross_modes",
+      "test_terminal.TerminalTests.test_segment_host_fields_use_fixed_u64_offsets_not_gpu_time",
+      "test_terminal.TerminalTests.test_tested_runner_binding_normalization_is_narrow_and_literal"
+    ]
+  },
+  "files": {
+    "complete.json": {
+      "bytes": 4147,
+      "sha256": "ca0ddb8f614a17e09c787d75f3a5d0d912456642be59b179cc57ea766fff6adc"
+    },
+    "retention_tool.py": {
+      "bytes": 13090,
+      "sha256": "8fc6241a1749ea9b9b1f36ffa2bde963747c2a93c689967ccd1ef5b403397210"
+    },
+    "source/run_checker_cpu.py": {
+      "bytes": 9393,
+      "sha256": "4137a9b689c0865ee7d8996bccd4a8a3fb50ad3b731b1342da2cb2fbbc8d912b"
+    },
+    "source/run_model_gpu.py": {
+      "bytes": 43046,
+      "sha256": "a996fbca701ed968a49f4dc88a62c808be76b150311d79e7dd4d098ca804a13b"
+    },
+    "source/test_census.py": {
+      "bytes": 4375,
+      "sha256": "d4f19ae2f4bcf9f68464a7b8951b82368183cec6db998a0ed55449d2349e7f64"
+    },
+    "source/test_comparison.py": {
+      "bytes": 3753,
+      "sha256": "daead3eef98b1368b705b17a6894c2c060ef69ca154788fbd8f01cbf9e888093"
+    },
+    "source/test_terminal.py": {
+      "bytes": 8856,
+      "sha256": "65cd07e2542b67aa8bcee20b17b9bc8e9c70a3a7a8940ab9f27576cca0f1ec47"
+    },
+    "source/validate_observation.py": {
+      "bytes": 17983,
+      "sha256": "7224877439ec966254d7604317f1f47b5d6345af698e47e332f6cb36c3abc19b"
+    },
+    "stderr": {
+      "bytes": 2885,
+      "sha256": "ddee29e852bb8e91be0d3c0e425c729bf90eb5d24ca96bc684dbfbd17459df39"
+    },
+    "stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "gpu_execution": false,
+  "members": 11,
+  "numerical_acceptance": false,
+  "original_files": 9,
+  "performance_claim": false,
+  "schema": "ferric-warm-paired-terminal-checker-export-v1",
+  "selected_files": 10,
+  "source_posthashes": true,
+  "test_rerun": false
+}

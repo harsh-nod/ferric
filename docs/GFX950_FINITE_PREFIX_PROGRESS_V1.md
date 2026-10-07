@@ -53,8 +53,13 @@ The [opt-in paired-terminal runtime API](../qualification/guarded-mlp-terminal-p
 is integrated after 1,119 KFD tests, 658 unchanged worker tests, ten facade
 doctests and 23 clean MI350 CPU phases. It coalesces terminal validation for
 retired reusable arenas while preserving queue/signal/ownership checks.
-The existing worker does not select it; native qualification and timing remain
-pending. Fewer source-level full checks are not a measured speedup.
+The new [warm-only worker caller](../qualification/guarded-mlp-warm-paired-terminal-v1/README.md)
+now selects it through a separate reusable AR4 profile, after 673 passing
+worker tests and four unchanged ignores on MI350. Twenty synthetic native
+comparison tests also pass. Parent and native qualification remain pending;
+the existing entries retain their behavior. Both earlier failed worker
+attempts are preserved. Fewer source-level full checks are not a measured
+speedup.
 
 The reviewed [700 tokens/s bandwidth budget](../qualification/guarded-mlp-terminal-pair-v1/roofline-v1/README.md)
 joins checkpoint bytes and actual TP2 weight/cache placement. Conditional on

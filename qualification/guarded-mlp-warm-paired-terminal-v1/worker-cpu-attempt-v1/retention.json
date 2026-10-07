@@ -1,0 +1,182 @@
+{
+  "archive": {
+    "bytes": 1107006,
+    "sha256": "bb1dea41668c54c4e84860b237b95a6ef17887184f663247f8c2fb4f33c28e66"
+  },
+  "canonical_source_changed": false,
+  "current_test_count": 0,
+  "external_inputs_rehashed_locally": false,
+  "files": {
+    "cache-transport.py": {
+      "bytes": 12805,
+      "sha256": "6158399f5ab1d162eae089b45c5db5e2a81be7011ba9637128ea09a0cdc36c16"
+    },
+    "cargo-cache-manifest.json": {
+      "bytes": 26511,
+      "sha256": "28ba8dcd2578688231204408baa0cfb7eb658c8de6cb0a0b77c123156d80ea00"
+    },
+    "cargo-cache-stage-complete.json": {
+      "bytes": 14979,
+      "sha256": "dd6a79a641b52f3b1dcc774375faa407477de58985f24b7af261b4f2edb8ec9f"
+    },
+    "evidence.py": {
+      "bytes": 24460,
+      "sha256": "a96627413eaa8f33af16d28e8a1a4c113de67a2e4d6d54a97301b88269bc5f35"
+    },
+    "evidence/dependencies-after.json": {
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "evidence/failed.json": {
+      "bytes": 1036998,
+      "sha256": "137f9861d6ec1a23ad076c186190882bf760293ea8b6b29c52ffefe3659590f6"
+    },
+    "evidence/rustfmt.command.json": {
+      "bytes": 4721,
+      "sha256": "b600a6fc667ef0379ace04fd5748f29934c567b0e3f37708ef8da7b60e810e40"
+    },
+    "evidence/rustfmt.result.json": {
+      "bytes": 3948,
+      "sha256": "c3117ed656367d9bba5a00ac6a3064596b87c69959f6a5e13a3b796756fcf32d"
+    },
+    "evidence/rustfmt.started.json": {
+      "bytes": 2805,
+      "sha256": "e9033307795ed77c85146a65f7fd70626b7d0ecfa19174ce7c3971b07ce537a2"
+    },
+    "evidence/rustfmt.stderr": {
+      "bytes": 790,
+      "sha256": "0594527a257dd2a3dc3be0bbf9b8600cc8f641e0f35ece124fc00350e96589b3"
+    },
+    "evidence/rustfmt.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 420673,
+      "sha256": "49be86a9a2409326cc28eb9dcee02872c28344b8f52f4c71ac719a48cba30842"
+    },
+    "evidence/sources-preformat.json": {
+      "bytes": 420673,
+      "sha256": "c8e57e3288316e39277fe08c44c9b7381fc2ae384bc9c57d9e2c0e25f0a1ed52"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs": {
+      "bytes": 24424,
+      "sha256": "362d613e91b8833ea638e23145654af0909514dae6157763c87fcacd36637b1e"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1_tests.rs": {
+      "bytes": 18261,
+      "sha256": "69edcf7757c2e09f18fd8e51f0956cc4c09c17186e365484f8bd9f1715de5120"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs": {
+      "bytes": 18333,
+      "sha256": "71084479cb7e3c6d4210c8fef30ac09d5d248a7c6101cf9a2194e8ea0bcd309c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs": {
+      "bytes": 28202,
+      "sha256": "0652d78fe2ccacc1b4a57f1427a063bc29ea31dc2c96ec8dc392b7668982c7a4"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs": {
+      "bytes": 21309,
+      "sha256": "08f584a460cd7f5c883cb62060d96f8019544d847bb0f619fd73c0c54f83656c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs": {
+      "bytes": 20195,
+      "sha256": "2e3362050411aa735c4d7c5723f6f1855f142197b96ec53e399a1dc544c2e06c"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 10410,
+      "sha256": "02f6ba652ebc8011ecb70c78f3c2b58b03366407e16fbae32c588db72c025aa8"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_setup/guarded_mlp_decode_v1.rs": {
+      "bytes": 3169,
+      "sha256": "c591181edb989f88d86f03f6d6f5b4a218d14b4b46e87e9d21de9aed42b3920d"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs": {
+      "bytes": 21006,
+      "sha256": "139ce89e10b5cbacebf236e796447e20c0dd968e2df1760e6dfb41eeedbd7c09"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs": {
+      "bytes": 21418,
+      "sha256": "37e4016d4ab23e3c1a28266388e70eb7afce882c5e736be5a2fb9bbb6d33053f"
+    },
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/tests/shared_wire.rs": {
+      "bytes": 4445,
+      "sha256": "012e76136a7c52ff98b7dc2c659d20d8d2143b569ebda985fd4c8fc88d204d64"
+    },
+    "input-manifest.json": {
+      "bytes": 210358,
+      "sha256": "175561b9dca4ac9a5b80ccb73008ed756b9ed43fad66dae3ff82ea3aa072cda3"
+    },
+    "inputs/runtime-complete.json": {
+      "bytes": 2250677,
+      "sha256": "bf0fa20a37ff3bf748ef5984df0dceb5cd1c453ef5c05c7111779b31cda33720"
+    },
+    "inputs/runtime-sources.json": {
+      "bytes": 407038,
+      "sha256": "f8024397177d83cdd1d07040b55c97afc5190988676bb80f67a9af4ae0554718"
+    },
+    "inputs/terminal-source-manifest.json": {
+      "bytes": 10821,
+      "sha256": "6422971e027dfb90c6ac962d72a7cb977f40e60bbd7edbc5bc52c5fe91a36e8a"
+    },
+    "inputs/worker-complete.json": {
+      "bytes": 1704432,
+      "sha256": "728339a954436b3e191e5efac8c42146521f7acd57c73ac81dc0d4ad55cdd421"
+    },
+    "inputs/worker-list.stdout": {
+      "bytes": 74219,
+      "sha256": "47523a1dc84e0bf495d268895beb990430ce0f27307b780d3dec9dc725a4a95d"
+    },
+    "inputs/worker-sources.json": {
+      "bytes": 420819,
+      "sha256": "c75c35bd7c987a4e52f1897a3d7afd2923e32b6d4768e5420473aa3c4527ce6c"
+    },
+    "inputs/worker-tests.stdout": {
+      "bytes": 78963,
+      "sha256": "8fceb3e8d48f4cfe7460ba72e4517d7332a9033703b7e534fab61dadc7949925"
+    },
+    "manifest.json": {
+      "bytes": 7577,
+      "sha256": "f7898df382f28023b63786a2cd9121e3c6007016fdbc96ff29f42adab0f9c1e1"
+    },
+    "run_cpu.py": {
+      "bytes": 39374,
+      "sha256": "0419c838930119d28fa42668a2155baff5f7b7d407b082728245393f9eea8c47"
+    },
+    "source-transport.py": {
+      "bytes": 18563,
+      "sha256": "3539a9e6572d1d87c13f284b4b7c325455edbce712561757e736dbc57c521361"
+    },
+    "stage-complete.json": {
+      "bytes": 870,
+      "sha256": "86eb8aab2a3ee03e87502806eed8fee1074b79f1ac0388a19f55b79972cd754f"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    }
+  },
+  "native_execution": false,
+  "new_project_execution": false,
+  "numerical_acceptance": false,
+  "observed_partial_formatter_changes": [
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_decode_wire_v1_tests.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/main.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_cli_v1_tests.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_decode_v1/tests.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1.rs",
+    "ferric/adapters/tp-peer-finite-engineering-worker-v1/tests/shared_wire.rs"
+  ],
+  "original_files": 37,
+  "original_receipt_unchanged": true,
+  "passed": false,
+  "performance_claim": false,
+  "schema": "ferric-warm-paired-terminal-worker-cpu-failed-retention-v1",
+  "terminal": {
+    "bytes": 1036998,
+    "sha256": "137f9861d6ec1a23ad076c186190882bf760293ea8b6b29c52ffefe3659590f6"
+  }
+}

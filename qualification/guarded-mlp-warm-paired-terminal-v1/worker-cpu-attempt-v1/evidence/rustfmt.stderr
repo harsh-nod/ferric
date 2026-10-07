@@ -1,0 +1,11 @@
+error: expected identifier, found reserved keyword `gen`
+   --> /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-warm-paired-terminal-worker-cpu-v228-v1/ferric/adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/tests.rs:601:74
+    |
+601 |             dispatch_selected_slot(&mut ledger, &mut bound, 0, |_, _, _, gen, paired| -> Result<()> {
+    |                                                                          ^^^ expected identifier, found reserved keyword
+    |
+help: escape `gen` to use it as an identifier
+    |
+601 |             dispatch_selected_slot(&mut ledger, &mut bound, 0, |_, _, _, r#gen, paired| -> Result<()> {
+    |                                                                          ++
+
