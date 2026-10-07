@@ -29,9 +29,12 @@ and is integrated with a complete canonical source postcheck. The
 selected tests; its seven actual postimages are integrated with a complete
 1,290-file source postcheck. The [final bound report tool](matched-timing-report-cpu-v1/README.md)
 also passed all 13 synthetic tests on MI350, with independently checked
-original evidence. The same-binary Census V3/Tail V4 GPU comparison
-is next. No tail native
-result or speedup is claimed yet. This change does not
+original evidence. The [same-binary Census V3/Tail V4 GPU pair](matched-timing-gpu-v2/README.md)
+now passes in one attempt per mode, with all 40 records and four complete
+payloads matching. The [report with tables and plots](matched-timing-report-v2/README.md)
+shows 5.410224% lower warm-forward parent wall time but only 0.234021% lower
+complete-parent time; first-use time rose 1.119270%. This is one ordered
+host-wall pair, not repeated throughput or GPU timing. This change does not
 add a Full2303 tail route, relax the one-hour bound, or resolve the independent
 position-5 numerical discrepancy. Exact independent 256 output IDs/raw decoded
 bytes, repeated equal-work performance, GPU overlap and 700 tokens/s remain

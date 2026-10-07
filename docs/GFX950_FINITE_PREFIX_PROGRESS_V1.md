@@ -24,9 +24,15 @@ postcheck, preserving all 228 worker bodies and the parent lockfile.
 The [final bound report tool](../qualification/guarded-mlp-scoped-tail-v1/matched-timing-report-cpu-v1/README.md)
 passed all 13 synthetic tests on MI350 in 0.221 seconds; independent review
 closed its original 16-member capsule and clean process retirement.
-No tail native result or speedup is claimed yet. A
-[community demo runbook](GFX950_COMMUNITY_DEMO_V1.md) covers the already retained
-Census experiment and its limits.
+The [fresh Census V3/Tail V4 native pair](../qualification/guarded-mlp-scoped-tail-v1/matched-timing-gpu-v2/README.md)
+passes in one attempt per case: all 40 records and four complete payloads match
+each other and the historical baseline, with healthy Close and clean retirement.
+Its [MI350-generated tables and plots](../qualification/guarded-mlp-scoped-tail-v1/matched-timing-report-v2/README.md)
+show warm-forward parent wall time falling from 72.284347 to 68.373602 seconds
+(-5.410224%), while complete-parent time falls only 0.234021% and first-use
+time rises 1.119270%. This is one ordered pair, not sustained throughput or
+GPU time. The [community demo runbook](GFX950_COMMUNITY_DEMO_V1.md) now includes
+both retained ablations with their limits; their gains are not multiplied.
 The tail path remains Readiness40-only and does not resolve the independent
 position-5 discrepancy or admit Full2303 execution.
 
@@ -34,8 +40,12 @@ The [first selected Down-dot diagnostic attempt](../qualification/guarded-mlp-re
 ran all 48 synthetic tests on MI350: 47 passed and one failed because a fixture
 expected a list where the API returns an identical-valued tuple. It stopped
 before model-shard reading or real-data dot analysis; the original failed
-capsule is retained. A test-only correction and separate fresh attempt are
-pending, with no numerical acceptance or arithmetic change claimed.
+capsule is retained. The [separate repaired V2 attempt](../qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v2/RESULTS.md)
+passes all 48 tests and evaluates 60 exact own-input rank dots over 15 selected
+rows. Both sides match their own exact dots rounded to BF16 in every selected
+row. All 14 selected differences persist under idealized own-input Down and
+common-residual calculation. This supports an upstream origin for those rows,
+not a final-argmax explanation, full-model acceptance or an arithmetic change.
 
 The preceding
 [scoped allocation census runtime and worker](../qualification/guarded-mlp-scoped-capacity-census-v1/README.md)

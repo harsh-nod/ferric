@@ -284,8 +284,14 @@ input history, tolerance or numerical-acceptance gate.
 The [first selected Down-dot attempt](position5-down-dot-v1/RESULTS.md) stopped
 at its synthetic tests: 47 passed and one fixture compared an API-returned tuple
 with a list containing the same values. No model-shard read or selected-dot
-analysis ran. Its original failed evidence is retained; a separate test-only
-repair and fresh qualification are required.
+analysis ran. Its original failed evidence is retained. The
+[fresh test-only repair and diagnostic](position5-down-dot-v2/RESULTS.md) passed
+all 48 tests and evaluated 60 exact own-input rank dots over 15 selected rows.
+Both sides' projections match their own exact dots rounded to BF16 in all 15
+rows. The 14 selected differences persist under the idealized own-input Down
+and common-residual calculation; the control remains equal. This supports an
+upstream origin for those selected differences, not a final-argmax explanation,
+full-model acceptance or an arithmetic change.
 
 ## Remaining Gates
 

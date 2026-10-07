@@ -24,3 +24,6 @@ test execution.
 The original source-only README describes the proposed diagnostic; it is not
 an observed outcome. There is no new numerical acceptance, arithmetic change,
 argmax explanation, Full2303 admission or performance result.
+
+The separately retained [V2 retry](../position5-down-dot-v2/RESULTS.md) has since
+passed. It does not rewrite this original failed attempt.

@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 1164,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-matched-timing-gpu-v228-v2/census/parent/command.json",
+    "sha256": "95f84da3ac385cfa9a15f2f1f1e9d80993719a3c96cfa83ebf811902b1dea90d"
+  },
+  "elapsed_seconds": 443.5067495449912,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 2063788,
+        "pid": 2063788,
+        "ppid": 2063546,
+        "sid": 2063788,
+        "starttime": 79690984,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 2068844,
+        "pid": 2068844,
+        "ppid": 2063788,
+        "sid": 2063788,
+        "starttime": 79700142,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    2063788,
+    2068844
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-matched-timing-gpu-v228-v2/census/parent/started.json",
+    "sha256": "6d5dc2a82329083533a257b054a03e197d7513f3ef78b6995e5064a539536d93"
+  },
+  "stderr": {
+    "bytes": 2427,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-matched-timing-gpu-v228-v2/census/parent/stderr",
+    "sha256": "29fa12cfeaeec12a68ed4e23f855ba7a3fed91393fd0286ea1dc2022859b9379"
+  },
+  "stdout": {
+    "bytes": 24589,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-matched-timing-gpu-v228-v2/census/parent/stdout",
+    "sha256": "f028b456ef5babf67d03cb0e2fa1eedbbbc840f59c6e7a548b2915a9f91919e2"
+  }
+}

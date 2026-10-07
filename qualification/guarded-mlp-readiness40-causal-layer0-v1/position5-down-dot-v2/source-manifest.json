@@ -1,0 +1,527 @@
+{
+  "schema": "ferric-position5-selected-down-exact-source-v1",
+  "status": "source-only-unexecuted",
+  "files": {
+    "README.md": {
+      "bytes": 11096,
+      "sha256": "fed6885dd59f0dd396824459a7d9a7a877cdf5f1f10fc4adc0bff1ef09dde683"
+    },
+    "arithmetic.rs": {
+      "bytes": 7432,
+      "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+    },
+    "capture.py": {
+      "bytes": 6716,
+      "sha256": "ab101bd82fad89c889880c77c6c7fdaf2bfcf0ac97322fb6c937ddc600ef38b1"
+    },
+    "down.py": {
+      "bytes": 17217,
+      "sha256": "6cb36e872be8edf36c969df7f7ed9f4eb16394594cf446e77a66ce952d649f83"
+    },
+    "exact_bf16.py": {
+      "bytes": 2554,
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "fp32_replay.py": {
+      "bytes": 4657,
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "gateup.py": {
+      "bytes": 14551,
+      "sha256": "b443db824dfaab875ef671fc57ad0cc7173c6a7e5eb3dcf3fef81bef2fd3f91d"
+    },
+    "head.py": {
+      "bytes": 7310,
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "kernels.rs": {
+      "bytes": 2520,
+      "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+    },
+    "position5.py": {
+      "bytes": 9386,
+      "sha256": "2c8138368a6ce10537523c9dd92dcf1e734c7928d74a247808989f2536db33b5"
+    },
+    "qkv.py": {
+      "bytes": 10530,
+      "sha256": "9e653d8b58850375b3ddb10a53c7810a3306fa156a402e311cfdd2de11577cc6"
+    },
+    "r2.py": {
+      "bytes": 8835,
+      "sha256": "c9e2d565a5bfa384bf15330653f83422089ad47d245a9bcee159e88caa3dadfd"
+    },
+    "run.py": {
+      "bytes": 22684,
+      "sha256": "467ecdddbbdfbec62446eaf41a2c97d49b973e4e6c09882ac8e4e00ac01fae2f"
+    },
+    "test_down.py": {
+      "bytes": 17123,
+      "sha256": "95874ec4c0a5c9b1783754f3b979711ff6d0079cd2caebb4042853a6895868f1"
+    },
+    "test_fp32_replay.py": {
+      "bytes": 9013,
+      "sha256": "87a358807c4f76fbd7b0fc7603dc08de7e34c66871b06aa6d8ac89f165798adb"
+    },
+    "test_gateup.py": {
+      "bytes": 12392,
+      "sha256": "58ad332b73b97a963ebeea6d54da3ce890239106a2d1ecdbb76e215dbe57782b"
+    },
+    "test_position5.py": {
+      "bytes": 8543,
+      "sha256": "c13f4c6e5664f13d6164e282c1aacd072c3a416328b22a9e1cf46cbd6939792e"
+    },
+    "test_r2.py": {
+      "bytes": 10893,
+      "sha256": "ca5829ccb77ccf14b25ea5e12dc43090abe4aff1efd318de0b593b6c6437af77"
+    }
+  },
+  "test_names": [
+    "test_down.DownTests.test_exact_6144_term_dot_against_independent_fraction",
+    "test_down.DownTests.test_exact_error_terms_reconcile_without_floating_threshold",
+    "test_down.DownTests.test_full_shard_layout_transpose_gap_dtype_and_index_refusal",
+    "test_down.DownTests.test_original_registration_and_current_upload_roles",
+    "test_down.DownTests.test_partition_byte_hash_and_complete_extent",
+    "test_down.DownTests.test_product_halves_and_exact_seven_original_coordinates",
+    "test_down.DownTests.test_product_role_scalar_extent_identity_and_hash_refusals",
+    "test_down.DownTests.test_reuse_complete_original_boundary_rows_without_dot_reexecution",
+    "test_down.DownTests.test_reuse_failure_pin_row_order_operand_and_output_drift_refuse",
+    "test_down.DownTests.test_row_major_column_halves_not_contiguous_tensor_halves",
+    "test_down.DownTests.test_selected_row_bounds_sparse_delta_and_nonclaims",
+    "test_down.DownTests.test_signed_zero_and_own_input_counterfactual_is_not_model_feedback",
+    "test_down.DownTests.test_strict_finite_operands_sum_join_and_ideal_overflow",
+    "test_down.DownTests.test_tp_sum_rounding_and_bf16_projection_rounding_are_distinct",
+    "test_fp32_replay.Fp32ReplayTests.test_addition_matches_fraction_not_host_float",
+    "test_fp32_replay.Fp32ReplayTests.test_all_lanes_all_steps_and_xor_tree_fraction_reference",
+    "test_fp32_replay.Fp32ReplayTests.test_bf16_boundary_materializes_before_residual",
+    "test_fp32_replay.Fp32ReplayTests.test_encoding_decoding_matches_independent_fraction",
+    "test_fp32_replay.Fp32ReplayTests.test_fraction_nearest_neighbor_midpoints_and_neighbors",
+    "test_fp32_replay.Fp32ReplayTests.test_gradual_underflow_and_signed_zero",
+    "test_fp32_replay.Fp32ReplayTests.test_lane_cancellation_preserves_actual_association",
+    "test_fp32_replay.Fp32ReplayTests.test_midpoint_distance_has_explicit_exact_scale",
+    "test_fp32_replay.Fp32ReplayTests.test_nonfinite_shape_and_overflow_refusals",
+    "test_fp32_replay.Fp32ReplayTests.test_overflow_threshold_both_signs",
+    "test_fp32_replay.Fp32ReplayTests.test_partials_are_not_individually_narrowed",
+    "test_fp32_replay.Fp32ReplayTests.test_product_underflow_and_subnormal_counters",
+    "test_gateup.GateUpTests.test_exact_seven_dots_bounds_midpoints_and_nonclaims",
+    "test_gateup.GateUpTests.test_extraction_closes_seven_rows_and_repetition",
+    "test_gateup.GateUpTests.test_original_shard_transpose_and_extent_refusals",
+    "test_gateup.GateUpTests.test_partition_pin_wrong_role_rank_and_mutated_bytes_refused",
+    "test_gateup.GateUpTests.test_rank_and_partition_boundary_coordinates",
+    "test_gateup.GateUpTests.test_registration_reconstruction_and_four_source_roles",
+    "test_gateup.GateUpTests.test_wrong_input_and_comparison_pin_refused",
+    "test_gateup.GateUpTests.test_wrong_role_rank_alias_extent_and_upload_refused",
+    "test_position5.Position5Tests.test_body_part_and_comparison_hash_drift_refuse",
+    "test_position5.Position5Tests.test_full4096_rows_own_operands_and_separate_framework_control",
+    "test_position5.Position5Tests.test_missing_duplicate_scalar_boundary_extent_and_gap_refuse",
+    "test_position5.Position5Tests.test_observed_output_error_is_reported_without_acceptance",
+    "test_position5.Position5Tests.test_repeat_complete_capture_pin_and_prior_admission_refuse",
+    "test_position5.Position5Tests.test_wrong_position_generation_layer_and_boolean_rank_refuse",
+    "test_r2.R2Tests.test_all_rows_and_independent_rank_residuals",
+    "test_r2.R2Tests.test_capture_closes_all_parts_and_actual_output_join",
+    "test_r2.R2Tests.test_failed_admission_identity_and_saved_observations_refuse",
+    "test_r2.R2Tests.test_framework_control_is_separate_and_reports_mismatch",
+    "test_r2.R2Tests.test_materialization_zero_and_overflow_boundaries",
+    "test_r2.R2Tests.test_nonfinite_all_operand_and_output_roles_refuse",
+    "test_r2.R2Tests.test_one_mutated_output_remains_an_exact_mismatch",
+    "test_r2.R2Tests.test_role_extent_and_bytes_type_are_closed"
+  ],
+  "inherited_bodies": {
+    "head.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/head.py",
+      "bytes": 7310,
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "qkv.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/qkv.py",
+      "bytes": 10530,
+      "sha256": "9e653d8b58850375b3ddb10a53c7810a3306fa156a402e311cfdd2de11577cc6"
+    },
+    "exact_bf16.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/exact_bf16.py",
+      "bytes": 2554,
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "fp32_replay.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/fp32_replay.py",
+      "bytes": 4657,
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "capture.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/capture.py",
+      "bytes": 6716,
+      "sha256": "ab101bd82fad89c889880c77c6c7fdaf2bfcf0ac97322fb6c937ddc600ef38b1"
+    },
+    "r2.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/r2.py",
+      "bytes": 8835,
+      "sha256": "c9e2d565a5bfa384bf15330653f83422089ad47d245a9bcee159e88caa3dadfd"
+    },
+    "position5.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/position5.py",
+      "bytes": 9386,
+      "sha256": "2c8138368a6ce10537523c9dd92dcf1e734c7928d74a247808989f2536db33b5"
+    },
+    "test_fp32_replay.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/test_fp32_replay.py",
+      "bytes": 9013,
+      "sha256": "87a358807c4f76fbd7b0fc7603dc08de7e34c66871b06aa6d8ac89f165798adb"
+    },
+    "test_r2.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/test_r2.py",
+      "bytes": 10893,
+      "sha256": "ca5829ccb77ccf14b25ea5e12dc43090abe4aff1efd318de0b593b6c6437af77"
+    },
+    "test_position5.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/test_position5.py",
+      "bytes": 8543,
+      "sha256": "c13f4c6e5664f13d6164e282c1aacd072c3a416328b22a9e1cf46cbd6939792e"
+    },
+    "arithmetic.rs": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/arithmetic.rs",
+      "bytes": 7432,
+      "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+    },
+    "kernels.rs": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/kernels.rs",
+      "bytes": 2520,
+      "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+    },
+    "gateup.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/gateup.py",
+      "bytes": 14551,
+      "sha256": "b443db824dfaab875ef671fc57ad0cc7173c6a7e5eb3dcf3fef81bef2fd3f91d"
+    },
+    "test_gateup.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/test_gateup.py",
+      "bytes": 12392,
+      "sha256": "58ad332b73b97a963ebeea6d54da3ce890239106a2d1ecdbb76e215dbe57782b"
+    }
+  },
+  "runner_ancestor": {
+    "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/run.py",
+    "bytes": 22684,
+    "sha256": "828daddb2eafcc984b76137053dee0eb6cf86ce4fed212f6fe8a5129a5835b56"
+  },
+  "runner_unchanged_functions": [
+    "require",
+    "guard",
+    "interrupted",
+    "stamp",
+    "pin",
+    "compact",
+    "read",
+    "save",
+    "encoded",
+    "load",
+    "admit",
+    "scan_shard",
+    "main"
+  ],
+  "runner_changed_functions": [],
+  "input_originals": {
+    "comparison.json": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/comparison.json",
+      "bytes": 285894,
+      "sha256": "3f94fe36125e3cbbf92e33caca6049b94fd33963956ef1477bf304dcec6bf38f"
+    },
+    "native-summary.json": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/native-summary.json",
+      "bytes": 21934,
+      "sha256": "5a414a72e6d0e4b76031d57de909f954c7cd0853a39888b5f3a167fe6e94d8f4"
+    },
+    "native-terminal.json": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/native-terminal.json",
+      "bytes": 278903,
+      "sha256": "00aa0447a23f57c6d9bb2ed39cd4e5b2b9da692f15bceb33107ac3822f95516f"
+    },
+    "native-sidecar.bin": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/native-sidecar.bin",
+      "bytes": 1666665,
+      "sha256": "6577294939bca22bb62bab672e053b45d5c19798fdfc7f5cd10b8f4b6f7e93a2"
+    },
+    "reference-inner.json": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/reference-inner.json",
+      "bytes": 285346,
+      "sha256": "5ebd12d258fc9c76190b4ec4c7270d9732d15e635c7944d966bd50ffc81fa027"
+    },
+    "reference-sidecar1.bin": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/reference-sidecar1.bin",
+      "bytes": 1855037,
+      "sha256": "d3b7af6a85243168c440f2332905ca493248f9631fc894732dc5cc860c6bb273"
+    },
+    "reference-sidecar2.bin": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/reference-sidecar2.bin",
+      "bytes": 1855037,
+      "sha256": "14a4139ae3653edb35d04c28009c26147069b9e42dd5cfe41823921c0dd87d9c"
+    },
+    "registration-original.json": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/registration-original.json",
+      "bytes": 122075,
+      "sha256": "3ecdd5afb99848539310b8eb6201f09645cc27df1275d5bd2b6db0d40550f20e"
+    },
+    "uploads.json": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/inputs/uploads.json",
+      "bytes": 178103,
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    },
+    "r2-terminal.json": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/output/complete.json",
+      "bytes": 21551,
+      "sha256": "bf16c755ede242da389e99a2a907e2907e8cf442c2e82fd62a41c0a7e9d2528b"
+    },
+    "r2-replay.json": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/output/replay.json",
+      "bytes": 1008054,
+      "sha256": "eee5940bdf309285cc68e03dd2e8889cf074024965c0466836c13d0e67409bdd"
+    },
+    "r2-derived-down.bf16": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/output/derived-down.bf16",
+      "bytes": 8192,
+      "sha256": "968bc3d6a1ac14ba80885fd9ee8cacb3426a17dde254135d565ee92b324cea10"
+    },
+    "r2-derived-ordered-sum.f32": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/output/derived-ordered-sum.f32",
+      "bytes": 16384,
+      "sha256": "0797e1c13dff8e02d8788e52f8fa75d913fbab6dbd2dbb094f2581bfdcb35992"
+    }
+  },
+  "input_members": 13,
+  "source_members": 18,
+  "source_packet_members": 32,
+  "prior_evidence": {
+    "gate_up_terminal": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/output/complete.json",
+      "bytes": 28075,
+      "sha256": "2da4e9cdd79aef60ff3d9eb67c6062a6a32dabc8d42d3d711cea33dc97173b6b"
+    },
+    "r2_terminal": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-r2-replay-v1/output/complete.json",
+      "bytes": 21551,
+      "sha256": "bf16c755ede242da389e99a2a907e2907e8cf442c2e82fd62a41c0a7e9d2528b"
+    }
+  },
+  "original_model_index": {
+    "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-terminal-pair-v1/roofline-v1/model.safetensors.index.json",
+    "bytes": 32878,
+    "sha256": "f9fdbcb91c23971c13ec5d5f2573d2349e8f61f2f049371ec699281748fdb1bc"
+  },
+  "original_model_shard": {
+    "path": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model/target/model-00001-of-00005.safetensors",
+    "bytes": 3996250744,
+    "sha256": "31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f",
+    "local_body_available": false
+  },
+  "selected_rows": [
+    0,
+    219,
+    955,
+    1352,
+    1408,
+    1953,
+    2040,
+    2070,
+    2208,
+    2210,
+    2328,
+    2706,
+    2850,
+    3704,
+    4017
+  ],
+  "fixed_control_row": 0,
+  "exact_rank_dots": 60,
+  "rank_terms": 6144,
+  "full_terms": 12288,
+  "product_difference_words": 7,
+  "remote_root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-position5-down-dot-v228-v2",
+  "limits": {
+    "wall_seconds": 240,
+    "cpu_seconds": 180,
+    "address_space_bytes": 536870912,
+    "file_bytes": 2097152,
+    "affinity": [
+      8,
+      9
+    ],
+    "nice": 10
+  },
+  "inherited_test_count": 34,
+  "new_test_count": 14,
+  "test_count": 48,
+  "successful_output_count": 3,
+  "future": {
+    "source_packet": null,
+    "terminal": null,
+    "diagnostic": null,
+    "qualification": null
+  },
+  "static_audit": {
+    "ast_parsed": true,
+    "inherited_bodies_rehashed": true,
+    "original_input_bodies_rehashed": true,
+    "helper_imports": false,
+    "helper_execution": false,
+    "tests_executed": false,
+    "remote_execution": false,
+    "canonical_changed": false
+  },
+  "scope": {
+    "exact_arithmetic_only": true,
+    "prior_full_r2_reused": true,
+    "current_native_upload_commitments": true,
+    "model_execution": false,
+    "gpu_execution": false,
+    "current_isa_proven": false,
+    "native_accumulation_tree_emulated": false,
+    "framework_accumulation_emulated": false,
+    "full_capsule_revalidated": false,
+    "numerical_acceptance": false,
+    "full_model_acceptance": false,
+    "policy_changed": false,
+    "tolerance_changed": false,
+    "final_argmax_causation": false,
+    "semantic_bug_claimed": false,
+    "performance_claim": false
+  },
+  "source_generation": "position5-down-dot-v2-tuple-expectation-repair",
+  "predecessor_source": {
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-position5-down-dot-v1/source-manifest.json",
+    "bytes": 17799,
+    "sha256": "b78906d6f27235f2534964ebad48272a12973b998560d0137a15b0d10b454c4c"
+  },
+  "executed_runner_ancestor": {
+    "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/gate-up-exact-v1/run.py",
+    "bytes": 18285,
+    "sha256": "b883ed8c0ff43504c00dae41777b45e7abf2edbf69ad60b9648af1e01ceccb6b"
+  },
+  "runner_literal_changes": [
+    "ROOT v228-v1 to v228-v2 only"
+  ],
+  "repair": {
+    "path": "test_down.py",
+    "before": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/test_down.py",
+      "bytes": 17122,
+      "sha256": "9d8ab9f74efd6b51c2afef1e0536a127fae6542eca06c6d47817f3f5288377d9"
+    },
+    "after": {
+      "bytes": 17123,
+      "sha256": "95874ec4c0a5c9b1783754f3b979711ff6d0079cd2caebb4042853a6895868f1"
+    },
+    "old": "self.assertEqual(reused['down'], [0x3f80] * 4096)",
+    "new": "self.assertEqual(reused['down'], (0x3f80,) * 4096)",
+    "test": "test_down.DownTests.test_reuse_complete_original_boundary_rows_without_dot_reexecution",
+    "assertions_removed": false,
+    "test_names_changed": false,
+    "production_arithmetic_changed": false
+  },
+  "unchanged_predecessor_bodies": {
+    "arithmetic.rs": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/arithmetic.rs",
+      "bytes": 7432,
+      "sha256": "e221d035dc7f0c70c1dc362cf754a4928dc76f69eb4e66465b811057d0bacd6a"
+    },
+    "capture.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/capture.py",
+      "bytes": 6716,
+      "sha256": "ab101bd82fad89c889880c77c6c7fdaf2bfcf0ac97322fb6c937ddc600ef38b1"
+    },
+    "down.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/down.py",
+      "bytes": 17217,
+      "sha256": "6cb36e872be8edf36c969df7f7ed9f4eb16394594cf446e77a66ce952d649f83"
+    },
+    "exact_bf16.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/exact_bf16.py",
+      "bytes": 2554,
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "fp32_replay.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/fp32_replay.py",
+      "bytes": 4657,
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "gateup.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/gateup.py",
+      "bytes": 14551,
+      "sha256": "b443db824dfaab875ef671fc57ad0cc7173c6a7e5eb3dcf3fef81bef2fd3f91d"
+    },
+    "head.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/head.py",
+      "bytes": 7310,
+      "sha256": "9dbe5ff2ab24faf0bfb006973c15438cee4a887c7cf1a05d8aa1b788c3c03e11"
+    },
+    "kernels.rs": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/kernels.rs",
+      "bytes": 2520,
+      "sha256": "3293184a9b00aa5b33a735a16d9d0665b4b88614e1e61a3f624e11b080eae8cb"
+    },
+    "position5.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/position5.py",
+      "bytes": 9386,
+      "sha256": "2c8138368a6ce10537523c9dd92dcf1e734c7928d74a247808989f2536db33b5"
+    },
+    "qkv.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/qkv.py",
+      "bytes": 10530,
+      "sha256": "9e653d8b58850375b3ddb10a53c7810a3306fa156a402e311cfdd2de11577cc6"
+    },
+    "r2.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/r2.py",
+      "bytes": 8835,
+      "sha256": "c9e2d565a5bfa384bf15330653f83422089ad47d245a9bcee159e88caa3dadfd"
+    },
+    "test_fp32_replay.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/test_fp32_replay.py",
+      "bytes": 9013,
+      "sha256": "87a358807c4f76fbd7b0fc7603dc08de7e34c66871b06aa6d8ac89f165798adb"
+    },
+    "test_gateup.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/test_gateup.py",
+      "bytes": 12392,
+      "sha256": "58ad332b73b97a963ebeea6d54da3ce890239106a2d1ecdbb76e215dbe57782b"
+    },
+    "test_position5.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/test_position5.py",
+      "bytes": 8543,
+      "sha256": "c13f4c6e5664f13d6164e282c1aacd072c3a416328b22a9e1cf46cbd6939792e"
+    },
+    "test_r2.py": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/test_r2.py",
+      "bytes": 10893,
+      "sha256": "ca5829ccb77ccf14b25ea5e12dc43090abe4aff1efd318de0b593b6c6437af77"
+    }
+  },
+  "observed_failed_attempt": {
+    "terminal": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/output/failed.json",
+      "bytes": 17135,
+      "sha256": "f96283daae1281a78d6590b2f3706f4c81921c3bbecbe1fde00170d076fce9f1"
+    },
+    "test_stream": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/output/tests.stderr",
+      "bytes": 7579,
+      "sha256": "fcb93b4469a8f622359d7143efa8d2a726ee182fd7ed8b33b6cb028b65068964"
+    },
+    "manifest": {
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-readiness40-causal-layer0-v1/position5-down-dot-v1/manifest.json",
+      "bytes": 10374,
+      "sha256": "73fb1f0d38a691c2fbb43b1771d7a327281f66090ac1bb1fb5c9204182739fde"
+    },
+    "archive": {
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/guarded-mlp-position5-down-dot-evidence-v228-v1.tar.gz",
+      "bytes": 3909989,
+      "sha256": "0d365d7b5d1967a8895cce7175b03fde477a3d83e40390d80f80ed2f4dac9302"
+    },
+    "passed": false,
+    "tests_passed": 47,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "test_names": 48,
+    "diagnostic": null,
+    "model_shard": null,
+    "model_inputs_read": false,
+    "prior_success_transferred": false
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "cleanup_signalled": false,
+  "command": {
+    "bytes": 1167,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-matched-timing-gpu-v228-v2/tail/parent/command.json",
+    "sha256": "d36d3351ce290493e94ba94a829dbf77c963f7375313f1af2b1a557bf09cebb6"
+  },
+  "elapsed_seconds": 442.398914778023,
+  "exit_code": 0,
+  "gpu_execution_requested": true,
+  "lineage": [
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 2092224,
+        "pid": 2092224,
+        "ppid": 2092197,
+        "sid": 2092224,
+        "starttime": 79745385,
+        "state": "R",
+        "uid": 9661
+      },
+      "reason": "spawned-parent"
+    },
+    {
+      "event": "owned",
+      "identity": {
+        "pgid": 2103846,
+        "pid": 2103846,
+        "ppid": 2092224,
+        "sid": 2092224,
+        "starttime": 79754592,
+        "state": "S",
+        "uid": 9661
+      },
+      "reason": "ancestry"
+    }
+  ],
+  "owned_groups": [
+    2092224,
+    2103846
+  ],
+  "owned_groups_absent": true,
+  "owned_processes_reaped": true,
+  "reason": null,
+  "started": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-matched-timing-gpu-v228-v2/tail/parent/started.json",
+    "sha256": "169bb22f17851dcf3213cab510ab1f9b549cfc0852ef15381a3f937bdb1a3535"
+  },
+  "stderr": {
+    "bytes": 2427,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-matched-timing-gpu-v228-v2/tail/parent/stderr",
+    "sha256": "b1e6e62704351dd2e8963ff49ae11511e98ee296a82b0c44a6f848d7ade7e678"
+  },
+  "stdout": {
+    "bytes": 24954,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-bank-scoped-census-tail-matched-timing-gpu-v228-v2/tail/parent/stdout",
+    "sha256": "bc3879e1504645d4671312c3928b6c280c433e53ce951a8b94b50e7c2be7f9e4"
+  }
+}

@@ -50,28 +50,42 @@ and waiting; it is not GPU kernel time, overlap evidence or token throughput.
 5. Finish with the open gates below and the [current progress record](GFX950_FINITE_PREFIX_PROGRESS_V1.md).
    This demo requires no new native launch or benchmark run.
 
-## Tail V4 Follow-Up
+## Tail V4 Demo
 
-The [Tail proposal and qualification record](../qualification/guarded-mlp-scoped-tail-v1/README.md)
-are a separate next step, not part of the measured Census result.
+The [new Tail ablation report](../qualification/guarded-mlp-scoped-tail-v1/matched-timing-report-v2/README.md)
+is a second, separately measured same-binary pair. Census V3 is its control;
+Tail V4 additionally scopes the warm final normalization/head/argmax/readback
+window. Both native cases passed with complete 40-record/four-payload parity.
 
-| Gate | Status at this draft |
+| Parent wall interval | Census V3 (s) | Tail V4 (s) | Observed change |
+| --- | ---: | ---: | ---: |
+| First use, positions 0-1 | 25.789911 | 26.078570 | +1.119270% |
+| Warm, positions 2-39 | 72.284347 | 68.373602 | -5.410224% |
+| Complete parent, including setup and shutdown | 443.092756 | 442.055825 | -0.234021% |
+
+Show the [per-position plot](../qualification/guarded-mlp-scoped-tail-v1/matched-timing-report-v2/waits.svg),
+[parent/forward groups](../qualification/guarded-mlp-scoped-tail-v1/matched-timing-report-v2/groups.svg)
+and [complete category table](../qualification/guarded-mlp-scoped-tail-v1/matched-timing-report-v2/table.md).
+The modest total change matters: setup and shutdown dominate, and first use
+regressed. This is one ordered host-wall pair, not GPU overlap or sustained
+decode. Do not multiply its reduction by the earlier Census experiment's gain.
+
+| Gate | Retained Status |
 | --- | --- |
 | Runtime/worker CPU qualification | Passed: 1,180 runtime tests plus 8 ignores; 820 worker tests plus 4 ignores; 27 phases |
 | Strict data checker | Passed: 114 synthetic tests |
 | Parent CPU qualification | Passed on fresh retry: 68 phases, 568 selected tests; original failed attempt retained |
 | Final bound report tool | Passed: 13 synthetic tests; original evidence independently checked |
-| Fresh same-binary Census V3 / Tail V4 native pair | Pending; no result or gain predicted |
-| Tail report and independently checked publication | Pending actual pair |
+| Fresh same-binary Census V3 / Tail V4 native pair | Passed: one attempt per case, 11 naturally retired phases each |
+| Tail report | Generated on MI350; original tables, plots, archive and reproduction commands retained; independent data-only review passed |
 
 The parent failure is a shared test's backend-specific module reference. The
 [test-only repair passed a fresh complete runtime/worker qualification](../qualification/guarded-mlp-scoped-tail-v1/cpu-attempt-v2/README.md)
 and is integrated. The [fresh parent retry also passed](../qualification/guarded-mlp-scoped-tail-v1/parent-cpu-v2/README.md),
-and its seven tested source files are integrated. No V4 GPU result is claimed yet.
-CPU tests and synthetic admission do not establish native correctness or
-performance. Tail is a distinct Readiness40 route, not Full2303 activation.
-Keep pending entries until original receipts and actual comparisons are
-retained; publish failures and regressions without substituting projections.
+and its seven tested source files are integrated. The native pair is retained
+separately from CPU qualification. Tail remains a distinct Readiness40 route,
+not Full2303 activation. Both the original failure and measured regressions
+remain visible. The report's data-only reproduction needs no new GPU launch.
 
 ## Still Open
 

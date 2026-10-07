@@ -31,7 +31,8 @@ authenticates archived bytes and metadata, not remote-only executable bodies.
 
 The Readiness40 parent executable is 14,246,864 bytes, SHA-256
 `9cf24b52ffcb6b4d9cdeb6b58c3f97668f9ce20f550463d40451c21483a4e0b6`.
-It is a CPU-qualified product, not a native GPU outcome. The matched Census V3
-and Tail V4 comparison is pending. No native correctness, numerical acceptance,
+It is a CPU-qualified product, not a native GPU outcome. The separately retained
+[matched Census V3/Tail V4 comparison](../matched-timing-gpu-v2/README.md) has
+since passed. No native correctness, numerical acceptance,
 Full2303 feasibility, performance gain or production admission follows from
 this result. Original deadlines, CPU affinity and storage floors are unchanged.
