@@ -1,0 +1,12 @@
+
+running 7 tests
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_closed_call_keeps_original_paired_timeout_cap ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_closed_layer_every_boundary_failure_quarantines_before_publication ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_closed_layer_every_boundary_unwind_quarantines_before_publication ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_closed_layer_uses_one_native_and_fake_ordering_engine ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_hidden_validation_requires_exact_finite_rank_pair ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_public_counts_are_data_only_and_preserve_rank_call_totals ... ok
+test engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::scoped_layer::tests::scoped_warm_admission_requires_ready_consumed_reuse_without_completed_proof ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1130 filtered out; finished in 0.00s
+

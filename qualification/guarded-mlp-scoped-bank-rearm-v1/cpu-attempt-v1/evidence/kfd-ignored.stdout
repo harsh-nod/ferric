@@ -1,0 +1,8 @@
+engineering_gfx950::peer::combined_mlp_state_v1::tests::native::native_stable_guarded_r2_v1: test
+engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_exact_residual_v1: test
+engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::interleaved::native_paired_guarded_mlp_interleaved_v1: test
+engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::native_paired_guarded_mlp_v1: test
+engineering_gfx950::peer::combined_mlp_state_v1::tests::native::paired::reuse::native_paired_guarded_mlp_reuse_v1: test
+queue::dispatch_binding::tests::real_gfx950_kernel_rejects_before_fixed_dispatch_data_preparation: test
+shared_memory::gfx950_observed::queue::finite_join::tests::retained_fixed_image_passes_same_engine_intake: test
+shared_memory::gfx950_observed::queue::multiwave_join::tests::actual_multiwave_image_passes_distinct_same_engine_intake: test

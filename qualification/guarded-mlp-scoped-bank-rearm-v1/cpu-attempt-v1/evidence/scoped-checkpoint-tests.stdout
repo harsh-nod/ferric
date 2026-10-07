@@ -1,0 +1,21 @@
+
+running 16 tests
+test device::gfx950::scoped_currentness::tests::every_scoped_engine_fault_poisons_both_and_stops_at_the_original_boundary ... ok
+test device::gfx950::scoped_currentness::tests::every_scoped_engine_unwind_poisons_both_without_later_observation ... ok
+test device::gfx950::scoped_currentness::tests::scoped_checkpoint_keeps_local_checks_between_two_root_probes_without_discovery ... ok
+test device::gfx950::scoped_currentness::tests::scoped_closed_or_poisoned_windows_never_resume ... ok
+test device::gfx950::scoped_currentness::tests::scoped_counter_overflow_is_terminal_before_unaccounted_work ... ok
+test device::gfx950::scoped_currentness::tests::scoped_deadlines_refuse_entry_and_expiry_after_every_observed_effect ... ok
+test device::gfx950::scoped_currentness::tests::scoped_entry_and_exit_each_discover_and_compare_both_retained_participants ... ok
+test device::gfx950::scoped_currentness::tests::scoped_exit_is_bound_to_entry_even_if_retained_snapshots_are_replaced ... ok
+test device::gfx950::scoped_currentness::tests::scoped_persistent_content_change_without_generation_is_caught_at_full_exit ... ok
+test device::gfx950::scoped_currentness::tests::scoped_rank_checkpoint_preserves_exact_one_rank_predicates_and_full_exit ... ok
+test device::gfx950::scoped_currentness::tests::scoped_rank_deadline_and_generation_drift_are_terminal_before_later_effects ... ok
+test device::gfx950::scoped_currentness::tests::scoped_rank_every_fault_and_unwind_stops_and_invalidates_whole_window ... ok
+test device::gfx950::scoped_currentness::tests::scoped_rank_substitution_and_out_of_range_poison_window_and_selected_device ... ok
+test device::gfx950::scoped_currentness::tests::scoped_root_or_generation_drift_rejects_before_local_predicates ... ok
+test device::gfx950::scoped_currentness::tests::scoped_roster_count_duplicate_zero_and_substitution_are_terminal ... ok
+test device::gfx950::scoped_currentness::tests::scoped_transient_content_change_and_revert_is_an_explicit_temporal_limitation ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 1121 filtered out; finished in 0.01s
+

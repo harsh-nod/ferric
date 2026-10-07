@@ -51,7 +51,11 @@ are unchanged. This qualification did not execute the model or GPU.
 
 The [strict data-admission suite](../guarded-mlp-full2303-v1/scoped-warm-admission-cpu-v1/README.md)
 passed all 34 synthetic tests on MI350, preserving the 25 earlier cases and
-adding nine scoped-policy cases. A scoped comparison adapter is still required.
+adding nine scoped-policy cases. The
+[scoped comparison adapter](../guarded-mlp-full2303-v1/scoped-warm-comparison-cpu-v1/README.md)
+then passed all 42 synthetic tests, preserving those 34 and adding eight exact
+generated-ID/decoded-byte and original-record comparison cases. An actual
+native/reference comparison has not yet been completed.
 Native launch additionally needs a feasible bounded execution budget
 and actual larger-context coverage. Independent 256-generated-ID/decoded-byte
 agreement, sustained BF16 target-only 2,048/256 decoding, 700 tokens/s and all
