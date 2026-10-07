@@ -36,6 +36,29 @@ and the failed terminal. No failed flag or outcome has been rewritten.
 | Coupled failed terminal | `5021149c2139723bc1c2de294ce26e4ee1df14f13fe2f78abcf3ec8ab2b7e44e` |
 | Coupled failed archive | `c7b44e5f76218fcabea48407fc56b2b23ba9b4e840453c06f635adf9b7c75bac` |
 
+## Second Coupled CPU Attempt
+
+The fresh V2 run compiled the repaired worker library but failed at the same
+test-build phase after 109.393 seconds. Two function-pointer declarations in
+the new CLI test used a borrowed slice type whose higher-ranked lifetime did
+not match the generic reader function. Rust reported E0308. The test-only
+repair uses a concrete owned reader; runtime behavior is unchanged.
+
+The preceding 21 phases again completed naturally, including all 1,143 runtime
+passes, the eight existing ignores, focused scopes and ten facade doctests.
+The worker test compiler exited naturally with status 101, was fully reaped,
+and all postchecks passed. Worker tests did not execute. This remains a failed
+qualification, not permission to integrate or launch the scoped GPU route.
+
+`cpu-attempt-v2` retains all 186 original archive members, including the
+unmodified failed terminal and compiler diagnostics. The next complete run
+must preserve both original proposals and their separate repair lineage.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| V2 coupled failed terminal | `da226a70faa41176cf98df9ab6f3fd2e9bc5ab3f06c38ee522d142cda5b54ceb` |
+| V2 coupled failed archive | `447fa3fdb95351f22977512dd88414c678a58ae83dc10d75fbce9d14b12c1f1d` |
+
 ## Synthetic Data Checker
 
 The first checker attempt recorded 69 successful tests and one fixture error:
