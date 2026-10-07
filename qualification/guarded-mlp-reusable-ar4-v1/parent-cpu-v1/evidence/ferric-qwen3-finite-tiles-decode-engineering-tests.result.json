@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-model-engineering",
+    "--bin",
+    "ferric-qwen3-finite-tiles-decode-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2554,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-tiles-decode-engineering-tests.command.json",
+    "sha256": "a8894297b9e645770efe319c79b977d9e0ae04bbdaf0a5af4d2abe5851d87fb8"
+  },
+  "elapsed_ns": 421934382,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-tiles-decode-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 310774,
+  "pid": 310774,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1752,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-tiles-decode-engineering-tests.stderr",
+    "sha256": "91fb015cca80ec44c933fc025a6cdfce5561efa20f891a5e7b7b80eda5310f5d"
+  },
+  "stdout": {
+    "bytes": 172,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/evidence/ferric-qwen3-finite-tiles-decode-engineering-tests.stdout",
+    "sha256": "c51805bda9355923cc4371f9cf4a0adf9f6ecf0e887d27c34c8e2457eb556a1a"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

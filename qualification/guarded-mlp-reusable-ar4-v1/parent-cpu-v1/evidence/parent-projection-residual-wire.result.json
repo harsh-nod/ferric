@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-model-engineering",
+    "--lib",
+    "finite_projection_residual_layer_wire_v1::tests::",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2559,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/evidence/parent-projection-residual-wire.command.json",
+    "sha256": "8b40b4171b9e9a4a096ad4042fde847186f9a82e98803b5e9a19cdea46d68bd1"
+  },
+  "elapsed_ns": 225794070,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-projection-residual-wire",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 314299,
+  "pid": 314299,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 799,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/evidence/parent-projection-residual-wire.stderr",
+    "sha256": "9824e91a59dfd882ee8dcf5da5a0e1b096f8c2f6512d835408bb5521c9eb50fb"
+  },
+  "stdout": {
+    "bytes": 616,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1/evidence/parent-projection-residual-wire.stdout",
+    "sha256": "4985310fb8571e793977049852cdf10c72c0b956c0bbf063103ac37c6bfcbc0a"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

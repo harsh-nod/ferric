@@ -1,0 +1,9 @@
+test_all_four_equal_payloads_and_histories (test_comparison.ComparisonTests.test_all_four_equal_payloads_and_histories) ... ok
+test_history_difference_is_not_hidden_by_equal_payloads (test_comparison.ComparisonTests.test_history_difference_is_not_hidden_by_equal_payloads) ... ok
+test_one_changed_byte_in_each_frame_is_reported (test_comparison.ComparisonTests.test_one_changed_byte_in_each_frame_is_reported) ... ok
+test_tampered_hash_or_wrong_extent_is_refused (test_comparison.ComparisonTests.test_tampered_hash_or_wrong_extent_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.016s
+
+OK

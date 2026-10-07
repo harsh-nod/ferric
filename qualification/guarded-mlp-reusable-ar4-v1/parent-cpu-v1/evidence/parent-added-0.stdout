@@ -1,0 +1,6 @@
+
+running 1 test
+test finite_projection_residual_mlp_ordered_wire_v1::tests::ordered_control_has_one_segment_and_rejects_legacy_extent ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 874 filtered out; finished in 0.00s
+

@@ -1,0 +1,19 @@
+{
+  "archive": {
+    "bytes": 8638130,
+    "sha256": "836c410919cb4c1aa94323c7154449c693b48333561ee7acd763e49ef44855d8"
+  },
+  "cargo_execution": false,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 254807,
+    "sha256": "db08f2d3941a04779a3ebbede3d1dba10573b11202d7f6e6b81fe3696343a0b9"
+  },
+  "members": 1336,
+  "passed": true,
+  "project_code_executed": false,
+  "qualification_passed": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-parent-cpu-v228-v1",
+  "schema": "ferric-guarded-mlp-reusable-ar4-parent-source-stage-v1",
+  "source_files": 1225
+}

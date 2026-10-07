@@ -12,7 +12,8 @@ sustained benchmark, production admission, or a 700 tokens/s result. All issue
 | Runtime | 1,101 passes, 8 ignored; 10 facade doctests | [Separate runtime qualification](../guarded-mlp-reusable-arena-v1/README.md) |
 | Worker | 615 passes, 4 unchanged ignores; 9 clean phases | [Actual CPU receipt](worker-cpu-v1/evidence/complete.json) |
 | Census validator | 8 passes | [Synthetic checks](census-cpu-v1/complete.json), not observed GPU allocations |
-| Parent | Pending | Separate build and selected tests |
+| Parent | 396 selected passes; 55 clean phases | [Actual CPU receipt](parent-cpu-v1/evidence/complete.json) |
+| Payload comparison | 4 passes | [Separate synthetic checks](comparison-cpu-v1/complete.json) |
 | Native reusable AR4 | Pending | Actual storage reuse and complete payload equality |
 | Sustained 2,048/256 | Pending | Independent numerical acceptance and performance |
 
@@ -23,6 +24,14 @@ files, and four Cargo artifact records are retained. The CPU run took
 71.363692 seconds; that is build/test wall time, not GPU or inference timing.
 All nine subprocess phases exited naturally, were reaped, and left no owned
 process groups. Source, dependency, cache, and artifact postchecks passed.
+
+The three parent changes are also integrated from their actual formatted
+postimages. All 1,222 canonical Ferric source files match the composed parent
+and worker qualification maps. Parent qualification executed 396 selected
+tests across 47 scopes; its 875-name library inventory is not a claim that the
+entire parent suite ran. All 55 phases and postchecks passed. The parent keeps
+its existing locked Git runtime dependency; the worker separately builds the
+new local reusable-arena runtime. Neither dependency graph was relabeled.
 
 ## Implementation
 
@@ -61,8 +70,9 @@ samples, continued allocation growth, invalid types and incomplete Close.
 
 ## Next Demo Gate
 
-Build the separate parent selector, then run the same four-step autoregressive
-workload on MI350 with unchanged kernel images. Acceptance requires the actual
+The separate parent selector is `--observe-guarded-reusable-ar4`, with request
+schema `FerricFiniteGuardedMlpReusableAr4RequestV1`. Run the same four-step
+autoregressive workload on MI350 with unchanged kernel images. Acceptance requires the actual
 five-sample plateau, all four complete 606,976-byte observation payloads and
 input histories equal to ordinary AR4, healthy Close, and clean device/process
 postchecks. Payload equality is regression evidence, not an independent
@@ -81,3 +91,6 @@ does not by itself remove the measured host dispatch and observation costs.
 - [Worker capsule manifest](worker-cpu-v1/manifest.json) retains exact tool, source, command and private-cache provenance without executable or package bodies.
 - Census CPU terminal SHA-256: `a1f048f2a32ccb44f5c2d7f6263faa3620a4eaf130a2c55222c8e2c32461f5a8`.
 - [Census test output](census-cpu-v1/stderr) retains all eight named outcomes; the checker starts no subprocess and uses no GPU.
+- Parent terminal SHA-256: `f24fab8b524afc87726d6aec918abce01dc39643f56c7ac7f323af4c4ce953f2`.
+- [Parent capsule manifest](parent-cpu-v1/manifest.json): 416 members, 415 pinned bodies, 279 raw files; archive SHA-256 `85affe2ec5a0a0011397cce1e2841dc878f6c53e5d4b08527ec67612a97bcb76`.
+- [Comparison test output](comparison-cpu-v1/stderr): four synthetic tests cover changed bytes in every frame, changed input history, and tampered hashes or extents. This is separate from the eight census tests.

@@ -1,0 +1,10 @@
+
+running 5 tests
+test tests::guarded_capture_parent_cli_is_separate_and_explicit ... ok
+test tests::guarded_decode_parent_cli_refuses_legacy_fallback_or_extra_modes ... ok
+test tests::guarded_host_parent_cli_is_explicit_and_exclusive ... ok
+test tests::guarded_reuse_parent_cli_is_explicit_and_cannot_combine_diagnostics ... ok
+test tests::guarded_shared_host_parent_cli_cannot_select_or_combine_other_modes ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

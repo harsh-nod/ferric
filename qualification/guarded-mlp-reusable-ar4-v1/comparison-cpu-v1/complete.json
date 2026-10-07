@@ -1,0 +1,49 @@
+{
+  "controller": {
+    "bytes": 7368,
+    "sha256": "74b113fe5ce6ce52e4d69b324f74b91b854a793126c261a285ba70f27d1ee022"
+  },
+  "elapsed_seconds": 0.026508706039749086,
+  "errors": 0,
+  "expected_test_names": [
+    "test_comparison.ComparisonTests.test_all_four_equal_payloads_and_histories",
+    "test_comparison.ComparisonTests.test_history_difference_is_not_hidden_by_equal_payloads",
+    "test_comparison.ComparisonTests.test_one_changed_byte_in_each_frame_is_reported",
+    "test_comparison.ComparisonTests.test_tampered_hash_or_wrong_extent_is_refused"
+  ],
+  "failure": null,
+  "failures": 0,
+  "gpu_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "postcheck_errors": [],
+  "schema": "ferric-guarded-mlp-reusable-ar4-comparison-cpu-v1",
+  "sources": {
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-comparison-runner-v228-v1.py": {
+      "bytes": 34836,
+      "sha256": "c506df18aa71978fdf81eb93b422ebc39c03f832c935c10f4698b5fa25121fa3"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-comparison-tests-v228-v1.py": {
+      "bytes": 3753,
+      "sha256": "daead3eef98b1368b705b17a6894c2c060ef69ca154788fbd8f01cbf9e888093"
+    },
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-validator-v228-v1.py": {
+      "bytes": 15574,
+      "sha256": "9d0f860d0174ef5574c3023253b4e220ff16bfba845ad13c7e0ce210cdc66ed7"
+    }
+  },
+  "stderr": {
+    "bytes": 648,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-comparison-cpu-v228-v1/stderr",
+    "sha256": "0e67c27e2a23e8f863f9c2a75e135a24782c83eef1ffd9370fd4b91976cbee21"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-reusable-ar4-comparison-cpu-v228-v1/stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "subprocesses_started": 0,
+  "synthetic_evidence_only": true,
+  "tests_run": 4
+}
