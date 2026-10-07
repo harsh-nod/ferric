@@ -22,16 +22,22 @@ full-workload numerical acceptance and performance remain separate gates.
 The independent BF16 reference now completes two repeatable 40-position
 full-model passes on MI350. The authenticated comparison reports 39/40 argmax
 agreement, with position 5 differing (reference token 2; Ferric token 9112).
-No position-5 tensor was retained by either run, so its cause and margin remain
-unknown. The four captured positions show 0.30-0.69% logits relative L2 error;
-these are diagnostics, not an acceptance threshold. A separately scoped
-position-5 capture investigation is required before claiming correctness.
+No position-5 tensor was retained by either original run. The four originally
+captured positions show 0.30-0.69% logits relative L2 error;
+these are diagnostics, not an acceptance threshold. The separately scoped
+position-5 capture below does not establish full-model correctness.
 
 The [position-5 diagnostic route](../qualification/guarded-mlp-readiness40-position5-v1/README.md)
 is now integrated after 663 worker passes, 433 selected parent passes and
 17/7 synthetic checker/comparator passes on MI350. Its independent BF16
-reference completes two repeatable fresh-cache passes. Native capture and
-cross-run diagnosis remain pending. The original comparison now has a
+reference completes two repeatable fresh-cache passes. Its native run now
+passes all 40 forwards and clean Close in one attempt. The authenticated
+cross-run comparison confirms unchanged all-40 records and common captures.
+At position 5 the reference ties tokens 2/9112 at 19.625; Ferric scores token
+9112 at 19.75, one BF16 step higher. Layer 0 already differs in 14/4,096 words.
+This explains the argmax switch but not the arithmetic cause or numerical
+acceptability; operation-level investigation remains open. The original
+comparison now has a
 [layer-by-layer error plot and complete tables](../qualification/guarded-mlp-readiness40-v1/numerical-report-v1/README.md),
 rendered on MI350 after ten passing tests. These add diagnostic visibility,
 not numerical acceptance or a performance claim.

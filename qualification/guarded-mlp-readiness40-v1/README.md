@@ -120,9 +120,10 @@ It compares 152 selected tensors and all 40 reported argmax values.
 
 **The numerical gate remains open:** 39 of 40 observed argmax values agree.
 At position 5, with input token 271, the reference reports token 2 and Ferric
-reports token 9112. Neither run retained position-5 logits or hidden tensors,
-so the difference's margin and cause are unknown. These are teacher-forced
-prompt predictions, not 40 generated tokens or a model-accuracy benchmark.
+reports token 9112. Neither original run retained position-5 logits or hidden
+tensors; the separately scoped investigation below now captures them. These
+are teacher-forced prompt predictions, not 40 generated tokens or a
+model-accuracy benchmark.
 
 | Captured Position | Reference / Ferric Argmax | Logits Relative L2 | Maximum Absolute Logit Difference |
 |---|---|---|---|
@@ -141,13 +142,13 @@ show all 152 tensor comparisons and all 40 argmax records. The renderer passed
 ten tests on MI350; the original metric values are preserved, with no new
 acceptance or performance claim.
 
-The next diagnostic preserves the full 40-position schedule, arithmetic and
-limits, but explicitly captures position 5 in a separately named profile.
-Common-position payloads and all 40 input/logit records must first confirm
-that changing capture selection did not change execution results.
-The [position-5 reference](../guarded-mlp-readiness40-position5-v1/README.md)
-has now completed two repeatable fresh-cache passes; its matching native
-capture and cross-run numerical diagnosis are still pending.
+The [position-5 investigation](../guarded-mlp-readiness40-position5-v1/README.md)
+now passes native execution and the authenticated cross-run comparison.
+All 40 records and common captures are unchanged within each implementation.
+The reference ties tokens 2 and 9112 at 19.625; Ferric gives token 9112 a score
+of 19.75, one BF16 representable step higher. This explains the argmax switch,
+but not its arithmetic cause or numerical acceptability. The first captured
+hidden-state difference is already present at layer 0.
 
 The next gates remain resolving the numerical discrepancy, full bounded
 request execution, independent numerical acceptance, and then sustained

@@ -1,0 +1,196 @@
+{
+  "files": {
+    "output/complete.json": {
+      "bytes": 32247,
+      "sha256": "e6dbc4712f6a04e11be40b70b09f46bf388cdbd26150e6e2fec1c6e2cac12578"
+    },
+    "retention-tool.py": {
+      "bytes": 23182,
+      "sha256": "d4b0822fb3c27cb8328fed2e97cc529cb1d232245a462f6b5cce651f0efd5327"
+    },
+    "source/common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "source/compare.py": {
+      "bytes": 8676,
+      "sha256": "f3e9d141379c7de13726adf83273955a72dcae521c3389778bf12060c217fd7a"
+    },
+    "source/diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "source/native_evidence.py": {
+      "bytes": 25540,
+      "sha256": "f81ff9ad0a6dd7a1652701286590779fdaa77209455ce31f5929b6efca67dd73"
+    },
+    "source/new_native_evidence.py": {
+      "bytes": 24651,
+      "sha256": "42894e15f5eae11236aa450db4eb4521c1de9c035efd6803beb9e7dab88fc5ff"
+    },
+    "source/new_native_evidence_bound.py": {
+      "bytes": 25681,
+      "sha256": "432fb0d7716757209b4cd9d7a15c3851c0c6579d916f9f9e0ca9d6a3abd215b3"
+    },
+    "source/new_reference_evidence.py": {
+      "bytes": 30237,
+      "sha256": "d7c9b3b45e1addedb5d8518a5f410eb660628b95a85ee13d2801c80ca76d7fa5"
+    },
+    "source/pure_evidence.py": {
+      "bytes": 15079,
+      "sha256": "71048139b433d903a37c2344491dfa098ac9e4326e1b8860f462ac80ab9d5145"
+    },
+    "source/reference.py": {
+      "bytes": 11379,
+      "sha256": "bdaa410f15b485de29c3f1f97c4de86fc18a7b158bad58ee36bfc4df394b8568"
+    },
+    "source/reference_evidence.py": {
+      "bytes": 30149,
+      "sha256": "98d246d10ac9f755437d94dad9b1a0783b0e307bfae3d7a579ac3c6a086334a4"
+    },
+    "source/run.py": {
+      "bytes": 20319,
+      "sha256": "c6a28f982b1a8fa0a6591e9be166eccf50ac065911944ecd3a3a5ce10908e822"
+    },
+    "source/run_bound.py": {
+      "bytes": 20762,
+      "sha256": "ffd32c787344001250aa9fe2e88452ad83cf1a4c633eca648c240bfc639b1884"
+    },
+    "source/source-manifest.json": {
+      "bytes": 1932,
+      "sha256": "d0872e23a2ef39dc0a857adda0166c01cc5b61f980bdd6363d5d04d5d821238d"
+    }
+  },
+  "full_recorded_readset_rehashed": true,
+  "gpu_execution": false,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1",
+  "runtime_execution": false,
+  "schema": "ferric-readiness40-position5-comparison-retention-v1",
+  "verification": {
+    "authenticated_readset": {
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-checker-evidence-v228-v1.tar.gz": {
+        "bytes": 27743,
+        "sha256": "95cebdbd242abc0d5d8256cd7f7fa11ddc45f5aa18d36e4652baae7b549a8660"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-gpu-evidence-v228-v1.tar.gz": {
+        "bytes": 2210645,
+        "sha256": "df5c824f18d26b3c1a6cde4e7eb6827f1472a846cbb5b97a0b693001270d3c3c"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-checker-evidence-v228-v1.tar.gz": {
+        "bytes": 31883,
+        "sha256": "9c5a2d73f3c73a2d63d208d3c018855c56e6cc2bd6416f600c5e29abba7f9564"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/common.py": {
+        "bytes": 3172,
+        "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/compare.py": {
+        "bytes": 8676,
+        "sha256": "f3e9d141379c7de13726adf83273955a72dcae521c3389778bf12060c217fd7a"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/diagnostics.py": {
+        "bytes": 5084,
+        "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/native_evidence.py": {
+        "bytes": 25540,
+        "sha256": "f81ff9ad0a6dd7a1652701286590779fdaa77209455ce31f5929b6efca67dd73"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/new_native_evidence_bound.py": {
+        "bytes": 25681,
+        "sha256": "432fb0d7716757209b4cd9d7a15c3851c0c6579d916f9f9e0ca9d6a3abd215b3"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/new_reference_evidence.py": {
+        "bytes": 30237,
+        "sha256": "d7c9b3b45e1addedb5d8518a5f410eb660628b95a85ee13d2801c80ca76d7fa5"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/pure_evidence.py": {
+        "bytes": 15079,
+        "sha256": "71048139b433d903a37c2344491dfa098ac9e4326e1b8860f462ac80ab9d5145"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/reference.py": {
+        "bytes": 11379,
+        "sha256": "bdaa410f15b485de29c3f1f97c4de86fc18a7b158bad58ee36bfc4df394b8568"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/reference_evidence.py": {
+        "bytes": 30149,
+        "sha256": "98d246d10ac9f755437d94dad9b1a0783b0e307bfae3d7a579ac3c6a086334a4"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-comparison-v228-v1/run_bound.py": {
+        "bytes": 20762,
+        "sha256": "ffd32c787344001250aa9fe2e88452ad83cf1a4c633eca648c240bfc639b1884"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-diagnostic-evidence-v228-v1.tar.gz": {
+        "bytes": 26801,
+        "sha256": "4aac3791a482fa1f72839ee50ca0f7cab1a26ab79a768962861e26b66da5f17b"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-gpu-evidence-v228-v1.tar.gz": {
+        "bytes": 2196714,
+        "sha256": "eabac40bfc4ecc4a11390c34a9263a784b6c1941ac6888f58af0ce386be0c349"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-position5-reference-evidence-v228-v1.tar.gz": {
+        "bytes": 3928908,
+        "sha256": "3747e54a97c0ca99590fd5a30aa0f59866a71c766cd74ac40872d4b2a8ae9a2f"
+      },
+      "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-reference-evidence-v228-v2.tar.gz": {
+        "bytes": 3965567,
+        "sha256": "cd9103d1e73c1af63960f24e9d501f5a6747ff82a505891f38d08657693cf5bc"
+      }
+    },
+    "common_capture_positions": [
+      0,
+      16,
+      39
+    ],
+    "gpu_execution": false,
+    "metrics_recomputed": false,
+    "modules_imported": false,
+    "native_top_two": [
+      {
+        "bf16_word": 16798,
+        "rank": 1,
+        "signed_units_2_pow_minus133": 215058455894033108908852751896877509640192,
+        "token": 9112,
+        "value": 19.75
+      },
+      {
+        "bf16_word": 16797,
+        "rank": 2,
+        "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+        "token": 2,
+        "value": 19.625
+      }
+    ],
+    "numerical_acceptance": false,
+    "original_capsule_bodies_retained": false,
+    "original_files": 14,
+    "original_passed": true,
+    "output_files": 1,
+    "own_history_records": 40,
+    "performance_claim": false,
+    "reference_top_two": [
+      {
+        "bf16_word": 16797,
+        "rank": 1,
+        "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+        "token": 2,
+        "value": 19.625
+      },
+      {
+        "bf16_word": 16797,
+        "rank": 2,
+        "signed_units_2_pow_minus133": 213697326426349355054999253467150436794368,
+        "token": 9112,
+        "value": 19.625
+      }
+    ],
+    "source_files": 13,
+    "success_checks_revalidated": true,
+    "tensor_rows": 38,
+    "terminal": {
+      "bytes": 32247,
+      "sha256": "e6dbc4712f6a04e11be40b70b09f46bf388cdbd26150e6e2fec1c6e2cac12578"
+    },
+    "terminal_name": "complete.json"
+  }
+}

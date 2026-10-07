@@ -1,0 +1,63 @@
+{
+  "schema": "ferric-readiness40-position5-comparison-source-v1",
+  "files": {
+    "common.py": {
+      "bytes": 3172,
+      "sha256": "445c602dd0d237beb2ebef62446d1d2b34283367b68529736a890640ae185256"
+    },
+    "compare.py": {
+      "bytes": 8676,
+      "sha256": "f3e9d141379c7de13726adf83273955a72dcae521c3389778bf12060c217fd7a"
+    },
+    "diagnostics.py": {
+      "bytes": 5084,
+      "sha256": "38cee89882d13dce81a992a64d4931c52a6f5b0b2dc77f5cddf1fc7cfe37ccaf"
+    },
+    "native_evidence.py": {
+      "bytes": 25540,
+      "sha256": "f81ff9ad0a6dd7a1652701286590779fdaa77209455ce31f5929b6efca67dd73"
+    },
+    "new_native_evidence.py": {
+      "bytes": 24651,
+      "sha256": "42894e15f5eae11236aa450db4eb4521c1de9c035efd6803beb9e7dab88fc5ff"
+    },
+    "new_reference_evidence.py": {
+      "bytes": 30237,
+      "sha256": "d7c9b3b45e1addedb5d8518a5f410eb660628b95a85ee13d2801c80ca76d7fa5"
+    },
+    "pure_evidence.py": {
+      "bytes": 15079,
+      "sha256": "71048139b433d903a37c2344491dfa098ac9e4326e1b8860f462ac80ab9d5145"
+    },
+    "reference.py": {
+      "bytes": 11379,
+      "sha256": "bdaa410f15b485de29c3f1f97c4de86fc18a7b158bad58ee36bfc4df394b8568"
+    },
+    "reference_evidence.py": {
+      "bytes": 30149,
+      "sha256": "98d246d10ac9f755437d94dad9b1a0783b0e307bfae3d7a579ac3c6a086334a4"
+    },
+    "run.py": {
+      "bytes": 20319,
+      "sha256": "c6a28f982b1a8fa0a6591e9be166eccf50ac065911944ecd3a3a5ce10908e822"
+    }
+  },
+  "original_gate_tests": {
+    "native_checker": 16,
+    "diagnostic_native_checker": 17,
+    "conditional_diagnostic": 7
+  },
+  "new_tests_executed": false,
+  "source_only": true,
+  "pending_bindings": [
+    "NEW_NATIVE_ARCHIVE",
+    "NEW_NATIVE_TERMINAL",
+    "NEW_CHECKER_ARCHIVE",
+    "DIAGNOSTIC_ARCHIVE",
+    "MODULE_PINS.new_native_evidence.py"
+  ],
+  "native_execution": false,
+  "model_execution": false,
+  "numerical_acceptance": false,
+  "performance_claim": false
+}
