@@ -1,0 +1,1 @@
+{"canonical_changed_by_this_command": false, "integration_map": {"bytes": 241664, "sha256": "b672748a44d3d170dad8ef117d579df7a8d444b2458d0e8861f57411a59ba213"}, "native_execution": false, "original_capsule_pins": 482, "parent_overlay_files": 7, "passed": true, "schema": "ferric-scoped-parent-v3-source-integration-postcheck-v1", "source_files": 1263, "worker_files": 209}

@@ -24,9 +24,13 @@ passes its repaired 70-test synthetic checker and complete coupled CPU
 qualification on MI350. V3 passed all 26 phases in 151.522 seconds: 1,143
 runtime tests with eight existing ignores, 726 worker tests with four existing
 ignores, nine focused runtime scopes and ten facade doctests. All 207 original
-evidence members are retained. The earlier module-path and test-type failures
-remain preserved as failures. Parent qualification and a fresh same-binary
-Default/scoped GPU pair are still required before an end-to-end claim.
+evidence members are retained. The separate parent V3 run also passes all 65
+phases and 492 selected tests across 55 scopes in 411.247 seconds. Its 483
+original evidence members are retained. The seven tested parent changes are
+integrated, with a complete 1,263-file source postcheck and all 209 worker
+bodies unchanged. The earlier module-path and test-type failures remain
+preserved as failures. A fresh same-binary Default/scoped GPU pair is still
+required before an end-to-end claim.
 
 The [Full2303 independent reference](../qualification/guarded-mlp-full2303-v1/README.md)
 has completed two fresh-cache BF16 framework passes of the 2,048/256 workload.

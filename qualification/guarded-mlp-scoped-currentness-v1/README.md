@@ -74,7 +74,7 @@ both repair histories and all 35 actual formatted source postimages. Both
 earlier failed attempts remain separate and unchanged.
 
 This qualifies the coupled CPU build and tests, not a scoped GPU execution.
-Parent qualification and a fresh same-binary native comparison remain required.
+A fresh same-binary native comparison remains required.
 
 The 22 runtime and 13 worker changes are integrated from those exact tested
 postimages. The [integration record](integration-v1/integration.json) and
@@ -87,6 +87,26 @@ qualification workspace fixtures were not copied into the repositories.
 | Passing V3 terminal | `335cf93cc109390f3b7590f7dbe35ed852adca223a042894dcc18418a738ffbd` |
 | Passing V3 archive | `8c0160d5017c72e981d78f54cb66a68fcdad63e261d5c261460aa2ffb9e77b0f` |
 | Qualified worker executable | `f6a788dbb297b68a2dddc255d7faf49165de9ee8fa4eccc062bfe8b65a6d360a` |
+
+## Parent Qualification
+
+The separate parent V3 run passed all 65 supervised phases on `mi350` in
+411.247 seconds. All 492 selected tests across 55 scopes passed, preserving
+the 478 prior selected outcomes and adding 14. The library inventory has 961
+names; this is not a full parent-library-suite claim. Seven executable
+products and all 209 qualified worker source bodies passed their postchecks.
+
+`parent-cpu-attempt-v3` retains all 483 original archive members, including
+329 raw bodies and 121 lineage bodies. All seven tested parent changes are
+integrated. The [parent integration postcheck](parent-integration-v1/postcheck.json)
+verifies the complete 1,263-file Ferric source composition, not just the changed
+files. No source, dependency or native authority is inferred from filenames.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Parent V3 terminal | `6ca1454eb809ac2a4fa0eae74417ab1316032b00d769b85b30b5e386c0d27171` |
+| Parent V3 archive | `9e8cf83ca988e2a9805eba10e576fe8ff63b467eb5a19bb7cba98d77ea95d502` |
+| Qualified readiness executable | `1ef5d720029bd4d6dfc9f5ff9278b4fee7627240ee157ce7be91b7f44743f779` |
 
 ## Synthetic Data Checker
 
@@ -115,8 +135,8 @@ tests, not a native execution, numerical reference or performance result.
 
 ## Remaining Gates
 
-Parent qualification and a fresh same-binary Default/scoped GPU pair must pass
-before claiming this optimization runs end to end. Independent numerical
+A fresh same-binary Default/scoped GPU pair must pass before claiming this
+optimization runs end to end. Independent numerical
 acceptance, the full 2,048/256 workload
 and the 700 tokens/s target remain open. No issue #42 milestone is closed by
 these results.

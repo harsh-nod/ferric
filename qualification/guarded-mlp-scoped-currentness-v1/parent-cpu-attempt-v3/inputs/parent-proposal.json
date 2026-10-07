@@ -1,0 +1,290 @@
+{
+  "schema": "ferric-scoped-warm-readiness40-parent-source-v1",
+  "canonical_changed": false,
+  "compiled": false,
+  "tested": false,
+  "native_execution": false,
+  "default_routes_changed": false,
+  "default_group_policy_changed": false,
+  "temporal_equivalent_to_full": false,
+  "performance_claim": false,
+  "numerical_acceptance": false,
+  "base": {
+    "repository": "ferric",
+    "commit": "497a81892c6b5c1634e50441bd43b1626f6956f6",
+    "parent_receipt": {
+      "path": "qualification/guarded-mlp-readiness40-shared-full-v1/parent-cpu-attempt-v3/evidence/complete.json",
+      "bytes": 3983845,
+      "sha256": "f7134c5f22d75c8295b8ab99ad8625fac40aa615ac1682340c0b8e6ffde1f71e"
+    },
+    "parent_sources": {
+      "path": "qualification/guarded-mlp-readiness40-shared-full-v1/parent-cpu-attempt-v3/evidence/sources-after.json",
+      "bytes": 507332,
+      "sha256": "9e70e32da52ebba96a8354ecd5fe60bbb3add9a7d1b93ba0d218572349f129c4"
+    },
+    "canonical_bodies_joined": 1257,
+    "selected_passes": 478,
+    "library_inventory": 948
+  },
+  "requires": {
+    "worker_selector": {
+      "path": "../scoped-worker-selector-v1/source-manifest.json",
+      "bytes": 15169,
+      "sha256": "cfec625935042c416a329cfb0e02c1fc8836f12820967e1d3c0257ed2d6a8235"
+    },
+    "imported_policy_rows": [
+      {
+        "repository": "ferric",
+        "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1.rs",
+        "before": null,
+        "after": {
+          "bytes": 6372,
+          "sha256": "c6810cfdf44d40a414ffdb027b90593b26ff77d84d657d483092503a1695142e"
+        },
+        "preimage_path": null
+      },
+      {
+        "repository": "ferric",
+        "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+        "before": null,
+        "after": {
+          "bytes": 6782,
+          "sha256": "091cc582d172418f5a1a972eff53e9d1e0f62a627cec330f58a1b9a1dcca5b65"
+        },
+        "preimage_path": null
+      }
+    ],
+    "runtime": {
+      "path": "../scoped-currentness-routed-v1/source-manifest.json",
+      "bytes": 13373,
+      "sha256": "437948cd334c9f95dcf77de4e3217c92f4d8e6d4cabbcf5010aff182f53ae5b2"
+    },
+    "consumer": {
+      "path": "../scoped-worker-v1/source-manifest.json",
+      "bytes": 1677,
+      "sha256": "6b4dffbe4032e52f6dddb80f255553c420e95a3fb7af84f2b1da311daf1168bb"
+    }
+  },
+  "files": [
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs",
+      "before": {
+        "bytes": 10741,
+        "sha256": "fb7b357ba8d9f51d37c8d0201ba9639ca03eb921059003b3617856afa78a1e55"
+      },
+      "after": {
+        "bytes": 14368,
+        "sha256": "630948079c32cf786c2160a9ed4f83a5aceea9584feb1817947d75daa34dfbdb"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/lib.rs",
+      "before": {
+        "bytes": 90553,
+        "sha256": "92e586b82d7a4718b8836416b2f144e6a4c441bc6e0004b5304c4a7f697dd8dd"
+      },
+      "after": {
+        "bytes": 90752,
+        "sha256": "0d0d8d291209f5016d9d3b1a8ccbaa78ea8f45d2ba87b4734e840b2f4069300e"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/lib.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs",
+      "before": {
+        "bytes": 25225,
+        "sha256": "5ca7698896eebd2ab47daa8127ad983406bb0331cb56c943fba5aee90b659de6"
+      },
+      "after": {
+        "bytes": 26757,
+        "sha256": "ae16b0abe97940a262d16d5eafd4136a8bcbf6112e7fe88d0e5a9cdae9f45891"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs",
+      "before": {
+        "bytes": 16309,
+        "sha256": "9caabceb774f65f58f9d59b99365563fbabc36c82808f3cbdf58a7ce49e04e1a"
+      },
+      "after": {
+        "bytes": 17740,
+        "sha256": "69aff692108c7f04f6e6bfbddda3c7dc6cf30ca51a7dba55e99cd823504f4eed"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs",
+      "before": {
+        "bytes": 12987,
+        "sha256": "e6103527394fa280c5eb9d51c22d50a6b3b112cea91ef9bff1945feeb36d46a8"
+      },
+      "after": {
+        "bytes": 17765,
+        "sha256": "b0821b83611d33d21008730491bf91a8dc907ad5f5c955975cae8e71fedcf3c1"
+      },
+      "preimage_path": "preimages/ferric/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs"
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_scoped.rs",
+      "before": null,
+      "after": {
+        "bytes": 2476,
+        "sha256": "8cbdc896e1883b4e950cd0225aadd2911a81792c8a1a8c1d347f3e5ce161948f"
+      },
+      "preimage_path": null
+    },
+    {
+      "repository": "ferric",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_scoped_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 5024,
+        "sha256": "29389b3b698fd2e821ee33232d83434f25ee92314b96b4e7d698fe95b15a74c5"
+      },
+      "preimage_path": null
+    }
+  ],
+  "new_tests": {
+    "parent_library": [
+      "readiness_scoped_warm_host_timing_keeps_all_existing_entry_signatures",
+      "readiness_scoped_warm_host_timing_refuses_mode_and_opt_in_before_io",
+      "scoped_warm_parent_authenticates_original_file_scope_and_executable",
+      "scoped_warm_parent_entry_preserves_legacy_signatures_and_exact_opt_in",
+      "scoped_warm_parent_refuses_empty_shared_duplicate_and_oversized_stderr",
+      "scoped_warm_parent_refuses_rehashed_counter_and_policy_drift",
+      "scoped_warm_policy_checks_every_call_count_and_unbounded_counter_overflow",
+      "scoped_warm_policy_exact_closed_record_roundtrips",
+      "scoped_warm_policy_refuses_boolean_integer_substitution",
+      "scoped_warm_policy_refuses_every_policy_and_authority_drift",
+      "scoped_warm_policy_refuses_other_profiles_and_missing_identity",
+      "scoped_warm_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "scoped_warm_policy_requires_one_exact_bounded_record"
+    ],
+    "parent_readiness_binary": [
+      "scoped_warm_parent_cli_has_two_closed_selectors_without_combination"
+    ]
+  },
+  "test_roster": [
+    {
+      "name": "scoped_warm_parent_cli_has_two_closed_selectors_without_combination",
+      "path": "adapters/m1-engineering-execution-v1/src/bin/ferric-qwen3-guarded-mlp-readiness-engineering.rs",
+      "target": "parent_readiness_binary",
+      "imported": false
+    },
+    {
+      "name": "readiness_scoped_warm_host_timing_keeps_all_existing_entry_signatures",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "readiness_scoped_warm_host_timing_refuses_mode_and_opt_in_before_io",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_host_timing_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "scoped_warm_parent_authenticates_original_file_scope_and_executable",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_scoped_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "scoped_warm_parent_entry_preserves_legacy_signatures_and_exact_opt_in",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_scoped_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "scoped_warm_parent_refuses_empty_shared_duplicate_and_oversized_stderr",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_scoped_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "scoped_warm_parent_refuses_rehashed_counter_and_policy_drift",
+      "path": "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_scoped_tests.rs",
+      "target": "parent_library",
+      "imported": false
+    },
+    {
+      "name": "scoped_warm_policy_exact_closed_record_roundtrips",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "scoped_warm_policy_refuses_every_policy_and_authority_drift",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "scoped_warm_policy_refuses_scope_worker_transcript_and_counts_drift",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "scoped_warm_policy_requires_one_exact_bounded_record",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "scoped_warm_policy_refuses_other_profiles_and_missing_identity",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "scoped_warm_policy_refuses_boolean_integer_substitution",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    },
+    {
+      "name": "scoped_warm_policy_checks_every_call_count_and_unbounded_counter_overflow",
+      "path": "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1_tests.rs",
+      "target": "parent_library",
+      "imported": true
+    }
+  ],
+  "old_test_names_preserved_in_changed_files": 36,
+  "conditional_census": {
+    "new_direct_library_tests": 6,
+    "new_imported_library_tests": 7,
+    "new_binary_tests": 1,
+    "selected_passes": 492,
+    "library_inventory": 961,
+    "phases": 65,
+    "selected_scopes": 55,
+    "products": 7
+  },
+  "selectors": [
+    "--observe-guarded-readiness40-position5-scoped-warm",
+    "--observe-guarded-readiness40-position5-scoped-warm-host-timing"
+  ],
+  "wrapper_schemas": [
+    "FerricReadiness40Position5ScopedWarmObservationV1",
+    "FerricReadiness40Position5ScopedWarmTimedObservationV1"
+  ],
+  "artifacts": {
+    "integration.patch": {
+      "bytes": 25714,
+      "sha256": "bab57086f5f1969a9592d60e367073d6f27077a7faa4e999a251b98c9807acfe"
+    },
+    "README.md": {
+      "bytes": 6377,
+      "sha256": "00edcfa9689a2361e34d43d490bc746bc615b43e4d7732b8d400b7c079e2310c"
+    }
+  }
+}

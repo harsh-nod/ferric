@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-warm-parent-cpu-v228-v3/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2683,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-warm-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.command.json",
+    "sha256": "e30b8651fab598eb32539196f48ca8792b0049a2b8870c4c8378b4535b01cb13"
+  },
+  "elapsed_ns": 531318380,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3824098,
+  "pid": 3824098,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2448,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-warm-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.stderr",
+    "sha256": "08870df3f5a6303ad97042c2a3e256da2ed602d62d4d92490905333af59db0bb"
+  },
+  "stdout": {
+    "bytes": 204,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-scoped-warm-parent-cpu-v228-v3/evidence/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests.stdout",
+    "sha256": "92565bcf6696a81ff0f06b63334c2f17e018af7a1d502f8ea5fbc829cec3dd86"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
