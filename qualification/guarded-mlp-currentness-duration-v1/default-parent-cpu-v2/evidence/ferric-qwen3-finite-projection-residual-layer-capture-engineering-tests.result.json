@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-layer-capture-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2708,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests.command.json",
+    "sha256": "3e8fdfdfe70c6c35eb2aeb18e2d437909a5eb6edb8bc68165758ede1e2293203"
+  },
+  "elapsed_ns": 430191926,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3496152,
+  "pid": 3496152,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2453,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests.stderr",
+    "sha256": "43104f3b62afddb077670cce4b2b957a98a6d447d97ce4c65c104d9a30099d4e"
+  },
+  "stdout": {
+    "bytes": 193,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests.stdout",
+    "sha256": "00371c96fea1303cd223279e27c94123480174682b15d2e074e211579dc45e81"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,54 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering,engineering-currentness-duration-diagnostics",
+    "--lib",
+    "finite_guarded_mlp_readiness_currentness_durations_v1::tests::",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2787,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/parent-currentness-duration-policy.command.json",
+    "sha256": "075b74f5729e61fb707624b4901c5b4a04afff34f5e1331c121de3b2187d6306"
+  },
+  "elapsed_ns": 219612597,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-currentness-duration-policy",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3561853,
+  "pid": 3561853,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1300,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/parent-currentness-duration-policy.stderr",
+    "sha256": "008b6eff667a78c65f8aea9a010e6a83715f2002f10055ee788620f28ed435f7"
+  },
+  "stdout": {
+    "bytes": 1409,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/parent-currentness-duration-policy.stdout",
+    "sha256": "25287018afbb3c2062d67458c87fca87422351ec63b0ae42466a8206ef91c978"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

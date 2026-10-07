@@ -1,0 +1,14 @@
+
+running 9 tests
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_checks_bank_subtotal_overflow_and_body_containment ... ok
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_does_not_accept_changed_original_policy_or_out_of_bound_ns ... ok
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_joins_each_scope_to_original_policy_counts ... ok
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_joins_policy_worker_transcript_and_session_identity ... ok
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_refuses_bank_row_drift_even_when_global_totals_cancel ... ok
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_refuses_claim_type_unknown_duplicate_and_noncanonical_bytes ... ok
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_refuses_missing_duplicate_reordered_or_measured_first_use_rows ... ok
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_requires_exact_two_canonical_bounded_records ... ok
+test finite_guarded_mlp_readiness_currentness_durations_v1::tests::duration_record_roundtrips_two_original_lines_without_policy_laundering ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1049 filtered out; finished in 0.00s
+

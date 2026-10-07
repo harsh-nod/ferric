@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering,engineering-currentness-duration-diagnostics",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-layer-capture-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2771,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests.command.json",
+    "sha256": "98797a8f838700f4b6efc517fa9e03fda138c9920ee5ed8d80c6deb23c59cdee"
+  },
+  "elapsed_ns": 527259947,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3555706,
+  "pid": 3555706,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2462,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests.stderr",
+    "sha256": "9b3cdda0363d4376c44e8a54dd725b4e449dee69d9c572a9af3aa13e88be19cc"
+  },
+  "stdout": {
+    "bytes": 193,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests.stdout",
+    "sha256": "00371c96fea1303cd223279e27c94123480174682b15d2e074e211579dc45e81"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

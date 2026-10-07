@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering,engineering-currentness-duration-diagnostics",
+    "--lib",
+    "finite_queued_projection_comparison_wire_v1::",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2751,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/parent-projection-wire.command.json",
+    "sha256": "facb6e7cb04c54c100fbb805f64685a98622f697e477a9afcf35e6db88aa62bc"
+  },
+  "elapsed_ns": 228316181,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "parent-projection-wire",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3559427,
+  "pid": 3559427,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 1300,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/parent-projection-wire.stderr",
+    "sha256": "008b6eff667a78c65f8aea9a010e6a83715f2002f10055ee788620f28ed435f7"
+  },
+  "stdout": {
+    "bytes": 1037,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/parent-projection-wire.stdout",
+    "sha256": "508dd3a6e0f0a76cfddcd583f04f9309d54e46204a6ca7278d4517ae3c6b8358"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

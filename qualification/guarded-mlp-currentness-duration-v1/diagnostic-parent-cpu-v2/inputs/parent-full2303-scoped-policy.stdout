@@ -1,0 +1,10 @@
+
+running 5 tests
+test finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_checks_all_window_counts_and_checked_arithmetic_overflow ... ok
+test finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_compact_closed_record_and_exact_own_history_roundtrip ... ok
+test finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_refuses_every_policy_and_authority_drift ... ok
+test finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_refuses_scope_identity_extent_and_transcript_drift ... ok
+test finite_guarded_mlp_full2303_scoped_v1::tests::full_scoped_policy_requires_canonical_single_record_and_refuses_write_flush_failures ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1042 filtered out; finished in 0.00s
+

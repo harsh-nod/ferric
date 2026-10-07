@@ -13,8 +13,12 @@ feature off, and 1,192 runtime / 853 worker tests with it enabled. Each build
 passed all 27 phases; existing ignores are unchanged. All 22 actual tested
 runtime/worker files are integrated with a complete 827-runtime / 1,299-Ferric
 source postcheck. The strict independent checker passes 126 synthetic tests.
-Both initial failed attempts remain retained. Parent qualification and an
-instrumented native run are pending; no duration breakdown, numerical
+Both initial failed attempts remain retained. The separate parent builds now
+pass 584 selected tests in 68 phases with the feature off and 595 tests in
+69 phases with it on. Their four actual tested source files are integrated
+after original-data review and a complete 1,299-Ferric / 827-runtime postcheck,
+preserving all 236 worker bodies. Native admission qualification and an
+instrumented GPU run remain pending; no duration breakdown, numerical
 acceptance or new inference performance result is claimed.
 
 The preceding [Full2303 scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)

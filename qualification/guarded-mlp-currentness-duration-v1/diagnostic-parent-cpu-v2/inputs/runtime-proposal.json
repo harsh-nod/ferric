@@ -1,0 +1,335 @@
+{
+  "feature": "engineering-currentness-duration-diagnostics",
+  "feature_dependencies": [
+    "engineering-gfx950"
+  ],
+  "files": [
+    {
+      "after": {
+        "bytes": 2133,
+        "sha256": "e02cd6f4d9516f9e45c51c286ff5b5ec1b5cbaa85d48050cd6e4b44a84896795"
+      },
+      "before": {
+        "bytes": 1984,
+        "sha256": "55be6d7bb5ffc8bb5ca347d753555f53d474e949c6efb80e4a7ce5a4bcc5f3cd"
+      },
+      "path": "crates/fe2o3-kfd/Cargo.toml",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 27988,
+        "sha256": "dfbfa657a8aca620d5cd5de967274f6fc0c48a35d9d65d31b2c15ea0bc710af5"
+      },
+      "before": {
+        "bytes": 27801,
+        "sha256": "57e32f62c32a5813b8e480ca5309af84f30cafab960166eb668d6bc80b8305e6"
+      },
+      "path": "crates/fe2o3-kfd/src/device_gfx950.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 5533,
+        "sha256": "aa0b954dc02fa172f3f516124ed313b5a6869b43fa7161d360f9653d8e099ab1"
+      },
+      "before": null,
+      "path": "crates/fe2o3-kfd/src/device_gfx950_currentness_duration_v1.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 12935,
+        "sha256": "7fae0a65e7aceed75f34ece174da84b8f449699bdae8630d86a7973b0b775645"
+      },
+      "before": null,
+      "path": "crates/fe2o3-kfd/src/device_gfx950_currentness_duration_v1_tests.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 14627,
+        "sha256": "e1496c98b6e090d43faa2c9739f02d6bd592c8d2bc2fa435bf70052054a106c4"
+      },
+      "before": {
+        "bytes": 12303,
+        "sha256": "64a30d2430f77edcf512a732796e7d308248d2e7a8c9d7e889e0ef375a89a48e"
+      },
+      "path": "crates/fe2o3-kfd/src/device_gfx950_scoped_currentness_v1.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 18556,
+        "sha256": "09c04cecf831e9f03a2fd5f6ca64233db5fe3e4846b1de20edd6a4340af2c252"
+      },
+      "before": {
+        "bytes": 18411,
+        "sha256": "addfb464cc8b9764b9edf1d57d3516371f11467106b96c483f142a773a0d737a"
+      },
+      "path": "crates/fe2o3-kfd/src/device_gfx950_scoped_currentness_v1_tests.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 16295,
+        "sha256": "a0846997a4bae2c13a0346ec3e1ab49a2850cea643804a6dc7646a012abc2900"
+      },
+      "before": {
+        "bytes": 12780,
+        "sha256": "d4b630c6fbd3bf2be5b1379e9640ffd2a33135a07f8fe0eba57e9757f836f166"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_bank_rearm_v1.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 14308,
+        "sha256": "7bb13de05e4eaec6ae319968ef71593ebdf8374271b0a9ecae8febb732dbddd0"
+      },
+      "before": {
+        "bytes": 13969,
+        "sha256": "fbc1433ae03e502e3a6c013afb8143b3f73de603e4de5b5a2d414b182313c345"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_currentness_v1.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 14052,
+        "sha256": "46ba745a0aebfdabf21dc9b765d4b3d4847268cb03185aec2337e28268b554b7"
+      },
+      "before": {
+        "bytes": 13556,
+        "sha256": "a879e7148ba13743fa005c923eeff9858018af54fd4a33c934a1ee7fa92a3e92"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1.rs",
+      "repository": "fe2o3"
+    },
+    {
+      "after": {
+        "bytes": 16767,
+        "sha256": "7fe5d11641b263b56b408ab52f604af6a40d5931e63f809cc10177e66cd6066a"
+      },
+      "before": {
+        "bytes": 16114,
+        "sha256": "96ea47c11452590d6221bf01a9da83a1bf8f33eb63979f7039bf4ef8e14685b4"
+      },
+      "path": "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_tail_v1.rs",
+      "repository": "fe2o3"
+    }
+  ],
+  "guarantees": {
+    "ambient_profile_enabled": false,
+    "bank_subtotal_validated_before_outer_guard_commit": true,
+    "cached_admission_enabled": false,
+    "canonical_changed": false,
+    "compiled": false,
+    "currentness_predicates_order_windows_deadlines_unchanged": true,
+    "duration_reconciled_before_finish_guard_commit": true,
+    "existing_checkpoint_engine_shared_by_real_and_fake": true,
+    "feature_off_observation_shapes_unchanged": true,
+    "formatted": false,
+    "full2303_feasibility": false,
+    "native_execution": false,
+    "new_currentness_policy": false,
+    "new_execution_facade": false,
+    "numerical_checks_changed": false,
+    "performance_claim": false,
+    "public_currentness_counts_unchanged": true,
+    "tests_executed": false
+  },
+  "interface": {
+    "bytes": 3773,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-currentness-duration-v1/runtime-v1/INTERFACE.md",
+    "sha256": "c94853b217173ca2f025acec71284505dd7b3d42b484cecd966d88b0d1024727"
+  },
+  "patch": {
+    "bytes": 36381,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-currentness-duration-v1/runtime-v1/runtime.patch",
+    "sha256": "bf686b44140f196d6785aa42349d9e0ec8a30fea8fb046a72fbac075444cdc9a"
+  },
+  "pending": {
+    "feature_off_outcome": null,
+    "feature_on_outcome": null,
+    "formatted_postimages": null,
+    "native_diagnostic": null,
+    "products": null
+  },
+  "proposal_root": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-currentness-duration-v1/runtime-v1",
+  "readme": {
+    "bytes": 5735,
+    "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-currentness-duration-v1/runtime-v1/README.md",
+    "sha256": "4f218ee3243b823eea89974f74d37306d67d7641c9f6345d516db84f20215acd"
+  },
+  "requires": [
+    {
+      "bytes": 2498847,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-full2303-scoped-tail-v1/cpu-v1/evidence/complete.json",
+      "sha256": "f25bd6d9f582a4e632c05e385961c260c0c95d2a119bac5af4927af6dc3b61ed"
+    },
+    {
+      "bytes": 435848,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-full2303-scoped-tail-v1/cpu-v1/evidence/sources-after.json",
+      "sha256": "eda7f5f696a5b93d048923cd5f8bd83b51a5ca9cb77efab8322da97f4286e928"
+    },
+    {
+      "bytes": 138625,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-full2303-scoped-tail-v1/cpu-v1/evidence/kfd-tests.stdout",
+      "sha256": "32717a9bd5e4d4297cceb875d09e5e0d69f965baa4946b94239ba5ebd5e39cee"
+    },
+    {
+      "bytes": 130138,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-full2303-scoped-tail-v1/cpu-v1/evidence/kfd-list.stdout",
+      "sha256": "a0950df723eff88f08d77f6b24f34823a85be015721c42b0d7a0725cbf381381"
+    },
+    {
+      "bytes": 2115,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-full2303-scoped-tail-v1/cpu-v1/evidence/scoped-checkpoint-tests.stdout",
+      "sha256": "8af808ac1897976e2d88e71d33147031dced981443a3bfede3a564f3beec439f"
+    },
+    {
+      "bytes": 3902,
+      "path": "/home/harsh/ferric-p227-integration/qualification/guarded-mlp-full2303-scoped-tail-v1/cpu-v1/evidence/mixed-bank-tests.stdout",
+      "sha256": "eb9453f6cd3d3508592ce55c7c8a788808ee6273096fd3bc3086d40f061d5d09"
+    },
+    {
+      "bytes": 15368,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-full-scoped-tail-v1/retained-admission-design-v1.md",
+      "sha256": "385126ccc913f4328a33d704008759af53a0ae1c4327e095870bd4c4a6859945"
+    },
+    {
+      "bytes": 9666,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/proposals/guarded-mlp-model-interface-v228-v1/model-full-scoped-tail-v1/currentness-duration-design-v1.md",
+      "sha256": "2874ddcec8fb1a57d309bdb13f4be99358101dbd607c615d3874d78a520d7529"
+    }
+  ],
+  "schema": "ferric-currentness-duration-runtime-source-v1",
+  "source_census": {
+    "additions": 2,
+    "baseline_runtime_canonical": 825,
+    "baseline_runtime_fixture": 827,
+    "cargo_root_manifests_unchanged": true,
+    "changed_rows": 10,
+    "proposed_runtime_canonical": 827,
+    "proposed_runtime_fixture": 829,
+    "replacements": 8,
+    "runtime_added": 2
+  },
+  "source_only": true,
+  "source_root": "/home/harsh/fe2o3-p228-runtime",
+  "test_contract": {
+    "baseline_coupled_phases": 27,
+    "baseline_runtime_ignored": 8,
+    "baseline_runtime_inventory": 1188,
+    "baseline_runtime_passed": 1180,
+    "existing_facade_doctests_preserved": true,
+    "existing_focus_counts": {
+      "mixed-bank-tests": {
+        "baseline": 22,
+        "feature_off": 22,
+        "feature_on": 23
+      },
+      "scoped-checkpoint-tests": {
+        "baseline": 16,
+        "feature_off": 16,
+        "feature_on": 27
+      }
+    },
+    "feature_off_expected_inventory": 1188,
+    "feature_off_expected_passed": 1180,
+    "feature_off_new_tests": [],
+    "feature_on_expected_inventory": 1200,
+    "feature_on_expected_passed": 1192,
+    "feature_on_new_tests": [
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_backwards_clock_refuses_after_callback_without_later_observation",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_clock_unwind_before_and_after_each_callback_never_commits",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_count_mismatch_and_category_sum_refuse_before_finish_commit",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_each_call_and_elapsed_overflow_refuses_under_engine_guard",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_elapsed_and_bank_subtotal_bounds_are_checked_integer_data",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_every_callback_fault_keeps_original_prefix_and_quarantine",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_every_callback_unwind_keeps_original_prefix_and_quarantine",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_final_deadline_is_rechecked_after_reconciliation",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_production_hooks_and_armed_publication_boundaries_are_source_bound",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_real_adapter_matches_unmeasured_predicate_and_deadline_order",
+      "device::gfx950::scoped_currentness::tests::duration_tests::duration_selected_rank_and_group_checkpoints_share_one_recorder",
+      "engineering_gfx950::peer::combined_mlp_state_v1::paired::retained::mixed_bank::scoped::custody_tests::scoped_bank_duration_refusal_and_unwind_preserve_outer_custody"
+    ],
+    "ignored_unchanged": 8,
+    "inherited_inline_names": [
+      "asrock_is_not_admitted_without_engineering_feature",
+      "every_exact_profile_field_is_fail_closed",
+      "every_scoped_engine_fault_poisons_both_and_stops_at_the_original_boundary",
+      "every_scoped_engine_unwind_poisons_both_without_later_observation",
+      "exact_mi350_profile_is_separate_from_mi300",
+      "mi350_2_is_not_admitted_without_engineering_feature",
+      "platform_observations_must_all_be_exact",
+      "profile_explicitly_grants_no_execution_or_model_authority",
+      "scoped_bank_outer_owner_quarantines_partial_commit_and_unwind",
+      "scoped_checkpoint_keeps_local_checks_between_two_root_probes_without_discovery",
+      "scoped_closed_or_poisoned_windows_never_resume",
+      "scoped_counter_overflow_is_terminal_before_unaccounted_work",
+      "scoped_deadlines_refuse_entry_and_expiry_after_every_observed_effect",
+      "scoped_entry_and_exit_each_discover_and_compare_both_retained_participants",
+      "scoped_exit_is_bound_to_entry_even_if_retained_snapshots_are_replaced",
+      "scoped_group_identity_rejects_each_substitution_without_native_contexts",
+      "scoped_persistent_content_change_without_generation_is_caught_at_full_exit",
+      "scoped_rank_checkpoint_preserves_exact_one_rank_predicates_and_full_exit",
+      "scoped_rank_deadline_and_generation_drift_are_terminal_before_later_effects",
+      "scoped_rank_every_fault_and_unwind_stops_and_invalidates_whole_window",
+      "scoped_rank_substitution_and_out_of_range_poison_window_and_selected_device",
+      "scoped_root_or_generation_drift_rejects_before_local_predicates",
+      "scoped_roster_count_duplicate_zero_and_substitution_are_terminal",
+      "scoped_transient_content_change_and_revert_is_an_explicit_temporal_limitation"
+    ],
+    "inherited_inline_test_bodies_unchanged": 24,
+    "no_new_phase_required": true
+  },
+  "unchanged_contracts": [
+    {
+      "bytes": 83574,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950.rs",
+      "sha256": "6906931207c551703d4e2ae15fd359ce233172e903fd481b84a3ba837e903538"
+    },
+    {
+      "bytes": 36164,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer.rs",
+      "sha256": "90463c8ad6f6bc54c2024104dd48a00f5cae7bfe07dab8ebf06c82ad2f4171f5"
+    },
+    {
+      "bytes": 120321,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/topology.rs",
+      "sha256": "d753e68fef631395c0f75af2ffa571dd34f59c7afac16ec248a494dfc54eebc2"
+    },
+    {
+      "bytes": 12137,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/device_gfx950_group_currentness.rs",
+      "sha256": "7f646a22c5ad6b261856e63d0fe13970891b7641531188ce0e21b9e94219a5e5"
+    },
+    {
+      "bytes": 15676,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_mixed_bank_v1.rs",
+      "sha256": "ef0f31eb3a194bde13ef5f3c61db96c736642246d5f62b06902880248967b4b6"
+    },
+    {
+      "bytes": 19374,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_facade_v1.rs",
+      "sha256": "cf8a821295e528cd73693a0117392e65f4739a9a416262d825347ba2dc7009ed"
+    },
+    {
+      "bytes": 4729,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_census_layer_v1.rs",
+      "sha256": "c511297726e0fd16f9d2d3db4c1dac663a2f9e41593a5bf9258b61c7cb23040b"
+    },
+    {
+      "bytes": 21575,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer_round.rs",
+      "sha256": "eb78c320dc0a41be374c82bfdcdeae87d88ead39baa7952b10d69a03c3b1867c"
+    },
+    {
+      "bytes": 20279,
+      "path": "/home/harsh/fe2o3-p228-runtime/crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_tail_v1_tests.rs",
+      "sha256": "5976dfcc061f6c6874b7d1d3db5108e300929c0a970f5ca8ac7b9ff342663ae6"
+    }
+  ]
+}

@@ -18,7 +18,7 @@ feature does not remove checks, extend deadlines or change arithmetic.
 The selected worker publishes the original canonical policy line and a
 second bounded diagnostic record after healthy Close. The diagnostic binds
 the first line's hash and the original session, worker and transcript. The
-proposed parent retains and authenticates the complete original stderr. Feature-off
+parent retains and authenticates the complete original stderr. Feature-off
 builds retain the single-record protocol.
 
 ## Qualification In Progress
@@ -37,8 +37,7 @@ diagnostic tests and instrumentation.
 The 22 actual tested runtime and worker files are now
 [integrated with a complete source postcheck](worker-integration-v1/README.md):
 827 runtime bodies and 1,299 Ferric bodies match the expected generation.
-All four parent source preimages remain unchanged pending their separate
-qualification. The runtime and worker feature is off by default.
+The runtime and worker feature is off by default.
 
 The independent Python checker's [fresh retry](checker-cpu-v2/README.md)
 passed all 126 tests. Its [first attempt](checker-cpu-failed-v1/README.md)
@@ -47,8 +46,16 @@ this diagnostic's fixed workload. The fixture-only repair uses the exact
 per-forward counts and validates the positive case before mutation tests.
 It does not relax the production validator.
 
-Parent qualification, actual instrumented GPU execution, original-evidence
-validation and a measured duration breakdown remain pending. No result from
+The separate parent builds also passed: [default](default-parent-cpu-v2/README.md)
+has 68 phases and 584 selected passes across 58 scopes; the
+[diagnostic build](diagnostic-parent-cpu-v2/README.md) has 69 phases and 595
+selected passes across 59 scopes. The eleven added cases cover the shared
+codec and complete original-stderr parser. Their four actual tested parent
+files are [integrated](parent-integration-v1/README.md) with a complete
+1,299-Ferric / 827-runtime postcheck, preserving all 236 worker bodies.
+
+Native admission qualification, actual instrumented GPU execution,
+original-evidence validation and a measured duration breakdown remain pending. No result from
 this work is substituted for independent numerical acceptance or full-request
 feasibility. The [community demo](../../docs/GFX950_COMMUNITY_DEMO_V1.md) still
 reports the previously measured short prompt-forward experiments.

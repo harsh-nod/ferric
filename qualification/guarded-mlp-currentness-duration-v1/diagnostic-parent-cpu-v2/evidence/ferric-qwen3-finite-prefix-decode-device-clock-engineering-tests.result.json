@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering,engineering-currentness-duration-diagnostics",
+    "--bin",
+    "ferric-qwen3-finite-prefix-decode-device-clock-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2764,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.command.json",
+    "sha256": "a0c94c3eda1b9bf83fb322d7774bbbb36494d2af09c1be15e3650068c897cbcb"
+  },
+  "elapsed_ns": 530423898,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3554767,
+  "pid": 3554767,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2448,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.stderr",
+    "sha256": "341a10b48950fa1510ee9e51692d5b95326a253a563a5d8744e062c745eb0588"
+  },
+  "stdout": {
+    "bytes": 203,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.stdout",
+    "sha256": "eb373173fed2e0f5d3f48973a70b9019b6844a1e94df36231d0ac97416440cde"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

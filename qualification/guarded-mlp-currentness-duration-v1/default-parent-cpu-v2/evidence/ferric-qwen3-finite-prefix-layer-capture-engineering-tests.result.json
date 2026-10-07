@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-prefix-layer-capture-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-layer-capture-engineering-tests.command.json",
+    "sha256": "e0c8ab69d8e5be5e116c12a4a267c8a5bf8e2848e26077c79fcf1c723aecb397"
+  },
+  "elapsed_ns": 519075001,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-prefix-layer-capture-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3494463,
+  "pid": 3494463,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2427,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-layer-capture-engineering-tests.stderr",
+    "sha256": "82a4237f92c2a16bb263061649722262633a5348cbd4096508c347c0803223a7"
+  },
+  "stdout": {
+    "bytes": 194,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-layer-capture-engineering-tests.stdout",
+    "sha256": "443e3d1bc63cdaec1c3def8635d18cdd235eb514bd7ea8395dd7b4d0a1db2f90"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-projection-residual-decode-host-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2706,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.command.json",
+    "sha256": "92b553ca7d87a629725e71f6298bb299552e19661081312e87c7e716c3b094d1"
+  },
+  "elapsed_ns": 519583612,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-projection-residual-decode-host-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3494527,
+  "pid": 3494527,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2449,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.stderr",
+    "sha256": "c9a7cbdfbf73b15199ecb5e3c92a9de8cb1514701dccd818cff1238b38903b25"
+  },
+  "stdout": {
+    "bytes": 197,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-projection-residual-decode-host-engineering-tests.stdout",
+    "sha256": "c07fcccadb129b4bc33d32176d59583956f3a071d00f256bb5934a21de5fa777"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

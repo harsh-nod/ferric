@@ -9,7 +9,9 @@ The [complete source postcheck](postcheck.json) authenticates all 827 canonical
 runtime bodies and 1,299 canonical Ferric bodies. It preserves both workspace
 manifests and lockfiles and all four proposed parent preimages. Only the listed
 22 source changes are admitted by this integration. The separate parent
-qualification is still pending.
+qualification was still pending at this checkpoint. The later
+[parent integration](../parent-integration-v1/README.md) retains its separate
+default and diagnostic results and source postcheck.
 
 The postcheck also compares all 1,065 project source bodies in the two original
 CPU capsules. Helper sources differ by mode and are not included in that

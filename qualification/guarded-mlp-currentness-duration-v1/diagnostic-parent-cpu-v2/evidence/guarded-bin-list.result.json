@@ -1,0 +1,54 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering,engineering-currentness-duration-diagnostics",
+    "--bin",
+    "ferric-qwen3-finite-guarded-mlp-decode-engineering",
+    "--",
+    "--list",
+    "--format=terse"
+  ],
+  "command": {
+    "bytes": 2768,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/guarded-bin-list.command.json",
+    "sha256": "14ee8718d505b240e0e98dbde114f2d2f4f7e975accf71505fb72f5634eb3cec"
+  },
+  "elapsed_ns": 521431563,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "guarded-bin-list",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3559608,
+  "pid": 3559608,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2432,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/guarded-bin-list.stderr",
+    "sha256": "66819ddcb61c9b486cea37c188adb29bbd7a6ad13147bc31a1b7726fd5494817"
+  },
+  "stdout": {
+    "bytes": 541,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-diagnostic-parent-cpu-v228-v2/evidence/guarded-bin-list.stdout",
+    "sha256": "f72c64d172ae26f69a677740d29ddfcba5e5785060731a0adec37f3b6b2a186d"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

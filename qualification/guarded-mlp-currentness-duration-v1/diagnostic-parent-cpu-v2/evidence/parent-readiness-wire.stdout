@@ -1,0 +1,9 @@
+
+running 4 tests
+test finite_guarded_mlp_readiness_wire_v1::tests::position5_wire_requires_matching_schema_entry_and_close ... ok
+test finite_guarded_mlp_readiness_wire_v1::tests::readiness_wire_close_requires_forty_zero_outputs_and_exact_identity ... ok
+test finite_guarded_mlp_readiness_wire_v1::tests::readiness_wire_profile_is_native40_only_and_setup_keeps_ar4_closed ... ok
+test finite_guarded_mlp_readiness_wire_v1::tests::readiness_wire_refuses_unknown_fields_truncation_and_unbound_images ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1054 filtered out; finished in 0.00s
+

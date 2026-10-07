@@ -1,0 +1,53 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/1.97.1-x86_64-unknown-linux-gnu/bin/cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "--jobs",
+    "2",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/ferric/adapters/m1-engineering-execution-v1/Cargo.toml",
+    "--features",
+    "guarded-mlp-readiness-engineering,guarded-mlp-full2303-engineering",
+    "--bin",
+    "ferric-qwen3-finite-prefix-decode-device-clock-engineering",
+    "--",
+    "--test-threads=2"
+  ],
+  "command": {
+    "bytes": 2701,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.command.json",
+    "sha256": "c09b97ab15a34885e14c6c43cbbd7a07264b9d2df6331ebe9490e2ee007e06ee"
+  },
+  "elapsed_ns": 518625421,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 3494279,
+  "pid": 3494279,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 2439,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.stderr",
+    "sha256": "b598e77f19a63c7d4857bf377cc8ff31c1ac48231e6562be3f9abab5f5d3b56d"
+  },
+  "stdout": {
+    "bytes": 203,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-default-parent-cpu-v228-v2/evidence/ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests.stdout",
+    "sha256": "eb373173fed2e0f5d3f48973a70b9019b6844a1e94df36231d0ac97416440cde"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}
