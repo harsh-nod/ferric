@@ -1,0 +1,29 @@
+[workspace]
+members = [
+    "crates/fe2o3-kfd", "crates/fe2o3-amdhsa-loader", "crates/fe2o3-aql",
+    "crates/fe2o3-drm-uapi", "crates/fe2o3-hsaco", "crates/fe2o3-kfd-uapi",
+    "crates/fe2o3-runtime-model", "crates/fe2o3-amd-target", "crates/fe2o3-target-spec",
+]
+default-members = ["crates/fe2o3-kfd", "crates/fe2o3-aql"]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/harsh-nod/fe2o3"
+rust-version = "1.94"
+
+[workspace.dependencies]
+fe2o3-amd-target = { path = "crates/fe2o3-amd-target" }
+fe2o3-amdhsa-loader = { path = "crates/fe2o3-amdhsa-loader" }
+fe2o3-aql = { path = "crates/fe2o3-aql" }
+fe2o3-drm-uapi = { path = "crates/fe2o3-drm-uapi" }
+fe2o3-hsaco = { path = "crates/fe2o3-hsaco" }
+fe2o3-kfd-uapi = { path = "crates/fe2o3-kfd-uapi" }
+fe2o3-runtime-model = { path = "crates/fe2o3-runtime-model" }
+fe2o3-target-spec = { path = "crates/fe2o3-target-spec" }
+libc = "0.2.189"
+rustix = { version = "1.1.4", features = ["fs", "net"] }
+serde = { version = "1", features = ["derive"] }
+sha2 = { version = "0.11.0", default-features = false }
+spin = { version = "0.12.3", default-features = false, features = ["once"] }
