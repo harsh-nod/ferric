@@ -1,0 +1,764 @@
+{
+  "audit_kind": "read-only independent source/data join; no new model dot or project import",
+  "contained_inputs": {
+    "framework_inner": {
+      "bytes": 285346,
+      "member": "output/complete.json",
+      "sha256": "5ebd12d258fc9c76190b4ec4c7270d9732d15e635c7944d966bd50ffc81fa027"
+    },
+    "framework_owner": {
+      "bytes": 10632,
+      "member": "complete.json",
+      "sha256": "2d4687d2fae7045a572054c5f46018c859e62a30f5b63c08a7f6060adbd7046c"
+    },
+    "framework_sidecars": [
+      {
+        "bytes": 1855037,
+        "member": "output/pass1-causal-layer0.bin",
+        "sha256": "d3b7af6a85243168c440f2332905ca493248f9631fc894732dc5cc860c6bb273"
+      },
+      {
+        "bytes": 1855037,
+        "member": "output/pass2-causal-layer0.bin",
+        "sha256": "14a4139ae3653edb35d04c28009c26147069b9e42dd5cfe41823921c0dd87d9c"
+      }
+    ],
+    "historical_capture": {
+      "bytes": 9670656,
+      "member": "prefix-silu-materialized-capture-gpu-v228-v1/native/candidate-capture.bin",
+      "sha256": "3967969ade0b4e3ca8eda117b2f28659a419d05d9f34537613dd42fdeec1946e"
+    },
+    "historical_replay_decompressed": {
+      "bytes": 10946336,
+      "sha256": "869541d4852c6cc1af45164f2a2521b075db30c62ed0487309cf0dd16abaa515"
+    },
+    "native_sidecar": {
+      "bytes": 1666665,
+      "member": "readiness/native/child-stderr.bin",
+      "sha256": "6577294939bca22bb62bab672e053b45d5c19798fdfc7f5cd10b8f4b6f7e93a2"
+    },
+    "native_summary": {
+      "bytes": 21934,
+      "member": "readiness/native/complete.json",
+      "sha256": "5a414a72e6d0e4b76031d57de909f954c7cd0853a39888b5f3a167fe6e94d8f4"
+    },
+    "native_terminal": {
+      "bytes": 278903,
+      "member": "readiness/complete.json",
+      "sha256": "00aa0447a23f57c6d9bb2ed39cd4e5b2b9da692f15bceb33107ac3822f95516f"
+    }
+  },
+  "counts": {
+    "current_embedding_encodings_join_prior_report_and_genuine_framework": 8192,
+    "current_native_partials_join_prior_capture_and_report": 8192,
+    "current_native_residuals_join_prior_capture_and_report": 8192,
+    "derived_tp_projection_roundings_rechecked": 4096,
+    "exact_integer_sum_roundings_rechecked": 4096,
+    "framework_residual_boundary_encodings_rechecked": 4096,
+    "framework_two_pass_selected_arrays_join_prior_raw_bodies": 8,
+    "framework_two_pass_selected_bf16_encodings": 32768,
+    "native_residual_boundary_encodings_rechecked": 8192,
+    "residual_difference_rows": [
+      1024,
+      3444
+    ]
+  },
+  "framework_p0_parts": {
+    "attention-output": [
+      {
+        "bytes": 8192,
+        "offset_in_payload": 92672,
+        "offset_in_sidecar": 126013,
+        "sha256": "a2462ddd99cab2adcfdfb0812e83ffbc87ebfd07c99e4ca08793c4d4fbf70cfe"
+      },
+      {
+        "bytes": 8192,
+        "offset_in_payload": 92672,
+        "offset_in_sidecar": 126013,
+        "sha256": "a2462ddd99cab2adcfdfb0812e83ffbc87ebfd07c99e4ca08793c4d4fbf70cfe"
+      }
+    ],
+    "embedding": [
+      {
+        "bytes": 8192,
+        "offset_in_payload": 0,
+        "offset_in_sidecar": 33341,
+        "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+      },
+      {
+        "bytes": 8192,
+        "offset_in_payload": 0,
+        "offset_in_sidecar": 33341,
+        "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+      }
+    ],
+    "first-residual": [
+      {
+        "bytes": 8192,
+        "offset_in_payload": 109056,
+        "offset_in_sidecar": 142397,
+        "sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8"
+      },
+      {
+        "bytes": 8192,
+        "offset_in_payload": 109056,
+        "offset_in_sidecar": 142397,
+        "sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8"
+      }
+    ],
+    "o-projection": [
+      {
+        "bytes": 8192,
+        "offset_in_payload": 100864,
+        "offset_in_sidecar": 134205,
+        "sha256": "6eb55741adea8ffe954ff1fd91d3e8b44fdabce18e49d64270a1ce4ec50d1dc4"
+      },
+      {
+        "bytes": 8192,
+        "offset_in_payload": 100864,
+        "offset_in_sidecar": 134205,
+        "sha256": "6eb55741adea8ffe954ff1fd91d3e8b44fdabce18e49d64270a1ce4ec50d1dc4"
+      }
+    ]
+  },
+  "historical_method": {
+    "current_arithmetic_check": "independent integer binary-search nearest-neighbor oracle on stored exact sums/current captured partials; no multiplication by checkpoint weights",
+    "exact_real_dots": "4096 BF16 products accumulated as integer units2^-266 with no FP32 operation rounding",
+    "fp32_order": {
+      "addition": "RNE FP32, gradual underflow",
+      "lanes": 64,
+      "multiplication": "RNE FP32",
+      "rank_terms": 2048,
+      "terms_per_lane": 32,
+      "xor_masks": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32
+      ]
+    },
+    "native_projection": "ordered FP32 (+0 + rank0 partial) + rank1 partial, then BF16 RNE",
+    "prior_counts": {
+      "framework_projection_matches_ideal": 4093,
+      "native_partials_match_fixed_order": 8192,
+      "native_projection_matches_framework": 4093,
+      "native_projection_matches_ideal": 4095,
+      "native_residual_matches_conditional_boundary": 8192,
+      "native_residual_matches_framework": 8188,
+      "rank_partials": 8192,
+      "rounded_products": 0,
+      "rows": 4096,
+      "subnormal_products": 0,
+      "subnormal_sums": 0
+    },
+    "prior_tests": {
+      "errors": 0,
+      "failures": 0,
+      "passed": true,
+      "skipped": 0,
+      "tests": 18
+    },
+    "residual": "materialized BF16 projection widened to FP32; add captured BF16 embedding in FP32 RNE; BF16 RNE output"
+  },
+  "images": {
+    "current_base_setup_prefix": {
+      "bytes": 48584,
+      "sha256": "4d0fe835eef3b76bc1b60ca560e6a8028f85bb9ce292bac77ccf6c6da65e6285"
+    },
+    "current_guarded_request_prefix": {
+      "bytes": 54344,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/rope-indexed-checked-emission-v228-v1/emitted/artifact.hsaco",
+      "sha256": "29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8"
+    },
+    "current_guarded_sequence_prefix": {
+      "bytes": 54344,
+      "sha256": "29fd58e7b09fee003ed31660e6201c20a7eb5da4b873d0b4d954993f7018f2f8"
+    },
+    "current_image_isa_equivalence_claimed": false,
+    "historical_modeled_prefix": {
+      "bytes": 53560,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/row-reciprocal-checked-probe-v228-v7/emitted/artifact.hsaco",
+      "sha256": "4885204c8d510122588549107f42d2bc6f180f48fbc4eddd3bb1260e8d6629c5"
+    }
+  },
+  "input_token": 9112,
+  "inputs": {
+    "current_framework_archive": {
+      "bytes": 9927249,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/guarded-mlp-readiness40-causal-layer0-reference-evidence-v228-v1.tar.gz",
+      "sha256": "aab3837ab2d3d7fcff0d69424246272f3969c1f0a827a2bf853f770bc2d204bf"
+    },
+    "current_native_archive": {
+      "bytes": 5614887,
+      "path": "/mnt/c/Users/harmenon/ferric-session-evidence/20261004/causal-layer0-native-evidence-v3.tar.gz",
+      "sha256": "6d346693b1024978d9c445d945ee2e01cace16187e5251932ef9ae52f3d06c0f"
+    },
+    "current_parent_source": {
+      "bytes": 23172,
+      "path": "/home/harsh/ferric-p227-integration/adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness.rs",
+      "sha256": "01d7d607b539fca98cbeb5b8ddd373b2825a1ee0f3c7e22481b1e02a5ded6100"
+    },
+    "historical_framework_pass1_attention-output": {
+      "bytes": 8192,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass1-attention-output.bf16",
+      "sha256": "a2462ddd99cab2adcfdfb0812e83ffbc87ebfd07c99e4ca08793c4d4fbf70cfe"
+    },
+    "historical_framework_pass1_embedding": {
+      "bytes": 8192,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass1-embedding.bf16",
+      "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+    },
+    "historical_framework_pass1_first-residual": {
+      "bytes": 8192,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass1-first-residual.bf16",
+      "sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8"
+    },
+    "historical_framework_pass1_o-projection": {
+      "bytes": 8192,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass1-o-projection.bf16",
+      "sha256": "6eb55741adea8ffe954ff1fd91d3e8b44fdabce18e49d64270a1ce4ec50d1dc4"
+    },
+    "historical_framework_pass2_attention-output": {
+      "bytes": 8192,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass2-attention-output.bf16",
+      "sha256": "a2462ddd99cab2adcfdfb0812e83ffbc87ebfd07c99e4ca08793c4d4fbf70cfe"
+    },
+    "historical_framework_pass2_embedding": {
+      "bytes": 8192,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass2-embedding.bf16",
+      "sha256": "68b2cf48a968e475175c36edb4b0fb94836fcb2afcdedcb4403b208cf98f6b1c"
+    },
+    "historical_framework_pass2_first-residual": {
+      "bytes": 8192,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass2-first-residual.bf16",
+      "sha256": "8741323079c3235eb02ffce0afc8d0716088c6c5417ac7923d68c5cea08822e8"
+    },
+    "historical_framework_pass2_o-projection": {
+      "bytes": 8192,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/layer0-framework-capture-v228-v1/pass2-o-projection.bf16",
+      "sha256": "6eb55741adea8ffe954ff1fd91d3e8b44fdabce18e49d64270a1ce4ec50d1dc4"
+    },
+    "historical_native_archive": {
+      "bytes": 427580,
+      "path": "/home/harsh/ferric-session-evidence/20261001/wave-output-lowering-v216/prefix-silu-materialized-capture-gpu-v228-v1-retained.tar.gz",
+      "sha256": "1403889c2fc9bf87c5ebe8cb7fa89e66bbc58af1d07991c78862adf4edad6ef4"
+    },
+    "historical_registration": {
+      "bytes": 122075,
+      "path": "/home/harsh/ferric-p227-integration/qualification/silu-materialized-native-capture-v1/native/candidate-registration.json",
+      "sha256": "3ecdd5afb99848539310b8eb6201f09645cc27df1275d5bd2b6db0d40550f20e"
+    },
+    "historical_replay_gzip": {
+      "bytes": 1946667,
+      "path": "/home/harsh/ferric-p227-integration/qualification/o-projection-exact-replay-v1/complete.json.gz",
+      "sha256": "ffb00e00d8783d694a4f0379e23a9d96252944371696304c4807638c716dddbf"
+    },
+    "historical_source_capture_inputs.py": {
+      "bytes": 21145,
+      "path": "/home/harsh/ferric-p227-integration/qualification/o-projection-exact-replay-v1/source/capture_inputs.py",
+      "sha256": "67b3982c7e1f3f8f64429ee4ee98b45ef266c15da1752b1c2f209a327e20ec40"
+    },
+    "historical_source_exact_bf16.py": {
+      "bytes": 2554,
+      "path": "/home/harsh/ferric-p227-integration/qualification/o-projection-exact-replay-v1/source/exact_bf16.py",
+      "sha256": "b9e53a3afa4fb851a8e7231c020e5ed19fb55deb7ce4d9f0bff1454e472acddf"
+    },
+    "historical_source_fp32_replay.py": {
+      "bytes": 4657,
+      "path": "/home/harsh/ferric-p227-integration/qualification/o-projection-exact-replay-v1/source/fp32_replay.py",
+      "sha256": "9a7eb5e4f5c503c83b126c21f6cf880b46dda58881eb22a62f71ca2e4a74cb13"
+    },
+    "historical_source_replay.py": {
+      "bytes": 21100,
+      "path": "/home/harsh/ferric-p227-integration/qualification/o-projection-exact-replay-v1/source/replay.py",
+      "sha256": "c8113b2000e95b76e266ca4add29208dc0292655a3f8b3ed13ab359b246b16ad"
+    },
+    "historical_source_source-manifest.json": {
+      "bytes": 4340,
+      "path": "/home/harsh/ferric-p227-integration/qualification/o-projection-exact-replay-v1/source/source-manifest.json",
+      "sha256": "6655e7b7bd7a7f9b6f2e10aae1b4a5e854a0cf2b39481b237f420366f69a6827"
+    },
+    "historical_tests": {
+      "bytes": 4605,
+      "path": "/home/harsh/ferric-p227-integration/qualification/o-projection-exact-replay-v1/tests-complete.json",
+      "sha256": "701e09f47946c2974c0f79eca0d14e5b1cb21e94ee197955dc12ee796ea075d9"
+    },
+    "historical_uploads": {
+      "bytes": 178103,
+      "path": "/home/harsh/ferric-p227-integration/qualification/silu-materialized-native-capture-v1/native/candidate-uploads.json",
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    }
+  },
+  "layer": 0,
+  "limits": {
+    "current_image_isa_equivalence_proven": false,
+    "framework_accumulation_tree_proven": false,
+    "full_model_acceptance": false,
+    "native_projection_directly_captured": false,
+    "new_gpu_execution": false,
+    "new_model_dot_executed": false,
+    "new_tests_executed": false,
+    "numerical_acceptance": false,
+    "performance_claim": false,
+    "tolerance_changed": false
+  },
+  "native_original_byte_joins": [
+    {
+      "current": {
+        "bytes": 4096,
+        "offset_in_capture_payload": 39048,
+        "offset_in_sidecar": 107457,
+        "sha256": "2e3d129d209db99e0b2d3d30fd3a144777ed2eac1dd129069c19aff356c50310"
+      },
+      "equal": true,
+      "historical_capture_offset": 4737024,
+      "rank": 0,
+      "role": "attention"
+    },
+    {
+      "current": {
+        "bytes": 16384,
+        "offset_in_capture_payload": 43144,
+        "offset_in_sidecar": 111553,
+        "sha256": "ead5ec3fc0954f2eccfdb94a3c775d41bb6672bdeb6056fd774ab6402279b56c"
+      },
+      "equal": true,
+      "historical_capture_offset": 4741120,
+      "rank": 0,
+      "role": "output_partial"
+    },
+    {
+      "current": {
+        "bytes": 8192,
+        "offset_in_capture_payload": 100488,
+        "offset_in_sidecar": 168897,
+        "sha256": "2502e44efc99e7ff44bd5e00f92f7c18e46e46ad143ca618a72a4addb88bfdd2"
+      },
+      "equal": true,
+      "historical_capture_offset": 4757504,
+      "rank": 0,
+      "role": "first_residual"
+    },
+    {
+      "current": {
+        "bytes": 4096,
+        "offset_in_capture_payload": 80008,
+        "offset_in_sidecar": 148417,
+        "sha256": "d4609f6429ee3a4bde1516dc449d2ed491ee90d5f88767028ecb3e1252965365"
+      },
+      "equal": true,
+      "historical_capture_offset": 9572352,
+      "rank": 1,
+      "role": "attention"
+    },
+    {
+      "current": {
+        "bytes": 16384,
+        "offset_in_capture_payload": 84104,
+        "offset_in_sidecar": 152513,
+        "sha256": "ca5bb8ef89d40fb4cee172b2978d9358d15e8e8c08f27547c01bb9bddf1de883"
+      },
+      "equal": true,
+      "historical_capture_offset": 9576448,
+      "rank": 1,
+      "role": "output_partial"
+    },
+    {
+      "current": {
+        "bytes": 8192,
+        "offset_in_capture_payload": 108680,
+        "offset_in_sidecar": 177089,
+        "sha256": "2502e44efc99e7ff44bd5e00f92f7c18e46e46ad143ca618a72a4addb88bfdd2"
+      },
+      "equal": true,
+      "historical_capture_offset": 9592832,
+      "rank": 1,
+      "role": "first_residual"
+    }
+  ],
+  "position": 0,
+  "postchecks_passed": true,
+  "registration_join": {
+    "actual_current": {
+      "bytes": 122073,
+      "sha256": "d45ff2054c5f8b0a99c5f9b449aa97a8dd7463bdd06eb68d27963dee80582880"
+    },
+    "changed_fields": [
+      "session",
+      "child_identity"
+    ],
+    "derived_current": {
+      "bytes": 122073,
+      "sha256": "d45ff2054c5f8b0a99c5f9b449aa97a8dd7463bdd06eb68d27963dee80582880"
+    },
+    "method": "parse original; replace only actual session and child_identity; compact JSON preserves original key order; compare complete bytes/hash to current Begin commitment",
+    "original": {
+      "bytes": 122075,
+      "sha256": "3ecdd5afb99848539310b8eb6201f09645cc27df1275d5bd2b6db0d40550f20e"
+    },
+    "original_bytes_rewritten": false
+  },
+  "rows": [
+    {
+      "checkpoint_row_byte_offset": 1563452792,
+      "checkpoint_row_bytes": 8192,
+      "derived_native_projection_bf16": "bc9d",
+      "direct_unmaterialized_exact_dot_plus_residual_bf16": "bd2d",
+      "exact_dot_bf16": "bc9d",
+      "exact_dot_units": "-2279655593969323056525856864191514422356503346440211082661767785232665250103296",
+      "framework_projection_bf16": "bc9e",
+      "framework_residual_bf16": "bd2e",
+      "historical_row": {
+        "closer_to_exact": "native",
+        "conditional_residual_bf16": "bd2d",
+        "differing_projection_midpoint": {
+          "distance_numerator": "2325780679081751393806334057527009498953329175043730106799846248979365888",
+          "left_even": false,
+          "right_even": true,
+          "scale_power_of_two": -267,
+          "signed_offset_numerator": "2325780679081751393806334057527009498953329175043730106799846248979365888"
+        },
+        "embedding_bf16": "bcbd",
+        "exact_sum_units": "-2279655593969323056525856864191514422356503346440211082661767785232665250103296",
+        "framework_distance_units": "7238168467671803089670089730071757745578850706190057117519498923619060285440",
+        "framework_matches_ideal": false,
+        "framework_projection_bf16": "bc9e",
+        "framework_residual_bf16": "bd2e",
+        "ideal_bf16": "bc9d",
+        "native_distance_units": "7235842686992721338276283396014230736079897377015013387412699077370080919552",
+        "native_matches_framework": false,
+        "native_matches_ideal": true,
+        "native_projection_bf16": "bc9d",
+        "native_residual_bf16": [
+          "bd2d",
+          "bd2d"
+        ],
+        "native_residual_matches_conditional_boundary": [
+          true,
+          true
+        ],
+        "native_residual_matches_framework": [
+          false,
+          false
+        ],
+        "native_tp_sum_f32": "bc9d7ffc",
+        "ranks": [
+          {
+            "absolute_sum_units": "105961322914543296701941673962197570245856541777064658680003605568469097340993536",
+            "exact_sum_units": "-5291699295053302102855300305143328137658863414964159495120590224585903463989248",
+            "native_distance_units": "154857933656113274980567334659840758589371757563073048331459137271496704",
+            "native_f32": "bd36cccf",
+            "native_matches_fixed_order": true,
+            "rank": 0,
+            "replay_distance_units": "154857933656113274980567334659840758589371757563073048331459137271496704",
+            "replay_f32": "bd36cccf",
+            "rounded_products": 0,
+            "subnormal_products": 0,
+            "subnormal_sums": 0
+          },
+          {
+            "absolute_sum_units": "96593766282038376144004240371940160752958710545855641261715669999283527823130624",
+            "exact_sum_units": "3012043701083979046329443440951813715302360068523948412458822439353238213885952",
+            "native_distance_units": "124608873495570257130950943732204732973550881520982526007660886571876352",
+            "native_f32": "3cd019a2",
+            "native_matches_fixed_order": true,
+            "rank": 1,
+            "replay_distance_units": "124608873495570257130950943732204732973550881520982526007660886571876352",
+            "replay_f32": "3cd019a2",
+            "rounded_products": 0,
+            "subnormal_products": 0,
+            "subnormal_sums": 0
+          }
+        ],
+        "replay_projection_bf16": "bc9d",
+        "replay_residual_bf16": "bd2d",
+        "replay_tp_sum_f32": "bc9d7ffc",
+        "row": 1024,
+        "shard_byte_offset": 1563452792
+      },
+      "hypothetical_exact_rank_then_fp32_round": [
+        "bd36cccf",
+        "3cd019a3"
+      ],
+      "hypothetical_exact_rank_then_fp32_tp_sum": "bc9d7ffb",
+      "hypothetical_split_projection_bf16": "bc9d",
+      "ideal_projection_then_residual_bf16": "bd2d",
+      "native_partials_f32": [
+        "bd36cccf",
+        "3cd019a2"
+      ],
+      "native_residual_bf16": [
+        "bd2d",
+        "bd2d"
+      ],
+      "native_tp_sum_f32": "bc9d7ffc",
+      "packed_rank_row_bytes": 4096,
+      "packed_rank_row_offset": 4194304,
+      "primary_residual_difference": true,
+      "residual_input_bf16": "bcbd",
+      "row": 1024,
+      "scale_power_of_two": -266
+    },
+    {
+      "checkpoint_row_byte_offset": 1566172536,
+      "checkpoint_row_bytes": 8192,
+      "derived_native_projection_bf16": "b492",
+      "direct_unmaterialized_exact_dot_plus_residual_bf16": "3c89",
+      "exact_dot_bf16": "b490",
+      "exact_dot_units": "-31893509067452538274531900179883875008390047303287807082855646510381531136",
+      "framework_projection_bf16": "b491",
+      "framework_residual_bf16": "3c89",
+      "historical_row": {
+        "closer_to_exact": "framework",
+        "conditional_residual_bf16": "3c89",
+        "differing_projection_midpoint": {
+          "distance_numerator": "482043846408653439528646229755910996444632142275025435962132551255982080",
+          "left_even": true,
+          "right_even": false,
+          "scale_power_of_two": -267,
+          "signed_offset_numerator": "482043846408653439528646229755910996444632142275025435962132551255982080"
+        },
+        "embedding_bf16": "3c89",
+        "exact_sum_units": "-31893509067452538274531900179883875008390047303287807082855646510381531136",
+        "framework_distance_units": "130593981655677699165367021081523090983098327582786533098465888047202304",
+        "framework_matches_ideal": false,
+        "framework_projection_bf16": "b491",
+        "framework_residual_bf16": "3c89",
+        "ideal_bf16": "b490",
+        "native_distance_units": "351449864752975740363279208674387905461533814692238902863666663208779776",
+        "native_matches_framework": false,
+        "native_matches_ideal": false,
+        "native_projection_bf16": "b492",
+        "native_residual_bf16": [
+          "3c89",
+          "3c89"
+        ],
+        "native_residual_matches_conditional_boundary": [
+          true,
+          true
+        ],
+        "native_residual_matches_framework": [
+          true,
+          true
+        ],
+        "native_tp_sum_f32": "b4920000",
+        "ranks": [
+          {
+            "absolute_sum_units": "99407734381887886570755946142551024663658138779241899108601924986076461774405632",
+            "exact_sum_units": "1314846846324825100075493719547713903766824060271350149884860849412105606004736",
+            "native_distance_units": "339911007579435266531161726217143503533217116879391537841754318022115328",
+            "native_f32": "3c35af0c",
+            "native_matches_fixed_order": true,
+            "rank": 0,
+            "replay_distance_units": "339911007579435266531161726217143503533217116879391537841754318022115328",
+            "replay_f32": "3c35af0c",
+            "rounded_products": 0,
+            "subnormal_products": 0,
+            "subnormal_sums": 0
+          },
+          {
+            "absolute_sum_units": "98092127117218700299984134179223946069090663537271733301360597528483129670500352",
+            "exact_sum_units": "-1314878739833892552613768251447893787641832450318653437691943705058615987535872",
+            "native_distance_units": "11538857173540473832117482457244401928316697812847365021912345186664448",
+            "native_f32": "bc35b030",
+            "native_matches_fixed_order": true,
+            "rank": 1,
+            "replay_distance_units": "11538857173540473832117482457244401928316697812847365021912345186664448",
+            "replay_f32": "bc35b030",
+            "rounded_products": 0,
+            "subnormal_products": 0,
+            "subnormal_sums": 0
+          }
+        ],
+        "replay_projection_bf16": "b492",
+        "replay_residual_bf16": "3c89",
+        "replay_tp_sum_f32": "b4920000",
+        "row": 1356,
+        "shard_byte_offset": 1566172536
+      },
+      "hypothetical_exact_rank_then_fp32_round": [
+        "3c35af0f",
+        "bc35b030"
+      ],
+      "hypothetical_exact_rank_then_fp32_tp_sum": "b4908000",
+      "hypothetical_split_projection_bf16": "b490",
+      "ideal_projection_then_residual_bf16": "3c89",
+      "native_partials_f32": [
+        "3c35af0c",
+        "bc35b030"
+      ],
+      "native_residual_bf16": [
+        "3c89",
+        "3c89"
+      ],
+      "native_tp_sum_f32": "b4920000",
+      "packed_rank_row_bytes": 4096,
+      "packed_rank_row_offset": 5554176,
+      "primary_residual_difference": false,
+      "residual_input_bf16": "3c89",
+      "row": 1356,
+      "scale_power_of_two": -266
+    },
+    {
+      "checkpoint_row_byte_offset": 1583277432,
+      "checkpoint_row_bytes": 8192,
+      "derived_native_projection_bf16": "3b88",
+      "direct_unmaterialized_exact_dot_plus_residual_bf16": "bb86",
+      "exact_dot_bf16": "3b88",
+      "exact_dot_units": "490308081545414168783415486197154548048605540558918566304789153842616114085888",
+      "framework_projection_bf16": "3b87",
+      "framework_residual_bf16": "bb87",
+      "historical_row": {
+        "closer_to_exact": "native",
+        "conditional_residual_bf16": "bb86",
+        "differing_projection_midpoint": {
+          "distance_numerator": "1907362306807573464193101983376464830898480693605900421893118217911533568",
+          "left_even": true,
+          "right_even": false,
+          "scale_power_of_two": -267,
+          "signed_offset_numerator": "1907362306807573464193101983376464830898480693605900421893118217911533568"
+        },
+        "embedding_bf16": "bc07",
+        "exact_sum_units": "490308081545414168783415486197154548048605540558918566304789153842616114085888",
+        "framework_distance_units": "1810205075486469340225393191752436792622792750747436763327471309232598417408",
+        "framework_matches_ideal": false,
+        "framework_projection_bf16": "3b87",
+        "framework_residual_bf16": "bb87",
+        "ideal_bf16": "3b88",
+        "native_distance_units": "1808297713179661766761200089769060327791894270053830862905578191014686883840",
+        "native_matches_framework": false,
+        "native_matches_ideal": true,
+        "native_projection_bf16": "3b88",
+        "native_residual_bf16": [
+          "bb86",
+          "bb86"
+        ],
+        "native_residual_matches_conditional_boundary": [
+          true,
+          true
+        ],
+        "native_residual_matches_framework": [
+          false,
+          false
+        ],
+        "native_tp_sum_f32": "3b878018",
+        "ranks": [
+          {
+            "absolute_sum_units": "99998368092875879447865986711490076277392665068726433515253444604183030486007808",
+            "exact_sum_units": "-5675770686646347183881921867779564968389216358843786275473409062243079320240128",
+            "native_distance_units": "205758312963693682912898659144133821301198686232829649175782753422016512",
+            "native_f32": "bd441151",
+            "native_matches_fixed_order": true,
+            "rank": 0,
+            "replay_distance_units": "205758312963693682912898659144133821301198686232829649175782753422016512",
+            "replay_f32": "bd441151",
+            "rounded_products": 0,
+            "subnormal_products": 0,
+            "subnormal_sums": 0
+          },
+          {
+            "absolute_sum_units": "97131209272644479337984371286379400604223526732383558810829728595157171042254848",
+            "exact_sum_units": "6166078768191761352665337353976719516437821899402704841778198216085695434326016",
+            "native_distance_units": "165695832216307832178023474724822650120173889620934358468862788591681536",
+            "native_f32": "3d550154",
+            "native_matches_fixed_order": true,
+            "rank": 1,
+            "replay_distance_units": "165695832216307832178023474724822650120173889620934358468862788591681536",
+            "replay_f32": "3d550154",
+            "rounded_products": 0,
+            "subnormal_products": 0,
+            "subnormal_sums": 0
+          }
+        ],
+        "replay_projection_bf16": "3b88",
+        "replay_residual_bf16": "bb86",
+        "replay_tp_sum_f32": "3b878018",
+        "row": 3444,
+        "shard_byte_offset": 1583277432
+      },
+      "hypothetical_exact_rank_then_fp32_round": [
+        "bd441151",
+        "3d550154"
+      ],
+      "hypothetical_exact_rank_then_fp32_tp_sum": "3b878018",
+      "hypothetical_split_projection_bf16": "3b88",
+      "ideal_projection_then_residual_bf16": "bb86",
+      "native_partials_f32": [
+        "bd441151",
+        "3d550154"
+      ],
+      "native_residual_bf16": [
+        "bb86",
+        "bb86"
+      ],
+      "native_tp_sum_f32": "3b878018",
+      "packed_rank_row_bytes": 4096,
+      "packed_rank_row_offset": 14106624,
+      "primary_residual_difference": true,
+      "residual_input_bf16": "bc07",
+      "row": 3444,
+      "scale_power_of_two": -266
+    }
+  ],
+  "schema": "ferric-current-causal-p0-o-replay-join-v1",
+  "weight_custody": {
+    "current_upload_manifest": {
+      "bytes": 178103,
+      "sha256": "d5e66dbf7e3abfec463424addb6735f9a3a5b2d50653d56689ee79d01404da47"
+    },
+    "dtype": "BF16",
+    "full_checkpoint_to_upload_deinterleaving": "performed by prior executed replay; same current complete upload manifest now authenticated",
+    "header_bytes": 9328,
+    "header_sha256": "979bbeed365485ddaa67a1ed41d0289e15e2f3ba0b3388cb93e42d31f346d1df",
+    "model_hash_rechecked_locally": false,
+    "model_shard": {
+      "bytes": 3996250744,
+      "path": "/home/harmenon/ferric-mi350-model-b968-c189-r1.kUjwIKs0/model/target/model-00001-of-00005.safetensors",
+      "sha256": "31d6a825ae35f11fb85b195b4c42c146c051e446433125a215336abdf95cbf5f"
+    },
+    "prior_executed_shard_hash_passes": 2,
+    "same_source_program": {
+      "bytes": 871211,
+      "sha256": "eb8607aae21d2774b188c3477e0b03a0b924dcd75638b18624707e543b743392"
+    },
+    "tensor_absolute_offset": 1555064184,
+    "tensor_data_offsets": [
+      1555054848,
+      1588609280
+    ],
+    "tensor_shape": [
+      4096,
+      4096
+    ],
+    "weight_upload_slices": [
+      {
+        "bytes": 16777216,
+        "key": {
+          "id": 200,
+          "kind": "source",
+          "rank": 0
+        },
+        "model_key": "model.layers.0.self_attn.o_proj.weight",
+        "rank": 0,
+        "sha256": "695a205027c01cc6bd7238b76d8ca2e503f508f4be7d6ad7f6dfe427a0c2fb8e",
+        "source_column_start": 0,
+        "source_row_stride_bytes": 8192
+      },
+      {
+        "bytes": 16777216,
+        "key": {
+          "id": 201,
+          "kind": "source",
+          "rank": 1
+        },
+        "model_key": "model.layers.0.self_attn.o_proj.weight",
+        "rank": 1,
+        "sha256": "79bca2f8b04191dd004a3248160b1e97848d5b1613b72bfed63ef8a944ec4b4c",
+        "source_column_start": 2048,
+        "source_row_stride_bytes": 8192
+      }
+    ]
+  }
+}

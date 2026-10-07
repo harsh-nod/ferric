@@ -219,15 +219,41 @@ None is an exact midpoint tie. This is not an accumulation-order emulator or
 a full-projection exactness claim. It rules out treating framework agreement
 alone as evidence that a numerical change improves these selected results.
 
+## Position-Zero Residual Diagnosis
+
+The [current O replay join](current-o-replay-join-v1/README.md) reuses the
+previously executed exact all-row O-projection reference. Full-byte joins
+cover the current attention operands, both FP32 partial arrays, embeddings,
+residuals, both framework passes, and current checkpoint/upload commitments.
+No new model dot or GPU run was needed. An independent data peer rechecked
+the original artifacts, stored exact-sum rounding and residual boundaries.
+
+At the two differing residual rows, 1024 and 3444, the native-derived BF16
+projection equals the once-rounded exact dot; the framework projection differs.
+Both sides' residuals reproduce their own projection-plus-embedding boundary.
+The useful counterexample is row 1356: neither projection is the nearest exact
+dot, yet both residuals match. The current and historical kernel images are
+different, so this data join does not transfer historical ISA qualification.
+
+These results explain this observed residual boundary without requiring a
+missing BF16 materialization or changing outputs to force framework agreement.
+They do not establish a causal path to the position-five argmax difference.
+
 ## Remaining Gates
 
 Both native and framework instrumentation preserve their own prior histories
-and selected payloads. Exact Q/K dots have now been checked. The remaining
-same-input attention differences need independent diagnosis; the current
-output-projection/residual capture is also being joined to the existing exact
-O replay. No arithmetic change or tolerance relaxation follows from these
-comparisons alone. Prompt-position argmax diagnostics and actual generated-token
-acceptance must remain distinct.
+and selected payloads. Exact Q/K dots and the position-zero residual join have
+now been checked. The remaining same-input attention differences need independent
+diagnosis. No arithmetic change or tolerance relaxation follows from these
+comparisons alone.
+
+The 39/40 argmax result is a prompt-position diagnostic, not a declared 40/40
+acceptance threshold. Both runs consume the same authentic prompt tokens and
+generate zero tokens; the position-five prediction is not fed to position six.
+Independent numerical acceptance remains unestablished, rather than a claimed
+failure against a tensor tolerance this diagnostic never declared. Actual
+generated-token agreement and full-model numerical acceptance need their own
+explicit gates.
 
 Full 2,048-prompt/256-generated megakernel correctness, sustained decode
 throughput, the 700 tokens/s target, and issue #42 milestones remain open.
