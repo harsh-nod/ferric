@@ -1,0 +1,17 @@
+test_both_stage_orders_are_exact (test_report_layer.LayerReportTests.test_both_stage_orders_are_exact) ... ok
+test_closed_and_paired_sums_are_independently_checked (test_report_layer.LayerReportTests.test_closed_and_paired_sums_are_independently_checked) ... ok
+test_cold_metrics_absent_and_warm_metrics_required (test_report_layer.LayerReportTests.test_cold_metrics_absent_and_warm_metrics_required) ... ok
+test_decimal_half_even_display (test_report_layer.LayerReportTests.test_decimal_half_even_display) ... ok
+test_each_same_process_containment_is_checked (test_report_layer.LayerReportTests.test_each_same_process_containment_is_checked) ... ok
+test_exact_integer_extent_overflow_and_census (test_report_layer.LayerReportTests.test_exact_integer_extent_overflow_and_census) ... ok
+test_exact_three_levels_and_warm_census (test_report_layer.LayerReportTests.test_exact_three_levels_and_warm_census) ... ok
+test_no_cross_level_or_callback_double_counting (test_report_layer.LayerReportTests.test_no_cross_level_or_callback_double_counting) ... ok
+test_original_lf_hash_canonical_and_whole_file_custody (test_report_layer.LayerReportTests.test_original_lf_hash_canonical_and_whole_file_custody) ... ok
+test_signed_parent_differences_are_not_clamped (test_report_layer.LayerReportTests.test_signed_parent_differences_are_not_clamped) ... ok
+test_unbound_original_inputs_refuse_before_io (test_report_layer.LayerReportTests.test_unbound_original_inputs_refuse_before_io) ... ok
+test_zero_duration_nested_levels_remain_valid_and_render (test_report_layer.LayerReportTests.test_zero_duration_nested_levels_remain_valid_and_render) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.017s
+
+OK

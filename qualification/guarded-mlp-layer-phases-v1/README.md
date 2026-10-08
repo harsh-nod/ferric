@@ -6,6 +6,40 @@ arithmetic nor currentness policy. Source review and CPU qualification do not
 establish a new GPU measurement, numerical correctness, overlap, speedup,
 Full2303 feasibility or the 700 tokens/s target.
 
+## Native Measurement
+
+The [layer-duration diagnostic](native-gpu-v1/README.md) passed its first
+MI350 attempt in 448.4863049009582 seconds: 40 prompt forwards through all
+36 layers, zero generated tokens, 11 naturally retired owned phases and
+six successful pre/postflight idle checks. All 40 semantic completion
+records and four captured numeric payloads match the historical Ferric
+baseline; each run's own transcript validates. This is same-side parity,
+not independent framework numerical acceptance.
+
+![Warm nested host intervals](native-gpu-v1/host-phases.svg)
+
+Across warm positions 2-39, worker bodies total 68.141092151 seconds.
+The forward layer interval is 59.363787713 seconds; its measured closed
+bodies total 59.353307047 seconds over 1,368 ordered returns. Within those
+closed bodies, MLP/sealing takes 33.703502531 seconds and prefix work takes
+18.863720373 seconds. The seven paired stages total 33.483701772 seconds
+inside MLP/sealing, with 30.941303993 seconds in poll (92.407059% of that
+paired body). These levels are nested, not additive. Poll includes host
+checks, fences, pauses and device waiting; it is not GPU kernel time.
+
+The [exact report](native-gpu-v1/report.json) preserves all 40 rows, first-use
+versus warm reductions and the separate 124-span parent timeline. The first
+two forwards have no nested layer measurements. Callback intervals remain
+inside the enclosing stages, and signed cross-process differences are not
+exclusive residuals. This single instrumented run establishes no speedup.
+The [report's 12 CPU tests](native-gpu-v1/report-tests/complete.json) passed,
+followed by its actual original-archive invocation. The bound reporter and
+original test sources are retained separately.
+
+The [original native archive](native-gpu-v1.tar.gz) contains 170 members
+with 169 manifest pins and passed export and retain revalidation. The
+generated report README and raw evidence are retained without modification.
+
 ## Measurement Boundaries
 
 The existing `engineering-currentness-duration-diagnostics` feature is
@@ -202,7 +236,6 @@ before any new test ran. The retry corrects that expectation without
 loosening it and adds a regression rejecting bare, mixed and wrong-package
 feature vectors.
 
-No layer-duration native GPU result is established by these CPU checkpoints;
-the retained measurement remains pending. Full2303 launch admission,
-independent generated outputs, sustained throughput and issue #42 M0-M7
-remain open.
+The CPU checkpoints do not themselves establish a GPU result; the separate
+retained measurement is linked above. Full2303 launch admission, independent
+generated outputs, sustained throughput and issue #42 M0-M7 remain open.

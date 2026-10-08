@@ -29,9 +29,27 @@ is preserved: all 227 predecessor workflow tests passed, but a new fixture
 refused the actual workspace-qualified Cargo feature vector. The narrow
 retry matches that exact vector and adds a regression; no gate is relaxed.
 The checker/workflow suites overlap inherited tests, not 482 distinct cases.
-An actual retained layer-duration GPU run remains pending; the earlier
-GPU results below do not qualify the new record or establish
-Full2303/256-output acceptance.
+
+Latest native measurement: the [closed-layer diagnostic](../qualification/guarded-mlp-layer-phases-v1/native-gpu-v1/README.md)
+passed its first MI350 attempt in 448.4863049009582 seconds with 11 naturally
+retired owned phases and six successful pre/postflight idle checks.
+All 40 semantic completion records and four captured numeric payloads match
+the historical Ferric baseline, with the run's own transcript validated.
+Its 170-member archive passed export and retain revalidation. This remains
+40 prompt forwards and zero generated tokens, not independent full-model
+numerical acceptance or Full2303/256-output qualification.
+
+The 38 warm worker bodies total 68.141092151 seconds. Of the 59.363787713
+forward-layer seconds, measured closed bodies account for 59.353307047
+across 1,368 ordered returns. Closed MLP/sealing takes 33.703502531 seconds
+and prefix takes 18.863720373 seconds. The nested paired body totals
+33.483701772 seconds, including 30.941303993 seconds in poll (92.407059%).
+These levels and callbacks overlap; do not add them across levels or call
+the polling interval GPU compute or removable overhead. The [exact report
+and nested plots](../qualification/guarded-mlp-layer-phases-v1/native-gpu-v1/README.md)
+preserve first-use/warm separation and signed parent-clock differences.
+The reporter passes 12 CPU tests and its actual original-data invocation;
+this is attribution, not a matched speedup.
 
 Preceding implementation: the opt-in
 [nine-phase forward diagnostic](../qualification/guarded-mlp-forward-phases-v1/README.md)
@@ -53,7 +71,7 @@ The 146 and 227 suites overlap inherited cases, not 373 distinct tests.
 Data-only request preparation has separately passed. Native GPU results require
 separate evidence; this CPU checkpoint establishes no GPU result or new timing.
 
-Latest native measurement: the [nine-phase forward diagnostic](../qualification/guarded-mlp-forward-phases-v1/native-gpu-v1/README.md)
+Earlier native measurement: the [nine-phase forward diagnostic](../qualification/guarded-mlp-forward-phases-v1/native-gpu-v1/README.md)
 passed its first MI350 attempt in 445.407950 seconds, with eleven cleanly
 retired phases and three successful postflight idle checks. All 40 semantic
 completion records and four captured numeric payloads match the historical
@@ -2161,17 +2179,15 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Measure the CPU-qualified closed-layer and paired-MLP stages before
-   changing execution policy. The existing nine-phase native result puts
-   59.301173639 warm seconds (87.151988% of the worker body) in layers;
-   39.686465506 of those seconds are outside measured layer callbacks.
-   The next diagnostic separates six closed-layer stages and seven nested
-   paired-MLP stages, including preflight, publication, polling and retirement.
-   Keep callbacks and paired intervals nested, not additive; the remaining
-   mixed host/device time is not measured GPU compute or a removable fraction.
-   Do not reduce currentness checks, polls, durability or deadlines on the
-   strength of an attribution bucket. Retain the original native evidence
-   and signed cross-process boundary differences before drawing conclusions.
+1. Review a bounded optimization candidate against the measured closed-layer
+   and paired-MLP paths before changing execution policy. The new native
+   attribution identifies 30.941303993 warm seconds in paired poll and
+   18.863720373 seconds in closed prefix work. The source audit must distinguish
+   repeated host work from required currentness, deadline, poison, completion
+   and durability checks; a concrete candidate and its qualification remain
+   pending. Keep callbacks and paired intervals nested, not additive.
+   Do not reduce checks, polls, durability or deadlines on the strength of
+   an attribution bucket, or infer a speedup or removable fraction from it.
 2. Establish launch feasibility for the CPU-qualified Full2303 route before
    running it on the GPU. The distinct long wire and bounded four-capture
    selection are implemented; readiness still executes only forty prompt

@@ -6,14 +6,31 @@ service, accepted full-model decode or a 700 tokens/s result. The measured
 workload is 40 authentic prompt forwards through all 36 layers, with **zero
 generated tokens**.
 
-## Next Measurement: CPU-Qualified
+## Latest Closed-Layer Attribution
 
 The [closed-layer phase diagnostic](../qualification/guarded-mlp-layer-phases-v1/README.md)
-now passes six MI350 feature-on/off CPU configurations: runtime primary suites
+now passes its first [MI350 native attempt](../qualification/guarded-mlp-layer-phases-v1/native-gpu-v1/README.md)
+in 448.486305 seconds, with 11 naturally retired owned phases and six
+successful pre/postflight idle checks. All 40 semantic completion records
+and four numeric payload captures match the historical Ferric baseline;
+the run's own transcript validates. This remains 40 prompt forwards and
+zero generated tokens, not independent full-model numerical acceptance.
+
+![Warm nested host intervals](../qualification/guarded-mlp-layer-phases-v1/native-gpu-v1/host-phases.svg)
+
+The 38 warm worker bodies total 68.141092151 seconds. The closed layer
+bodies account for 59.353307047 seconds across 1,368 ordered returns,
+including 33.703502531 seconds in MLP/sealing and 18.863720373 seconds in
+prefix work. Inside MLP/sealing, the paired body totals 33.483701772 seconds;
+its poll interval takes 30.941303993 seconds (92.407059%). These tables
+and plots show nested levels on separate scales, not additive costs.
+Polling includes host checks and device waiting, not measured GPU compute
+or a removable fraction. No matched speedup follows from this run.
+
+The implementation also passes six MI350 feature-on/off CPU configurations: runtime primary suites
 1,209/1,180, worker suites 911/838, and parent selected scopes 641/584.
-Its six layer stages and seven nested paired-MLP stages will distinguish
-where the enclosing layer time is spent. The documentation separates repeated
-test scopes, retained failures and the reduced qualification workspace.
+The documentation separates repeated test scopes, retained failures and
+the reduced qualification workspace.
 The [strict V2 checker](../qualification/guarded-mlp-layer-phases-v1/checker-cpu-v1/README.md)
 passes 178 tests, and the [native workflow retry](../qualification/guarded-mlp-layer-phases-v1/native-admission-cpu-v2/README.md)
 passes 304 tests in seven cleanly retired processes. These suites overlap
@@ -21,11 +38,13 @@ inherited cases, not 482 distinct tests. The failed first workflow attempt
 is preserved; the retry corrects an exact workspace-feature expectation,
 not a runtime or numerical gate.
 
-The layer-duration GPU measurement remains pending. These CPU results add no
-new measured bars, overlap, numerical acceptance or inference speedup to this
-demo. The chart below remains the earlier nine-phase native measurement.
+The retained 170-member native archive, original three-record stderr and
+exact integer report are linked from the native result. The report passes
+12 focused CPU tests and its actual data-only invocation. Neither the CPU
+qualification nor host attribution establishes overlap, numerical acceptance
+or inference speedup.
 
-## Latest Forward Attribution
+## Earlier Forward Attribution
 
 The [nine-phase GPU diagnostic](../qualification/guarded-mlp-forward-phases-v1/native-gpu-v1/README.md)
 passed its first MI350 attempt in 445.407950 seconds. All 40 semantic completion

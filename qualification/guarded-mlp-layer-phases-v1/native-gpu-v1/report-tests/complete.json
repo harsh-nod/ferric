@@ -1,0 +1,81 @@
+{
+  "actual_archive_read": false,
+  "argv": [
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-native-source-v228-v1/run_report_tests.py",
+    "e6629df54924cd7d3ba9563778c1e115a746052309fd45da6d3124d48937a78f",
+    "40cdc1071ca7cb1cc87420b186f85a1a4f5cf5572e9b2205838ad8aa8050cac6"
+  ],
+  "child_processes_started": 0,
+  "controller": {
+    "bytes": 5127,
+    "sha256": "411f5aa2f2de1e1e943c27e850b3004a5fdaa80abe5c8d67389d1f94ae13c96c"
+  },
+  "elapsed_seconds": 0.036983542959205806,
+  "expected_names": [
+    "test_report_layer.LayerReportTests.test_both_stage_orders_are_exact",
+    "test_report_layer.LayerReportTests.test_closed_and_paired_sums_are_independently_checked",
+    "test_report_layer.LayerReportTests.test_cold_metrics_absent_and_warm_metrics_required",
+    "test_report_layer.LayerReportTests.test_decimal_half_even_display",
+    "test_report_layer.LayerReportTests.test_each_same_process_containment_is_checked",
+    "test_report_layer.LayerReportTests.test_exact_integer_extent_overflow_and_census",
+    "test_report_layer.LayerReportTests.test_exact_three_levels_and_warm_census",
+    "test_report_layer.LayerReportTests.test_no_cross_level_or_callback_double_counting",
+    "test_report_layer.LayerReportTests.test_original_lf_hash_canonical_and_whole_file_custody",
+    "test_report_layer.LayerReportTests.test_signed_parent_differences_are_not_clamped",
+    "test_report_layer.LayerReportTests.test_unbound_original_inputs_refuse_before_io",
+    "test_report_layer.LayerReportTests.test_zero_duration_nested_levels_remain_valid_and_render"
+  ],
+  "failure": null,
+  "gpu_execution": false,
+  "limits": {
+    "address_space_bytes": 536870912,
+    "affinity": [
+      8,
+      9
+    ],
+    "cpu_seconds": 120,
+    "nice": 10,
+    "wall_seconds": 90
+  },
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "passed_names": [
+    "test_report_layer.LayerReportTests.test_both_stage_orders_are_exact",
+    "test_report_layer.LayerReportTests.test_closed_and_paired_sums_are_independently_checked",
+    "test_report_layer.LayerReportTests.test_cold_metrics_absent_and_warm_metrics_required",
+    "test_report_layer.LayerReportTests.test_decimal_half_even_display",
+    "test_report_layer.LayerReportTests.test_each_same_process_containment_is_checked",
+    "test_report_layer.LayerReportTests.test_exact_integer_extent_overflow_and_census",
+    "test_report_layer.LayerReportTests.test_exact_three_levels_and_warm_census",
+    "test_report_layer.LayerReportTests.test_no_cross_level_or_callback_double_counting",
+    "test_report_layer.LayerReportTests.test_original_lf_hash_canonical_and_whole_file_custody",
+    "test_report_layer.LayerReportTests.test_signed_parent_differences_are_not_clamped",
+    "test_report_layer.LayerReportTests.test_unbound_original_inputs_refuse_before_io",
+    "test_report_layer.LayerReportTests.test_zero_duration_nested_levels_remain_valid_and_render"
+  ],
+  "raw": {
+    "stderr": {
+      "bytes": 1735,
+      "sha256": "e262edd3b2814db5c69508a4a43483cc12109366326e82f54eb8b51ca93b4154"
+    },
+    "stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "schema": "ferric-layer-report-pure-tests-v1",
+  "single_process": true,
+  "source_unchanged": true,
+  "sources": {
+    "report_layer.py": {
+      "bytes": 31819,
+      "sha256": "e6629df54924cd7d3ba9563778c1e115a746052309fd45da6d3124d48937a78f"
+    },
+    "test_report_layer.py": {
+      "bytes": 11399,
+      "sha256": "40cdc1071ca7cb1cc87420b186f85a1a4f5cf5572e9b2205838ad8aa8050cac6"
+    }
+  },
+  "tests_run": 12
+}
