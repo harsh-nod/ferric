@@ -5,6 +5,10 @@ use crate::finite_guarded_mlp_long_wire_v2::{
 };
 use std::io;
 
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[path = "guarded_mlp_long_sequence_v2_timing.rs"]
+mod timing;
+
 pub struct Tail {
     pub output_token: u32,
     pub host_ns: [u64; 3],
@@ -24,6 +28,17 @@ pub trait Backend {
     fn commit(&mut self, generation: u64) -> io::Result<()>;
     fn close(&mut self) -> io::Result<()>;
     fn poison(&mut self);
+    #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+    fn forward_timing_selected(&self) -> bool {
+        false
+    }
+    #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+    fn record_forward_timing(
+        &mut self,
+        _row: crate::finite_guarded_mlp_readiness_forward_durations_v1::ForwardRow,
+    ) -> io::Result<()> {
+        Err(io::Error::other("forward timing sink not selected"))
+    }
 }
 pub struct Produced {
     pub frame: Frame,
@@ -70,11 +85,33 @@ impl Sequence {
         backend.poison();
     }
     pub fn run(&mut self, backend: &mut impl Backend, request: &Request) -> io::Result<Produced> {
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        {
+            self.run_inner(backend, request, &mut timing::NativeClock::default())
+        }
+        #[cfg(not(feature = "engineering-currentness-duration-diagnostics"))]
+        {
+            self.run_inner(backend, request)
+        }
+    }
+    fn run_inner(
+        &mut self,
+        backend: &mut impl Backend,
+        request: &Request,
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")] clock: &mut impl timing::Clock,
+    ) -> io::Result<Produced> {
         let mut attempt = Attempt {
             transcript: &mut self.transcript,
             backend,
             finished: false,
         };
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        let mut timing = timing::Timing::new(
+            attempt.backend.forward_timing_selected(),
+            attempt.transcript.completed(),
+        );
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         attempt.backend.check_deadline()?;
         let step = attempt.transcript.begin(request)?;
         let Command::Forward {
@@ -84,19 +121,31 @@ impl Sequence {
             unreachable!()
         };
         attempt.backend.check_deadline()?;
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         attempt.backend.metadata(request)?;
         attempt.backend.check_deadline()?;
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         let embedding_ns = attempt.backend.embedding(*token)?;
         attempt.backend.check_deadline()?;
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         attempt.backend.begin(step)?;
         attempt.backend.check_deadline()?;
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         let mut layers = Vec::with_capacity(36);
         for index in 0..36 {
             layers.push(attempt.backend.layer(index)?);
             attempt.backend.check_deadline()?;
         }
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         let tail = attempt.backend.tail()?;
         attempt.backend.check_deadline()?;
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         let control = Control {
             embedding_ns,
             layers,
@@ -119,12 +168,25 @@ impl Sequence {
         frame.completion.chain = attempt.transcript.next_chain(request, &frame.completion)?;
         frame.validate(profile)?;
         attempt.backend.check_deadline()?;
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         attempt.backend.fence()?;
         attempt.backend.check_deadline()?;
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        timing.mark(clock)?;
         attempt.backend.commit(*generation)?;
         attempt.backend.check_deadline()?;
         attempt.transcript.advance(&frame)?;
         attempt.backend.check_deadline()?;
+        // State may already be committed. Keep custody armed through row acceptance:
+        // refusal poisons and prevents publication; it does not roll state back.
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        {
+            timing.mark(clock)?;
+            if let Some(row) = timing.finish()? {
+                attempt.backend.record_forward_timing(row)?;
+            }
+        }
         attempt.finished = true;
         Ok(Produced {
             frame,

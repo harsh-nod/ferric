@@ -66,6 +66,15 @@ fn forward(s: &mut State, p: u32) {
         Ok(((), warm.then(|| counts(2)), warm.then(|| time(counts(2)))))
     })
     .unwrap();
+    s.record_forward_timing(phase(p)).unwrap();
+}
+fn phase(position: u32) -> forward::ForwardRow {
+    let phase_ns = [1, 1, 1, 5, 144, 4, 1, 1, 1];
+    forward::ForwardRow {
+        position,
+        forward_body_ns: phase_ns.iter().sum(),
+        phase_ns,
+    }
 }
 fn warm() -> State {
     let mut s = State::new_diagnostic(Profile::Readiness40Position5).unwrap();
@@ -226,4 +235,82 @@ fn duration_state_missing_metrics_first_use_and_wrong_positions_refuse_without_f
         .is_err()
     );
     assert!(s.terminal);
+}
+
+#[test]
+fn duration_phase_state_forty_rows_contain_original_callback_rows() {
+    let mut s = State::new_diagnostic(Profile::Readiness40Position5).unwrap();
+    for p in 0..40 {
+        forward(&mut s, p);
+    }
+    let counts = s.closed_counts().unwrap();
+    let callbacks = s.diagnostic_rows(&counts).unwrap();
+    let phases = s.forward_rows().unwrap();
+    assert_eq!(phases.len(), 40);
+    for (position, (row, callback)) in phases.iter().zip(&callbacks).enumerate() {
+        assert_eq!(*row, phase(position as u32));
+        row.validate_against(callback).unwrap();
+    }
+    assert!(callbacks[..2].iter().all(|r| r.measured.is_none()));
+}
+
+#[test]
+fn duration_phase_state_each_containment_refusal_is_terminal() {
+    for index in [3, 4, 5] {
+        let mut s = warm();
+        begin(&mut s, 2);
+        layers(&mut s, 2);
+        s.tail_diagnostic(2, |_| Ok(((), Some(counts(2)), Some(time(counts(2))))))
+            .unwrap();
+        let mut row = phase(2);
+        row.phase_ns[index] -= 1;
+        row.forward_body_ns -= 1;
+        assert!(s.record_forward_timing(row).is_err());
+        assert!(s.terminal && s.closed_counts().is_err() && s.forward_rows().is_err());
+        assert!(
+            s.begin_diagnostic(3, || panic!("no bank after phase refusal"))
+                .is_err()
+        );
+        assert!(s.record_forward_timing(phase(2)).is_err());
+    }
+}
+
+#[test]
+fn duration_phase_state_missing_prior_row_refuses_before_next_runtime_call() {
+    let mut s = State::new_diagnostic(Profile::Readiness40Position5).unwrap();
+    begin(&mut s, 0);
+    layers(&mut s, 0);
+    s.tail_diagnostic(0, |_| Ok(((), None, None))).unwrap();
+    assert!(
+        s.begin_diagnostic(1, || panic!("missing phases precede runtime"))
+            .is_err()
+    );
+    assert!(s.terminal && s.forward_rows().is_err());
+}
+
+#[test]
+fn duration_phase_state_duplicate_position_and_absent_callbacks_refuse() {
+    let mut duplicate = State::new_diagnostic(Profile::Readiness40Position5).unwrap();
+    forward(&mut duplicate, 0);
+    assert!(duplicate.record_forward_timing(phase(0)).is_err());
+    assert!(duplicate.terminal);
+    for position in [0, 1, u32::MAX] {
+        let mut s = State::new_diagnostic(Profile::Readiness40Position5).unwrap();
+        assert!(s.record_forward_timing(phase(position)).is_err());
+        assert!(s.terminal);
+    }
+}
+
+#[test]
+fn duration_phase_state_total_overflow_and_whole_bound_refuse_before_sink_commit() {
+    for prior in [u64::MAX, 3_600_000_000_000] {
+        let mut s = State::new_diagnostic(Profile::Readiness40Position5).unwrap();
+        begin(&mut s, 0);
+        layers(&mut s, 0);
+        s.tail_diagnostic(0, |_| Ok(((), None, None))).unwrap();
+        s.diagnostic.as_mut().unwrap().forward_body_ns = prior;
+        assert!(s.record_forward_timing(phase(0)).is_err());
+        assert!(s.terminal);
+        assert!(s.diagnostic.as_ref().unwrap().forward_rows.is_empty());
+    }
 }

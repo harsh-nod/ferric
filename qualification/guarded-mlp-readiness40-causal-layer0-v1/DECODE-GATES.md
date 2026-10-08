@@ -58,13 +58,16 @@ for that full workload.
 
 ## Next End-To-End Gate
 
-Implement and CPU-qualify explicit current-image guarded Full2303 ownership
-and transport: the authentic 2,048-token prompt, 256 own generated tokens,
+The explicit guarded Full2303 transport and source are now CPU-qualified.
+Complete its actual full-run preparer, launcher, worker ELF and retainer
+bindings; establish measured feasibility within the unchanged abort bound;
+then run the authentic 2,048-token prompt and 256 own generated tokens with
 finite/custody/queue/KV checks, compact records, selected original payloads
-and healthy Close. Compare generated IDs and decoded bytes against an
-independent two-pass framework run on the same checkpoint and prompt, each
-with fresh own KV and greedy recurrence. Report this as a scoped behavioral
-gate, keeping full-model tensor acceptance separate.
+and healthy Close. Compare all 256 generated IDs and raw decoded bytes with
+the existing independent two-pass framework reference on the same checkpoint
+and prompt, each using fresh own KV and greedy recurrence. The strict
+comparator already exists. This is a scoped behavioral gate, not a substitute
+for separate full-model tensor acceptance.
 
 The older finite-long route has different image, owner and framing contracts
 and cannot silently substitute. The existing Readiness40 one-hour cap remains

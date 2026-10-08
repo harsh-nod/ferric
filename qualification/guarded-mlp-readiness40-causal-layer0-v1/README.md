@@ -312,11 +312,18 @@ explicit gates.
 requirement and the distinction from conditional component checks and aggregate
 tensor acceptance. It introduces no new tolerance.
 
-The next runtime work is a separately selected guarded Full2303 transport and
-native owner for the actual 2,048-prompt/256-generated request. Existing
-Readiness40 and four-forward autoregressive entry points remain unchanged.
-Source/CPU qualification, safe launch feasibility and actual long-workload
-completion are distinct gates; a new profile is not itself a passing GPU run.
+The separately selected [guarded Full2303 transport](../guarded-mlp-full2303-scoped-tail-v1/README.md)
+is now source/CPU-qualified. The remaining native work is its full-run input
+preparer, launcher/ELF/retainer bindings, measured feasibility within the
+unchanged one-hour child bound, and actual 2,048-prompt/256-generated completion.
+The independent full reference and strict generated-output comparator already
+exist; they do not substitute for a native full run. Existing Readiness40 and
+four-forward autoregressive entry points remain separate evidence.
+
+If the full generated-output gate fails, use its first generated-ID mismatch
+as the next causal target. The prompt-position-five diagnostic does not itself
+fail that gate. Source/CPU qualification, safe launch feasibility and actual
+long-workload completion remain distinct gates.
 
 Full 2,048-prompt/256-generated megakernel correctness, sustained decode
 throughput, the 700 tokens/s target, and issue #42 milestones remain open.

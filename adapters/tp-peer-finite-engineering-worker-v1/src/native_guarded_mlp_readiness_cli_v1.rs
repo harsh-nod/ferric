@@ -196,6 +196,8 @@ struct Native {
     #[cfg(feature = "engineering-currentness-duration-diagnostics")]
     duration_rows:
         Option<Vec<crate::finite_guarded_mlp_readiness_currentness_durations_v1::ForwardRow>>,
+    #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+    forward_rows: Option<Vec<crate::finite_guarded_mlp_readiness_forward_durations_v1::ForwardRow>>,
 }
 impl Backend for Native {
     fn run(&mut self, request: &long::Request) -> io::Result<Produced> {
@@ -222,9 +224,11 @@ impl Backend for Native {
             }
             #[cfg(feature = "engineering-currentness-duration-diagnostics")]
             {
-                let (counts, rows) = owner.close_with_tail_diagnostic(request, digest)?;
+                let (counts, rows, forward_rows) =
+                    owner.close_with_tail_diagnostic(request, digest)?;
                 self.tail_counts = Some(counts);
                 self.duration_rows = Some(rows);
+                self.forward_rows = Some(forward_rows);
             }
             Ok(())
         } else if self.census_scoped {
@@ -698,6 +702,8 @@ unsafe fn run_native_tail_selected(
         tail_counts: None,
         #[cfg(feature = "engineering-currentness-duration-diagnostics")]
         duration_rows: None,
+        #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+        forward_rows: None,
     };
     let digest = serve(&mut native, r, w, &b, &mut incoming)?;
     if let Some(output) = policy {
@@ -772,18 +778,15 @@ unsafe fn run_native_tail_selected(
         policy.write_to(output)?;
         #[cfg(feature = "engineering-currentness-duration-diagnostics")]
         {
-            use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as diagnostic;
             let rows = native
                 .duration_rows
                 .take()
                 .ok_or_else(|| io::Error::other("diagnostic healthy Close rows absent"))?;
-            let record = diagnostic::Record::new(&policy, rows)?;
-            let first = policy.encode()?;
-            let second = record.encode()?;
-            scoped_deadline(Instant::now(), deadline)?;
-            output.write_all(&first)?;
-            output.write_all(&second)?;
-            output.flush()?;
+            let forward_rows = native
+                .forward_rows
+                .take()
+                .ok_or_else(|| io::Error::other("diagnostic healthy Close phase rows absent"))?;
+            write_forward_diagnostics(output, &policy, rows, forward_rows, deadline)?;
         }
         scoped_deadline(Instant::now(), deadline)?;
     } else if native.tail_counts.is_some() {
@@ -807,6 +810,35 @@ unsafe fn run_native_tail_selected(
         return Err(io::Error::other("unexpected causal sidecar"));
     }
     Ok(())
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+fn write_forward_diagnostics(
+    output: &mut dyn Write,
+    policy: &tail_scoped::PolicyRecord,
+    rows: Vec<crate::finite_guarded_mlp_readiness_currentness_durations_v1::ForwardRow>,
+    forward_rows: Vec<crate::finite_guarded_mlp_readiness_forward_durations_v1::ForwardRow>,
+    deadline: Instant,
+) -> io::Result<()> {
+    use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as diagnostic;
+    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as forward;
+    let old = diagnostic::Record::new(policy, rows)?;
+    let phases = forward::Record::new(policy, &old, forward_rows)?;
+    let records = [policy.encode()?, old.encode()?, phases.encode()?];
+    let total = records.iter().try_fold(0_usize, |total, record| {
+        total
+            .checked_add(record.len())
+            .ok_or_else(|| io::Error::other("diagnostic stderr length overflow"))
+    })?;
+    if total > forward::STDERR_MAX_BYTES {
+        return Err(io::Error::other("diagnostic three-record stderr limit"));
+    }
+    let [first, second, third] = records;
+    scoped_deadline(Instant::now(), deadline)?;
+    output.write_all(&first)?;
+    output.write_all(&second)?;
+    output.write_all(&third)?;
+    output.flush()
 }
 
 #[cfg(test)]

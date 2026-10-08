@@ -26,10 +26,10 @@ fn read_policy(
     }
     #[cfg(feature = "engineering-currentness-duration-diagnostics")]
     {
-        use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as diagnostic;
+        use crate::finite_guarded_mlp_readiness_forward_durations_v1 as diagnostic;
         let raw = pin.read(diagnostic::STDERR_MAX_BYTES as u64, true)?;
         diagnostic::decode_stderr(&raw, b, digest, worker)
-            .map(|(policy, _)| policy)
+            .map(|(policy, _, _)| policy)
             .map_err(|e| e.to_string())
     }
 }

@@ -86,3 +86,5 @@ pub mod finite_guarded_mlp_readiness_bank_scoped_census_v3;
 pub mod finite_guarded_mlp_readiness_bank_scoped_census_tail_v4;
 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
 pub mod finite_guarded_mlp_readiness_currentness_durations_v1;
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+pub mod finite_guarded_mlp_readiness_forward_durations_v1;

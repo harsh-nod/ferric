@@ -1,11 +1,14 @@
 //! Private collection wrappers keep the existing Tail operation guard armed.
 use super::*;
 use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as wire;
+use crate::finite_guarded_mlp_readiness_forward_durations_v1 as forward;
 use fe2o3_kfd::Gfx950EngineeringCurrentnessDurationsV1 as RuntimeDurations;
 
 #[derive(Default)]
 pub(super) struct Trace {
     rows: Vec<wire::ForwardRow>,
+    forward_rows: Vec<forward::ForwardRow>,
+    forward_body_ns: u64,
     pending: Option<Pending>,
 }
 struct Pending {
@@ -53,7 +56,10 @@ impl Trace {
         value: Option<(RuntimeDurations, u64)>,
     ) -> io::Result<()> {
         require(
-            self.pending.is_none() && self.rows.len() == position as usize && position < 40,
+            self.pending.is_none()
+                && self.rows.len() == position as usize
+                && self.forward_rows.len() == position as usize
+                && position < 40,
             "diagnostic bank ordering",
         )?;
         let duration = observed(position, counts, value.map(|v| v.0))?;
@@ -145,8 +151,57 @@ impl Trace {
         self.pending = None;
         Ok(())
     }
+    fn forward(&mut self, row: forward::ForwardRow) -> io::Result<()> {
+        require(
+            self.pending.is_none()
+                && self.forward_rows.len() == row.position as usize
+                && self.rows.len() == row.position as usize + 1,
+            "diagnostic forward phase ordering",
+        )?;
+        let callbacks = self
+            .rows
+            .get(row.position as usize)
+            .ok_or_else(|| io::Error::other("diagnostic forward callbacks absent"))?;
+        row.validate_against(callbacks)?;
+        let total = self
+            .forward_body_ns
+            .checked_add(row.forward_body_ns)
+            .ok_or_else(|| io::Error::other("diagnostic forward total overflow"))?;
+        require(
+            total <= 3_600_000_000_000,
+            "diagnostic forward total extent",
+        )?;
+        self.forward_rows.push(row);
+        self.forward_body_ns = total;
+        Ok(())
+    }
 }
 impl State {
+    pub(in super::super) fn forward_timing_selected(&self) -> bool {
+        self.diagnostic.is_some()
+    }
+    pub(in super::super) fn record_forward_timing(
+        &mut self,
+        row: forward::ForwardRow,
+    ) -> io::Result<()> {
+        let mut a = Attempt {
+            state: self,
+            committed: false,
+        };
+        require(
+            !a.state.terminal
+                && !a.state.active
+                && row.position.checked_add(1) == Some(a.state.next),
+            "diagnostic forward requires completed Tail operation",
+        )?;
+        a.state
+            .diagnostic
+            .as_mut()
+            .ok_or_else(|| io::Error::other("diagnostic forward trace absent"))?
+            .forward(row)?;
+        a.committed = true;
+        Ok(())
+    }
     pub(in super::super) fn new_diagnostic(profile: Profile) -> io::Result<Self> {
         let mut state = Self::new(profile)?;
         state.diagnostic = Some(Trace::default());
@@ -167,6 +222,11 @@ impl State {
         )?;
         let mut observed_counts = None;
         let mut observed_time = None;
+        let trace = a.state.diagnostic.as_ref().unwrap();
+        require(
+            trace.rows.len() == trace.forward_rows.len(),
+            "diagnostic previous forward phases absent",
+        )?;
         a.state.begin(position, || {
             let (result, duration) = call()?;
             observed_counts = result.currentness;
@@ -266,6 +326,24 @@ impl State {
             "diagnostic bounded rows before Close",
         )?;
         Ok(trace.rows.clone())
+    }
+    pub(in super::super) fn forward_rows(&self) -> io::Result<Vec<forward::ForwardRow>> {
+        require(
+            !self.terminal && !self.active && self.next == 40,
+            "diagnostic healthy complete forward phases",
+        )?;
+        let trace = self
+            .diagnostic
+            .as_ref()
+            .ok_or_else(|| io::Error::other("diagnostic forward trace absent"))?;
+        require(
+            trace.pending.is_none() && trace.forward_rows.len() == 40 && trace.rows.len() == 40,
+            "diagnostic all forty phase rows before Close",
+        )?;
+        for (row, callbacks) in trace.forward_rows.iter().zip(&trace.rows) {
+            row.validate_against(callbacks)?;
+        }
+        Ok(trace.forward_rows.clone())
     }
 }
 

@@ -2,6 +2,10 @@ use super::*;
 use crate::finite_guarded_mlp_readiness_bank_scoped_census_tail_v4::{
     BankCounts, CensusCounts, Counts, LayerCounts, TailCounts,
 };
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as diagnostic;
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+use crate::finite_guarded_mlp_readiness_forward_durations_v1 as phases;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 fn bootstrap() -> ready::Bootstrap {
@@ -61,6 +65,17 @@ fn record(b: &ready::Bootstrap) -> PolicyRecord {
     .unwrap()
 }
 struct PolicyFile(FilePin);
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+fn diagnostic_records(value: &PolicyRecord) -> (diagnostic::Record, phases::Record) {
+    let (_, _, mut report) = diagnostic::tests::fixture();
+    let tail = &mut report.forwards[2].measured.as_mut().unwrap().tail;
+    tail.before.calls = value.counts.tails.before_calls - 37 * 43;
+    tail.after.calls = value.counts.tails.after_calls - 37 * 43;
+    tail.root_generation.calls = value.counts.tails.generation_probes - 37 * 57;
+    let record = diagnostic::Record::new(value, report.forwards).unwrap();
+    let phases = phases::Record::new(value, &record, phases::tests::rows_for(&record)).unwrap();
+    (record, phases)
+}
 fn policy_file(value: &PolicyRecord) -> PolicyFile {
     #[cfg(not(feature = "engineering-currentness-duration-diagnostics"))]
     {
@@ -68,14 +83,15 @@ fn policy_file(value: &PolicyRecord) -> PolicyFile {
     }
     #[cfg(feature = "engineering-currentness-duration-diagnostics")]
     {
-        use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as diagnostic;
-        let (_, _, mut report) = diagnostic::tests::fixture();
-        let tail = &mut report.forwards[2].measured.as_mut().unwrap().tail;
-        tail.before.calls = value.counts.tails.before_calls - 37 * 43;
-        tail.after.calls = value.counts.tails.after_calls - 37 * 43;
-        tail.root_generation.calls = value.counts.tails.generation_probes - 37 * 57;
-        let record = diagnostic::Record::new(value, report.forwards).unwrap();
-        PolicyFile::new(&[value.encode().unwrap(), record.encode().unwrap()].concat())
+        let (record, phases) = diagnostic_records(value);
+        PolicyFile::new(
+            &[
+                value.encode().unwrap(),
+                record.encode().unwrap(),
+                phases.encode().unwrap(),
+            ]
+            .concat(),
+        )
     }
 }
 impl PolicyFile {
@@ -197,6 +213,7 @@ fn duration_parent_requires_second_record_and_original_entire_file_pin() {
 fn duration_parent_refuses_rehashed_report_counter_identity_and_containment_drift() {
     use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as diagnostic;
     let (b, policy, record) = diagnostic::tests::fixture();
+    let phases = phases::Record::new(&policy, &record, phases::tests::rows_for(&record)).unwrap();
     for mutation in 0..4 {
         let mut record = record.clone();
         match mutation {
@@ -219,10 +236,147 @@ fn duration_parent_refuses_rehashed_report_counter_identity_and_containment_drif
             }
             _ => record.execution_authority = true,
         }
-        let file = PolicyFile::new(&[policy.encode().unwrap(), record.encode().unwrap()].concat());
+        let file = PolicyFile::new(
+            &[
+                policy.encode().unwrap(),
+                record.encode().unwrap(),
+                phases.encode().unwrap(),
+            ]
+            .concat(),
+        );
         assert!(read_policy(&file.0, &b, [7; 32], [8; 32]).is_err());
     }
 }
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn forward_duration_parent_requires_three_canonical_ordered_records() {
+    let (b, policy, record) = diagnostic::tests::fixture();
+    let phases = phases::Record::new(&policy, &record, phases::tests::rows_for(&record)).unwrap();
+    let first = policy.encode().unwrap();
+    let second = record.encode().unwrap();
+    let third = phases.encode().unwrap();
+    let raw = [first.clone(), second.clone(), third.clone()].concat();
+    let file = PolicyFile::new(&raw);
+    assert_eq!(read_policy(&file.0, &b, [7; 32], [8; 32]).unwrap(), policy);
+    let prior = [first.clone(), second.clone()].concat();
+    diagnostic::decode_stderr(&prior, &b, [7; 32], [8; 32]).unwrap();
+    assert_eq!(phases::STDERR_MAX_BYTES, diagnostic::STDERR_MAX_BYTES);
+    for bad in [
+        prior,
+        [first.clone(), third.clone(), second.clone()].concat(),
+        [first.clone(), second.clone(), third.clone(), third.clone()].concat(),
+        [first.clone(), second.clone(), b"{}\n".to_vec()].concat(),
+        [
+            first.clone(),
+            second.clone(),
+            third[..third.len() - 1].to_vec(),
+        ]
+        .concat(),
+        [first.clone(), second.clone(), b" ".to_vec(), third.clone()].concat(),
+        [
+            first,
+            second,
+            vec![b' '; phases::MAX_BYTES + 1],
+            b"\n".to_vec(),
+        ]
+        .concat(),
+        [raw, b"\n".to_vec()].concat(),
+    ] {
+        let file = PolicyFile::new(&bad);
+        assert!(read_policy(&file.0, &b, [7; 32], [8; 32]).is_err());
+    }
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn forward_duration_parent_refuses_rehashed_third_identity_rows_and_containment_drift() {
+    let (b, policy, record) = diagnostic::tests::fixture();
+    let original = phases::Record::new(&policy, &record, phases::tests::rows_for(&record)).unwrap();
+    for mutation in 0..22 {
+        let mut phases = original.clone();
+        match mutation {
+            0 => phases.policy_sha256[0] ^= 1,
+            1 => phases.currentness_record_sha256[0] ^= 1,
+            2 => phases.session[0] ^= 1,
+            3 => phases.worker_sha256[0] ^= 1,
+            4 => phases.transcript_sha256[0] ^= 1,
+            5 => phases.phase_order.swap(0, 1),
+            6 => {
+                phases.forwards.pop();
+            }
+            7 => phases.forwards[3].position = 2,
+            8..=10 => {
+                let row = &mut phases.forwards[2];
+                row.phase_ns[mutation - 5] = 0;
+                row.forward_body_ns = row.phase_ns.iter().sum();
+            }
+            11 => phases.forwards[2].forward_body_ns += 1,
+            12 => {
+                phases.forwards[2].phase_ns[0] = u64::MAX;
+                phases.forwards[2].forward_body_ns = u64::MAX;
+            }
+            13 => {
+                phases.forwards[0].phase_ns[0] = 3_600_000_000_001;
+                phases.forwards[0].forward_body_ns = 3_600_000_000_001;
+            }
+            14 => phases.instrumented = false,
+            15 => phases.execution_authority = true,
+            16 => phases.numerical_acceptance = true,
+            17 => phases.performance_claim = true,
+            18 => phases.gpu_timing = true,
+            19 => phases.disjoint_phases = false,
+            20 => phases.host_elapsed_nanoseconds = false,
+            _ => phases.currentness_durations_nested = false,
+        }
+        let file = PolicyFile::new(
+            &[
+                policy.encode().unwrap(),
+                record.encode().unwrap(),
+                phases.encode().unwrap(),
+            ]
+            .concat(),
+        );
+        assert!(
+            read_policy(&file.0, &b, [7; 32], [8; 32]).is_err(),
+            "{mutation}",
+        );
+    }
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn forward_duration_parent_preserves_first_two_records_and_whole_stderr_identity() {
+    let b = bootstrap();
+    let policy = record(&b);
+    let (record, phases) = diagnostic_records(&policy);
+    let prefix = [policy.encode().unwrap(), record.encode().unwrap()].concat();
+    let expected = [prefix.clone(), phases.encode().unwrap()].concat();
+    let file = policy_file(&policy);
+    let raw = std::fs::read(&file.0.path).unwrap();
+    assert_eq!(raw, expected);
+    assert_eq!(&raw[..prefix.len()], prefix.as_slice());
+    assert_eq!(file.0.bytes, raw.len() as u64);
+    assert_eq!(file.0.sha256, hash(&raw));
+    let original_pin = file.0.clone();
+    read_policy(&file.0, &b, [7; 32], [8; 32]).unwrap();
+    assert_eq!(file.0, original_pin);
+    let mut prefix_pin = file.0.clone();
+    prefix_pin.bytes = prefix.len() as u64;
+    prefix_pin.sha256 = hash(&prefix);
+    assert!(read_policy(&prefix_pin, &b, [7; 32], [8; 32]).is_err());
+    let mut changed = phases.clone();
+    changed.forwards[2].phase_ns[0] += 1;
+    changed.forwards[2].forward_body_ns += 1;
+    let changed_raw = [prefix, changed.encode().unwrap()].concat();
+    std::fs::write(&file.0.path, &changed_raw).unwrap();
+    assert!(read_policy(&file.0, &b, [7; 32], [8; 32]).is_err());
+    let repinned = PolicyFile::new(&changed_raw);
+    assert_eq!(
+        read_policy(&repinned.0, &b, [7; 32], [8; 32]).unwrap(),
+        policy
+    );
+}
+
 #[test]
 fn bank_scoped_census_tail_parent_refuses_old_policies_duplicate_and_oversized_stderr() {
     let b = bootstrap();

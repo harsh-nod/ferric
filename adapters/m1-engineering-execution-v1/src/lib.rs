@@ -2343,6 +2343,9 @@ pub mod finite_guarded_mlp_readiness_bank_scoped_v2;
 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
 #[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_currentness_durations_v1.rs"]
 pub mod finite_guarded_mlp_readiness_currentness_durations_v1;
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_forward_durations_v1.rs"]
+pub mod finite_guarded_mlp_readiness_forward_durations_v1;
 #[cfg(feature = "guarded-mlp-model-engineering")]
 #[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1.rs"]
 pub mod finite_guarded_mlp_readiness_scoped_v1;

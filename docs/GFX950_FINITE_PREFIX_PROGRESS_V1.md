@@ -6,7 +6,19 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest implementation: optional
+Latest implementation: the opt-in
+[nine-phase forward diagnostic](../qualification/guarded-mlp-forward-phases-v1/README.md)
+passes fresh MI350 worker builds with the feature on/off (885/838 tests, four
+unchanged hardware ignores each) and parent selected CPU scopes (622/584 tests,
+69/67 supervised steps). All 15 tested Rust postimages are integrated. The
+829 runtime bodies are unchanged and their previous qualification is retained,
+not repeated. The original staging refusal is preserved. This adds host-phase
+accounting around the real Sequence with unchanged backend/deadline ordering,
+not new GPU timing or numerical acceptance. Its new third diagnostic record
+still needs a fresh native checker/preparer/launcher/retainer qualification
+before measurement; the earlier two-record qualifications do not cover it.
+
+Latest native measurement: optional
 [currentness-duration instrumentation](../qualification/guarded-mlp-currentness-duration-v1/README.md)
 passes separate MI350 CPU builds: 1,180 runtime / 838 worker tests with the
 feature off, and 1,192 runtime / 853 worker tests with it enabled. Each build
@@ -248,8 +260,8 @@ passes all 40 forwards and clean Close in one attempt. The authenticated
 cross-run comparison confirms unchanged all-40 records and common captures.
 At position 5 the reference ties tokens 2/9112 at 19.625; Ferric scores token
 9112 at 19.75, one BF16 step higher. Layer 0 already differs in 14/4,096 words.
-This explains the argmax switch but not the arithmetic cause or numerical
-acceptability; operation-level investigation remains open. The original
+The final logit ordering explains the different token choices; the upstream
+arithmetic cause and numerical acceptability remain unestablished. The original
 comparison now has a
 [layer-by-layer error plot and complete tables](../qualification/guarded-mlp-readiness40-v1/numerical-report-v1/README.md),
 rendered on MI350 after ten passing tests. These add diagnostic visibility,
@@ -2094,33 +2106,39 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Diagnose the position-5 difference in the completed forty-position genuine
-   prompt comparison (39/40 argmax agreement). The exact two-row head check
-   confirms correct final BF16 rounding on each implementation's own input;
-   the inputs already differ. The [causal layer-zero and KV captures](../qualification/guarded-mlp-readiness40-causal-layer0-v1/README.md)
-   and their authenticated comparison are complete. Diagnose the remaining
-   arithmetic and propagation differences using these retained boundaries;
-   capture availability is no longer the blocker. The checked BF16 RoPE image
-   is already in use. Exact layer-zero QKV evaluation also
-   shows that a framework disagreement need not be a native arithmetic bug.
-   Distinguish reduction-order rounding from semantic errors at the remaining
-   boundaries without fitting acceptance thresholds to the observations.
-2. Validate TP residuals, MLP, final normalization, logits and token selection
-   independently, including cumulative layer error and authentic KV history.
-   Preserve the old bitwise-comparison mode as a separate historical check;
-   do not equate native parity with an independent model reference.
-3. Establish launch feasibility for the CPU-qualified Full2303 route before
+1. Attribute the remaining host-inclusive Readiness40 cost before changing
+   execution policy. The opt-in currentness diagnostic accounts for 31.01%
+   of warm parent-forward time using disjoint callback/bank intervals; the
+   remaining 47.308 seconds across 38 warm forwards is not yet attributed.
+   Whole-forward phase timings must distinguish input preparation, metadata,
+   embedding, bank, layers, tail, frame construction, fence and commit.
+   These are host intervals, not GPU kernel timings or evidence of overlap.
+2. Establish launch feasibility for the CPU-qualified Full2303 route before
    running it on the GPU. The distinct long wire and bounded four-capture
    selection are implemented; readiness still executes only forty prompt
    forwards and generates zero tokens. Reduce the measured runtime overhead
    without raising the one-hour abort bound or weakening retirement checks.
    Test the actual full page transitions, KV lifetime, own-output history and
    cleanup before treating it as sustained decode. The independent full
-   framework reference and synthetic admission checks are prerequisites,
-   not substitutes for this native run.
-4. Qualify the full target workload: single-request Qwen3-8B, BF16,
+   framework reference and strict generated-output comparator already exist.
+   Bind the actual full-run preparer, launcher, worker ELF and retainer to
+   their own qualified sources. Existing reference and synthetic admission
+   checks are prerequisites, not substitutes for this native run.
+3. Qualify the full target workload: single-request Qwen3-8B, BF16,
    target-only decoding, 2,048 prompt tokens and 256 generated tokens. Report
    post-first-token throughput as `255 / (last_delivery - first_delivery)`.
+   Require exact agreement of all 256 generated IDs and decoded bytes with
+   the independent reference. If that gate fails, investigate the first
+   generated-ID mismatch at position `2047 + output_index`; after divergent
+   generated histories, label comparisons as different-input trajectories.
+4. Retain the [causal layer-zero and KV captures](../qualification/guarded-mlp-readiness40-causal-layer0-v1/README.md)
+   and conditional component checks as separate diagnostic evidence. The
+   39/40 prompt-position argmax agreement is not a failed generated-output
+   gate: both runs generate zero tokens, and neither position-five prediction
+   becomes the next input. Selected exact-dot checks favor either implementation
+   at different boundaries; they do not establish a native arithmetic bug or
+   full-model numerical acceptance. Preserve the historical bitwise check
+   separately and do not fit tolerances to observed disagreements.
 5. Run equal-work baselines and paired optimization ablations. Host-inclusive
    diagnostics are not GPU overlap graphs or a qualified vLLM comparison.
 

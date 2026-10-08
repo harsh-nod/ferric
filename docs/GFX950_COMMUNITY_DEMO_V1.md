@@ -23,6 +23,14 @@ instrumented host attribution, not a matched speed comparison. The new report
 passes all thirteen CPU tests and its actual original-archive invocation on
 MI350. Its chart is shown below, separately from the earlier matched ablations.
 
+The newer [nine-phase diagnostic CPU checkpoint](../qualification/guarded-mlp-forward-phases-v1/README.md)
+is a separate implementation step: worker builds pass 885/838 tests with the
+feature enabled/disabled, and parent selected scopes pass 622/584 tests. It
+attributes the whole forward body without changing kernel arithmetic or
+currentness policy. It has not yet run on the GPU. The earlier 126 checker
+tests and 171 workflow tests cover the old two-record protocol, not this new
+three-record protocol. The chart below remains the original measured result.
+
 ## New Host Attribution
 
 ![Instrumented serial host attribution](../qualification/guarded-mlp-currentness-duration-v1/report-v1/attribution.svg)

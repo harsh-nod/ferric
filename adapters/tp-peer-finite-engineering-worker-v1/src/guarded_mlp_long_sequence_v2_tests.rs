@@ -370,3 +370,7 @@ fn long_sequence_completed_warm_tail_then_worker_reject_is_terminal_without_comm
     assert_eq!(backend.inner.effects, before);
     assert!(!backend.inner.closed && !s.is_closed());
 }
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[path = "guarded_mlp_long_sequence_v2_timing_tests.rs"]
+mod forward_timing;

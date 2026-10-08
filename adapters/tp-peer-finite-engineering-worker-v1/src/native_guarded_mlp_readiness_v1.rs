@@ -463,6 +463,7 @@ impl Owner {
     ) -> io::Result<(
         crate::finite_guarded_mlp_readiness_bank_scoped_census_tail_v4::Counts,
         Vec<crate::finite_guarded_mlp_readiness_currentness_durations_v1::ForwardRow>,
+        Vec<crate::finite_guarded_mlp_readiness_forward_durations_v1::ForwardRow>,
     )> {
         let mut admission = Admission {
             base: &mut self.base,
@@ -474,11 +475,12 @@ impl Owner {
             .ok_or_else(|| io::Error::other("diagnostic Tail route not selected"))?;
         let counts = state.closed_counts()?;
         let rows = state.diagnostic_rows(&counts)?;
+        let forward_rows = state.forward_rows()?;
         remaining(Instant::now(), self.deadline)?;
         admission.committed = true;
         drop(admission);
         self.close(request, digest)?;
-        Ok((counts, rows))
+        Ok((counts, rows, forward_rows))
     }
     pub(crate) fn close_with_causal(
         mut self,
@@ -830,6 +832,28 @@ impl<'a> Driver<'a> {
     }
 }
 impl Backend for Driver<'_> {
+    #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+    fn forward_timing_selected(&self) -> bool {
+        self.profile == Profile::Readiness40Position5
+            && self
+                .tail_scoped
+                .as_deref()
+                .is_some_and(tail_scoped::State::forward_timing_selected)
+    }
+    #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+    fn record_forward_timing(
+        &mut self,
+        row: crate::finite_guarded_mlp_readiness_forward_durations_v1::ForwardRow,
+    ) -> io::Result<()> {
+        require(
+            self.forward_timing_selected(),
+            "diagnostic forward route not selected",
+        )?;
+        self.tail_scoped
+            .as_deref_mut()
+            .ok_or_else(|| io::Error::other("diagnostic forward Tail state absent"))?
+            .record_forward_timing(row)
+    }
     fn check_deadline(&mut self) -> io::Result<()> {
         remaining(Instant::now(), self.deadline)
     }

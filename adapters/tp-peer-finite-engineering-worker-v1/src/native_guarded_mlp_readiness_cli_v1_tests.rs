@@ -910,3 +910,139 @@ fn tail_scoped_cli_refuses_all_other_policies_before_io_and_keeps_deadline() {
     assert!(scoped_deadline(now, now).is_err());
     scoped_deadline(now, now + Duration::from_millis(1)).unwrap();
 }
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn forward_phase_cli_three_records_preserve_original_first_two_bytes() {
+    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as phases;
+    let (b, policy, old, record) = phases::tests::fixture();
+    let original = [policy.encode().unwrap(), old.encode().unwrap()].concat();
+    let mut output = Vec::new();
+    write_forward_diagnostics(
+        &mut output,
+        &policy,
+        old.forwards.clone(),
+        record.forwards.clone(),
+        Instant::now() + Duration::from_secs(1),
+    )
+    .unwrap();
+    assert!(output.starts_with(&original));
+    assert_eq!(output.iter().filter(|byte| **byte == b'\n').count(), 3);
+    assert!(output.len() <= phases::STDERR_MAX_BYTES);
+    let decoded =
+        phases::decode_stderr(&output, &b, policy.transcript_sha256, policy.worker_sha256).unwrap();
+    assert_eq!(decoded, (policy, old, record));
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn forward_phase_cli_invalid_late_record_writes_no_policy_prefix() {
+    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as phases;
+    for case in 0..5 {
+        let (_, policy, mut old, mut record) = phases::tests::fixture();
+        match case {
+            0 => {
+                record.forwards.pop();
+            }
+            1 => {
+                record.forwards.swap(38, 39);
+            }
+            2 => {
+                record.forwards[39].forward_body_ns += 1;
+            }
+            3 => {
+                let row = &mut record.forwards[39];
+                row.phase_ns[4] = 0;
+                row.forward_body_ns = row.phase_ns.iter().sum();
+            }
+            _ => {
+                old.forwards.pop();
+            }
+        }
+        let mut output = Vec::new();
+        assert!(
+            write_forward_diagnostics(
+                &mut output,
+                &policy,
+                old.forwards,
+                record.forwards,
+                Instant::now() + Duration::from_secs(1),
+            )
+            .is_err()
+        );
+        assert!(output.is_empty());
+    }
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn forward_phase_cli_writer_deadline_and_each_write_flush_refusal_propagate() {
+    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as phases;
+    struct Output {
+        fail_write: Option<usize>,
+        fail_flush: bool,
+        writes: usize,
+        flushes: usize,
+        bytes: Vec<u8>,
+    }
+    impl Write for Output {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            let ordinal = self.writes;
+            self.writes += 1;
+            if self.fail_write == Some(ordinal) {
+                return Err(io::Error::other("injected diagnostic write failure"));
+            }
+            self.bytes.extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            self.flushes += 1;
+            if self.fail_flush {
+                Err(io::Error::other("injected diagnostic flush failure"))
+            } else {
+                Ok(())
+            }
+        }
+    }
+    for case in 0..5 {
+        let (_, policy, old, record) = phases::tests::fixture();
+        let encoded = [
+            policy.encode().unwrap(),
+            old.encode().unwrap(),
+            record.encode().unwrap(),
+        ];
+        let mut output = Output {
+            fail_write: (case < 3).then_some(case),
+            fail_flush: case == 3,
+            writes: 0,
+            flushes: 0,
+            bytes: Vec::new(),
+        };
+        let deadline = if case == 4 {
+            Instant::now()
+        } else {
+            Instant::now() + Duration::from_secs(1)
+        };
+        assert!(
+            write_forward_diagnostics(
+                &mut output,
+                &policy,
+                old.forwards,
+                record.forwards,
+                deadline,
+            )
+            .is_err()
+        );
+        if case < 3 {
+            assert_eq!(output.writes, case + 1);
+            assert_eq!(output.flushes, 0);
+            assert_eq!(output.bytes, encoded[..case].concat());
+        } else if case == 3 {
+            assert_eq!((output.writes, output.flushes), (3, 1));
+            assert_eq!(output.bytes, encoded.concat());
+        } else {
+            assert_eq!((output.writes, output.flushes), (0, 0));
+            assert!(output.bytes.is_empty());
+        }
+    }
+}
