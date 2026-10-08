@@ -64,9 +64,13 @@ also passed all 171 tests in 88.796 seconds: the 126 unchanged validator cases,
 and 13 evidence-retention workflows. Both supervised leaves retired cleanly;
 all original evidence and source identities passed independent data review.
 
-Actual request preparation, final observed deployment bindings, instrumented
-GPU execution, original-evidence validation and a measured duration breakdown
-remain pending. No result from
+The [actual request preparation](native-preparation-v1/README.md) then passed
+on MI350, rehashing all 25 inputs and producing a fresh session and three
+original request/plan/receipt bodies. Their independent data review passed;
+the preparer launched no GPU work.
+
+Final observed deployment bindings, instrumented GPU execution,
+original-evidence validation and a measured duration breakdown remain pending. No result from
 this work is substituted for independent numerical acceptance or full-request
 feasibility. The [community demo](../../docs/GFX950_COMMUNITY_DEMO_V1.md) still
 reports the previously measured short prompt-forward experiments.

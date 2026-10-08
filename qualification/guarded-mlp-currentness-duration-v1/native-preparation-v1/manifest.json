@@ -1,0 +1,83 @@
+{
+  "data_only": true,
+  "gpu_execution": false,
+  "members": {
+    "frozen_owned.py": {
+      "bytes": 30433,
+      "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+    },
+    "library_audit.py": {
+      "bytes": 25872,
+      "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+    },
+    "prepare_model_inputs.py": {
+      "bytes": 25793,
+      "sha256": "b1214a2d869d5802ebb583ef4edfb8310a364cc4c1a9ec5afd8280b503550e0f"
+    },
+    "prepared-inputs.json": {
+      "bytes": 13959,
+      "sha256": "64c94a620a1efcd024be3a464f2e7929abb839812e402e8e99c70b06981c60f2"
+    },
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "stage.json": {
+      "bytes": 2428,
+      "sha256": "3a390a50702579abc54b61e54e583807f140e5918a5f7e7ecade744ae1a99c14"
+    },
+    "tail_duration-input.json": {
+      "bytes": 2316,
+      "sha256": "2f5844ddb0c1fcd55c4645a93e9c21f5af0cae62ffce10715a0ab3518a91a440"
+    },
+    "tail_duration-request.json": {
+      "bytes": 9185,
+      "sha256": "3f4197b0034725a572f8ed410b67ddcc206ab4c11fdb8e401f4aaad5838aa13d"
+    },
+    "validate_bank_scoped.py": {
+      "bytes": 9534,
+      "sha256": "2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772"
+    },
+    "validate_census.py": {
+      "bytes": 10392,
+      "sha256": "090431e59a481d5b681311d5a015ddfd35705cc828c920118d4f0043b862ec9f"
+    },
+    "validate_duration.py": {
+      "bytes": 9343,
+      "sha256": "d7ed85d14191e735490170a606a06cefb331e17b07c36a4a4d34ef38a5cf19bd"
+    },
+    "validate_matched.py": {
+      "bytes": 9362,
+      "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_scoped.py": {
+      "bytes": 9184,
+      "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+    },
+    "validate_scoped_pair.py": {
+      "bytes": 3233,
+      "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+    },
+    "validate_shared.py": {
+      "bytes": 8015,
+      "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+    },
+    "validate_tail.py": {
+      "bytes": 10447,
+      "sha256": "696e55d4bebea97ab82e5b613a76978c5e191087789d299551c304527e598d49"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "native_runner_staged": false,
+  "passed": true,
+  "readset_count": 25,
+  "remote_root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-gpu-v228-v1",
+  "schema": "ferric-currentness-duration-preparation-originals-v1"
+}

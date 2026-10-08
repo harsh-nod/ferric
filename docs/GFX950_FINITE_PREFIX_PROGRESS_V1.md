@@ -20,8 +20,10 @@ after original-data review and a complete 1,299-Ferric / 827-runtime postcheck,
 preserving all 236 worker bodies. The live CPU admission gate passes against
 37 real artifact inputs, and the separate synthetic native-workflow suite
 passes all 171 tests in 88.796 seconds with clean child retirement and
-independently reviewed originals. Actual request preparation, final observed
-deployment bindings and an instrumented GPU run remain pending; no duration breakdown, numerical
+independently reviewed originals. Actual request preparation also passed on
+MI350 with all 25 inputs rehashed and the original prepared bodies independently
+reviewed. Final deployment bindings and an instrumented GPU run remain pending;
+no duration breakdown, numerical
 acceptance or new inference performance result is claimed.
 
 The preceding [Full2303 scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)
