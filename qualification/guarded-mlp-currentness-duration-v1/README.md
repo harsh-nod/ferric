@@ -78,7 +78,10 @@ The final evidence tool revalidated and exported 167 original members.
 The measured callback categories total 21.242500713 seconds within
 68.571861417 seconds of warm parent-forward time. The bank-body interval
 contains its bank callbacks; those costs must not be double-counted. The
-reproducible report's CPU tests and real-archive invocation remain pending.
+reproducible report now passes [all thirteen CPU tests](report-cpu-v1/README.md)
+and its actual original-archive invocation on MI350. The
+[published chart, tables and reproduction command](report-v1/README.md)
+separate the measured callbacks from the unprofiled parent-forward remainder.
 No result from this work is substituted for independent numerical acceptance
 or full-request feasibility. The [community demo](../../docs/GFX950_COMMUNITY_DEMO_V1.md)
 distinguishes this instrumented attribution from the earlier matched ablations.

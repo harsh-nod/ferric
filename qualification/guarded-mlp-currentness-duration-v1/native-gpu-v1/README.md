@@ -56,4 +56,5 @@ Same-side parity is not an independent numerical reference. The known
 position-5 framework discrepancy remains unresolved. Full2303 has not run,
 the full 2,048/256 acceptance gate remains open, and this instrumented single
 case is not a matched speed comparison or evidence for 700 tokens/s. The
-reproducible duration report is a separate next step.
+[reproducible duration report](../report-v1/README.md) is now published after
+its separate CPU tests and actual original-archive invocation passed on MI350.

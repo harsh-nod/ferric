@@ -1,0 +1,4508 @@
+{
+  "bank_guarded_body_contains_bank_callbacks": true,
+  "callback_categories_serial": true,
+  "callbacks": [
+    {
+      "calls": 27588,
+      "category": "before",
+      "elapsed_ns": 436276685,
+      "group": "bank",
+      "share_warm_parent_percent": "0.636233"
+    },
+    {
+      "calls": 76,
+      "category": "discover",
+      "elapsed_ns": 132129119,
+      "group": "bank",
+      "share_warm_parent_percent": "0.192687"
+    },
+    {
+      "calls": 27588,
+      "category": "after",
+      "elapsed_ns": 143504343,
+      "group": "bank",
+      "share_warm_parent_percent": "0.209276"
+    },
+    {
+      "calls": 27550,
+      "category": "root_generation",
+      "elapsed_ns": 162930409,
+      "group": "bank",
+      "share_warm_parent_percent": "0.237605"
+    },
+    {
+      "calls": 559642,
+      "category": "before",
+      "elapsed_ns": 8837488056,
+      "group": "layers",
+      "share_warm_parent_percent": "12.887922"
+    },
+    {
+      "calls": 2736,
+      "category": "discover",
+      "elapsed_ns": 4808508418,
+      "group": "layers",
+      "share_warm_parent_percent": "7.012364"
+    },
+    {
+      "calls": 559642,
+      "category": "after",
+      "elapsed_ns": 2880315013,
+      "group": "layers",
+      "share_warm_parent_percent": "4.200433"
+    },
+    {
+      "calls": 610258,
+      "category": "root_generation",
+      "elapsed_ns": 3655685030,
+      "group": "layers",
+      "share_warm_parent_percent": "5.331174"
+    },
+    {
+      "calls": 1748,
+      "category": "before",
+      "elapsed_ns": 28308005,
+      "group": "tail",
+      "share_warm_parent_percent": "0.041282"
+    },
+    {
+      "calls": 76,
+      "category": "discover",
+      "elapsed_ns": 133624963,
+      "group": "tail",
+      "share_warm_parent_percent": "0.194869"
+    },
+    {
+      "calls": 1748,
+      "category": "after",
+      "elapsed_ns": 9210569,
+      "group": "tail",
+      "share_warm_parent_percent": "0.013432"
+    },
+    {
+      "calls": 2394,
+      "category": "root_generation",
+      "elapsed_ns": 14520103,
+      "group": "tail",
+      "share_warm_parent_percent": "0.021175"
+    }
+  ],
+  "checker_cpu": {
+    "bytes": 35853,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-checker-cpu-v228-v2/evidence/complete.json",
+    "sha256": "92dc097186d0ff256018612f0e759ef0a5a81f232556463596d653948819ffad"
+  },
+  "cpu_and_elf_metadata": {
+    "parent": {
+      "bytes": 14281472,
+      "sha256": "c1c90ba29f3e77b8111dee1a04d9d35f91cbff6abb3e914a9b75f599378bc7e4"
+    },
+    "parent_cpu": {
+      "bytes": 4165800,
+      "sha256": "f253584fcc0fde7087614c2d9469f37ff950aeb48825fc64d1be1614d6596602"
+    },
+    "parent_sources": {
+      "bytes": 537481,
+      "sha256": "2737318f2f1e13ac89eabf9e1ad603fc11c11f6a86adfbd2e0115a9bcb6a0a1b"
+    },
+    "worker": {
+      "bytes": 6598384,
+      "sha256": "10c7432d29f8ca780ce9338c3217bd93c75b04cd3463d7cd0921c0904382606d"
+    },
+    "worker_cpu": {
+      "bytes": 2569774,
+      "sha256": "5a27b9983ecd0d523226cbf2db4070108cd6deaf75d2ee6fe528274d2f8a5ac2"
+    },
+    "worker_sources": {
+      "bytes": 450252,
+      "sha256": "74bcd0c27c264faf5991e8b13f8dcd2b9f52d42ad1d9b3e9a30350ee2c1baa0c"
+    }
+  },
+  "decimal_rounding": "six_places_round_half_even",
+  "diagnostic_record": {
+    "bank_guarded_body_includes_callbacks": true,
+    "execution_authority": false,
+    "forwards": [
+      {
+        "measured": null,
+        "position": 0
+      },
+      {
+        "measured": null,
+        "position": 1
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3759194
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11479697
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3502442
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4258232
+            }
+          },
+          "bank_guarded_body_ns": 23566675,
+          "layers": {
+            "after": {
+              "calls": 14680,
+              "elapsed_ns": 76838111
+            },
+            "before": {
+              "calls": 14680,
+              "elapsed_ns": 233463951
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 127011949
+            },
+            "root_generation": {
+              "calls": 16012,
+              "elapsed_ns": 96444040
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 234440
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 722843
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3494062
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 393250
+            }
+          }
+        },
+        "position": 2
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3701992
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11200449
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3402532
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4245721
+            }
+          },
+          "bank_guarded_body_ns": 23104154,
+          "layers": {
+            "after": {
+              "calls": 14772,
+              "elapsed_ns": 75612136
+            },
+            "before": {
+              "calls": 14772,
+              "elapsed_ns": 232222237
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 125920721
+            },
+            "root_generation": {
+              "calls": 16104,
+              "elapsed_ns": 95777423
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 237280
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 745320
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3464702
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 428171
+            }
+          }
+        },
+        "position": 3
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3670441
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11292796
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3387102
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4175354
+            }
+          },
+          "bank_guarded_body_ns": 23059284,
+          "layers": {
+            "after": {
+              "calls": 14720,
+              "elapsed_ns": 75368401
+            },
+            "before": {
+              "calls": 14720,
+              "elapsed_ns": 231956494
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126321487
+            },
+            "root_generation": {
+              "calls": 16052,
+              "elapsed_ns": 95783433
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 234200
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 730640
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3430692
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 368890
+            }
+          }
+        },
+        "position": 4
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3932452
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11899308
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3612032
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4444563
+            }
+          },
+          "bank_guarded_body_ns": 24444805,
+          "layers": {
+            "after": {
+              "calls": 14756,
+              "elapsed_ns": 75824248
+            },
+            "before": {
+              "calls": 14756,
+              "elapsed_ns": 232640789
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126336897
+            },
+            "root_generation": {
+              "calls": 16088,
+              "elapsed_ns": 96181576
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 244380
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 752340
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3595153
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 393180
+            }
+          }
+        },
+        "position": 5
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3698943
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11238116
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3383612
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4162313
+            }
+          },
+          "bank_guarded_body_ns": 23020624,
+          "layers": {
+            "after": {
+              "calls": 14678,
+              "elapsed_ns": 75596191
+            },
+            "before": {
+              "calls": 14678,
+              "elapsed_ns": 231746484
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126341905
+            },
+            "root_generation": {
+              "calls": 16010,
+              "elapsed_ns": 96007868
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 245160
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 752860
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3619412
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 388450
+            }
+          }
+        },
+        "position": 6
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3712582
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11358390
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3406472
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4178011
+            }
+          },
+          "bank_guarded_body_ns": 23204185,
+          "layers": {
+            "after": {
+              "calls": 14726,
+              "elapsed_ns": 75538592
+            },
+            "before": {
+              "calls": 14726,
+              "elapsed_ns": 231950063
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 125868596
+            },
+            "root_generation": {
+              "calls": 16058,
+              "elapsed_ns": 95971665
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 248100
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 760091
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3495752
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 386570
+            }
+          }
+        },
+        "position": 7
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3670613
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11160206
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3369483
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4152753
+            }
+          },
+          "bank_guarded_body_ns": 22898405,
+          "layers": {
+            "after": {
+              "calls": 14688,
+              "elapsed_ns": 75758615
+            },
+            "before": {
+              "calls": 14688,
+              "elapsed_ns": 231992134
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126420313
+            },
+            "root_generation": {
+              "calls": 16020,
+              "elapsed_ns": 96042071
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 236051
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 723020
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3474562
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 373040
+            }
+          }
+        },
+        "position": 8
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3868793
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11677376
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3539782
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4443023
+            }
+          },
+          "bank_guarded_body_ns": 24085324,
+          "layers": {
+            "after": {
+              "calls": 14708,
+              "elapsed_ns": 76177240
+            },
+            "before": {
+              "calls": 14708,
+              "elapsed_ns": 233885581
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 127322382
+            },
+            "root_generation": {
+              "calls": 16040,
+              "elapsed_ns": 97190871
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 242180
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 750691
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3549153
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 386071
+            }
+          }
+        },
+        "position": 9
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3712493
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11373167
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3409842
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4190732
+            }
+          },
+          "bank_guarded_body_ns": 23249554,
+          "layers": {
+            "after": {
+              "calls": 14730,
+              "elapsed_ns": 75760557
+            },
+            "before": {
+              "calls": 14730,
+              "elapsed_ns": 231816084
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126456092
+            },
+            "root_generation": {
+              "calls": 16062,
+              "elapsed_ns": 96082651
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 243170
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 738350
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3558082
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 381490
+            }
+          }
+        },
+        "position": 10
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3716771
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11246528
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3456892
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4200523
+            }
+          },
+          "bank_guarded_body_ns": 23177324,
+          "layers": {
+            "after": {
+              "calls": 14750,
+              "elapsed_ns": 76004728
+            },
+            "before": {
+              "calls": 14750,
+              "elapsed_ns": 233056504
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 127289270
+            },
+            "root_generation": {
+              "calls": 16082,
+              "elapsed_ns": 96903572
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 236911
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 733152
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3463332
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 372560
+            }
+          }
+        },
+        "position": 11
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3910802
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11743580
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3618883
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4372460
+            }
+          },
+          "bank_guarded_body_ns": 24180605,
+          "layers": {
+            "after": {
+              "calls": 14762,
+              "elapsed_ns": 75596612
+            },
+            "before": {
+              "calls": 14762,
+              "elapsed_ns": 232471412
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126635055
+            },
+            "root_generation": {
+              "calls": 16094,
+              "elapsed_ns": 96259340
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 247811
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 761670
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3582923
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 388770
+            }
+          }
+        },
+        "position": 12
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3704093
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11258137
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3417032
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4199772
+            }
+          },
+          "bank_guarded_body_ns": 23127975,
+          "layers": {
+            "after": {
+              "calls": 14784,
+              "elapsed_ns": 75538446
+            },
+            "before": {
+              "calls": 14784,
+              "elapsed_ns": 232347380
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 125686567
+            },
+            "root_generation": {
+              "calls": 16116,
+              "elapsed_ns": 96158303
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 260380
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 759181
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3604483
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 391221
+            }
+          }
+        },
+        "position": 13
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3634232
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11154398
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3388092
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4223832
+            }
+          },
+          "bank_guarded_body_ns": 22956924,
+          "layers": {
+            "after": {
+              "calls": 14674,
+              "elapsed_ns": 75126444
+            },
+            "before": {
+              "calls": 14674,
+              "elapsed_ns": 230681146
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126179786
+            },
+            "root_generation": {
+              "calls": 16006,
+              "elapsed_ns": 95558564
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 250141
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 762061
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3602713
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 385880
+            }
+          }
+        },
+        "position": 14
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3836724
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11629874
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3492692
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4371004
+            }
+          },
+          "bank_guarded_body_ns": 23876924,
+          "layers": {
+            "after": {
+              "calls": 14766,
+              "elapsed_ns": 75753198
+            },
+            "before": {
+              "calls": 14766,
+              "elapsed_ns": 233340583
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126601461
+            },
+            "root_generation": {
+              "calls": 16098,
+              "elapsed_ns": 96620914
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 245520
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 755930
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3539422
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 385382
+            }
+          }
+        },
+        "position": 15
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3774202
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11483850
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3455602
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4286171
+            }
+          },
+          "bank_guarded_body_ns": 23551605,
+          "layers": {
+            "after": {
+              "calls": 14642,
+              "elapsed_ns": 75960938
+            },
+            "before": {
+              "calls": 14642,
+              "elapsed_ns": 232298692
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126785281
+            },
+            "root_generation": {
+              "calls": 15974,
+              "elapsed_ns": 96289278
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 240040
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 735130
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3494902
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 377850
+            }
+          }
+        },
+        "position": 16
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3782911
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11610138
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3549432
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4323074
+            }
+          },
+          "bank_guarded_body_ns": 23803305,
+          "layers": {
+            "after": {
+              "calls": 14746,
+              "elapsed_ns": 76078276
+            },
+            "before": {
+              "calls": 14746,
+              "elapsed_ns": 233517818
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126745320
+            },
+            "root_generation": {
+              "calls": 16078,
+              "elapsed_ns": 96623941
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 242931
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 760952
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3590012
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 381670
+            }
+          }
+        },
+        "position": 17
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3958592
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11950101
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3611482
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4453140
+            }
+          },
+          "bank_guarded_body_ns": 24517455,
+          "layers": {
+            "after": {
+              "calls": 14694,
+              "elapsed_ns": 74994708
+            },
+            "before": {
+              "calls": 14694,
+              "elapsed_ns": 230587844
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 125715387
+            },
+            "root_generation": {
+              "calls": 16026,
+              "elapsed_ns": 94868283
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 241290
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 738610
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3751082
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 375130
+            }
+          }
+        },
+        "position": 18
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3734992
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11469457
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3453302
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4270863
+            }
+          },
+          "bank_guarded_body_ns": 23467454,
+          "layers": {
+            "after": {
+              "calls": 14766,
+              "elapsed_ns": 75681177
+            },
+            "before": {
+              "calls": 14766,
+              "elapsed_ns": 232234100
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 125669648
+            },
+            "root_generation": {
+              "calls": 16098,
+              "elapsed_ns": 95485069
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 243892
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 729990
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3462162
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 375350
+            }
+          }
+        },
+        "position": 19
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3757115
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11451246
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3467812
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4272341
+            }
+          },
+          "bank_guarded_body_ns": 23487205,
+          "layers": {
+            "after": {
+              "calls": 14768,
+              "elapsed_ns": 75656427
+            },
+            "before": {
+              "calls": 14768,
+              "elapsed_ns": 232725718
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126125374
+            },
+            "root_generation": {
+              "calls": 16100,
+              "elapsed_ns": 95894608
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 254070
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 744470
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3535882
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 382520
+            }
+          }
+        },
+        "position": 20
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3677482
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11274257
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3426922
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4205213
+            }
+          },
+          "bank_guarded_body_ns": 23111285,
+          "layers": {
+            "after": {
+              "calls": 14750,
+              "elapsed_ns": 75492917
+            },
+            "before": {
+              "calls": 14750,
+              "elapsed_ns": 231761524
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126248358
+            },
+            "root_generation": {
+              "calls": 16082,
+              "elapsed_ns": 95652353
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 235520
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 725512
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3412512
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 374510
+            }
+          }
+        },
+        "position": 21
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3680212
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11275808
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3475082
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4202862
+            }
+          },
+          "bank_guarded_body_ns": 23169964,
+          "layers": {
+            "after": {
+              "calls": 14744,
+              "elapsed_ns": 75574694
+            },
+            "before": {
+              "calls": 14744,
+              "elapsed_ns": 231720954
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 125313248
+            },
+            "root_generation": {
+              "calls": 16076,
+              "elapsed_ns": 95132328
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233690
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 731321
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3399352
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 368501
+            }
+          }
+        },
+        "position": 22
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3933314
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11853356
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3613182
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4455583
+            }
+          },
+          "bank_guarded_body_ns": 24429015,
+          "layers": {
+            "after": {
+              "calls": 14696,
+              "elapsed_ns": 76531050
+            },
+            "before": {
+              "calls": 14696,
+              "elapsed_ns": 234023544
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 128006566
+            },
+            "root_generation": {
+              "calls": 16028,
+              "elapsed_ns": 97206538
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 254610
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 765730
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3656592
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 399080
+            }
+          }
+        },
+        "position": 23
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3847563
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11465228
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3492372
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4314821
+            }
+          },
+          "bank_guarded_body_ns": 23658474,
+          "layers": {
+            "after": {
+              "calls": 14704,
+              "elapsed_ns": 76311984
+            },
+            "before": {
+              "calls": 14704,
+              "elapsed_ns": 233772396
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 127436083
+            },
+            "root_generation": {
+              "calls": 16036,
+              "elapsed_ns": 97273831
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 244650
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 751840
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3557612
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 388430
+            }
+          }
+        },
+        "position": 24
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3792373
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11686607
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3461943
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4310922
+            }
+          },
+          "bank_guarded_body_ns": 23826025,
+          "layers": {
+            "after": {
+              "calls": 14680,
+              "elapsed_ns": 76165026
+            },
+            "before": {
+              "calls": 14680,
+              "elapsed_ns": 232373506
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126942787
+            },
+            "root_generation": {
+              "calls": 16012,
+              "elapsed_ns": 96557626
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 243271
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 756452
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3469892
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 379431
+            }
+          }
+        },
+        "position": 25
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3669545
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11349166
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3470832
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4254711
+            }
+          },
+          "bank_guarded_body_ns": 23329844,
+          "layers": {
+            "after": {
+              "calls": 14656,
+              "elapsed_ns": 75650543
+            },
+            "before": {
+              "calls": 14656,
+              "elapsed_ns": 232488231
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 127048838
+            },
+            "root_generation": {
+              "calls": 15988,
+              "elapsed_ns": 96222690
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 241870
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 821530
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3523242
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 376252
+            }
+          }
+        },
+        "position": 26
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3692204
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11332316
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3422252
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4162363
+            }
+          },
+          "bank_guarded_body_ns": 23188865,
+          "layers": {
+            "after": {
+              "calls": 14748,
+              "elapsed_ns": 75586278
+            },
+            "before": {
+              "calls": 14748,
+              "elapsed_ns": 232363763
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126661170
+            },
+            "root_generation": {
+              "calls": 16080,
+              "elapsed_ns": 95770172
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 236910
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 731730
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3431672
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 375580
+            }
+          }
+        },
+        "position": 27
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3890571
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11775408
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3518972
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4379854
+            }
+          },
+          "bank_guarded_body_ns": 24123275,
+          "layers": {
+            "after": {
+              "calls": 14732,
+              "elapsed_ns": 75264634
+            },
+            "before": {
+              "calls": 14732,
+              "elapsed_ns": 231532645
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 125850468
+            },
+            "root_generation": {
+              "calls": 16064,
+              "elapsed_ns": 95106488
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 235810
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 723551
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3444043
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 372800
+            }
+          }
+        },
+        "position": 28
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3802775
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11647333
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3548002
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4355955
+            }
+          },
+          "bank_guarded_body_ns": 23909835,
+          "layers": {
+            "after": {
+              "calls": 14744,
+              "elapsed_ns": 76033062
+            },
+            "before": {
+              "calls": 14744,
+              "elapsed_ns": 234117311
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 127253949
+            },
+            "root_generation": {
+              "calls": 16076,
+              "elapsed_ns": 96257871
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233550
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 723962
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3484222
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 367921
+            }
+          }
+        },
+        "position": 29
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3857822
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11732179
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3586712
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4426512
+            }
+          },
+          "bank_guarded_body_ns": 24153315,
+          "layers": {
+            "after": {
+              "calls": 14730,
+              "elapsed_ns": 76001588
+            },
+            "before": {
+              "calls": 14730,
+              "elapsed_ns": 233622794
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126913175
+            },
+            "root_generation": {
+              "calls": 16062,
+              "elapsed_ns": 96866715
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 237880
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 743522
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3538822
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 377640
+            }
+          }
+        },
+        "position": 30
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3773192
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11478689
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3455812
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4304192
+            }
+          },
+          "bank_guarded_body_ns": 23566865,
+          "layers": {
+            "after": {
+              "calls": 14692,
+              "elapsed_ns": 76333036
+            },
+            "before": {
+              "calls": 14692,
+              "elapsed_ns": 232948322
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126823250
+            },
+            "root_generation": {
+              "calls": 16024,
+              "elapsed_ns": 96458193
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 239960
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 723810
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3403032
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 373180
+            }
+          }
+        },
+        "position": 31
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3746200
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11328527
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3400562
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4191944
+            }
+          },
+          "bank_guarded_body_ns": 23218674,
+          "layers": {
+            "after": {
+              "calls": 14758,
+              "elapsed_ns": 75845804
+            },
+            "before": {
+              "calls": 14758,
+              "elapsed_ns": 232525953
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126591748
+            },
+            "root_generation": {
+              "calls": 16090,
+              "elapsed_ns": 95963700
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 235950
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 729530
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3468232
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 371690
+            }
+          }
+        },
+        "position": 32
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3696032
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11365568
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3502162
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4205702
+            }
+          },
+          "bank_guarded_body_ns": 23328644,
+          "layers": {
+            "after": {
+              "calls": 14754,
+              "elapsed_ns": 75554111
+            },
+            "before": {
+              "calls": 14754,
+              "elapsed_ns": 232044415
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126154098
+            },
+            "root_generation": {
+              "calls": 16086,
+              "elapsed_ns": 95990332
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 244720
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 724511
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3415432
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 368840
+            }
+          }
+        },
+        "position": 33
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3859155
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11634485
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3553562
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4355753
+            }
+          },
+          "bank_guarded_body_ns": 23960575,
+          "layers": {
+            "after": {
+              "calls": 14730,
+              "elapsed_ns": 76088351
+            },
+            "before": {
+              "calls": 14730,
+              "elapsed_ns": 233072120
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126926489
+            },
+            "root_generation": {
+              "calls": 16062,
+              "elapsed_ns": 96602210
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 249810
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 754580
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3600143
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 388360
+            }
+          }
+        },
+        "position": 34
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3724501
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11301697
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3388412
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4204403
+            }
+          },
+          "bank_guarded_body_ns": 23165634,
+          "layers": {
+            "after": {
+              "calls": 14730,
+              "elapsed_ns": 75607629
+            },
+            "before": {
+              "calls": 14730,
+              "elapsed_ns": 232081326
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 125981668
+            },
+            "root_generation": {
+              "calls": 16062,
+              "elapsed_ns": 95716810
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 246430
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 760320
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3611352
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 401700
+            }
+          }
+        },
+        "position": 35
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3814443
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11321414
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3421332
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4210894
+            }
+          },
+          "bank_guarded_body_ns": 23341964,
+          "layers": {
+            "after": {
+              "calls": 14714,
+              "elapsed_ns": 76010823
+            },
+            "before": {
+              "calls": 14714,
+              "elapsed_ns": 233298270
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126870462
+            },
+            "root_generation": {
+              "calls": 16046,
+              "elapsed_ns": 97400956
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233801
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 753341
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3418022
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 376360
+            }
+          }
+        },
+        "position": 36
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3909741
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11798046
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3564622
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4494125
+            }
+          },
+          "bank_guarded_body_ns": 24323005,
+          "layers": {
+            "after": {
+              "calls": 14766,
+              "elapsed_ns": 75843344
+            },
+            "before": {
+              "calls": 14766,
+              "elapsed_ns": 233795277
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 127039126
+            },
+            "root_generation": {
+              "calls": 16098,
+              "elapsed_ns": 96579010
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 256970
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 770420
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3608202
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 389151
+            }
+          }
+        },
+        "position": 37
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3698651
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11252240
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3398002
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4194232
+            }
+          },
+          "bank_guarded_body_ns": 23101215,
+          "layers": {
+            "after": {
+              "calls": 14744,
+              "elapsed_ns": 75739899
+            },
+            "before": {
+              "calls": 14744,
+              "elapsed_ns": 232468012
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126450726
+            },
+            "root_generation": {
+              "calls": 16076,
+              "elapsed_ns": 96569564
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 242380
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 737072
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3468192
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 381622
+            }
+          }
+        },
+        "position": 38
+      },
+      {
+        "measured": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3900630
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11727547
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3503862
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4476486
+            }
+          },
+          "bank_guarded_body_ns": 24153345,
+          "layers": {
+            "after": {
+              "calls": 14760,
+              "elapsed_ns": 75815195
+            },
+            "before": {
+              "calls": 14760,
+              "elapsed_ns": 232542679
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 126562718
+            },
+            "root_generation": {
+              "calls": 16092,
+              "elapsed_ns": 96214173
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 234840
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 721970
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3405912
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 373610
+            }
+          }
+        },
+        "position": 39
+      }
+    ],
+    "host_elapsed_nanoseconds": true,
+    "instrumented": true,
+    "numerical_acceptance": false,
+    "performance_claim": false,
+    "policy_sha256": [
+      27,
+      112,
+      43,
+      207,
+      183,
+      188,
+      72,
+      17,
+      8,
+      223,
+      233,
+      113,
+      93,
+      81,
+      184,
+      122,
+      131,
+      157,
+      72,
+      1,
+      214,
+      129,
+      27,
+      139,
+      184,
+      162,
+      195,
+      2,
+      36,
+      81,
+      67,
+      234
+    ],
+    "schema": "FerricReadiness40TailCurrentnessDurationsV1",
+    "session": [
+      114,
+      76,
+      127,
+      140,
+      185,
+      178,
+      190,
+      161,
+      80,
+      12,
+      127,
+      236,
+      77,
+      140,
+      7,
+      202,
+      244,
+      37,
+      22,
+      10,
+      240,
+      78,
+      33,
+      213,
+      163,
+      222,
+      98,
+      169,
+      150,
+      149,
+      245,
+      186
+    ],
+    "transcript_sha256": [
+      54,
+      114,
+      110,
+      247,
+      119,
+      237,
+      20,
+      224,
+      67,
+      252,
+      148,
+      182,
+      217,
+      170,
+      55,
+      91,
+      144,
+      194,
+      23,
+      134,
+      115,
+      223,
+      118,
+      6,
+      222,
+      205,
+      186,
+      37,
+      245,
+      107,
+      208,
+      145
+    ],
+    "worker_sha256": [
+      16,
+      199,
+      67,
+      45,
+      41,
+      248,
+      202,
+      120,
+      12,
+      233,
+      51,
+      140,
+      50,
+      23,
+      189,
+      147,
+      199,
+      91,
+      4,
+      205,
+      52,
+      99,
+      215,
+      205,
+      9,
+      33,
+      192,
+      144,
+      67,
+      130,
+      96,
+      109
+    ]
+  },
+  "exact_integer_nanoseconds": true,
+  "first_two_callbacks_unmeasured": true,
+  "forward_groups": [
+    {
+      "elapsed_ns": 26397592993,
+      "first_position": 0,
+      "forwards": 2,
+      "group": "First use (unmeasured callbacks)",
+      "last_position": 1
+    },
+    {
+      "elapsed_ns": 68571861417,
+      "first_position": 2,
+      "forwards": 38,
+      "group": "Warm",
+      "last_position": 39
+    },
+    {
+      "elapsed_ns": 94969454410,
+      "first_position": 0,
+      "forwards": 40,
+      "group": "All forwards",
+      "last_position": 39
+    }
+  ],
+  "forward_groups_are_parent_subsets": true,
+  "full2303_feasibility": false,
+  "gpu_overlap_claim": false,
+  "gpu_timing": false,
+  "instrumented": true,
+  "matched_speed_comparison": false,
+  "numerical_acceptance": false,
+  "parent_categories": [
+    {
+      "category": "Source preparation",
+      "elapsed_ns": 92227530910
+    },
+    {
+      "category": "Spawn through setup",
+      "elapsed_ns": 225665259048
+    },
+    {
+      "category": "Prepare/write",
+      "elapsed_ns": 8532793
+    },
+    {
+      "category": "Wait for frame",
+      "elapsed_ns": 94936357100
+    },
+    {
+      "category": "Validate/retain/commit",
+      "elapsed_ns": 24564517
+    },
+    {
+      "category": "Close and retirement",
+      "elapsed_ns": 30240425696
+    },
+    {
+      "category": "Postcheck and publication",
+      "elapsed_ns": 560338437
+    }
+  ],
+  "parent_host_measurement": true,
+  "parent_spans": [
+    {
+      "elapsed_ns": 92227530910,
+      "end_ns": 92227530910,
+      "index": 0,
+      "position": null,
+      "region": "source_preparation",
+      "start_ns": 0
+    },
+    {
+      "elapsed_ns": 225665259048,
+      "end_ns": 317892789958,
+      "index": 1,
+      "position": null,
+      "region": "spawn_to_setup_seal",
+      "start_ns": 92227530910
+    },
+    {
+      "elapsed_ns": 193080,
+      "end_ns": 317892983038,
+      "index": 2,
+      "position": 0,
+      "region": "prepare_write",
+      "start_ns": 317892789958
+    },
+    {
+      "elapsed_ns": 13235699654,
+      "end_ns": 331128682692,
+      "index": 3,
+      "position": 0,
+      "region": "flush_to_frame_read",
+      "start_ns": 317892983038
+    },
+    {
+      "elapsed_ns": 2681212,
+      "end_ns": 331131363904,
+      "index": 4,
+      "position": 0,
+      "region": "validate_retain_commit",
+      "start_ns": 331128682692
+    },
+    {
+      "elapsed_ns": 41940,
+      "end_ns": 331131405844,
+      "index": 5,
+      "position": 1,
+      "region": "prepare_write",
+      "start_ns": 331131363904
+    },
+    {
+      "elapsed_ns": 13158521067,
+      "end_ns": 344289926911,
+      "index": 6,
+      "position": 1,
+      "region": "flush_to_frame_read",
+      "start_ns": 331131405844
+    },
+    {
+      "elapsed_ns": 456040,
+      "end_ns": 344290382951,
+      "index": 7,
+      "position": 1,
+      "region": "validate_retain_commit",
+      "start_ns": 344289926911
+    },
+    {
+      "elapsed_ns": 38520,
+      "end_ns": 344290421471,
+      "index": 8,
+      "position": 2,
+      "region": "prepare_write",
+      "start_ns": 344290382951
+    },
+    {
+      "elapsed_ns": 1803671298,
+      "end_ns": 346094092769,
+      "index": 9,
+      "position": 2,
+      "region": "flush_to_frame_read",
+      "start_ns": 344290421471
+    },
+    {
+      "elapsed_ns": 2063012,
+      "end_ns": 346096155781,
+      "index": 10,
+      "position": 2,
+      "region": "validate_retain_commit",
+      "start_ns": 346094092769
+    },
+    {
+      "elapsed_ns": 41660,
+      "end_ns": 346096197441,
+      "index": 11,
+      "position": 3,
+      "region": "prepare_write",
+      "start_ns": 346096155781
+    },
+    {
+      "elapsed_ns": 1805500349,
+      "end_ns": 347901697790,
+      "index": 12,
+      "position": 3,
+      "region": "flush_to_frame_read",
+      "start_ns": 346096197441
+    },
+    {
+      "elapsed_ns": 299530,
+      "end_ns": 347901997320,
+      "index": 13,
+      "position": 3,
+      "region": "validate_retain_commit",
+      "start_ns": 347901697790
+    },
+    {
+      "elapsed_ns": 38120,
+      "end_ns": 347902035440,
+      "index": 14,
+      "position": 4,
+      "region": "prepare_write",
+      "start_ns": 347901997320
+    },
+    {
+      "elapsed_ns": 1801078986,
+      "end_ns": 349703114426,
+      "index": 15,
+      "position": 4,
+      "region": "flush_to_frame_read",
+      "start_ns": 347902035440
+    },
+    {
+      "elapsed_ns": 579771,
+      "end_ns": 349703694197,
+      "index": 16,
+      "position": 4,
+      "region": "validate_retain_commit",
+      "start_ns": 349703114426
+    },
+    {
+      "elapsed_ns": 41800,
+      "end_ns": 349703735997,
+      "index": 17,
+      "position": 5,
+      "region": "prepare_write",
+      "start_ns": 349703694197
+    },
+    {
+      "elapsed_ns": 1805788479,
+      "end_ns": 351509524476,
+      "index": 18,
+      "position": 5,
+      "region": "flush_to_frame_read",
+      "start_ns": 349703735997
+    },
+    {
+      "elapsed_ns": 2577772,
+      "end_ns": 351512102248,
+      "index": 19,
+      "position": 5,
+      "region": "validate_retain_commit",
+      "start_ns": 351509524476
+    },
+    {
+      "elapsed_ns": 36920,
+      "end_ns": 351512139168,
+      "index": 20,
+      "position": 6,
+      "region": "prepare_write",
+      "start_ns": 351512102248
+    },
+    {
+      "elapsed_ns": 1797337834,
+      "end_ns": 353309477002,
+      "index": 21,
+      "position": 6,
+      "region": "flush_to_frame_read",
+      "start_ns": 351512139168
+    },
+    {
+      "elapsed_ns": 359830,
+      "end_ns": 353309836832,
+      "index": 22,
+      "position": 6,
+      "region": "validate_retain_commit",
+      "start_ns": 353309477002
+    },
+    {
+      "elapsed_ns": 41170,
+      "end_ns": 353309878002,
+      "index": 23,
+      "position": 7,
+      "region": "prepare_write",
+      "start_ns": 353309836832
+    },
+    {
+      "elapsed_ns": 1797804765,
+      "end_ns": 355107682767,
+      "index": 24,
+      "position": 7,
+      "region": "flush_to_frame_read",
+      "start_ns": 353309878002
+    },
+    {
+      "elapsed_ns": 310840,
+      "end_ns": 355107993607,
+      "index": 25,
+      "position": 7,
+      "region": "validate_retain_commit",
+      "start_ns": 355107682767
+    },
+    {
+      "elapsed_ns": 37950,
+      "end_ns": 355108031557,
+      "index": 26,
+      "position": 8,
+      "region": "prepare_write",
+      "start_ns": 355107993607
+    },
+    {
+      "elapsed_ns": 1798037764,
+      "end_ns": 356906069321,
+      "index": 27,
+      "position": 8,
+      "region": "flush_to_frame_read",
+      "start_ns": 355108031557
+    },
+    {
+      "elapsed_ns": 349881,
+      "end_ns": 356906419202,
+      "index": 28,
+      "position": 8,
+      "region": "validate_retain_commit",
+      "start_ns": 356906069321
+    },
+    {
+      "elapsed_ns": 41560,
+      "end_ns": 356906460762,
+      "index": 29,
+      "position": 9,
+      "region": "prepare_write",
+      "start_ns": 356906419202
+    },
+    {
+      "elapsed_ns": 1810639182,
+      "end_ns": 358717099944,
+      "index": 30,
+      "position": 9,
+      "region": "flush_to_frame_read",
+      "start_ns": 356906460762
+    },
+    {
+      "elapsed_ns": 318280,
+      "end_ns": 358717418224,
+      "index": 31,
+      "position": 9,
+      "region": "validate_retain_commit",
+      "start_ns": 358717099944
+    },
+    {
+      "elapsed_ns": 37680,
+      "end_ns": 358717455904,
+      "index": 32,
+      "position": 10,
+      "region": "prepare_write",
+      "start_ns": 358717418224
+    },
+    {
+      "elapsed_ns": 1805431279,
+      "end_ns": 360522887183,
+      "index": 33,
+      "position": 10,
+      "region": "flush_to_frame_read",
+      "start_ns": 358717455904
+    },
+    {
+      "elapsed_ns": 217111,
+      "end_ns": 360523104294,
+      "index": 34,
+      "position": 10,
+      "region": "validate_retain_commit",
+      "start_ns": 360522887183
+    },
+    {
+      "elapsed_ns": 2942151,
+      "end_ns": 360526046445,
+      "index": 35,
+      "position": 11,
+      "region": "prepare_write",
+      "start_ns": 360523104294
+    },
+    {
+      "elapsed_ns": 1799143836,
+      "end_ns": 362325190281,
+      "index": 36,
+      "position": 11,
+      "region": "flush_to_frame_read",
+      "start_ns": 360526046445
+    },
+    {
+      "elapsed_ns": 303230,
+      "end_ns": 362325493511,
+      "index": 37,
+      "position": 11,
+      "region": "validate_retain_commit",
+      "start_ns": 362325190281
+    },
+    {
+      "elapsed_ns": 39650,
+      "end_ns": 362325533161,
+      "index": 38,
+      "position": 12,
+      "region": "prepare_write",
+      "start_ns": 362325493511
+    },
+    {
+      "elapsed_ns": 1800904786,
+      "end_ns": 364126437947,
+      "index": 39,
+      "position": 12,
+      "region": "flush_to_frame_read",
+      "start_ns": 362325533161
+    },
+    {
+      "elapsed_ns": 328160,
+      "end_ns": 364126766107,
+      "index": 40,
+      "position": 12,
+      "region": "validate_retain_commit",
+      "start_ns": 364126437947
+    },
+    {
+      "elapsed_ns": 43680,
+      "end_ns": 364126809787,
+      "index": 41,
+      "position": 13,
+      "region": "prepare_write",
+      "start_ns": 364126766107
+    },
+    {
+      "elapsed_ns": 1805493160,
+      "end_ns": 365932302947,
+      "index": 42,
+      "position": 13,
+      "region": "flush_to_frame_read",
+      "start_ns": 364126809787
+    },
+    {
+      "elapsed_ns": 273690,
+      "end_ns": 365932576637,
+      "index": 43,
+      "position": 13,
+      "region": "validate_retain_commit",
+      "start_ns": 365932302947
+    },
+    {
+      "elapsed_ns": 3469702,
+      "end_ns": 365936046339,
+      "index": 44,
+      "position": 14,
+      "region": "prepare_write",
+      "start_ns": 365932576637
+    },
+    {
+      "elapsed_ns": 1792273811,
+      "end_ns": 367728320150,
+      "index": 45,
+      "position": 14,
+      "region": "flush_to_frame_read",
+      "start_ns": 365936046339
+    },
+    {
+      "elapsed_ns": 326060,
+      "end_ns": 367728646210,
+      "index": 46,
+      "position": 14,
+      "region": "validate_retain_commit",
+      "start_ns": 367728320150
+    },
+    {
+      "elapsed_ns": 39050,
+      "end_ns": 367728685260,
+      "index": 47,
+      "position": 15,
+      "region": "prepare_write",
+      "start_ns": 367728646210
+    },
+    {
+      "elapsed_ns": 1808623571,
+      "end_ns": 369537308831,
+      "index": 48,
+      "position": 15,
+      "region": "flush_to_frame_read",
+      "start_ns": 367728685260
+    },
+    {
+      "elapsed_ns": 277741,
+      "end_ns": 369537586572,
+      "index": 49,
+      "position": 15,
+      "region": "validate_retain_commit",
+      "start_ns": 369537308831
+    },
+    {
+      "elapsed_ns": 38620,
+      "end_ns": 369537625192,
+      "index": 50,
+      "position": 16,
+      "region": "prepare_write",
+      "start_ns": 369537586572
+    },
+    {
+      "elapsed_ns": 1802168717,
+      "end_ns": 371339793909,
+      "index": 51,
+      "position": 16,
+      "region": "flush_to_frame_read",
+      "start_ns": 369537625192
+    },
+    {
+      "elapsed_ns": 2632831,
+      "end_ns": 371342426740,
+      "index": 52,
+      "position": 16,
+      "region": "validate_retain_commit",
+      "start_ns": 371339793909
+    },
+    {
+      "elapsed_ns": 42040,
+      "end_ns": 371342468780,
+      "index": 53,
+      "position": 17,
+      "region": "prepare_write",
+      "start_ns": 371342426740
+    },
+    {
+      "elapsed_ns": 1801717457,
+      "end_ns": 373144186237,
+      "index": 54,
+      "position": 17,
+      "region": "flush_to_frame_read",
+      "start_ns": 371342468780
+    },
+    {
+      "elapsed_ns": 356820,
+      "end_ns": 373144543057,
+      "index": 55,
+      "position": 17,
+      "region": "validate_retain_commit",
+      "start_ns": 373144186237
+    },
+    {
+      "elapsed_ns": 38490,
+      "end_ns": 373144581547,
+      "index": 56,
+      "position": 18,
+      "region": "prepare_write",
+      "start_ns": 373144543057
+    },
+    {
+      "elapsed_ns": 1795513594,
+      "end_ns": 374940095141,
+      "index": 57,
+      "position": 18,
+      "region": "flush_to_frame_read",
+      "start_ns": 373144581547
+    },
+    {
+      "elapsed_ns": 335630,
+      "end_ns": 374940430771,
+      "index": 58,
+      "position": 18,
+      "region": "validate_retain_commit",
+      "start_ns": 374940095141
+    },
+    {
+      "elapsed_ns": 39790,
+      "end_ns": 374940470561,
+      "index": 59,
+      "position": 19,
+      "region": "prepare_write",
+      "start_ns": 374940430771
+    },
+    {
+      "elapsed_ns": 1802900887,
+      "end_ns": 376743371448,
+      "index": 60,
+      "position": 19,
+      "region": "flush_to_frame_read",
+      "start_ns": 374940470561
+    },
+    {
+      "elapsed_ns": 371661,
+      "end_ns": 376743743109,
+      "index": 61,
+      "position": 19,
+      "region": "validate_retain_commit",
+      "start_ns": 376743371448
+    },
+    {
+      "elapsed_ns": 37590,
+      "end_ns": 376743780699,
+      "index": 62,
+      "position": 20,
+      "region": "prepare_write",
+      "start_ns": 376743743109
+    },
+    {
+      "elapsed_ns": 1800186066,
+      "end_ns": 378543966765,
+      "index": 63,
+      "position": 20,
+      "region": "flush_to_frame_read",
+      "start_ns": 376743780699
+    },
+    {
+      "elapsed_ns": 438860,
+      "end_ns": 378544405625,
+      "index": 64,
+      "position": 20,
+      "region": "validate_retain_commit",
+      "start_ns": 378543966765
+    },
+    {
+      "elapsed_ns": 42030,
+      "end_ns": 378544447655,
+      "index": 65,
+      "position": 21,
+      "region": "prepare_write",
+      "start_ns": 378544405625
+    },
+    {
+      "elapsed_ns": 1798941655,
+      "end_ns": 380343389310,
+      "index": 66,
+      "position": 21,
+      "region": "flush_to_frame_read",
+      "start_ns": 378544447655
+    },
+    {
+      "elapsed_ns": 272050,
+      "end_ns": 380343661360,
+      "index": 67,
+      "position": 21,
+      "region": "validate_retain_commit",
+      "start_ns": 380343389310
+    },
+    {
+      "elapsed_ns": 40340,
+      "end_ns": 380343701700,
+      "index": 68,
+      "position": 22,
+      "region": "prepare_write",
+      "start_ns": 380343661360
+    },
+    {
+      "elapsed_ns": 1799794176,
+      "end_ns": 382143495876,
+      "index": 69,
+      "position": 22,
+      "region": "flush_to_frame_read",
+      "start_ns": 380343701700
+    },
+    {
+      "elapsed_ns": 382590,
+      "end_ns": 382143878466,
+      "index": 70,
+      "position": 22,
+      "region": "validate_retain_commit",
+      "start_ns": 382143495876
+    },
+    {
+      "elapsed_ns": 42070,
+      "end_ns": 382143920536,
+      "index": 71,
+      "position": 23,
+      "region": "prepare_write",
+      "start_ns": 382143878466
+    },
+    {
+      "elapsed_ns": 1809576432,
+      "end_ns": 383953496968,
+      "index": 72,
+      "position": 23,
+      "region": "flush_to_frame_read",
+      "start_ns": 382143920536
+    },
+    {
+      "elapsed_ns": 439080,
+      "end_ns": 383953936048,
+      "index": 73,
+      "position": 23,
+      "region": "validate_retain_commit",
+      "start_ns": 383953496968
+    },
+    {
+      "elapsed_ns": 38570,
+      "end_ns": 383953974618,
+      "index": 74,
+      "position": 24,
+      "region": "prepare_write",
+      "start_ns": 383953936048
+    },
+    {
+      "elapsed_ns": 1809620392,
+      "end_ns": 385763595010,
+      "index": 75,
+      "position": 24,
+      "region": "flush_to_frame_read",
+      "start_ns": 383953974618
+    },
+    {
+      "elapsed_ns": 385300,
+      "end_ns": 385763980310,
+      "index": 76,
+      "position": 24,
+      "region": "validate_retain_commit",
+      "start_ns": 385763595010
+    },
+    {
+      "elapsed_ns": 44290,
+      "end_ns": 385764024600,
+      "index": 77,
+      "position": 25,
+      "region": "prepare_write",
+      "start_ns": 385763980310
+    },
+    {
+      "elapsed_ns": 1804414639,
+      "end_ns": 387568439239,
+      "index": 78,
+      "position": 25,
+      "region": "flush_to_frame_read",
+      "start_ns": 385764024600
+    },
+    {
+      "elapsed_ns": 359900,
+      "end_ns": 387568799139,
+      "index": 79,
+      "position": 25,
+      "region": "validate_retain_commit",
+      "start_ns": 387568439239
+    },
+    {
+      "elapsed_ns": 38580,
+      "end_ns": 387568837719,
+      "index": 80,
+      "position": 26,
+      "region": "prepare_write",
+      "start_ns": 387568799139
+    },
+    {
+      "elapsed_ns": 1803671828,
+      "end_ns": 389372509547,
+      "index": 81,
+      "position": 26,
+      "region": "flush_to_frame_read",
+      "start_ns": 387568837719
+    },
+    {
+      "elapsed_ns": 371110,
+      "end_ns": 389372880657,
+      "index": 82,
+      "position": 26,
+      "region": "validate_retain_commit",
+      "start_ns": 389372509547
+    },
+    {
+      "elapsed_ns": 43380,
+      "end_ns": 389372924037,
+      "index": 83,
+      "position": 27,
+      "region": "prepare_write",
+      "start_ns": 389372880657
+    },
+    {
+      "elapsed_ns": 1809133532,
+      "end_ns": 391182057569,
+      "index": 84,
+      "position": 27,
+      "region": "flush_to_frame_read",
+      "start_ns": 389372924037
+    },
+    {
+      "elapsed_ns": 266680,
+      "end_ns": 391182324249,
+      "index": 85,
+      "position": 27,
+      "region": "validate_retain_commit",
+      "start_ns": 391182057569
+    },
+    {
+      "elapsed_ns": 40700,
+      "end_ns": 391182364949,
+      "index": 86,
+      "position": 28,
+      "region": "prepare_write",
+      "start_ns": 391182324249
+    },
+    {
+      "elapsed_ns": 1798239935,
+      "end_ns": 392980604884,
+      "index": 87,
+      "position": 28,
+      "region": "flush_to_frame_read",
+      "start_ns": 391182364949
+    },
+    {
+      "elapsed_ns": 363950,
+      "end_ns": 392980968834,
+      "index": 88,
+      "position": 28,
+      "region": "validate_retain_commit",
+      "start_ns": 392980604884
+    },
+    {
+      "elapsed_ns": 42810,
+      "end_ns": 392981011644,
+      "index": 89,
+      "position": 29,
+      "region": "prepare_write",
+      "start_ns": 392980968834
+    },
+    {
+      "elapsed_ns": 1807797890,
+      "end_ns": 394788809534,
+      "index": 90,
+      "position": 29,
+      "region": "flush_to_frame_read",
+      "start_ns": 392981011644
+    },
+    {
+      "elapsed_ns": 337761,
+      "end_ns": 394789147295,
+      "index": 91,
+      "position": 29,
+      "region": "validate_retain_commit",
+      "start_ns": 394788809534
+    },
+    {
+      "elapsed_ns": 38700,
+      "end_ns": 394789185995,
+      "index": 92,
+      "position": 30,
+      "region": "prepare_write",
+      "start_ns": 394789147295
+    },
+    {
+      "elapsed_ns": 1805615129,
+      "end_ns": 396594801124,
+      "index": 93,
+      "position": 30,
+      "region": "flush_to_frame_read",
+      "start_ns": 394789185995
+    },
+    {
+      "elapsed_ns": 366050,
+      "end_ns": 396595167174,
+      "index": 94,
+      "position": 30,
+      "region": "validate_retain_commit",
+      "start_ns": 396594801124
+    },
+    {
+      "elapsed_ns": 42770,
+      "end_ns": 396595209944,
+      "index": 95,
+      "position": 31,
+      "region": "prepare_write",
+      "start_ns": 396595167174
+    },
+    {
+      "elapsed_ns": 1798122815,
+      "end_ns": 398393332759,
+      "index": 96,
+      "position": 31,
+      "region": "flush_to_frame_read",
+      "start_ns": 396595209944
+    },
+    {
+      "elapsed_ns": 359280,
+      "end_ns": 398393692039,
+      "index": 97,
+      "position": 31,
+      "region": "validate_retain_commit",
+      "start_ns": 398393332759
+    },
+    {
+      "elapsed_ns": 38770,
+      "end_ns": 398393730809,
+      "index": 98,
+      "position": 32,
+      "region": "prepare_write",
+      "start_ns": 398393692039
+    },
+    {
+      "elapsed_ns": 1808047061,
+      "end_ns": 400201777870,
+      "index": 99,
+      "position": 32,
+      "region": "flush_to_frame_read",
+      "start_ns": 398393730809
+    },
+    {
+      "elapsed_ns": 356130,
+      "end_ns": 400202134000,
+      "index": 100,
+      "position": 32,
+      "region": "validate_retain_commit",
+      "start_ns": 400201777870
+    },
+    {
+      "elapsed_ns": 43030,
+      "end_ns": 400202177030,
+      "index": 101,
+      "position": 33,
+      "region": "prepare_write",
+      "start_ns": 400202134000
+    },
+    {
+      "elapsed_ns": 1807217680,
+      "end_ns": 402009394710,
+      "index": 102,
+      "position": 33,
+      "region": "flush_to_frame_read",
+      "start_ns": 400202177030
+    },
+    {
+      "elapsed_ns": 231951,
+      "end_ns": 402009626661,
+      "index": 103,
+      "position": 33,
+      "region": "validate_retain_commit",
+      "start_ns": 402009394710
+    },
+    {
+      "elapsed_ns": 42410,
+      "end_ns": 402009669071,
+      "index": 104,
+      "position": 34,
+      "region": "prepare_write",
+      "start_ns": 402009626661
+    },
+    {
+      "elapsed_ns": 1811466763,
+      "end_ns": 403821135834,
+      "index": 105,
+      "position": 34,
+      "region": "flush_to_frame_read",
+      "start_ns": 402009669071
+    },
+    {
+      "elapsed_ns": 308770,
+      "end_ns": 403821444604,
+      "index": 106,
+      "position": 34,
+      "region": "validate_retain_commit",
+      "start_ns": 403821135834
+    },
+    {
+      "elapsed_ns": 42210,
+      "end_ns": 403821486814,
+      "index": 107,
+      "position": 35,
+      "region": "prepare_write",
+      "start_ns": 403821444604
+    },
+    {
+      "elapsed_ns": 1804797099,
+      "end_ns": 405626283913,
+      "index": 108,
+      "position": 35,
+      "region": "flush_to_frame_read",
+      "start_ns": 403821486814
+    },
+    {
+      "elapsed_ns": 319090,
+      "end_ns": 405626603003,
+      "index": 109,
+      "position": 35,
+      "region": "validate_retain_commit",
+      "start_ns": 405626283913
+    },
+    {
+      "elapsed_ns": 39470,
+      "end_ns": 405626642473,
+      "index": 110,
+      "position": 36,
+      "region": "prepare_write",
+      "start_ns": 405626603003
+    },
+    {
+      "elapsed_ns": 1803951458,
+      "end_ns": 407430593931,
+      "index": 111,
+      "position": 36,
+      "region": "flush_to_frame_read",
+      "start_ns": 405626642473
+    },
+    {
+      "elapsed_ns": 327000,
+      "end_ns": 407430920931,
+      "index": 112,
+      "position": 36,
+      "region": "validate_retain_commit",
+      "start_ns": 407430593931
+    },
+    {
+      "elapsed_ns": 44660,
+      "end_ns": 407430965591,
+      "index": 113,
+      "position": 37,
+      "region": "prepare_write",
+      "start_ns": 407430920931
+    },
+    {
+      "elapsed_ns": 1812271754,
+      "end_ns": 409243237345,
+      "index": 114,
+      "position": 37,
+      "region": "flush_to_frame_read",
+      "start_ns": 407430965591
+    },
+    {
+      "elapsed_ns": 354130,
+      "end_ns": 409243591475,
+      "index": 115,
+      "position": 37,
+      "region": "validate_retain_commit",
+      "start_ns": 409243237345
+    },
+    {
+      "elapsed_ns": 464210,
+      "end_ns": 409244055685,
+      "index": 116,
+      "position": 38,
+      "region": "prepare_write",
+      "start_ns": 409243591475
+    },
+    {
+      "elapsed_ns": 1805548429,
+      "end_ns": 411049604114,
+      "index": 117,
+      "position": 38,
+      "region": "flush_to_frame_read",
+      "start_ns": 409244055685
+    },
+    {
+      "elapsed_ns": 243021,
+      "end_ns": 411049847135,
+      "index": 118,
+      "position": 38,
+      "region": "validate_retain_commit",
+      "start_ns": 411049604114
+    },
+    {
+      "elapsed_ns": 42630,
+      "end_ns": 411049889765,
+      "index": 119,
+      "position": 39,
+      "region": "prepare_write",
+      "start_ns": 411049847135
+    },
+    {
+      "elapsed_ns": 1809691891,
+      "end_ns": 412859581656,
+      "index": 120,
+      "position": 39,
+      "region": "flush_to_frame_read",
+      "start_ns": 411049889765
+    },
+    {
+      "elapsed_ns": 2662712,
+      "end_ns": 412862244368,
+      "index": 121,
+      "position": 39,
+      "region": "validate_retain_commit",
+      "start_ns": 412859581656
+    },
+    {
+      "elapsed_ns": 30240425696,
+      "end_ns": 443102670064,
+      "index": 122,
+      "position": null,
+      "region": "close_and_retirement",
+      "start_ns": 412862244368
+    },
+    {
+      "elapsed_ns": 560338437,
+      "end_ns": 443663008501,
+      "index": 123,
+      "position": null,
+      "region": "postcheck_and_ordinary_publication",
+      "start_ns": 443102670064
+    }
+  ],
+  "parent_total_ns": 443663008501,
+  "performance_claim": false,
+  "policy_record": {
+    "allocation_preflights_changed": true,
+    "allocation_preflights_outside_windows": false,
+    "cache_kernel_admission": false,
+    "capture_positions": [
+      0,
+      5,
+      16,
+      39
+    ],
+    "child_pid": 3992980,
+    "completed_forwards": 40,
+    "counts": {
+      "banks": {
+        "after_calls": 27588,
+        "before_calls": 27588,
+        "final_generations": [
+          20,
+          20
+        ],
+        "full_discoveries": 76,
+        "generation_probes": 27550,
+        "local_checkpoints": 13718,
+        "ordinary_initial_banks": 2,
+        "scoped_rearms": 38,
+        "scoped_rearms_by_forward": [
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "census": {
+        "owner_counts": [
+          787,
+          783
+        ],
+        "preflights": 2736,
+        "rank_checkpoints": 21888,
+        "warm_layers": 1368
+      },
+      "layers": {
+        "after_calls": 559642,
+        "before_calls": 559642,
+        "full_discoveries": 2736,
+        "generation_probes": 610258,
+        "local_checkpoints": 303077,
+        "ordinary_layers": 72,
+        "scoped_layers": 1368,
+        "scoped_layers_by_forward": [
+          0,
+          0,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36,
+          36
+        ]
+      },
+      "tails": {
+        "after_calls": 1748,
+        "before_calls": 1748,
+        "dispatches": 114,
+        "full_discoveries": 76,
+        "generation_probes": 2394,
+        "local_checkpoints": 1140,
+        "ordinary_tails": 2,
+        "readback_bytes": 11858584,
+        "readbacks": 114,
+        "scoped_tails": 38
+      }
+    },
+    "default_group_policy_unchanged": true,
+    "device_ids": [
+      16366993098680759275,
+      10838076764495710945
+    ],
+    "execution_profile": "Readiness40Position5BankScopedWarmCensusTailCurrentnessV4",
+    "full_entry_exit_per_scoped_bank": true,
+    "full_entry_exit_per_scoped_layer": true,
+    "full_entry_exit_per_scoped_tail": true,
+    "full_long_workload": false,
+    "generated_tokens": [],
+    "host_observer": false,
+    "native_closed": true,
+    "numerical_acceptance": false,
+    "operational_currentness": false,
+    "paired_hidden_reads": false,
+    "paired_terminal": false,
+    "participant_local_between_boundaries": true,
+    "performance_claim": false,
+    "production_authority": false,
+    "profile_sha256": [
+      83,
+      126,
+      222,
+      160,
+      215,
+      64,
+      134,
+      133,
+      198,
+      69,
+      219,
+      140,
+      55,
+      171,
+      24,
+      232,
+      206,
+      199,
+      63,
+      33,
+      107,
+      228,
+      156,
+      250,
+      161,
+      211,
+      120,
+      220,
+      141,
+      78,
+      171,
+      54
+    ],
+    "registration_sha256": [
+      14,
+      253,
+      205,
+      219,
+      247,
+      148,
+      187,
+      200,
+      113,
+      151,
+      82,
+      227,
+      51,
+      167,
+      196,
+      2,
+      32,
+      197,
+      242,
+      38,
+      192,
+      229,
+      199,
+      111,
+      108,
+      41,
+      131,
+      56,
+      182,
+      4,
+      19,
+      82
+    ],
+    "schema": "FerricReadiness40Position5BankScopedWarmCensusTailPolicyV4",
+    "scope_includes_prefix_mlp_hidden": true,
+    "scope_includes_tail_dispatch_and_readback": true,
+    "scoped_bank_rearm": true,
+    "scoped_capacity_census": true,
+    "scoped_tail": true,
+    "scoped_warm_currentness": true,
+    "session": [
+      114,
+      76,
+      127,
+      140,
+      185,
+      178,
+      190,
+      161,
+      80,
+      12,
+      127,
+      236,
+      77,
+      140,
+      7,
+      202,
+      244,
+      37,
+      22,
+      10,
+      240,
+      78,
+      33,
+      213,
+      163,
+      222,
+      98,
+      169,
+      150,
+      149,
+      245,
+      186
+    ],
+    "shared_full_currentness": false,
+    "temporal_equivalent_to_full": false,
+    "transcript_sha256": [
+      54,
+      114,
+      110,
+      247,
+      119,
+      237,
+      20,
+      224,
+      67,
+      252,
+      148,
+      182,
+      217,
+      170,
+      55,
+      91,
+      144,
+      194,
+      23,
+      134,
+      115,
+      223,
+      118,
+      6,
+      222,
+      205,
+      186,
+      37,
+      245,
+      107,
+      208,
+      145
+    ],
+    "worker_sha256": [
+      16,
+      199,
+      67,
+      45,
+      41,
+      248,
+      202,
+      120,
+      12,
+      233,
+      51,
+      140,
+      50,
+      23,
+      189,
+      147,
+      199,
+      91,
+      4,
+      205,
+      52,
+      99,
+      215,
+      205,
+      9,
+      33,
+      192,
+      144,
+      67,
+      130,
+      96,
+      109
+    ]
+  },
+  "positions": [
+    {
+      "all_callbacks_ns": null,
+      "bank_callbacks_ns": null,
+      "bank_guarded_body_ns": null,
+      "bank_other_ns": null,
+      "expanded_disjoint_ns": null,
+      "layer_callbacks_ns": null,
+      "measured": false,
+      "parent_forward_ns": 13238573946,
+      "position": 0,
+      "tail_callbacks_ns": null,
+      "unattributed_parent_ns": null
+    },
+    {
+      "all_callbacks_ns": null,
+      "bank_callbacks_ns": null,
+      "bank_guarded_body_ns": null,
+      "bank_other_ns": null,
+      "expanded_disjoint_ns": null,
+      "layer_callbacks_ns": null,
+      "measured": false,
+      "parent_forward_ns": 13159019047,
+      "position": 1,
+      "tail_callbacks_ns": null,
+      "unattributed_parent_ns": null
+    },
+    {
+      "all_callbacks_ns": 561602211,
+      "bank_callbacks_ns": 22999565,
+      "bank_guarded_body_ns": 23566675,
+      "bank_other_ns": 567110,
+      "expanded_disjoint_ns": 562169321,
+      "layer_callbacks_ns": 533758051,
+      "measured": true,
+      "parent_forward_ns": 1805772830,
+      "position": 2,
+      "tail_callbacks_ns": 4844595,
+      "unattributed_parent_ns": 1243603509
+    },
+    {
+      "all_callbacks_ns": 556958684,
+      "bank_callbacks_ns": 22550694,
+      "bank_guarded_body_ns": 23104154,
+      "bank_other_ns": 553460,
+      "expanded_disjoint_ns": 557512144,
+      "layer_callbacks_ns": 529532517,
+      "measured": true,
+      "parent_forward_ns": 1805841539,
+      "position": 3,
+      "tail_callbacks_ns": 4875473,
+      "unattributed_parent_ns": 1248329395
+    },
+    {
+      "all_callbacks_ns": 556719930,
+      "bank_callbacks_ns": 22525693,
+      "bank_guarded_body_ns": 23059284,
+      "bank_other_ns": 533591,
+      "expanded_disjoint_ns": 557253521,
+      "layer_callbacks_ns": 529429815,
+      "measured": true,
+      "parent_forward_ns": 1801696877,
+      "position": 4,
+      "tail_callbacks_ns": 4764422,
+      "unattributed_parent_ns": 1244443356
+    },
+    {
+      "all_callbacks_ns": 559856918,
+      "bank_callbacks_ns": 23888355,
+      "bank_guarded_body_ns": 24444805,
+      "bank_other_ns": 556450,
+      "expanded_disjoint_ns": 560413368,
+      "layer_callbacks_ns": 530983510,
+      "measured": true,
+      "parent_forward_ns": 1808408051,
+      "position": 5,
+      "tail_callbacks_ns": 4985053,
+      "unattributed_parent_ns": 1247994683
+    },
+    {
+      "all_callbacks_ns": 557181314,
+      "bank_callbacks_ns": 22482984,
+      "bank_guarded_body_ns": 23020624,
+      "bank_other_ns": 537640,
+      "expanded_disjoint_ns": 557718954,
+      "layer_callbacks_ns": 529692448,
+      "measured": true,
+      "parent_forward_ns": 1797734584,
+      "position": 6,
+      "tail_callbacks_ns": 5005882,
+      "unattributed_parent_ns": 1240015630
+    },
+    {
+      "all_callbacks_ns": 556874884,
+      "bank_callbacks_ns": 22655455,
+      "bank_guarded_body_ns": 23204185,
+      "bank_other_ns": 548730,
+      "expanded_disjoint_ns": 557423614,
+      "layer_callbacks_ns": 529328916,
+      "measured": true,
+      "parent_forward_ns": 1798156775,
+      "position": 7,
+      "tail_callbacks_ns": 4890513,
+      "unattributed_parent_ns": 1240733161
+    },
+    {
+      "all_callbacks_ns": 557372861,
+      "bank_callbacks_ns": 22353055,
+      "bank_guarded_body_ns": 22898405,
+      "bank_other_ns": 545350,
+      "expanded_disjoint_ns": 557918211,
+      "layer_callbacks_ns": 530213133,
+      "measured": true,
+      "parent_forward_ns": 1798425595,
+      "position": 8,
+      "tail_callbacks_ns": 4806673,
+      "unattributed_parent_ns": 1240507384
+    },
+    {
+      "all_callbacks_ns": 563033143,
+      "bank_callbacks_ns": 23528974,
+      "bank_guarded_body_ns": 24085324,
+      "bank_other_ns": 556350,
+      "expanded_disjoint_ns": 563589493,
+      "layer_callbacks_ns": 534576074,
+      "measured": true,
+      "parent_forward_ns": 1810999022,
+      "position": 9,
+      "tail_callbacks_ns": 4928095,
+      "unattributed_parent_ns": 1247409529
+    },
+    {
+      "all_callbacks_ns": 557722710,
+      "bank_callbacks_ns": 22686234,
+      "bank_guarded_body_ns": 23249554,
+      "bank_other_ns": 563320,
+      "expanded_disjoint_ns": 558286030,
+      "layer_callbacks_ns": 530115384,
+      "measured": true,
+      "parent_forward_ns": 1805686070,
+      "position": 10,
+      "tail_callbacks_ns": 4921092,
+      "unattributed_parent_ns": 1247400040
+    },
+    {
+      "all_callbacks_ns": 560680743,
+      "bank_callbacks_ns": 22620714,
+      "bank_guarded_body_ns": 23177324,
+      "bank_other_ns": 556610,
+      "expanded_disjoint_ns": 561237353,
+      "layer_callbacks_ns": 533254074,
+      "measured": true,
+      "parent_forward_ns": 1802389217,
+      "position": 11,
+      "tail_callbacks_ns": 4805955,
+      "unattributed_parent_ns": 1241151864
+    },
+    {
+      "all_callbacks_ns": 559589318,
+      "bank_callbacks_ns": 23645725,
+      "bank_guarded_body_ns": 24180605,
+      "bank_other_ns": 534880,
+      "expanded_disjoint_ns": 560124198,
+      "layer_callbacks_ns": 530962419,
+      "measured": true,
+      "parent_forward_ns": 1801272596,
+      "position": 12,
+      "tail_callbacks_ns": 4981174,
+      "unattributed_parent_ns": 1241148398
+    },
+    {
+      "all_callbacks_ns": 557324995,
+      "bank_callbacks_ns": 22579034,
+      "bank_guarded_body_ns": 23127975,
+      "bank_other_ns": 548941,
+      "expanded_disjoint_ns": 557873936,
+      "layer_callbacks_ns": 529730696,
+      "measured": true,
+      "parent_forward_ns": 1805810530,
+      "position": 13,
+      "tail_callbacks_ns": 5015265,
+      "unattributed_parent_ns": 1247936594
+    },
+    {
+      "all_callbacks_ns": 554947289,
+      "bank_callbacks_ns": 22400554,
+      "bank_guarded_body_ns": 22956924,
+      "bank_other_ns": 556370,
+      "expanded_disjoint_ns": 555503659,
+      "layer_callbacks_ns": 527545940,
+      "measured": true,
+      "parent_forward_ns": 1796069573,
+      "position": 14,
+      "tail_callbacks_ns": 5000795,
+      "unattributed_parent_ns": 1240565914
+    },
+    {
+      "all_callbacks_ns": 560572704,
+      "bank_callbacks_ns": 23330294,
+      "bank_guarded_body_ns": 23876924,
+      "bank_other_ns": 546630,
+      "expanded_disjoint_ns": 561119334,
+      "layer_callbacks_ns": 532316156,
+      "measured": true,
+      "parent_forward_ns": 1808940362,
+      "position": 15,
+      "tail_callbacks_ns": 4926254,
+      "unattributed_parent_ns": 1247821028
+    },
+    {
+      "all_callbacks_ns": 559181936,
+      "bank_callbacks_ns": 22999825,
+      "bank_guarded_body_ns": 23551605,
+      "bank_other_ns": 551780,
+      "expanded_disjoint_ns": 559733716,
+      "layer_callbacks_ns": 531334189,
+      "measured": true,
+      "parent_forward_ns": 1804840168,
+      "position": 16,
+      "tail_callbacks_ns": 4847922,
+      "unattributed_parent_ns": 1245106452
+    },
+    {
+      "all_callbacks_ns": 561206475,
+      "bank_callbacks_ns": 23265555,
+      "bank_guarded_body_ns": 23803305,
+      "bank_other_ns": 537750,
+      "expanded_disjoint_ns": 561744225,
+      "layer_callbacks_ns": 532965355,
+      "measured": true,
+      "parent_forward_ns": 1802116317,
+      "position": 17,
+      "tail_callbacks_ns": 4975565,
+      "unattributed_parent_ns": 1240372092
+    },
+    {
+      "all_callbacks_ns": 555245649,
+      "bank_callbacks_ns": 23973315,
+      "bank_guarded_body_ns": 24517455,
+      "bank_other_ns": 544140,
+      "expanded_disjoint_ns": 555789789,
+      "layer_callbacks_ns": 526166222,
+      "measured": true,
+      "parent_forward_ns": 1795887714,
+      "position": 18,
+      "tail_callbacks_ns": 5106112,
+      "unattributed_parent_ns": 1240097925
+    },
+    {
+      "all_callbacks_ns": 556810002,
+      "bank_callbacks_ns": 22928614,
+      "bank_guarded_body_ns": 23467454,
+      "bank_other_ns": 538840,
+      "expanded_disjoint_ns": 557348842,
+      "layer_callbacks_ns": 529069994,
+      "measured": true,
+      "parent_forward_ns": 1803312338,
+      "position": 19,
+      "tail_callbacks_ns": 4811394,
+      "unattributed_parent_ns": 1245963496
+    },
+    {
+      "all_callbacks_ns": 558267583,
+      "bank_callbacks_ns": 22948514,
+      "bank_guarded_body_ns": 23487205,
+      "bank_other_ns": 538691,
+      "expanded_disjoint_ns": 558806274,
+      "layer_callbacks_ns": 530402127,
+      "measured": true,
+      "parent_forward_ns": 1800662516,
+      "position": 20,
+      "tail_callbacks_ns": 4916942,
+      "unattributed_parent_ns": 1241856242
+    },
+    {
+      "all_callbacks_ns": 556487080,
+      "bank_callbacks_ns": 22583874,
+      "bank_guarded_body_ns": 23111285,
+      "bank_other_ns": 527411,
+      "expanded_disjoint_ns": 557014491,
+      "layer_callbacks_ns": 529155152,
+      "measured": true,
+      "parent_forward_ns": 1799255735,
+      "position": 21,
+      "tail_callbacks_ns": 4748054,
+      "unattributed_parent_ns": 1242241244
+    },
+    {
+      "all_callbacks_ns": 555108052,
+      "bank_callbacks_ns": 22633964,
+      "bank_guarded_body_ns": 23169964,
+      "bank_other_ns": 536000,
+      "expanded_disjoint_ns": 555644052,
+      "layer_callbacks_ns": 527741224,
+      "measured": true,
+      "parent_forward_ns": 1800217106,
+      "position": 22,
+      "tail_callbacks_ns": 4732864,
+      "unattributed_parent_ns": 1244573054
+    },
+    {
+      "all_callbacks_ns": 564699145,
+      "bank_callbacks_ns": 23855435,
+      "bank_guarded_body_ns": 24429015,
+      "bank_other_ns": 573580,
+      "expanded_disjoint_ns": 565272725,
+      "layer_callbacks_ns": 535767698,
+      "measured": true,
+      "parent_forward_ns": 1810057582,
+      "position": 23,
+      "tail_callbacks_ns": 5076012,
+      "unattributed_parent_ns": 1244784857
+    },
+    {
+      "all_callbacks_ns": 562856810,
+      "bank_callbacks_ns": 23119984,
+      "bank_guarded_body_ns": 23658474,
+      "bank_other_ns": 538490,
+      "expanded_disjoint_ns": 563395300,
+      "layer_callbacks_ns": 534794294,
+      "measured": true,
+      "parent_forward_ns": 1810044262,
+      "position": 24,
+      "tail_callbacks_ns": 4942532,
+      "unattributed_parent_ns": 1246648962
+    },
+    {
+      "all_callbacks_ns": 560139836,
+      "bank_callbacks_ns": 23251845,
+      "bank_guarded_body_ns": 23826025,
+      "bank_other_ns": 574180,
+      "expanded_disjoint_ns": 560714016,
+      "layer_callbacks_ns": 532038945,
+      "measured": true,
+      "parent_forward_ns": 1804818829,
+      "position": 25,
+      "tail_callbacks_ns": 4849046,
+      "unattributed_parent_ns": 1244104813
+    },
+    {
+      "all_callbacks_ns": 559117450,
+      "bank_callbacks_ns": 22744254,
+      "bank_guarded_body_ns": 23329844,
+      "bank_other_ns": 585590,
+      "expanded_disjoint_ns": 559703040,
+      "layer_callbacks_ns": 531410302,
+      "measured": true,
+      "parent_forward_ns": 1804081518,
+      "position": 26,
+      "tail_callbacks_ns": 4962894,
+      "unattributed_parent_ns": 1244378478
+    },
+    {
+      "all_callbacks_ns": 557766410,
+      "bank_callbacks_ns": 22609135,
+      "bank_guarded_body_ns": 23188865,
+      "bank_other_ns": 579730,
+      "expanded_disjoint_ns": 558346140,
+      "layer_callbacks_ns": 530381383,
+      "measured": true,
+      "parent_forward_ns": 1809443592,
+      "position": 27,
+      "tail_callbacks_ns": 4775892,
+      "unattributed_parent_ns": 1251097452
+    },
+    {
+      "all_callbacks_ns": 556095244,
+      "bank_callbacks_ns": 23564805,
+      "bank_guarded_body_ns": 24123275,
+      "bank_other_ns": 558470,
+      "expanded_disjoint_ns": 556653714,
+      "layer_callbacks_ns": 527754235,
+      "measured": true,
+      "parent_forward_ns": 1798644585,
+      "position": 28,
+      "tail_callbacks_ns": 4776204,
+      "unattributed_parent_ns": 1241990871
+    },
+    {
+      "all_callbacks_ns": 561825913,
+      "bank_callbacks_ns": 23354065,
+      "bank_guarded_body_ns": 23909835,
+      "bank_other_ns": 555770,
+      "expanded_disjoint_ns": 562381683,
+      "layer_callbacks_ns": 533662193,
+      "measured": true,
+      "parent_forward_ns": 1808178461,
+      "position": 29,
+      "tail_callbacks_ns": 4809655,
+      "unattributed_parent_ns": 1245796778
+    },
+    {
+      "all_callbacks_ns": 561905361,
+      "bank_callbacks_ns": 23603225,
+      "bank_guarded_body_ns": 24153315,
+      "bank_other_ns": 550090,
+      "expanded_disjoint_ns": 562455451,
+      "layer_callbacks_ns": 533404272,
+      "measured": true,
+      "parent_forward_ns": 1806019879,
+      "position": 30,
+      "tail_callbacks_ns": 4897864,
+      "unattributed_parent_ns": 1243564428
+    },
+    {
+      "all_callbacks_ns": 560314668,
+      "bank_callbacks_ns": 23011885,
+      "bank_guarded_body_ns": 23566865,
+      "bank_other_ns": 554980,
+      "expanded_disjoint_ns": 560869648,
+      "layer_callbacks_ns": 532562801,
+      "measured": true,
+      "parent_forward_ns": 1798524865,
+      "position": 31,
+      "tail_callbacks_ns": 4739982,
+      "unattributed_parent_ns": 1237655217
+    },
+    {
+      "all_callbacks_ns": 558399840,
+      "bank_callbacks_ns": 22667233,
+      "bank_guarded_body_ns": 23218674,
+      "bank_other_ns": 551441,
+      "expanded_disjoint_ns": 558951281,
+      "layer_callbacks_ns": 530927205,
+      "measured": true,
+      "parent_forward_ns": 1808441961,
+      "position": 32,
+      "tail_callbacks_ns": 4805402,
+      "unattributed_parent_ns": 1249490680
+    },
+    {
+      "all_callbacks_ns": 557265923,
+      "bank_callbacks_ns": 22769464,
+      "bank_guarded_body_ns": 23328644,
+      "bank_other_ns": 559180,
+      "expanded_disjoint_ns": 557825103,
+      "layer_callbacks_ns": 529742956,
+      "measured": true,
+      "parent_forward_ns": 1807492661,
+      "position": 33,
+      "tail_callbacks_ns": 4753503,
+      "unattributed_parent_ns": 1249667558
+    },
+    {
+      "all_callbacks_ns": 561085018,
+      "bank_callbacks_ns": 23402955,
+      "bank_guarded_body_ns": 23960575,
+      "bank_other_ns": 557620,
+      "expanded_disjoint_ns": 561642638,
+      "layer_callbacks_ns": 532689170,
+      "measured": true,
+      "parent_forward_ns": 1811817943,
+      "position": 34,
+      "tail_callbacks_ns": 4992893,
+      "unattributed_parent_ns": 1250175305
+    },
+    {
+      "all_callbacks_ns": 557026248,
+      "bank_callbacks_ns": 22619013,
+      "bank_guarded_body_ns": 23165634,
+      "bank_other_ns": 546621,
+      "expanded_disjoint_ns": 557572869,
+      "layer_callbacks_ns": 529387433,
+      "measured": true,
+      "parent_forward_ns": 1805158399,
+      "position": 35,
+      "tail_callbacks_ns": 5019802,
+      "unattributed_parent_ns": 1247585530
+    },
+    {
+      "all_callbacks_ns": 561130118,
+      "bank_callbacks_ns": 22768083,
+      "bank_guarded_body_ns": 23341964,
+      "bank_other_ns": 573881,
+      "expanded_disjoint_ns": 561703999,
+      "layer_callbacks_ns": 533580511,
+      "measured": true,
+      "parent_forward_ns": 1804317928,
+      "position": 36,
+      "tail_callbacks_ns": 4781524,
+      "unattributed_parent_ns": 1242613929
+    },
+    {
+      "all_callbacks_ns": 562048034,
+      "bank_callbacks_ns": 23766534,
+      "bank_guarded_body_ns": 24323005,
+      "bank_other_ns": 556471,
+      "expanded_disjoint_ns": 562604505,
+      "layer_callbacks_ns": 533256757,
+      "measured": true,
+      "parent_forward_ns": 1812670544,
+      "position": 37,
+      "tail_callbacks_ns": 5024743,
+      "unattributed_parent_ns": 1250066039
+    },
+    {
+      "all_callbacks_ns": 558600592,
+      "bank_callbacks_ns": 22543125,
+      "bank_guarded_body_ns": 23101215,
+      "bank_other_ns": 558090,
+      "expanded_disjoint_ns": 559158682,
+      "layer_callbacks_ns": 531228201,
+      "measured": true,
+      "parent_forward_ns": 1806255660,
+      "position": 38,
+      "tail_callbacks_ns": 4829266,
+      "unattributed_parent_ns": 1247096978
+    },
+    {
+      "all_callbacks_ns": 559479622,
+      "bank_callbacks_ns": 23608525,
+      "bank_guarded_body_ns": 24153345,
+      "bank_other_ns": 544820,
+      "expanded_disjoint_ns": 560024442,
+      "layer_callbacks_ns": 531134765,
+      "measured": true,
+      "parent_forward_ns": 1812397233,
+      "position": 39,
+      "tail_callbacks_ns": 4736332,
+      "unattributed_parent_ns": 1252372791
+    }
+  ],
+  "production_authority": false,
+  "schema": "ferric-readiness40-currentness-duration-host-attribution-v1",
+  "stderr": {
+    "bytes": 28279,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-gpu-v228-v1/tail_duration/native/child-stderr.bin",
+    "sha256": "8bd38995299f9a4314230aea61e842f904b2b56874e123ebc967878a3fc91651"
+  },
+  "terminal": {
+    "bytes": 737180,
+    "name": "complete.json",
+    "sha256": "65d7a93e4ef330452566923908ef851956a30d47b95708d6c97976678ee18cd7"
+  },
+  "timing_file": {
+    "bytes": 14529,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-gpu-v228-v1/tail_duration/native/host-timing.json",
+    "sha256": "9c1dbd83c7f3317cd93a6a59831687b100179b823d32ce66ffd03922995efed6"
+  },
+  "tokens_per_second_claim": false,
+  "warm": {
+    "all_callbacks_ns": 21242500713,
+    "bank_callbacks_ns": 874840556,
+    "bank_guarded_body_ns": 895839604,
+    "bank_other_ns": 20999048,
+    "expanded_disjoint_ns": 21263499761,
+    "layer_callbacks_ns": 20181996517,
+    "parent_forward_ns": 68571861417,
+    "tail_callbacks_ns": 185663640,
+    "unattributed_parent_ns": 47308361656
+  }
+}

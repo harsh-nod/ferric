@@ -1,0 +1,59 @@
+{
+  "gpu_execution": false,
+  "members": {
+    "duration_report.py": {
+      "bytes": 22586,
+      "sha256": "dedca35993c62acce84f8d2286b2dbce30f2f6f046afcebd6427ff69c83d9b6e"
+    },
+    "evidence/complete.json": {
+      "bytes": 4019,
+      "sha256": "c9d5074e64f44023dc95f56d2e3fa32eeb8c7f7a4d08eb0b67620393894b7253"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 662,
+      "sha256": "402085750ac6d732b4663e05f41113a1ac722e9592b3d590d29cc76ed461eeb6"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 662,
+      "sha256": "402085750ac6d732b4663e05f41113a1ac722e9592b3d590d29cc76ed461eeb6"
+    },
+    "evidence/started.json": {
+      "bytes": 538,
+      "sha256": "d4e18345c2bcd400bd8521927c755a8d6612941ae24f2d8d82b643c6b8e363a1"
+    },
+    "evidence/stderr": {
+      "bytes": 2391,
+      "sha256": "ea761f0ec2be7fa66239f0a8dca2c34f74ce18cd498135b3cd4b04211f09311d"
+    },
+    "evidence/stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "run_cpu.py": {
+      "bytes": 8066,
+      "sha256": "95e459c1fe5d268fe8403721bd4ccc1629d9d591056011c2b7928530bfc5945c"
+    },
+    "stage.json": {
+      "bytes": 1025,
+      "sha256": "16d3a96b104fa1a149d52df7750c398a1b232a86ba081f019810f9f8192fe889"
+    },
+    "test_duration_report.py": {
+      "bytes": 12400,
+      "sha256": "9b9b7378b46f98a20160cf071b8e853dda6b26a75c05a336bbde6a4404b3c474"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "passed": true,
+  "pid": 4172736,
+  "process_observed_absent_after_ssh_exit_zero": true,
+  "schema": "ferric-currentness-duration-report-cpu-originals-v1",
+  "source_root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-report-cpu-v228-v1",
+  "tests_run": 13
+}

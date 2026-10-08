@@ -1,0 +1,27 @@
+{
+  "all_originals_rehashed": true,
+  "archive": {
+    "bytes": 4555390,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-currentness-duration-gpu-evidence-v228-v1.tar.gz",
+    "sha256": "fe351dbef62f5e1ba90fe91eee99877c9c53006394054cf88fec5654fa2cf71b"
+  },
+  "gpu_execution": false,
+  "manifest": {
+    "bytes": 397282,
+    "sha256": "df2a495c79eb3da5346e433d972996ebcfcf5de730fbfff58fe9402a9cbb8322"
+  },
+  "model_execution": false,
+  "native_rerun": false,
+  "numerical_acceptance": false,
+  "original_data_revalidated": true,
+  "original_members": 167,
+  "performance_claim": false,
+  "report_source": {
+    "bytes": 22586,
+    "sha256": "dedca35993c62acce84f8d2286b2dbce30f2f6f046afcebd6427ff69c83d9b6e"
+  },
+  "verifier": {
+    "bytes": 46945,
+    "sha256": "5cec01470378f1ed5d9efd009f3d66bc8349fe52705b54b39d9ba997d1bf2be9"
+  }
+}

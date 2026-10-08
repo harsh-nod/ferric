@@ -1,0 +1,18 @@
+test_bank_callback_subtotal_must_fit_its_interval (test_duration_report.DurationReportTests.test_bank_callback_subtotal_must_fit_its_interval) ... ok
+test_bank_callbacks_are_never_added_to_the_containing_bank_body (test_duration_report.DurationReportTests.test_bank_callbacks_are_never_added_to_the_containing_bank_body) ... ok
+test_csv_svg_and_tables_preserve_integers_blank_unmeasured_and_no_double_sum (test_duration_report.DurationReportTests.test_csv_svg_and_tables_preserve_integers_blank_unmeasured_and_no_double_sum) ... ok
+test_each_forward_rejects_negative_residual_even_if_aggregate_would_fit (test_duration_report.DurationReportTests.test_each_forward_rejects_negative_residual_even_if_aggregate_would_fit) ... ok
+test_first_two_unmeasured_and_all_positions_are_exact (test_duration_report.DurationReportTests.test_first_two_unmeasured_and_all_positions_are_exact) ... ok
+test_integer_overflow_and_decimal_half_even_are_exact (test_duration_report.DurationReportTests.test_integer_overflow_and_decimal_half_even_are_exact) ... ok
+test_original_timing_gaps_overlaps_totals_and_generation_are_rejected (test_duration_report.DurationReportTests.test_original_timing_gaps_overlaps_totals_and_generation_are_rejected) ... ok
+test_residual_uses_complete_forward_not_flush_wait (test_duration_report.DurationReportTests.test_residual_uses_complete_forward_not_flush_wait) ... ok
+test_scalar_types_bounds_closed_fields_and_bank_census_are_strict (test_duration_report.DurationReportTests.test_scalar_types_bounds_closed_fields_and_bank_census_are_strict) ... ok
+test_small_valid_timeline_and_twelve_callback_categories_reconcile (test_duration_report.DurationReportTests.test_small_valid_timeline_and_twelve_callback_categories_reconcile) ... ok
+test_standalone_verifier_bytes_must_match_before_any_load (test_duration_report.DurationReportTests.test_standalone_verifier_bytes_must_match_before_any_load) ... ok
+test_summarizer_preserves_single_case_scope_and_rejects_false_admission (test_duration_report.DurationReportTests.test_summarizer_preserves_single_case_scope_and_rejects_false_admission) ... ok
+test_zero_elapsed_callbacks_are_not_confused_with_unmeasured_rows (test_duration_report.DurationReportTests.test_zero_elapsed_callbacks_are_not_confused_with_unmeasured_rows) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.034s
+
+OK

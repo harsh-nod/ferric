@@ -1,0 +1,25 @@
+{
+  "address_space_bytes": 536870912,
+  "affinity": [
+    8,
+    9
+  ],
+  "child_processes_requested": false,
+  "cpu_seconds": 30,
+  "file_bytes": 8388608,
+  "gpu_execution": false,
+  "host": "smci350-rck-g03-b19-03",
+  "in_process": true,
+  "isolated": true,
+  "nice": 10,
+  "no_bytecode": true,
+  "pid": 4172736,
+  "python": {
+    "bytes": 8020928,
+    "path": "/usr/bin/python3.12",
+    "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+  },
+  "stream_bytes": 4194304,
+  "uid": 9661,
+  "whole_seconds": 60
+}

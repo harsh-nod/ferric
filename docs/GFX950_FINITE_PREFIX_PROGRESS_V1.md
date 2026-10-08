@@ -28,8 +28,11 @@ three successful postflight idle checks. All forty records and four complete
 payloads match the historical Ferric baseline; the evidence tool revalidated
 167 original archive members. Measured callback categories account for
 21.242500713 seconds of 68.571861417 warm-forward seconds. The reproducible
-report still needs CPU execution and actual-archive qualification. This is
-host attribution, not numerical acceptance or a new inference speedup.
+[report](../qualification/guarded-mlp-currentness-duration-v1/report-v1/README.md)
+now passes all thirteen CPU tests and its actual-archive invocation on MI350.
+Its chart and exact tables separate callbacks, the nested bank interval and
+the unprofiled remainder. This is host attribution, not numerical acceptance
+or a new inference speedup.
 
 The preceding [Full2303 scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)
 passes all 27 MI350 CPU phases in 186.074 seconds: 1,180 runtime and 838 worker

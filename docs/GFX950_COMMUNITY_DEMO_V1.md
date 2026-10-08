@@ -19,9 +19,27 @@ The [instrumented GPU run](../qualification/guarded-mlp-currentness-duration-v1/
 now passes all forty forwards and four historical payload comparisons, with
 eleven cleanly retired phases. Its measured callback categories total
 21.242500713 seconds within 68.571861417 warm-forward seconds. This is one
-instrumented host attribution, not a matched speed comparison. The new report's
-CPU execution and original-archive qualification are pending; the plots below
-continue to show the earlier separately measured ablations.
+instrumented host attribution, not a matched speed comparison. The new report
+passes all thirteen CPU tests and its actual original-archive invocation on
+MI350. Its chart is shown below, separately from the earlier matched ablations.
+
+## New Host Attribution
+
+![Instrumented serial host attribution](../qualification/guarded-mlp-currentness-duration-v1/report-v1/attribution.svg)
+
+The [report and reproduction command](../qualification/guarded-mlp-currentness-duration-v1/report-v1/README.md)
+show where the measured host time goes. Layer callbacks account for
+20.181996517 seconds across the 38 warm forwards. The complete disjoint
+attribution, including bank guarded-body time and tail callbacks, accounts
+for 31.009075% of warm parent-forward time; the remaining 68.990925% is
+unprofiled work and waiting, not measured GPU time.
+
+Use the [exact category table](../qualification/guarded-mlp-currentness-duration-v1/report-v1/table.md)
+and [per-forward data](../qualification/guarded-mlp-currentness-duration-v1/report-v1/forwards.csv)
+to inspect the calculation. Bank callbacks are inside the bank interval and
+are never counted twice. The first two forwards are unmeasured by these
+callbacks. This identifies the next host-cost investigation; it does not show
+a removable fraction, GPU overlap, or an additional speedup.
 
 ## Show Now
 

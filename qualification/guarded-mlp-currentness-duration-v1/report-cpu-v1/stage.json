@@ -1,0 +1,31 @@
+{
+  "archive": {
+    "bytes": 20178,
+    "sha256": "84e110aa75f2b17cc0965bd3e99d1dcefc456c34a7dfeda8987f18be3937cce2"
+  },
+  "gpu_execution": false,
+  "passed": true,
+  "root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-report-cpu-v228-v1",
+  "sources": {
+    "duration_report.py": {
+      "bytes": 22586,
+      "sha256": "dedca35993c62acce84f8d2286b2dbce30f2f6f046afcebd6427ff69c83d9b6e"
+    },
+    "run_cpu.py": {
+      "bytes": 8066,
+      "sha256": "95e459c1fe5d268fe8403721bd4ccc1629d9d591056011c2b7928530bfc5945c"
+    },
+    "test_duration_report.py": {
+      "bytes": 12400,
+      "sha256": "9b9b7378b46f98a20160cf071b8e853dda6b26a75c05a336bbde6a4404b3c474"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="370" viewBox="0 0 1040 370">
+<rect width="100%" height="100%" fill="white"/>
+<g font-family="sans-serif" fill="#20252b">
+<text x="32" y="32" font-size="21">Instrumented serial host attribution: warm forwards 2-39</text>
+<text x="32" y="58" font-size="13">Complete parent-forward time; not GPU time, overlap, throughput or speedup.</text>
+<text x="32" y="80" font-size="12">Bank callbacks are part of the bank interval. First two ordinary forwards are unmeasured.</text>
+<rect x="32.000000" y="112" width="12.247690" height="48" fill="#147d92"/>
+<rect x="44.247690" y="112" width="0.293985" height="48" fill="#94c5cc"/>
+<rect x="44.541675" y="112" width="282.546168" height="48" fill="#b44b3e"/>
+<rect x="327.087843" y="112" width="2.599275" height="48" fill="#667547"/>
+<rect x="329.687118" y="112" width="662.312882" height="48" fill="#c7cbd1"/>
+<rect x="32" y="184" width="13" height="13" fill="#147d92"/>
+<text x="54" y="195" font-size="13">Bank callbacks</text>
+<text x="610" y="195" font-size="13">874.840556 ms</text>
+<rect x="32" y="211" width="13" height="13" fill="#94c5cc"/>
+<text x="54" y="222" font-size="13">Other bank guarded body</text>
+<text x="610" y="222" font-size="13">20.999048 ms</text>
+<rect x="32" y="238" width="13" height="13" fill="#b44b3e"/>
+<text x="54" y="249" font-size="13">Layer callbacks</text>
+<text x="610" y="249" font-size="13">20181.996517 ms</text>
+<rect x="32" y="265" width="13" height="13" fill="#667547"/>
+<text x="54" y="276" font-size="13">Tail callbacks</text>
+<text x="610" y="276" font-size="13">185.663640 ms</text>
+<rect x="32" y="292" width="13" height="13" fill="#c7cbd1"/>
+<text x="54" y="303" font-size="13">Other parent-forward time</text>
+<text x="610" y="303" font-size="13">47308.361656 ms</text>
+<text x="32" y="350" font-size="12">Warm parent total: 68571.861417 ms. Other parent time includes unprofiled work and waits.</text>
+</g></svg>

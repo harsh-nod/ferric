@@ -1,0 +1,13 @@
+group,category,calls,elapsed_ns,share_warm_parent_percent
+bank,before,27588,436276685,0.636233
+bank,discover,76,132129119,0.192687
+bank,after,27588,143504343,0.209276
+bank,root_generation,27550,162930409,0.237605
+layers,before,559642,8837488056,12.887922
+layers,discover,2736,4808508418,7.012364
+layers,after,559642,2880315013,4.200433
+layers,root_generation,610258,3655685030,5.331174
+tail,before,1748,28308005,0.041282
+tail,discover,76,133624963,0.194869
+tail,after,1748,9210569,0.013432
+tail,root_generation,2394,14520103,0.021175

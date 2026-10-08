@@ -1,0 +1,98 @@
+{
+  "actual_archive_tested": false,
+  "child_processes_requested": false,
+  "elapsed_seconds": 0.053222963004373014,
+  "errors": [],
+  "failure": null,
+  "failures": [],
+  "gpu_execution": false,
+  "in_process": true,
+  "model_execution": false,
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "raw": {
+    "sources-after.json": {
+      "bytes": 662,
+      "sha256": "402085750ac6d732b4663e05f41113a1ac722e9592b3d590d29cc76ed461eeb6"
+    },
+    "sources-before.json": {
+      "bytes": 662,
+      "sha256": "402085750ac6d732b4663e05f41113a1ac722e9592b3d590d29cc76ed461eeb6"
+    },
+    "started.json": {
+      "bytes": 538,
+      "sha256": "d4e18345c2bcd400bd8521927c755a8d6612941ae24f2d8d82b643c6b8e363a1"
+    },
+    "stderr": {
+      "bytes": 2391,
+      "sha256": "ea761f0ec2be7fa66239f0a8dca2c34f74ce18cd498135b3cd4b04211f09311d"
+    },
+    "stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "schema": "ferric-currentness-duration-report-cpu-v1",
+  "sources_after": {
+    "duration_report.py": {
+      "bytes": 22586,
+      "sha256": "dedca35993c62acce84f8d2286b2dbce30f2f6f046afcebd6427ff69c83d9b6e"
+    },
+    "run_cpu.py": {
+      "bytes": 8066,
+      "sha256": "95e459c1fe5d268fe8403721bd4ccc1629d9d591056011c2b7928530bfc5945c"
+    },
+    "test_duration_report.py": {
+      "bytes": 12400,
+      "sha256": "9b9b7378b46f98a20160cf071b8e853dda6b26a75c05a336bbde6a4404b3c474"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "sources_before": {
+    "duration_report.py": {
+      "bytes": 22586,
+      "sha256": "dedca35993c62acce84f8d2286b2dbce30f2f6f046afcebd6427ff69c83d9b6e"
+    },
+    "run_cpu.py": {
+      "bytes": 8066,
+      "sha256": "95e459c1fe5d268fe8403721bd4ccc1629d9d591056011c2b7928530bfc5945c"
+    },
+    "test_duration_report.py": {
+      "bytes": 12400,
+      "sha256": "9b9b7378b46f98a20160cf071b8e853dda6b26a75c05a336bbde6a4404b3c474"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "tests": [
+    "test_duration_report.DurationReportTests.test_bank_callback_subtotal_must_fit_its_interval",
+    "test_duration_report.DurationReportTests.test_bank_callbacks_are_never_added_to_the_containing_bank_body",
+    "test_duration_report.DurationReportTests.test_csv_svg_and_tables_preserve_integers_blank_unmeasured_and_no_double_sum",
+    "test_duration_report.DurationReportTests.test_each_forward_rejects_negative_residual_even_if_aggregate_would_fit",
+    "test_duration_report.DurationReportTests.test_first_two_unmeasured_and_all_positions_are_exact",
+    "test_duration_report.DurationReportTests.test_integer_overflow_and_decimal_half_even_are_exact",
+    "test_duration_report.DurationReportTests.test_original_timing_gaps_overlaps_totals_and_generation_are_rejected",
+    "test_duration_report.DurationReportTests.test_residual_uses_complete_forward_not_flush_wait",
+    "test_duration_report.DurationReportTests.test_scalar_types_bounds_closed_fields_and_bank_census_are_strict",
+    "test_duration_report.DurationReportTests.test_small_valid_timeline_and_twelve_callback_categories_reconcile",
+    "test_duration_report.DurationReportTests.test_standalone_verifier_bytes_must_match_before_any_load",
+    "test_duration_report.DurationReportTests.test_summarizer_preserves_single_case_scope_and_rejects_false_admission",
+    "test_duration_report.DurationReportTests.test_zero_elapsed_callbacks_are_not_confused_with_unmeasured_rows"
+  ],
+  "tests_run": 13
+}

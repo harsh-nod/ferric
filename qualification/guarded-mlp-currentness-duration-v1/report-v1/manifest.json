@@ -1,0 +1,48 @@
+{
+  "cpu_terminal": {
+    "bytes": 4019,
+    "sha256": "c9d5074e64f44023dc95f56d2e3fa32eeb8c7f7a4d08eb0b67620393894b7253"
+  },
+  "data_only": true,
+  "files": {
+    "attribution.svg": {
+      "bytes": 1961,
+      "sha256": "efa2543bc401190a728e6004c2f2cbf9f3a0dca0f44575d73c83c9df6ab2093e"
+    },
+    "callbacks.csv": {
+      "bytes": 534,
+      "sha256": "ceefcca81fed56dc4c4c6ac6c1f5b0d398a0995603f95df7662ac5918f576e42"
+    },
+    "forwards.csv": {
+      "bytes": 3769,
+      "sha256": "b11fa7aa427582a86a136f92a006ff6e962f1ae11cbd4396431237c6879b2c02"
+    },
+    "parent-spans.csv": {
+      "bytes": 7375,
+      "sha256": "96af3236df4757c2da6d5c7b1c77182059a48e0dbd8b2602065fa6177591cd5b"
+    },
+    "provenance.json": {
+      "bytes": 905,
+      "sha256": "e575b2da7398baf824fbc3ba7168cb5cfd850f4e2d938bce52cfc3f937c79ec8"
+    },
+    "summary.json": {
+      "bytes": 108500,
+      "sha256": "6854e1279a5f2a6f57bf2251aa7e134c86841967ea8efcb8da7a34901e181ca2"
+    },
+    "table.md": {
+      "bytes": 2392,
+      "sha256": "e7a5d233a2b8bf573c13aa5bd32cd027233cc256bdec4baf81ef39186b11b056"
+    }
+  },
+  "gpu_execution": false,
+  "native_archive": {
+    "bytes": 4555390,
+    "sha256": "fe351dbef62f5e1ba90fe91eee99877c9c53006394054cf88fec5654fa2cf71b"
+  },
+  "passed": true,
+  "schema": "ferric-currentness-duration-report-originals-v1",
+  "source": {
+    "bytes": 22586,
+    "sha256": "dedca35993c62acce84f8d2286b2dbce30f2f6f046afcebd6427ff69c83d9b6e"
+  }
+}
