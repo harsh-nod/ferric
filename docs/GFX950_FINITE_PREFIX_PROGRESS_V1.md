@@ -6,7 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler checkpoint: [worker accessor inlining and callback boundary](../qualification/guarded-mlp-force-inline-worker-v1/README.md)
+Latest compiler checkpoint: [bounded inlined static-callback source authentication](../qualification/guarded-mlp-inline-fndef-origin-v1/README.md)
+adds a real-source-scope fallback for fully inlined static callbacks. Exact
+owner/target identities, complete rooted ancestry and one closure-wide work
+budget are checked. Unsafe-source audits and helper ABI restrictions remain.
+The full MI350 CPU qualification passes 1,336 compiler tests (24 unchanged
+ignores) and 359 device tests (no ignores), across 11 clean phases.
+
+Both fresh V12 compile attempts pass the previous callback boundary but
+still exit naturally with status 1 and no HSACO: Kernel IR materialization
+reports a defined-call argument type mismatch. The fixed/early locations
+are function 2, blocks 307/159. Exact callee and lowered-type diagnosis is
+next; no new GPU, model output, performance result or milestone closure is
+claimed. The held GPU device remains unavailable without recovery evidence.
+
+Previous compiler checkpoint: [worker accessor inlining and callback boundary](../qualification/guarded-mlp-force-inline-worker-v1/README.md)
 adds the final two borrowed-self GPU-only annotations without body changes.
 The exact source pin and regressions pass 1,331 compiler tests (24 unchanged
 ignores) and 359 device tests (no ignores) in 11 clean MI350 CPU phases.

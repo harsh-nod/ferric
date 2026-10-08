@@ -1,0 +1,248 @@
+{
+  "archive": {
+    "bytes": 7697630,
+    "sha256": "0f1935dafe0645efd7968bee63f36138f2454cdb03a4ddbc26594febe15ca229"
+  },
+  "correction_patch": {
+    "bytes": 20044,
+    "sha256": "b7773b29d4a57650b7731410e60d966ea85b6167631e4c6e3e1bd63dac9eeb0c"
+  },
+  "cpu": {
+    "artifacts": {
+      "backend": {
+        "cargo_artifact": {
+          "executable": null,
+          "features": [],
+          "filenames": [
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.rlib",
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so"
+          ],
+          "fresh": false,
+          "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/Cargo.toml",
+          "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3#0.1.0",
+          "profile": {
+            "debug_assertions": true,
+            "debuginfo": 0,
+            "opt_level": "0",
+            "overflow_checks": true,
+            "test": false
+          },
+          "reason": "compiler-artifact",
+          "target": {
+            "crate_types": [
+              "rlib",
+              "dylib"
+            ],
+            "doc": true,
+            "doctest": true,
+            "edition": "2024",
+            "kind": [
+              "rlib",
+              "dylib"
+            ],
+            "name": "rustc_codegen_fe2o3",
+            "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/src/lib.rs",
+            "test": true
+          }
+        },
+        "pin": {
+          "bytes": 206396904,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/librustc_codegen_fe2o3.so",
+          "sha256": "f9209a6d96291048b711c05e76e3f6325f849f0f059cecff92e5d72228bcafdd"
+        }
+      },
+      "device-test": {
+        "cargo_artifact": {
+          "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/deps/fe2o3_device-76bccbb59d854414",
+          "features": [],
+          "filenames": [
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/deps/fe2o3_device-76bccbb59d854414"
+          ],
+          "fresh": false,
+          "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/fe2o3-device/Cargo.toml",
+          "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/fe2o3-device#0.1.0",
+          "profile": {
+            "debug_assertions": true,
+            "debuginfo": 0,
+            "opt_level": "0",
+            "overflow_checks": true,
+            "test": true
+          },
+          "reason": "compiler-artifact",
+          "target": {
+            "crate_types": [
+              "lib"
+            ],
+            "doc": true,
+            "doctest": true,
+            "edition": "2024",
+            "kind": [
+              "lib"
+            ],
+            "name": "fe2o3_device",
+            "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/fe2o3-device/src/lib.rs",
+            "test": true
+          }
+        },
+        "pin": {
+          "bytes": 4949896,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/deps/fe2o3_device-76bccbb59d854414",
+          "sha256": "1c2d78313b9f64b03ea261951b764892326c27e9a14341e55da75bb23af81c73"
+        }
+      },
+      "extractor": {
+        "cargo_artifact": {
+          "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+          "features": [],
+          "filenames": [
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/fe2o3-rustc-extract"
+          ],
+          "fresh": false,
+          "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/Cargo.toml",
+          "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3#0.1.0",
+          "profile": {
+            "debug_assertions": true,
+            "debuginfo": 0,
+            "opt_level": "0",
+            "overflow_checks": true,
+            "test": false
+          },
+          "reason": "compiler-artifact",
+          "target": {
+            "crate_types": [
+              "bin"
+            ],
+            "doc": true,
+            "doctest": false,
+            "edition": "2024",
+            "kind": [
+              "bin"
+            ],
+            "name": "fe2o3-rustc-extract",
+            "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/src/bin/fe2o3-rustc-extract.rs",
+            "test": true
+          }
+        },
+        "pin": {
+          "bytes": 205248,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/fe2o3-rustc-extract",
+          "sha256": "1c8342c8c7964c436da49a2303d72cf6c79e4fecfbe910eb1820b1c490676456"
+        }
+      },
+      "test": {
+        "cargo_artifact": {
+          "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+          "features": [],
+          "filenames": [
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c"
+          ],
+          "fresh": false,
+          "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/Cargo.toml",
+          "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3#0.1.0",
+          "profile": {
+            "debug_assertions": true,
+            "debuginfo": 0,
+            "opt_level": "0",
+            "overflow_checks": true,
+            "test": true
+          },
+          "reason": "compiler-artifact",
+          "target": {
+            "crate_types": [
+              "rlib",
+              "dylib"
+            ],
+            "doc": true,
+            "doctest": true,
+            "edition": "2024",
+            "kind": [
+              "rlib",
+              "dylib"
+            ],
+            "name": "rustc_codegen_fe2o3",
+            "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/fe2o3/crates/rustc-codegen-fe2o3/src/lib.rs",
+            "test": true
+          }
+        },
+        "pin": {
+          "bytes": 131947872,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inline-fndef-origin-cpu-v228-v1/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+          "sha256": "4915a25e5ff6acc5ef53925bd9f33dc5c458e3305d7f9a86fb4ba4c0705d26bc"
+        }
+      }
+    },
+    "elapsed_seconds": 226.9686833950691,
+    "phases": 11,
+    "receipt": {
+      "bytes": 5329281,
+      "sha256": "3d9f2fcecf68c702014ac9fce127fd35a20ab1fdde1231dcfcedee1dee910c29"
+    },
+    "tests": {
+      "compiler": [
+        1336,
+        24
+      ],
+      "device": [
+        359,
+        0
+      ]
+    }
+  },
+  "expanded_bytes": 53840276,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "members": 112,
+  "numerical_acceptance": false,
+  "originals": 111,
+  "pair": {
+    "early": {
+      "accepted": false,
+      "diagnostics": {
+        "semantic-mir-v1.bin": {
+          "bytes": 945494,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v12/early-run/fe2o3-engineering-diagnostics-v1/semantic-mir-v1.bin",
+          "sha256": "9dc891d206ed5317606b266706f20d2a161d16855b60227501eb88b962be7195"
+        },
+        "semantic-source-map-v1.json": {
+          "bytes": 2728,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v12/early-run/fe2o3-engineering-diagnostics-v1/semantic-source-map-v1.json",
+          "sha256": "f670805114318453baf51ef83d425009f0a1ab9c64d8f47268d3a5a059f97807"
+        }
+      },
+      "elapsed_seconds": 119.82043263502419,
+      "products": {},
+      "result": {
+        "bytes": 6446,
+        "sha256": "747d0f1e63ccf9cae6769260da1112878e8255407f5f1f8ddb5d36fad86ecb21"
+      }
+    },
+    "fixed": {
+      "accepted": false,
+      "diagnostics": {
+        "semantic-mir-v1.bin": {
+          "bytes": 944415,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v12/fixed-run/fe2o3-engineering-diagnostics-v1/semantic-mir-v1.bin",
+          "sha256": "dfb4b64f370def38bd02042298476ec71ee56a53976000ddcb8e8ab5b6047723"
+        },
+        "semantic-source-map-v1.json": {
+          "bytes": 2728,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v12/fixed-run/fe2o3-engineering-diagnostics-v1/semantic-source-map-v1.json",
+          "sha256": "9a65300626378c82b5140139ea42625ad13fe9415926abc98a7432600000b663"
+        }
+      },
+      "elapsed_seconds": 119.29362021898851,
+      "products": {},
+      "result": {
+        "bytes": 6446,
+        "sha256": "8eeda87c5e60b46c2473ce59caacabe50ce5834b2020696f93a305d50094d9df"
+      }
+    }
+  },
+  "performance_claim": false,
+  "production_authority": false,
+  "schema": "ferric-inline-fndef-origin-publication-v1",
+  "source_review": {
+    "bytes": 9155,
+    "sha256": "735dc6f9fa4806564c30a693713b92e50c91c3bef56a66f0457181f771864beb"
+  }
+}
