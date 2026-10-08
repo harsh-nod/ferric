@@ -1,0 +1,114 @@
+{
+  "archive": {
+    "bytes": 8354424,
+    "sha256": "2e3700c0e64b0ef45dbcba6ecec9444c4c658ffcbddc66423892a76d3cdc6652"
+  },
+  "cpu": {
+    "artifacts": {
+      "reader": {
+        "cargo_artifact": {
+          "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/target/debug/fe2o3-semantic-capture-inspect",
+          "features": [],
+          "filenames": [
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/target/debug/fe2o3-semantic-capture-inspect"
+          ],
+          "fresh": false,
+          "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model/Cargo.toml",
+          "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model#0.1.0",
+          "profile": {
+            "debug_assertions": true,
+            "debuginfo": 0,
+            "opt_level": "0",
+            "overflow_checks": true,
+            "test": false
+          },
+          "reason": "compiler-artifact",
+          "target": {
+            "crate_types": [
+              "bin"
+            ],
+            "doc": true,
+            "doctest": false,
+            "edition": "2024",
+            "kind": [
+              "bin"
+            ],
+            "name": "fe2o3-semantic-capture-inspect",
+            "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model/src/bin/fe2o3-semantic-capture-inspect.rs",
+            "test": true
+          }
+        },
+        "pin": {
+          "bytes": 5034184,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/target/debug/fe2o3-semantic-capture-inspect",
+          "sha256": "17859ee1f2cd56ef74e0b20a00fa55844738665e22e21e6963e362c2acf2893f"
+        }
+      },
+      "test": {
+        "cargo_artifact": {
+          "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/target/debug/deps/fe2o3_semantic_capture_inspect-12a4cab1b5b494a3",
+          "features": [],
+          "filenames": [
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/target/debug/deps/fe2o3_semantic_capture_inspect-12a4cab1b5b494a3"
+          ],
+          "fresh": false,
+          "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model/Cargo.toml",
+          "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model#0.1.0",
+          "profile": {
+            "debug_assertions": true,
+            "debuginfo": 0,
+            "opt_level": "0",
+            "overflow_checks": true,
+            "test": true
+          },
+          "reason": "compiler-artifact",
+          "target": {
+            "crate_types": [
+              "bin"
+            ],
+            "doc": true,
+            "doctest": false,
+            "edition": "2024",
+            "kind": [
+              "bin"
+            ],
+            "name": "fe2o3-semantic-capture-inspect",
+            "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/fe2o3/crates/fe2o3-mir-model/src/bin/fe2o3-semantic-capture-inspect.rs",
+            "test": true
+          }
+        },
+        "pin": {
+          "bytes": 6056800,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-inspect-cpu-v228-v1/target/debug/deps/fe2o3_semantic_capture_inspect-12a4cab1b5b494a3",
+          "sha256": "f4c92f6d38a2b95cdbf6bdb58d384be855a228cd03ea918c5762b67dc92f4c0d"
+        }
+      }
+    },
+    "elapsed_seconds": 22.996975314919837,
+    "ignored_tests": 0,
+    "passed_tests": 14,
+    "phases": 11,
+    "receipt": {
+      "bytes": 4803807,
+      "sha256": "862acab9993408c8303ba047219b2fca5c2c8a4d9c940807b22569b8f3257a7b"
+    }
+  },
+  "expanded_bytes": 57993488,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "kir_binding_types_observed": false,
+  "members": 100,
+  "numerical_acceptance": false,
+  "originals": 99,
+  "performance_claim": false,
+  "production_authority": false,
+  "reader_patch": {
+    "bytes": 27518,
+    "sha256": "eaf513165eda2b5aaca17020bf7c873b94d8d67c4ab2189341c8456c23a35c5e"
+  },
+  "schema": "ferric-semantic-call-publication-v1",
+  "source_join": {
+    "bytes": 68873,
+    "sha256": "3585842d8321ae9172aa42ba72e93a63d791f4409970324357973f8ae5af3e78"
+  }
+}

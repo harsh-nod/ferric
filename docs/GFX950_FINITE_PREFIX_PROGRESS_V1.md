@@ -6,7 +6,16 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler checkpoint: [bounded inlined static-callback source authentication](../qualification/guarded-mlp-inline-fndef-origin-v1/README.md)
+Latest diagnostic checkpoint: [canonical defined-call diagnosis](../qualification/guarded-mlp-semantic-call-v1/README.md)
+adds a bounded call-site mode to the existing semantic inspector. All 14
+tests and 11 CPU phases pass; historical helper-mode JSON/stdout are unchanged.
+Both original V12 failures now join to `complete_coverage` at provider line798,
+with matching source-semantic arguments `u32, usize, usize, bool`. Predetermined
+source-file joins are independently audited. Actual transient Kernel IR types
+are not yet observed; no conversion, HSACO, GPU run, performance result or
+milestone closure is claimed. Next is an exact lowerer mismatch diagnostic.
+
+Previous compiler checkpoint: [bounded inlined static-callback source authentication](../qualification/guarded-mlp-inline-fndef-origin-v1/README.md)
 adds a real-source-scope fallback for fully inlined static callbacks. Exact
 owner/target identities, complete rooted ancestry and one closure-wide work
 budget are checked. Unsafe-source audits and helper ABI restrictions remain.
@@ -16,8 +25,8 @@ ignores) and 359 device tests (no ignores), across 11 clean phases.
 Both fresh V12 compile attempts pass the previous callback boundary but
 still exit naturally with status 1 and no HSACO: Kernel IR materialization
 reports a defined-call argument type mismatch. The fixed/early locations
-are function 2, blocks 307/159. Exact callee and lowered-type diagnosis is
-next; no new GPU, model output, performance result or milestone closure is
+are function 2, blocks 307/159. The latest diagnostic above identifies the
+callee; lowered-type diagnosis is next. No new GPU, model output, performance result or milestone closure is
 claimed. The held GPU device remains unavailable without recovery evidence.
 
 Previous compiler checkpoint: [worker accessor inlining and callback boundary](../qualification/guarded-mlp-force-inline-worker-v1/README.md)

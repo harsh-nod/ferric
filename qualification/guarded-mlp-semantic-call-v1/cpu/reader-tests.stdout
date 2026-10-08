@@ -1,0 +1,19 @@
+
+running 14 tests
+test tests::call_capture_joins_sources_and_rejects_changed_inputs ... ok
+test tests::call_diagnostic_output_and_projection_limits_are_exact ... ok
+test tests::call_selector_indices_are_canonical_u32 ... ok
+test tests::call_selector_refuses_admitted_nonbody_callable ... ok
+test tests::call_selector_rejects_out_of_range_and_noncall_blocks ... ok
+test tests::defined_call_reports_copy_move_constant_and_exact_identities ... ok
+test tests::defined_call_reports_initialized_tuple_projection ... ok
+test tests::digest_extent_identity_and_schema_mismatches_are_rejected ... ok
+test tests::exact_canonical_roundtrip_reports_one_helper_without_authority ... ok
+test tests::map_files_are_bounded_sorted_unique_and_strict ... ok
+test tests::oversized_inputs_are_rejected_before_decode ... ok
+test tests::relative_file_and_argument_count_are_refused ... ok
+test tests::source_origin_requires_full_identity_and_bounded_extent ... ok
+test tests::truncated_trailing_and_noncanonical_mir_are_rejected ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
