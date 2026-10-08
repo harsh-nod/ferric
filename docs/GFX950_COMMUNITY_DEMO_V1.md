@@ -6,7 +6,27 @@ service, accepted full-model decode or a 700 tokens/s result. The measured
 workload is 40 authentic prompt forwards through all 36 layers, with **zero
 generated tokens**.
 
-The latest measurement checkpoint is
+## Latest Forward Attribution
+
+The [nine-phase GPU diagnostic](../qualification/guarded-mlp-forward-phases-v1/native-gpu-v1/README.md)
+passed its first MI350 attempt in 445.407950 seconds. All 40 semantic completion
+records and four captured numeric payloads match the historical Ferric baseline;
+each run's own transcript chain validates. The original
+169-member archive also passed export and retain revalidation. This is still
+40 prompt positions and zero generated tokens, not full-model numerical
+acceptance.
+
+![Nine disjoint warm-forward host phases](../qualification/guarded-mlp-forward-phases-v1/native-gpu-v1/host-phases.svg)
+
+Across positions 2-39, the worker forward body totals 68.043397297 seconds.
+Layers account for 59.301173639 seconds (87.151988%); their measured callbacks
+are nested inside that total. The remaining 39.686465506 layer seconds mix
+host work and device waiting, not measured GPU compute. The exact table and
+source-grounded next measurement are in the linked report. Parent/worker
+interval differences have different boundaries and are not exclusive timers.
+This single instrumented run establishes no matched speedup or GPU overlap.
+
+The earlier callback-only measurement checkpoint is
 [optional currentness-duration instrumentation](../qualification/guarded-mlp-currentness-duration-v1/README.md).
 Its runtime and worker sources are integrated after separate MI350 CPU
 qualifications with the feature off and on, and its strict checker passes
@@ -23,7 +43,7 @@ instrumented host attribution, not a matched speed comparison. The new report
 passes all thirteen CPU tests and its actual original-archive invocation on
 MI350. Its chart is shown below, separately from the earlier matched ablations.
 
-The newer [nine-phase diagnostic CPU checkpoint](../qualification/guarded-mlp-forward-phases-v1/README.md)
+The [nine-phase diagnostic CPU checkpoint](../qualification/guarded-mlp-forward-phases-v1/README.md)
 is a separate implementation step: worker builds pass 885/838 tests with the
 feature enabled/disabled, and parent selected scopes pass 622/584 tests. It
 attributes the whole forward body without changing kernel arithmetic or
@@ -33,10 +53,10 @@ in four cleanly retired CPU-only processes. These suites retain the earlier
 126 checker and 171 workflow cases; their overlapping inherited tests must
 not be counted as 373 distinct tests. The new workflow tests use authenticated
 CPU artifacts and synthetic retention cases, not a model/GPU run. Data-only
-request preparation has separately passed. Any new native GPU result requires
-its own evidence; the chart below remains the original measured result.
+request preparation has separately passed. The new native result has the
+separate original evidence linked above; the chart below remains historical.
 
-## New Host Attribution
+## Earlier Callback Attribution
 
 ![Instrumented serial host attribution](../qualification/guarded-mlp-currentness-duration-v1/report-v1/attribution.svg)
 

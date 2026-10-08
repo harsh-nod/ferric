@@ -265,16 +265,16 @@
   },
   "documents": {
     "docs/GFX950_COMMUNITY_DEMO_V1.md": {
-      "bytes": 11831,
-      "sha256": "21236ced57d16740c5d6304b9c9f7e9ebd84a3ecd404de63672bc9765222695f"
+      "bytes": 13017,
+      "sha256": "7e878960fa94e83c43202464c303e0ac4691c36ae6ec791ce5b05f09325e2ac7"
     },
     "docs/GFX950_FINITE_PREFIX_PROGRESS_V1.md": {
-      "bytes": 160949,
-      "sha256": "4d34518102b9b78fb99d850eb85c89a64cfee26d16fdfc0d68ea515467be1df5"
+      "bytes": 162340,
+      "sha256": "fa0e9497ae5b5abb263dfe0e6748b1c3fd6544850510b7a0a27a94d5c1e7b0e5"
     },
     "qualification/guarded-mlp-forward-phases-v1/README.md": {
-      "bytes": 8070,
-      "sha256": "1270eaedb7712caf80b45d80ad2539966d2412d89b4e9ff14611136f56114b34"
+      "bytes": 9023,
+      "sha256": "169acaa17afc845df76edd228933a8389eb9ab3e9021264d6ae45eec9c294b54"
     },
     "qualification/guarded-mlp-forward-phases-v1/checker-cpu-v1/README.md": {
       "bytes": 2458,
@@ -283,6 +283,10 @@
     "qualification/guarded-mlp-forward-phases-v1/native-admission-cpu-v1/README.md": {
       "bytes": 4599,
       "sha256": "c266a1cbc9e30fd7bdcf2aa35a33d8b230d59f526375228766e8540e8b4128d0"
+    },
+    "qualification/guarded-mlp-forward-phases-v1/native-gpu-v1/README.md": {
+      "bytes": 5377,
+      "sha256": "8d22241ce7b9bf391627fd08de025e6ff0a52b93f9f5a43c4220860422f6de58"
     },
     "qualification/guarded-mlp-readiness40-causal-layer0-v1/DECODE-GATES.md": {
       "bytes": 4851,
@@ -294,7 +298,7 @@
     }
   },
   "full2303_executed": false,
-  "gpu_execution": false,
+  "gpu_execution": true,
   "native_admission_qualification": {
     "actual_cpu_artifact_reads": true,
     "archive": {
@@ -331,6 +335,52 @@
       "bytes": 355146,
       "path": "native-admission-cpu-v1/complete.json",
       "sha256": "e5ecec31ead47b13b6fb7eaab5fbc17ed46f2744bd47eb9fd7be6267fc210ac0"
+    }
+  },
+  "native_qualification": {
+    "archive": {
+      "bytes": 4595635,
+      "path": "native-gpu-v1.tar.gz",
+      "sha256": "d22c87f34e686653caa3cdd5584e8b37569845455eb2d398f19d81902209403e"
+    },
+    "elapsed_seconds": 445.4079501030501,
+    "full2303_executed": false,
+    "generated_tokens": 0,
+    "gpu_execution": true,
+    "gpu_timing": false,
+    "instrumented": true,
+    "manifest_pins": 168,
+    "matched_speed_comparison": false,
+    "native_attempts": 1,
+    "numerical_acceptance": false,
+    "original_member_count": 169,
+    "performance_claim": false,
+    "plot": {
+      "bytes": 2319,
+      "path": "native-gpu-v1/host-phases.svg",
+      "sha256": "0494a13c7ca160b508d4c0e7191798f93fb5d7c2e950f3849d9e27e4d1acfbe9"
+    },
+    "prompt_positions": 40,
+    "report": {
+      "bytes": 96636,
+      "path": "native-gpu-v1/report.json",
+      "sha256": "f65fc6b23b5022f98cd908657901d66990c203d0c845f41a4c7b3befa04ee550"
+    },
+    "reporter": {
+      "bytes": 26139,
+      "path": "native-gpu-v1/report_forward_phases.py",
+      "sha256": "fa5bf7d5a0ba3f6d890fc1cd259ff2651e1690f6acbd9a321b97ebbc61d3341a"
+    },
+    "retention_result": {
+      "bytes": 125598,
+      "path": "native-gpu-v1/retention-result.json",
+      "sha256": "2164b10d39096dbc81f4f4f24d6fd2e083dfc0b5ad9e3326bbd1a9fb07128b9d"
+    },
+    "semantic_and_payload_parity_revalidated": true,
+    "terminal": {
+      "bytes": 812186,
+      "path": "native-gpu-v1/native-complete.json",
+      "sha256": "aa5d9b023c8ca9b7cb916bc60d41282804769479b294a01ab619787ed0a4dc56"
     }
   },
   "numerical_acceptance": false,

@@ -26,7 +26,27 @@ The 146 and 227 suites overlap inherited cases, not 373 distinct tests.
 Data-only request preparation has separately passed. Native GPU results require
 separate evidence; this CPU checkpoint establishes no GPU result or new timing.
 
-Latest native measurement: optional
+Latest native measurement: the [nine-phase forward diagnostic](../qualification/guarded-mlp-forward-phases-v1/native-gpu-v1/README.md)
+passed its first MI350 attempt in 445.407950 seconds, with eleven cleanly
+retired phases and three successful postflight idle checks. All 40 semantic
+completion records and four captured numeric payloads match the historical
+Ferric baseline; each run's own transcript chain validates. The live exporter
+and actual archive retain path both revalidated
+169 original members. Independent data review joined all 166 input pins,
+73 raw bodies, three original canonical diagnostic records and 124 parent
+host spans. This is TP2, all 36 layers, 40 prompt positions and zero generated
+tokens; it is not independent full-model numerical acceptance.
+
+The warm 38 worker bodies total 68.043397297 seconds. Layers account for
+59.301173639 seconds (87.151988%), including 19.614708133 seconds of measured
+callbacks. The remaining 39.686465506 layer seconds are mixed host/device work,
+not measured GPU compute or a removable fraction. The new report shows exact
+first-use/warm phase tables and a plot without double-counting nested callbacks.
+Parent-minus-worker interval differences are signed comparisons of different
+boundaries, not an exclusive publication timer. No matched speedup, Full2303
+execution, exact 256-output acceptance or 700 tokens/s claim follows.
+
+Earlier native measurement: optional
 [currentness-duration instrumentation](../qualification/guarded-mlp-currentness-duration-v1/README.md)
 passes separate MI350 CPU builds: 1,180 runtime / 838 worker tests with the
 feature off, and 1,192 runtime / 853 worker tests with it enabled. Each build

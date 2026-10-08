@@ -5,6 +5,24 @@ sequence. It changes neither kernel arithmetic nor currentness policy. The
 CPU checkpoint does not establish a new GPU measurement, Full2303 correctness,
 GPU overlap, a speedup or the 700 tokens/s target.
 
+## Native Measurement
+
+The [actual GPU diagnostic and phase report](native-gpu-v1/README.md) now pass
+their original-data checks. One MI350 TP2 attempt completed 40 prompt positions
+through all 36 layers in 445.407950 seconds, with zero generated tokens.
+All 40 semantic completion records and four captured numeric payloads match
+the historical Ferric baseline; each run's own transcript chain validates.
+Export and retain revalidation preserve all 169
+original archive members.
+
+Warm positions 2-39 contain 68.043397297 seconds of worker forward-body time.
+The layer phase accounts for 59.301173639 seconds (87.151988%), including
+19.614708133 seconds of nested measured callbacks. The remaining layer work
+is not separately measured GPU compute. The report separates first-use rows,
+disjoint phases and nested callbacks, and keeps differently bounded parent
+intervals separate. No matched speedup, GPU overlap or Full2303 acceptance is
+established.
+
 ## Why Add It
 
 The preceding [native currentness report](../guarded-mlp-currentness-duration-v1/report-v1/README.md)

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="790" viewBox="0 0 1100 790">
+<rect width="1100" height="790" fill="white"/>
+<g font-family="sans-serif" font-size="15" fill="#17212b">
+<text x="32" y="38" font-size="24">Warm forward host phases</text>
+<text x="32" y="67">Positions 2-39, one instrumented run. Host time includes checks and waiting.</text>
+<text x="230" y="105">Seconds; nine adjacent worker intervals</text>
+<text x="32" y="150">input</text>
+<rect x="230" y="130" width="0.002" height="28" fill="#27866b"/>
+<text x="904" y="150">0.000181 s</text>
+<text x="32" y="195">metadata</text>
+<rect x="230" y="175" width="33.904" height="28" fill="#27866b"/>
+<text x="904" y="195">3.093112 s</text>
+<text x="32" y="240">embedding</text>
+<rect x="230" y="220" width="24.353" height="28" fill="#27866b"/>
+<text x="904" y="240">2.221773 s</text>
+<text x="32" y="285">bank</text>
+<rect x="230" y="265" width="9.593" height="28" fill="#27866b"/>
+<text x="904" y="285">0.875156 s</text>
+<text x="32" y="330">layers</text>
+<rect x="230" y="310" width="650.000" height="28" fill="#27866b"/>
+<text x="904" y="330">59.301174 s</text>
+<text x="32" y="375">tail</text>
+<rect x="230" y="355" width="16.286" height="28" fill="#27866b"/>
+<text x="904" y="375">1.485821 s</text>
+<text x="32" y="420">frame</text>
+<rect x="230" y="400" width="0.388" height="28" fill="#27866b"/>
+<text x="904" y="420">0.035425 s</text>
+<text x="32" y="465">fence</text>
+<rect x="230" y="445" width="5.650" height="28" fill="#27866b"/>
+<text x="904" y="465">0.515442 s</text>
+<text x="32" y="510">commit</text>
+<rect x="230" y="490" width="5.648" height="28" fill="#27866b"/>
+<text x="904" y="510">0.515314 s</text>
+<text x="32" y="573" font-size="20">Nested layer detail, already inside the layers bar</text>
+<text x="32" y="623">Layer callbacks</text>
+<rect x="230" y="603" width="214.997" height="28" fill="#3279ad"/>
+<text x="904" y="623">19.614708 s</text>
+<text x="32" y="668">Other layer interval</text>
+<rect x="230" y="648" width="435.003" height="28" fill="#888d94"/>
+<text x="904" y="668">39.686466 s</text>
+<text x="32" y="726">Nested bars share the phase scale; do not add them to the nine phase bars.</text>
+<text x="32" y="753">Not GPU timing, overlap, speedup, throughput, or an optimization ceiling.</text>
+</g></svg>
