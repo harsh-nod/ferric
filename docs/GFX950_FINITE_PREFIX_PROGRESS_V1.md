@@ -21,8 +21,17 @@ The V2 record adds six closed-layer stages and seven nested paired-MLP stages
 inside the existing nine forward intervals. Both earlier failed attempts are
 retained; kernel arithmetic, currentness policy and deadlines are unchanged.
 This is CPU qualification only. A distinct V2 native checker/admission path
-and actual retained GPU run remain next; the earlier GPU results below do
-not qualify the new record or establish Full2303/256-output acceptance.
+now passes its [178-test checker](../qualification/guarded-mlp-layer-phases-v1/checker-cpu-v1/README.md)
+and [304-test native workflow retry](../qualification/guarded-mlp-layer-phases-v1/native-admission-cpu-v2/README.md).
+The latter took 149.409749477054 seconds across seven natural, reaped
+processes with absent groups and unchanged sources. Its first failed attempt
+is preserved: all 227 predecessor workflow tests passed, but a new fixture
+refused the actual workspace-qualified Cargo feature vector. The narrow
+retry matches that exact vector and adds a regression; no gate is relaxed.
+The checker/workflow suites overlap inherited tests, not 482 distinct cases.
+An actual retained layer-duration GPU run remains pending; the earlier
+GPU results below do not qualify the new record or establish
+Full2303/256-output acceptance.
 
 Preceding implementation: the opt-in
 [nine-phase forward diagnostic](../qualification/guarded-mlp-forward-phases-v1/README.md)
@@ -2152,13 +2161,17 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Attribute the remaining host-inclusive Readiness40 cost before changing
-   execution policy. The opt-in currentness diagnostic accounts for 31.01%
-   of warm parent-forward time using disjoint callback/bank intervals; the
-   remaining 47.308 seconds across 38 warm forwards is not yet attributed.
-   Whole-forward phase timings must distinguish input preparation, metadata,
-   embedding, bank, layers, tail, frame construction, fence and commit.
-   These are host intervals, not GPU kernel timings or evidence of overlap.
+1. Measure the CPU-qualified closed-layer and paired-MLP stages before
+   changing execution policy. The existing nine-phase native result puts
+   59.301173639 warm seconds (87.151988% of the worker body) in layers;
+   39.686465506 of those seconds are outside measured layer callbacks.
+   The next diagnostic separates six closed-layer stages and seven nested
+   paired-MLP stages, including preflight, publication, polling and retirement.
+   Keep callbacks and paired intervals nested, not additive; the remaining
+   mixed host/device time is not measured GPU compute or a removable fraction.
+   Do not reduce currentness checks, polls, durability or deadlines on the
+   strength of an attribution bucket. Retain the original native evidence
+   and signed cross-process boundary differences before drawing conclusions.
 2. Establish launch feasibility for the CPU-qualified Full2303 route before
    running it on the GPU. The distinct long wire and bounded four-capture
    selection are implemented; readiness still executes only forty prompt

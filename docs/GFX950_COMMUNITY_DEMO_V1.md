@@ -14,7 +14,14 @@ now passes six MI350 feature-on/off CPU configurations: runtime primary suites
 Its six layer stages and seven nested paired-MLP stages will distinguish
 where the enclosing layer time is spent. The documentation separates repeated
 test scopes, retained failures and the reduced qualification workspace.
-The new V2 diagnostic still needs native admission and a GPU run; it adds no
+The [strict V2 checker](../qualification/guarded-mlp-layer-phases-v1/checker-cpu-v1/README.md)
+passes 178 tests, and the [native workflow retry](../qualification/guarded-mlp-layer-phases-v1/native-admission-cpu-v2/README.md)
+passes 304 tests in seven cleanly retired processes. These suites overlap
+inherited cases, not 482 distinct tests. The failed first workflow attempt
+is preserved; the retry corrects an exact workspace-feature expectation,
+not a runtime or numerical gate.
+
+The layer-duration GPU measurement remains pending. These CPU results add no
 new measured bars, overlap, numerical acceptance or inference speedup to this
 demo. The chart below remains the earlier nine-phase native measurement.
 

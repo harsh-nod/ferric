@@ -178,7 +178,31 @@ These are synthetic CPU admission tests, not native inference measurements.
 Individual layer-return containment remains checked by the separately
 qualified Rust runtime and worker; the wire exposes only per-forward aggregates.
 
-No layer-duration native result is established by either CPU checkpoint.
-Source/ELF admission, preparation, retention workflow qualification and a retained
-native run are still required. Full2303 launch admission, independent generated
-outputs, sustained throughput and issue #42 M0-M7 remain open.
+## Native Workflow Qualification
+
+The [native admission workflow retry](native-admission-cpu-v2/README.md)
+passed **304 tests** across seven naturally exited, reaped processes with
+absent process groups in 149.409749477054 seconds. The unchanged predecessor
+workflow contributes 227 tests; the new layer suites contribute 43 CPU
+admission, 16 retention and 18 preparation tests. All 376 source/fixture
+bodies remained unchanged and there were no postcheck errors.
+
+These are mixed actual-artifact-backed and synthetic CPU tests. They
+authenticate original qualified receipt/source/ELF data and exercise complete
+preparation and retained-outcome workflows without executing model code.
+The 178-test checker and 304-test workflow overlap inherited cases; their
+totals are not a count of distinct tests.
+
+The [original workflow archive](native-admission-cpu-v2.tar.gz) retains 417
+members, including all sources/fixtures, 37 raw evidence files and the
+original successful terminal. The [first failed attempt](native-admission-cpu-failed-v1.tar.gz)
+is preserved separately: all 227 predecessor tests passed, but the new CPU
+class fixture refused the exact workspace-qualified Cargo feature names
+before any new test ran. The retry corrects that expectation without
+loosening it and adds a regression rejecting bare, mixed and wrong-package
+feature vectors.
+
+No layer-duration native GPU result is established by these CPU checkpoints;
+the retained measurement remains pending. Full2303 launch admission,
+independent generated outputs, sustained throughput and issue #42 M0-M7
+remain open.
