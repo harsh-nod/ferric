@@ -6,7 +6,22 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest investigation: the [MLP early-STOP compile experiment](../qualification/guarded-mlp-early-stop-v1/README.md)
+Latest compiler checkpoint: the [opt-in MIR threshold profile](../qualification/guarded-mlp-inline-hint-v1/README.md)
+adds exactly `-Zinline-mir-hint-threshold=16384`, preserving the old/default
+profiles and all backend checks. The fresh MI350 frontend passes 21 focused
+tests in seven clean phases. Its source patch is retained as a qualification
+candidate, not a production branch change.
+
+Four subsequent fixed/early compiler attempts fail naturally with unchanged
+inputs and clean process retirement. V6 rejects an inlined FnMut source
+origin. V7 retains the named callback body with `inline(never)` and reaches
+Kernel IR materialization, which rejects a mutable aggregate helper argument.
+This is compiler progress, not a new HSACO, GPU result or measured speedup.
+The packet retains the exact patch, preimages/postimages, commands and original
+success/failure evidence. No runtime or kernel candidate is promoted; all
+native decode and milestone gates remain open.
+
+Previous investigation: the [MLP early-STOP compile experiment](../qualification/guarded-mlp-early-stop-v1/README.md)
 identifies 512 fixed scheduler rounds, including retired LDS work, in the
 currently selected MLP image. An isolated candidate calls the existing early
 STOP entry without changing arithmetic, launch geometry or host currentness.
@@ -17,8 +32,9 @@ After resolving command/lock compatibility and investigating a closure-origin
 rejection and Rust inliner ICE, both latest arms fail the same closed check:
 a potentially reachable panic path in core atomic compare-exchange.
 No new HSACO or GPU result exists, and neither kernel nor runtime is promoted.
-A separate default-off normalization profile matching the historical inlining
-threshold is the next proposed experiment, not an implemented fix.
+At that checkpoint, a separate default-off normalization profile matching the
+historical inlining threshold was proposed. Its implementation and actual
+compile results are now recorded in the latest checkpoint above.
 
 Previous candidate: the [Scoped active-pause experiment](../qualification/guarded-mlp-active-pause-v1/README.md)
 is retained as a qualification archive only; runtime production sources remain

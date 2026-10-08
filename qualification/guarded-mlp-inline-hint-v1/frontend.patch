@@ -1,0 +1,283 @@
+--- a/crates/cargo-fe2o3/src/engineering_hsaco.rs
++++ b/crates/cargo-fe2o3/src/engineering_hsaco.rs
+@@ -84,6 +84,7 @@
+ enum MirNormalizationV1 {
+     Minimal,
+     OptimizedInline,
++    OptimizedInlineHint16384,
+ }
+ 
+ impl MirNormalizationV1 {
+@@ -91,6 +92,7 @@
+         match self {
+             Self::Minimal => "minimal-v1",
+             Self::OptimizedInline => "optimized-inline-v1",
++            Self::OptimizedInlineHint16384 => "optimized-inline-hint-16384-v1",
+         }
+     }
+ }
+@@ -429,9 +431,10 @@
+     let mir_normalization = match mir_normalization.as_deref().unwrap_or("minimal-v1") {
+         "minimal-v1" => MirNormalizationV1::Minimal,
+         "optimized-inline-v1" => MirNormalizationV1::OptimizedInline,
++        "optimized-inline-hint-16384-v1" => MirNormalizationV1::OptimizedInlineHint16384,
+         _ => {
+             return Err(
+-                "--mir-normalization must be exactly minimal-v1 or optimized-inline-v1".to_owned(),
++                "--mir-normalization must be exactly minimal-v1, optimized-inline-v1, or optimized-inline-hint-16384-v1".to_owned(),
+             );
+         }
+     };
+@@ -779,7 +782,7 @@
+ const fn usage() -> &'static str {
+     concat!(
+         "usage: cargo fe2o3 engineering hsaco --crate <rustc-crate-name> --output-root </fresh/fe2o3-engineering-v1> --target <gfx942:xnack-|gfx950:xnack-> --code-object-version 6 --extractor <absolute-path> --extractor-sha256 <hex> --extractor-backend <absolute-path> --extractor-backend-sha256 <hex> --worker <absolute-path> --worker-sha256 <hex> --worker-build-id <id> --llvm-build-id <id> --cargo <absolute-path> --cargo-sha256 <hex> --rustc <absolute-path> --rustc-sha256 <hex> --host-linker <absolute-clang-path> --host-linker-sha256 <hex> --host-lld <absolute-lld-path> --host-lld-sha256 <hex> --host-lld-proxy <absolute-proxy-path> --host-lld-proxy-sha256 <hex> --cargo-vendor <absolute-versioned-directory> [--cargo-git-source <https://URL@40-hex-rev>]... [--provider <llvm-bitcode|llvm-ir|amdgpu-relocatable>:<sha256>:<absolute-path>] [--timeout-seconds <1..600>] [--max-output-bytes <bytes>] ",
+-        "[--mir-normalization <minimal-v1|optimized-inline-v1>] -- [Cargo package/feature args]",
++        "[--mir-normalization <minimal-v1|optimized-inline-v1|optimized-inline-hint-16384-v1>] -- [Cargo package/feature args]",
+     )
+ }
+ 
+@@ -1149,6 +1152,171 @@
+     }
+ 
+     #[test]
++    fn inline_hint_profile_preserves_defaults_and_exact_target_flags() {
++        let root = env::temp_dir();
++        for profile in [
++            ProductionAmdTargetProfileV1::Gfx942,
++            ProductionAmdTargetProfileV1::Gfx950,
++        ] {
++            for (selector, expected, inline, optimization, hint) in [
++                (None, MirNormalizationV1::Minimal, "no", "0", ""),
++                (
++                    Some("minimal-v1"),
++                    MirNormalizationV1::Minimal,
++                    "no",
++                    "0",
++                    "",
++                ),
++                (
++                    Some("optimized-inline-v1"),
++                    MirNormalizationV1::OptimizedInline,
++                    "yes",
++                    "3",
++                    "",
++                ),
++                (
++                    Some("optimized-inline-hint-16384-v1"),
++                    MirNormalizationV1::OptimizedInlineHint16384,
++                    "yes",
++                    "3",
++                    " -Zinline-mir-hint-threshold=16384",
++                ),
++            ] {
++                let mut args = base_args(&root);
++                let target = args.iter().position(|value| value == "--target").unwrap() + 1;
++                args[target] = profile.device_target().into();
++                if let Some(selector) = selector {
++                    let delimiter = args.iter().position(|value| value == "--").unwrap();
++                    args.splice(
++                        delimiter..delimiter,
++                        ["--mir-normalization".into(), selector.into()],
++                    );
++                }
++                let options = parse(&args, &root).unwrap();
++                assert_eq!(options.mir_normalization, expected);
++                assert_eq!(
++                    options.mir_normalization.name(),
++                    selector.unwrap_or("minimal-v1")
++                );
++                assert_eq!(
++                    extraction_rustflags(options.profile, options.mir_normalization),
++                    format!(
++                        "-Zalways-encode-mir -Zinline-mir={inline} -Zmir-enable-passes=-JumpThreading -Copt-level={optimization} -Ctarget-cpu={} -Ctarget-feature={}{hint}",
++                        profile.cpu(),
++                        profile.rustc_features()
++                    )
++                );
++            }
++        }
++        assert!(usage().contains("optimized-inline-hint-16384-v1"));
++    }
++
++    #[test]
++    fn inline_hint_profile_rejects_unversioned_injected_and_duplicate_selectors() {
++        let root = env::temp_dir();
++        for selector in [
++            "",
++            "optimized-inline-hint-16384",
++            "optimized-inline-hint-8192-v1",
++            "optimized-inline-hint-16384-v2",
++            "optimized-inline-hint-16384-v1 -Copt-level=0",
++            "-Zinline-mir-hint-threshold=16384",
++        ] {
++            let mut args = base_args(&root);
++            let delimiter = args.iter().position(|value| value == "--").unwrap();
++            args.splice(
++                delimiter..delimiter,
++                ["--mir-normalization".into(), selector.into()],
++            );
++            assert!(parse(&args, &root).is_err(), "accepted {selector:?}");
++        }
++        for second in [
++            "minimal-v1",
++            "optimized-inline-v1",
++            "optimized-inline-hint-16384-v1",
++        ] {
++            let mut args = base_args(&root);
++            let delimiter = args.iter().position(|value| value == "--").unwrap();
++            args.splice(
++                delimiter..delimiter,
++                [
++                    "--mir-normalization".into(),
++                    "optimized-inline-hint-16384-v1".into(),
++                    "--mir-normalization".into(),
++                    second.into(),
++                ],
++            );
++            assert!(parse(&args, &root).is_err(), "accepted duplicate {second}");
++        }
++        let mut missing = base_args(&root);
++        let delimiter = missing.iter().position(|value| value == "--").unwrap();
++        missing.insert(delimiter, "--mir-normalization".into());
++        assert!(parse(&missing, &root).is_err());
++        for injected in [
++            "--mir-normalization",
++            "--rustflags",
++            "--config",
++            "-Z",
++            "-C",
++            "--jobs",
++        ] {
++            let mut args = base_args(&root);
++            args.extend([injected.into(), "optimized-inline-hint-16384-v1".into()]);
++            assert!(
++                parse(&args, &root).is_err(),
++                "accepted Cargo override {injected}"
++            );
++        }
++        for name in [
++            "RUSTFLAGS",
++            "CARGO_ENCODED_RUSTFLAGS",
++            "CARGO_TARGET_AMDGCN_AMD_AMDHSA_RUSTFLAGS",
++            "CARGO_PROFILE_DEV_OPT_LEVEL",
++        ] {
++            assert!(conflicting_environment_name(OsStr::new(name)));
++        }
++    }
++
++    #[test]
++    fn manifest_fixed_options_bind_each_normalization_and_unchanged_checks() {
++        let root = env::temp_dir();
++        for profile in [
++            ProductionAmdTargetProfileV1::Gfx942,
++            ProductionAmdTargetProfileV1::Gfx950,
++        ] {
++            for normalization in [
++                MirNormalizationV1::Minimal,
++                MirNormalizationV1::OptimizedInline,
++                MirNormalizationV1::OptimizedInlineHint16384,
++            ] {
++                let mut args = base_args(&root);
++                let target = args.iter().position(|value| value == "--target").unwrap() + 1;
++                args[target] = profile.device_target().into();
++                let delimiter = args.iter().position(|value| value == "--").unwrap();
++                args.splice(
++                    delimiter..delimiter,
++                    ["--mir-normalization".into(), normalization.name().into()],
++                );
++                let options = parse(&args, &root).unwrap();
++                // Test the real manifest field constructor without fabricating an observation.
++                let actual = serde_json::to_value(fixed_options(&options)).unwrap();
++                assert_eq!(
++                    actual,
++                    serde_json::json!({
++                        "mir_normalization": normalization.name(),
++                        "extraction_rustflags": extraction_rustflags(profile, normalization),
++                        "optimization": "O2",
++                        "strip_debug": true,
++                        "verify_each": true,
++                        "timeout_seconds": options.timeout.as_secs(),
++                        "maximum_output_bytes": options.max_output_bytes,
++                    })
++                );
++            }
++        }
++    }
++
++    #[test]
+     fn rejects_loader_and_cargo_selection_environment() {
+         for name in [
+             "LD_PRELOAD",
+--- a/crates/cargo-fe2o3/src/engineering_hsaco/execution.rs
++++ b/crates/cargo-fe2o3/src/engineering_hsaco/execution.rs
+@@ -175,14 +175,17 @@
+     profile: ProductionAmdTargetProfileV1,
+     normalization: MirNormalizationV1,
+ ) -> String {
+-    // Both profiles retain the same checked importer and selected target contract.
++    // Every profile retains the same checked importer and selected target contract.
+     // Inlined origins are audited independently of the optimized executable graph.
+-    let (inline, optimization) = match normalization {
+-        MirNormalizationV1::Minimal => ("no", "0"),
+-        MirNormalizationV1::OptimizedInline => ("yes", "3"),
++    let (inline, optimization, hint) = match normalization {
++        MirNormalizationV1::Minimal => ("no", "0", ""),
++        MirNormalizationV1::OptimizedInline => ("yes", "3", ""),
++        MirNormalizationV1::OptimizedInlineHint16384 => {
++            ("yes", "3", " -Zinline-mir-hint-threshold=16384")
++        }
+     };
+     format!(
+-        "-Zalways-encode-mir -Zinline-mir={inline} -Zmir-enable-passes=-JumpThreading -Copt-level={optimization} -Ctarget-cpu={} -Ctarget-feature={}",
++        "-Zalways-encode-mir -Zinline-mir={inline} -Zmir-enable-passes=-JumpThreading -Copt-level={optimization} -Ctarget-cpu={} -Ctarget-feature={}{hint}",
+         profile.cpu(),
+         profile.rustc_features()
+     )
+--- a/crates/cargo-fe2o3/src/engineering_hsaco/support.rs
++++ b/crates/cargo-fe2o3/src/engineering_hsaco/support.rs
+@@ -58,7 +58,7 @@
+ }
+ 
+ #[derive(Serialize)]
+-struct FixedOptions {
++pub(super) struct FixedOptions {
+     mir_normalization: &'static str,
+     extraction_rustflags: String,
+     optimization: &'static str,
+@@ -66,6 +66,18 @@
+     verify_each: bool,
+     timeout_seconds: u64,
+     maximum_output_bytes: u64,
++}
++
++pub(super) fn fixed_options(options: &Options) -> FixedOptions {
++    FixedOptions {
++        mir_normalization: options.mir_normalization.name(),
++        extraction_rustflags: extraction_rustflags(options.profile, options.mir_normalization),
++        optimization: "O2",
++        strip_debug: true,
++        verify_each: true,
++        timeout_seconds: options.timeout.as_secs(),
++        maximum_output_bytes: options.max_output_bytes,
++    }
+ }
+ 
+ #[derive(Serialize)]
+@@ -147,15 +159,7 @@
+             },
+         },
+         providers,
+-        options: FixedOptions {
+-            mir_normalization: options.mir_normalization.name(),
+-            extraction_rustflags: extraction_rustflags(options.profile, options.mir_normalization),
+-            optimization: "O2",
+-            strip_debug: true,
+-            verify_each: true,
+-            timeout_seconds: options.timeout.as_secs(),
+-            maximum_output_bytes: options.max_output_bytes,
+-        },
++        options: fixed_options(options),
+         execution: Execution {
+             bootstrap_request: identity(observation.bootstrap_request_identity()),
+             bootstrap_response: identity(observation.bootstrap_response_identity()),
