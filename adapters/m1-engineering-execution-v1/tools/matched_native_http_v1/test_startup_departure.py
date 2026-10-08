@@ -158,6 +158,27 @@ class StartupDepartureTests(unittest.TestCase):
         self.assertTrue(attempts[0]['descriptor_scan']['device_users'])
         self.assertEqual(proofs, [])
 
+    def test_complete_positive_scan_with_nongpu_child_exit_requires_fresh_scan(self):
+        result, attempts, proofs = self.exercise(mode='after', positive=True)
+        self.assertTrue(result['accepted'])
+        self.assertFalse(attempts[0]['accepted'])
+        self.assertTrue(attempts[0]['descriptor_scan']['accepted'])
+        self.assertEqual(len(attempts), 2)
+        self.assertEqual(len(proofs), 2)
+
+    def test_gpu_user_cannot_be_removed_by_departure_reconciliation(self):
+        def change(value):
+            if value['accepted'] or not value.get('descriptor_scan', {}).get('owned_users'):
+                return
+            old = value['before']['owned_identities']
+            lost = next(row for row in old if row not in value['after']['owned_identities'])
+            value['descriptor_scan']['owned_users'][0]['identity'] = lost
+            value['descriptor_scan']['device_users'][0]['identity'] = lost
+        result, attempts, proofs = self.exercise(mode='after', positive=True, mutate=change)
+        self.assertFalse(result['accepted'])
+        self.assertEqual(len(attempts), 1)
+        self.assertEqual(proofs, [])
+
     def test_init_loss_is_not_an_eligible_child_departure(self):
         def change(allowed, receipt, init, child):
             allowed.clear()

@@ -68,7 +68,8 @@ class CpuTests(unittest.TestCase):
 
     def test_historical_g30_g32_require_their_own_exact_guard_cap_and_wrapper(self):
         for profile in ('FerricCpuFourCore30GiBEmitterV1', 'FerricCpuFourCore32GiBEmitterV1',
-                        'FerricCpuFourCore42GiBEmitterV1', 'FerricCpuFourCore44GiBEmitterV1'):
+                        'FerricCpuFourCore42GiBEmitterV1', 'FerricCpuFourCore44GiBEmitterV1',
+                        'FerricCpuFourCore56GiBEmitterV1'):
             value, sources, result = fixture()
             guard, environment, cap, wrapper = m.PROFILES[profile]
             result['profile'] = result['launch_environment']['FERRIC_CPU_PROFILE'] = profile

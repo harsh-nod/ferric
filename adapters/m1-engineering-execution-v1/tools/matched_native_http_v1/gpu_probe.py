@@ -2,7 +2,7 @@
 
 The outer benchmark must hash-bind these modules and its immutable stage first.
 No launch, signal, container mutation, or timing admission occurs here.
-Only an exact pre-GPU container startup birth may request a fresh complete sample.
+Only exact container startup churn may request a fresh complete sample.
 """
 import os
 from pathlib import Path
@@ -111,6 +111,34 @@ class StartupBudget:
             identity_reader=identities, pid_reader=census, descriptor_stat=descriptor)
 
 
+def startup_gpu_survivors(scan, before, after):
+    """Permit a retry only around unchanged GPU owners, never a refused GPU scan."""
+    users = scan.get('device_users')
+    require(type(users) is list and users == scan.get('owned_users')
+            and scan.get('foreign_users') == [], 'only exact owned startup GPU users')
+    old = {row['pid']: row for row in before['owned_identities']}
+    new = {row['pid']: row for row in after['owned_identities']}
+    stable = {pid: row for pid, row in old.items() if new.get(pid) == row}
+    positive = set()
+    for user in users:
+        row = user.get('identity', {})
+        require(stable.get(row.get('pid')) == row and user.get('descriptors'),
+                'GPU-owning lifetime must survive startup membership change')
+        positive.add(row['pid'])
+    require(len(positive) == len(users), 'distinct startup GPU users required')
+    for endpoint in (before, after):
+        require(endpoint.get('root_visibility') is True, 'root-visible startup GPU endpoint required')
+        for key in ('fuser_pids', 'sysfs_pids'):
+            values = endpoint.get(key)
+            require(type(values) is list and all(type(pid) is int and pid > 1 for pid in values)
+                    and values == sorted(set(values)) and set(values) <= positive,
+                    'startup GPU endpoints must bind fully scanned surviving owners')
+            require(values == before[key] == after[key], 'startup GPU endpoint set changed')
+    if users:
+        require(scan.get('accepted') is True and scan.get('complete') is True
+                and scan.get('errors') == [], 'complete positive startup scan required')
+
+
 def startup_birth(result, *, identity, runtime):
     """Classify only a retained refusal; never convert it to acceptance."""
     require(result.get('schema') == 'FerricNativeHttpGpuProbeV1'
@@ -121,13 +149,11 @@ def startup_birth(result, *, identity, runtime):
     expected = {'schema': 'FerricDeviceDescriptorSampleV2', 'method': 'proc-fd-rdev-finite-roster-v1',
         'sampling_policy': 'initial-plus-one-birth-frontier-v1', 'root_visibility': True,
         'accepted': True, 'complete': True, 'phase': 'startup', 'errors': [],
-        'device_users': [], 'owned_users': [], 'foreign_users': []}
+        'foreign_users': []}
     require(all(type(scan.get(key)) is type(value) and scan[key] == value
-                for key, value in expected.items()), 'complete no-GPU startup scan required')
+                for key, value in expected.items()), 'complete owned startup scan required')
     before, after = result['before'], result['after']
-    for endpoint in (before, after):
-        require(endpoint.get('root_visibility') is True and endpoint.get('fuser_pids') == []
-                and endpoint.get('sysfs_pids') == [], 'empty root-visible startup GPU endpoints required')
+    startup_gpu_survivors(scan, before, after)
     old_rows, new_rows = before['owned_identities'], after['owned_identities']
     old, new = ({row['pid']: row for row in rows} for rows in (old_rows, new_rows))
     require(len(old) == len(old_rows) and len(new) == len(new_rows) and set(old) < set(new)
@@ -161,12 +187,10 @@ def startup_departures(result, *, identity, runtime, budget, evidence, proc=Path
     before, after, scan = result['before'], result['after'], result['descriptor_scan']
     expected = {'schema': 'FerricDeviceDescriptorSampleV2', 'method': 'proc-fd-rdev-finite-roster-v1',
         'sampling_policy': 'initial-plus-one-birth-frontier-v1', 'root_visibility': True,
-        'phase': 'startup', 'device_users': [], 'owned_users': [], 'foreign_users': []}
+        'phase': 'startup', 'foreign_users': []}
     require(all(type(scan.get(key)) is type(value) and scan[key] == value
-                for key, value in expected.items()), 'zero-GPU startup descriptor evidence required')
-    for endpoint in (before, after):
-        require(endpoint.get('root_visibility') is True and endpoint.get('fuser_pids') == []
-                and endpoint.get('sysfs_pids') == [], 'empty root-visible startup GPU endpoints required')
+                for key, value in expected.items()), 'owned startup descriptor evidence required')
+    startup_gpu_survivors(scan, before, after)
     old_rows, new_rows = before['owned_identities'], after['owned_identities']
     old, new = ({row['pid']: row for row in rows} for rows in (old_rows, new_rows))
     lost = set(old) - set(new)

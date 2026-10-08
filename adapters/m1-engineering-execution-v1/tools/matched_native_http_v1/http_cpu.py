@@ -8,6 +8,10 @@ PROFILE = 'FerricCpuFourCore36GiBEmitterV1'
 GUARD_SHA = 'fba93769c349a1bca0ea72ff2dbc0ed9b077be712dc8f370775d050df96af796'
 ENV_SHA = 'a4f373e86b56bfc692b56d726280fc1f7efbfa521db96e936dd92787d7b2c7b8'
 PROFILES = {
+    'FerricCpuFourCore56GiBEmitterV1': (
+        '7011bfe58dd5d602b421342c22ce23bdc5a1484e1d7d2da3375f9382e52f1902',
+        '716d6ed7fb4796a3a80825fcdc403609ac089157a00eb7f49da67e0c5d960384',
+        60129542144, 'cpu-env-56g-emitter.sh'),
     'FerricCpuFourCore44GiBEmitterV1': (
         '9018aa3b902ec4341f478ed25466fc5b9becc1d2a7ed72f3f831bf8810e12bb0',
         '13faafaf05ba850fdcb11bc4a79950d7d92523cb45db1756a1c5f751a2e1cc7a',
@@ -35,8 +39,8 @@ TEST_FILES = ('test_http_lifecycle.py', 'test_selected_native.py', 'test_contain
     'test_http_runner.py', 'test_probe_cli.py', 'test_http_cpu.py',
     'test_gpu_activity.py', 'test_startup_scanner.py', 'test_startup_reconciliation.py',
     'test_startup_departure.py', 'test_native_fd_rescan.py', 'test_width_selection.py',
-    'test_gate_up_selection.py', 'test_down_selection.py')
-EXPECTED_TESTS = 302
+    'test_gate_up_selection.py', 'test_down_selection.py', 'test_current_down_selection.py')
+EXPECTED_TESTS = 316
 
 
 def require(ok, message):

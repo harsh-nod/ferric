@@ -22,6 +22,9 @@ ADAPTERS = {
     'DownDa6b': ('207af7b843cefba73da7beff658a213ee280bd21d2ea55a7ec6e6d84c5508739',
                  '023503f46deaec44032f3507d7dd3533854bc78476b1d5f2a42b885c90903b57',
                  'native-down-control-vs-splitk8-tpot-r1'),
+    'Down1736': ('207af7b843cefba73da7beff658a213ee280bd21d2ea55a7ec6e6d84c5508739',
+                 '023503f46deaec44032f3507d7dd3533854bc78476b1d5f2a42b885c90903b57',
+                 'native-down-control-vs-splitk8-tpot-r1'),
 }
 REQUESTS, BATCHES, DISPATCHES = 42, 135, 87711
 SESSION_FIELDS = {'worker_pids', 'session_id', 'setup_seconds'}
@@ -62,6 +65,19 @@ DOWN_IMAGE = {
     'artifact_handoff_id': 'cd23060449750a973f05742c0d5a043cb637491743e2ac56b56e847cc2c4dbdf',
 }
 DOWN_ROSTER_SHA = '10f64ed7e1d41e68b4ec1c4549bba0c559fc9564ea7d181a2c64d1babe035177'
+CURRENT_BINDING_SHA = 'f5cc7a96ef4cbe9f055c86d6c0bea557c20ee369692fb26038c401729f3465b1'
+CURRENT_PLAN_SHA = '723298e87e8f5e12949267d761986fbd5d3aa6c8c8a90a728c6f93219b19c54a'
+CURRENT_WORKER_SHA = '8f764849a5a1c6a23c567f8aefe253de5e6ef2320977a79db7c472ad3417a8b5'
+CURRENT_REFRESH = {
+    'schema': 'FerricNativeDownWorkerRefreshV1',
+    'runtime_main': '1736eff451d445f1f194abe145af242cf51ec322',
+    'parent_plan': {'path': '/dev/shm/ferric-native-down-a002/plan.json',
+                    'sha256': '40af41015d4bb1401ef92f0b38ab992ae3b2d77d18bc9a651ff972767e047068'},
+    'worker_sha256': CURRENT_WORKER_SHA,
+    'source_sha256': '5e3ec3e9e7c568fb3459120b9b7dc2171b55163389e56dc531da59095420b295',
+    'historical_runtime_is_ancestry_only': True,
+    'wait_diagnostics': False, 'packet_diagnostics': False,
+}
 
 
 def require(condition, message):
@@ -75,7 +91,7 @@ def canonical(value):
 
 def geometry(campaign, arm):
     require(campaign in ADAPTERS and arm in ('A', 'B'), 'closed campaign and explicit arm required')
-    if campaign == 'DownDa6b':
+    if campaign in ('DownDa6b', 'Down1736'):
         return 131, 85403 if arm == 'A' else 89975
     if campaign == 'GateUpDa6b':
         return 131, 85403 if arm == 'A' else 94547
@@ -212,8 +228,15 @@ def project_arm(arm, spec, result, build, report, *, campaign='V17'):
     require(result.get('accepted') is True and result.get('raw_replay_passed') is True
             and result.get('instrumented') is False and result.get('latency_admitted') is True,
             'completed raw-replayed native latency arm required')
+    current = campaign == 'Down1736'
+    if current:
+        require(report.get('worker_refresh') == CURRENT_REFRESH,
+                'exact ordinary 1736 worker refresh; historical build is ancestry only')
+    else:
+        require('worker_refresh' not in report, 'worker refresh cannot enter historical HTTP selection')
+    worker_sha = CURRENT_WORKER_SHA if current else build['worker']['sha256']
     require(spec['controller']['sha256'] == build['controllers']['live-' + arm]['sha256']
-            and spec['worker']['sha256'] == build['worker']['sha256'],
+            and spec['worker']['sha256'] == worker_sha,
             'same CPU-qualified source/executables required')
     argv = list(spec['argv'])
     require(argv[0] == spec['controller']['path'] and argv.count('--max-batches') == 1,
@@ -239,9 +262,9 @@ def project_arm(arm, spec, result, build, report, *, campaign='V17'):
         width_scope(arm, spec, result, build, report)
     elif campaign == 'GateUpDa6b':
         gate_up_scope(arm, spec, result, build, report)
-    elif campaign == 'DownDa6b':
+    elif campaign in ('DownDa6b', 'Down1736'):
         down_scope(arm, spec, result, build, report)
-    return {'schema': 'Ferric' + campaign + 'SelectedHttpArmV1', 'arm': arm, 'argv': argv,
+    selected = {'schema': 'Ferric' + campaign + 'SelectedHttpArmV1', 'arm': arm, 'argv': argv,
         'controller': spec['controller'], 'worker': spec['worker'],
         'controller_source': build['controller_source'], 'runtime_source': build['runtime_source'],
         'expected_setup': setup, 'reference': spec['reference'], 'prompt': spec['prompt'],
@@ -250,6 +273,10 @@ def project_arm(arm, spec, result, build, report, *, campaign='V17'):
         'requests': REQUESTS, 'model_batches': REQUESTS * batches,
         'model_dispatches': REQUESTS * dispatches,
         'scope': 'selected native prerequisite; no HTTP launch or comparison result'}
+    if current:
+        selected['worker_refresh'] = report['worker_refresh']
+        selected['runtime_source_is_historical_ancestry'] = True
+    return selected
 
 
 def admit(selection):
@@ -273,7 +300,14 @@ def admit(selection):
     definition.loader.exec_module(contract)
     raw = contract.read(path, binding['sha256'], 32 * 1024**2)[0]
     plan = contract.decode(raw)
-    loaded, _, evidence, cell, _, _ = contract.validate_plan(plan, stage)
+    if campaign == 'Down1736':
+        require(binding['sha256'] == CURRENT_PLAN_SHA
+                and plan.get('worker_refresh') == CURRENT_REFRESH,
+                'exact completed current-worker campaign required')
+        refresh = contract.module(stage / 'current_binding.py', CURRENT_BINDING_SHA)
+        original, loaded, _, evidence, cell, _, _ = refresh.validate(contract, stage, plan, 'counter-A')
+    else:
+        loaded, _, evidence, cell, _, _ = contract.validate_plan(plan, stage)
     _, _, legacy, _, _, runner, _, _ = loaded
     require(plan['sources']['measurement/native_campaign_replay.py'] == replay_sha
             and plan['sources']['measurement/native_lifecycle.py'] == LIFECYCLE_SHA
@@ -289,7 +323,7 @@ def admit(selection):
                 and len(plan.get('cells', [])) == 14
                 and plan['sources']['measurement/native_token_cell.py'] == GATE_UP_CELL_SHA,
                 'complete da6b gate/up campaign and exact parser required')
-    elif campaign == 'DownDa6b':
+    elif campaign in ('DownDa6b', 'Down1736'):
         require(plan.get('schema') == 'FerricNativeDownCampaignPlanR1'
                 and len(plan.get('cells', [])) == 14
                 and plan['sources']['measurement/native_token_cell.py'] == DOWN_CELL_SHA,
@@ -300,6 +334,8 @@ def admit(selection):
     replay.validate_counter_pair(rows[:2])
     actual = cell.evaluate_campaign(plan['comparison'], rows[2:], rows[:2])
     actual['cpu_cost_by_cell'] = {row['cell_id']: row['completion']['cpu_cost'] for row in rows}
+    if campaign == 'Down1736':
+        actual['worker_refresh'] = plan['worker_refresh']
     report = contract.bound(selection['report'])
     require(canonical(report) == canonical(actual), 'completed native report differs from raw replay')
     selected = next(row for row in rows[2:] if row['spec']['arm'] == selection['arm'])
@@ -312,10 +348,13 @@ def admit(selection):
     result['images'] = plan['images']
     if campaign == 'GateUpDa6b':
         result['gate_up'] = plan['gate_up']
-    elif campaign == 'DownDa6b':
+    elif campaign in ('DownDa6b', 'Down1736'):
         result['down'] = plan['down']
     require(contract.read(path, binding['sha256'])[0] == raw, 'native plan changed during HTTP selection')
     contract.verify_files(stage, plan['files'])
+    if campaign == 'Down1736':
+        contract.bound(plan['worker_refresh']['parent_plan'])
+        contract.verify_files(Path(CURRENT_REFRESH['parent_plan']['path']).parent, original['files'])
     return result
 
 

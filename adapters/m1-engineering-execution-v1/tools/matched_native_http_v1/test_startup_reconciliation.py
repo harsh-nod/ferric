@@ -128,13 +128,43 @@ class StartupReconciliationTests(unittest.TestCase):
         self.assertEqual(len(attempts), 1)
         self.assertTrue(attempts[0]['descriptor_scan']['foreign_users'])
 
-    def test_positive_owned_descriptor_with_new_child_is_terminal(self):
+    def test_positive_owned_descriptor_with_new_child_requires_fresh_scan(self):
         self.fixture.add_process(18)
         self.fixture.gpu_pids = {17}
         old, new = self.row([17]), self.row([17, 18])
-        result, attempts = self.exercise([old, new])
-        self.assertFalse(result['accepted'])
+        result, attempts = self.exercise([old, new, new, new], endpoint_pids=[17])
+        self.assertTrue(result['accepted'])
+        self.assertFalse(attempts[0]['accepted'])
         self.assertTrue(attempts[0]['descriptor_scan']['owned_users'])
+        self.assertEqual(len(attempts), 2)
+
+    def test_positive_startup_requires_complete_scan_and_stable_gpu_endpoints(self):
+        self.fixture.add_process(18)
+        self.fixture.gpu_pids = {17}
+        old, new = self.row([17]), self.row([17, 18])
+        mutations = [
+            lambda x: x['descriptor_scan'].update(complete=False),
+            lambda x: x['descriptor_scan'].update(accepted=False),
+            lambda x: x['descriptor_scan'].update(errors=['incomplete']),
+            lambda x: x['descriptor_scan'].update(foreign_users=[{'pid': 99}]),
+            lambda x: x['after'].update(sysfs_pids=[18]),
+            lambda x: x['before'].update(fuser_pids=[99]),
+            lambda x: x['after'].update(root_visibility=False),
+        ]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                result, attempts = self.exercise([old, new], endpoint_pids=[17],
+                    mutate=lambda value, _: mutate(value))
+                self.assertFalse(result['accepted'])
+                self.assertEqual(len(attempts), 1)
+
+    def test_positive_gpu_owner_lifetime_change_never_retries(self):
+        self.fixture.add_process(18)
+        self.fixture.gpu_pids = {17}
+        old, new = self.row([17]), self.row([17, 18])
+        new[0][17]['start_time_ticks'] += 1
+        result, attempts = self.exercise([old, new], endpoint_pids=[17])
+        self.assertFalse(result['accepted'])
         self.assertEqual(len(attempts), 1)
 
     def test_nonempty_external_endpoint_is_terminal(self):

@@ -196,7 +196,7 @@ def startup_container(activity, attribution, probe, supplier, devices, budget):
     final = dict(result)
     final['startup_reconciliation'] = {
         'schema': 'FerricNativeHttpStartupReconciliationV1',
-        'policy': 'no-gpu-exact-container-birth-or-proven-noninit-exit-three-samples-v2',
+        'policy': 'stable-gpu-owner-container-birth-or-proven-noninit-exit-three-samples-v3',
         'sample_limit': 3, 'shared_seconds': activity.MAX_SECONDS,
         'attempts': attempts, 'accepted_attempt': len(attempts) - 1 if final['accepted'] else None,
         'departure_proofs': departure_proofs,

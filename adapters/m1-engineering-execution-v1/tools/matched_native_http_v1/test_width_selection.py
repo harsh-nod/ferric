@@ -178,14 +178,14 @@ class WidthSelectionTests(unittest.TestCase):
         self.assertEqual(c.SERVING_SHA, '347754cb8d88da4639beb0163f54c0ca091288e9c11d6e47e29e47db1dddaf7d')
         self.assertEqual(c.POLICY, 'exact-greedy-token-ids-and-decoded-utf8-v1')
 
-    def test_r6_observer_and_shared_client_bytes_unchanged(self):
+    def test_shared_client_and_exact_startup_reconciler_source_pins(self):
         pins = {
             'gpu_activity.py': '4cc1bb26e5eea7bd235ca4c014fd205d4d9fffdf35d96c1b9a2cad1233cd03e2',
             'gpu_attribution.py': 'a077d7d1309166b7a216643b10fcbddb6e7a729142ea2c23af1513990a515f51',
             'http_lifecycle.py': '075cd929cd6df73c2768959eabdab7548f5611b84c8f54200d8b71494ed6f5d8',
             'owned_command.py': 'cd6159e8a86358335ee7122956590e539b5fcf52ac1f79e839f72811b378d245',
-            'gpu_probe.py': 'e6ea88524cf61d4554e883ddf1c74ab8969d92107ff86b4bc96fbbe2ddca0550',
-            'probe_cli.py': '97daf684a1e1762072d3d7dcca236da2ca71113c3eddc0cf13c062097dc33d00',
+            'gpu_probe.py': '40a2795d5126ba9a8b29007a2134fbaf8a80c52af2cc97b85cc88a9c2ba01364',
+            'probe_cli.py': 'ee85acf4bff53b1f317f89e85a88b2b20d80f693f0a5e4fec2ff5058f0c1d0ff',
             'container_custody.py': 'e37085a7a4078a33337b05e8a6155b71dbae5d05869819588048049e65109570',
             'sitecustomize.py': '540c105f4a10e474c98a0d54a1900afc963d6c6fae139ab2613bbb8a4eb329a5',
             'competitive_benchmark.py': c.CLIENT_SHA, 'frozen/serve_ferric.py': c.SERVING_SHA,

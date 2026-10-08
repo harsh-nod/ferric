@@ -180,7 +180,7 @@ def selection_adapter(sources):
 def validate_ferric(ferric, sources):
     require(type(ferric) is dict and ferric.get('schema') in ('FerricV17SelectedHttpArmV1',
             'FerricV19SelectedHttpArmV1', 'FerricWidth55cSelectedHttpArmV1', 'FerricGateUpDa6bSelectedHttpArmV1',
-            'FerricDownDa6bSelectedHttpArmV1'),
+            'FerricDownDa6bSelectedHttpArmV1', 'FerricDown1736SelectedHttpArmV1'),
             'closed selected native HTTP arm required')
     adapter = selection_adapter(sources)
     selected = adapter.admit(ferric.get('native_evidence'))

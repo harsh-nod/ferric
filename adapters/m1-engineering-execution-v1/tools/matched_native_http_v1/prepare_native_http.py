@@ -19,7 +19,7 @@ def binding(path):
 
 def assemble(native_plan, native_report, arm, workload, tokenizer, target, reference, cpu, campaign):
     sources = {name: c.digest(ROOT / name) for name in c.DRIVER_FILES}
-    c.require(campaign in ('V17', 'V19', 'Width55c', 'GateUpDa6b', 'DownDa6b'), 'closed standalone native campaign')
+    c.require(campaign in ('V17', 'V19', 'Width55c', 'GateUpDa6b', 'DownDa6b', 'Down1736'), 'closed standalone native campaign')
     selection = {'schema': 'Ferric' + campaign + 'HttpSelectionV1', 'arm': arm,
                  'plan': binding(native_plan), 'report': binding(native_report)}
     ferric = c.selection_adapter(sources).admit(selection)
@@ -40,7 +40,7 @@ def main():
                  'target-manifest', 'reference', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--arm', choices=('A', 'B'), required=True)
-    parser.add_argument('--native-campaign', choices=('V17', 'V19', 'Width55c', 'GateUpDa6b', 'DownDa6b'), required=True)
+    parser.add_argument('--native-campaign', choices=('V17', 'V19', 'Width55c', 'GateUpDa6b', 'DownDa6b', 'Down1736'), required=True)
     parser.add_argument('--cpu-qualification', type=Path)
     args = parser.parse_args()
     c.require(args.output.is_absolute() and not args.output.exists()
