@@ -1,9 +1,9 @@
 # Scoped Active-Pause Candidate
 
 This is an isolated source and CPU-qualification candidate, not a measured
-optimization or a native admission. The candidate is retained in qualification
+optimization or a native GPU qualification. The candidate is retained in qualification
 archives only; it is not installed on the runtime production branch.
-No candidate GPU run, matched gain, full-model decode acceptance or throughput
+No candidate GPU result, matched gain, full-model decode acceptance or throughput
 result has been observed.
 
 ## Change
@@ -90,6 +90,36 @@ This covers arithmetic, schema rejection and AST sampling-placement checks
 only. It does not qualify a whole native workflow, establish live child CPU
 accounting, or measure the candidate's resource cost.
 
+## Native Workflow CPU Qualification
+
+The candidate and unchanged control now pass their separate bounded MI350
+CPU workflow qualifications. These use real admitted CPU artifacts alongside
+synthetic preparation/retention fixtures; they do not execute the native
+model or measure live child CPU usage.
+
+| Workflow | Passed | Owned Phases | Elapsed Seconds | Original Terminal SHA Prefix | Original Archive |
+| --- | ---: | ---: | ---: | --- | --- |
+| Candidate v2 | 336 | 8 | 168.889884753 | `e18ccf07` | [Candidate](native-admission-cpu-v2.tar.gz) |
+| Control v1 | 330 | 8 | 166.223272139 | `6aceca40` | [Control](control-native-admission-cpu-v1.tar.gz) |
+
+Both runs have zero failures, errors or skips, natural zero exits, reaped
+children, absent owned process groups and 377 unchanged staged sources.
+Each archive has 423 members, including 422 pinned originals and 42 raw
+evidence files. The candidate archive is 9,048,216 bytes,
+`a0a51e79b5b088556ca79232da47c7247a33af352df87e93c9ae3637f941641c`;
+the control archive is 9,046,022 bytes,
+`43ac0ac1c84d225688bf258864ecf2608176d24a82100374b3c47c1cec8a5ff4`.
+Independent data-only review rehashed every archive member and joined every
+retained original to its run source, raw evidence or authenticated stager.
+
+The totals overlap: each includes the same 227 predecessor workflow tests
+and 14 usage tests, alongside the arm-specific admission/preparation/retention
+suites. They are not 666 distinct tests or native measurements. The earlier
+candidate 335-test v1 was staged but unrun; it is neither a failed attempt nor
+credited qualification. CPU qualification elapsed time is not an A/B native
+performance result. Live resource accounting and original native case
+retirement remain to be observed.
+
 ## Measurement Gate
 
 The [preceding closed-layer measurement](../guarded-mlp-layer-phases-v1/native-gpu-v1/README.md)
@@ -98,9 +128,10 @@ body seconds. Warm forward bodies totaled 68.141092151 seconds. These are
 nested host intervals containing required checks and device waiting, not
 GPU compute, sleep-only cost or a removable fraction.
 
-All six artifact qualifications are complete. The next gate is strict native
-workflow admission, followed by fresh control/candidate/candidate/control
-(ABBA) cases run serially.
+All six artifact qualifications and both CPU workflow qualifications are
+complete. The next gate is fresh control/candidate/candidate/control (ABBA)
+GPU cases run serially, each with its own observed preparation and bound
+native admission.
 A is the unchanged qualified closed-layer runtime; B is this isolated
 candidate. Each arm must have its own matching runtime, worker and parent
 artifact bindings, the same model/image/prompt pins and same 40-forward

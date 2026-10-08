@@ -1234,16 +1234,16 @@
   "currentness_policy_changed": false,
   "documents": {
     "docs/GFX950_COMMUNITY_DEMO_V1.md": {
-      "bytes": 16851,
-      "sha256": "4e15508bceb266800388dce2e2e69e5d30c93031b747ebbd4afe6f02c9fca9c1"
+      "bytes": 17581,
+      "sha256": "46b49fb5c3da7e838ce254d24ff29e4437a2f1b0efe001eec5e3d9ecb32b4e09"
     },
     "docs/GFX950_FINITE_PREFIX_PROGRESS_V1.md": {
-      "bytes": 167772,
-      "sha256": "51944444b470a697f1e6a0a7ca70d98764c50f5fcf29fba6a004a918f901c890"
+      "bytes": 168635,
+      "sha256": "68aff60ba50bb69bd78624b0a3d24ba2b36ced1ab78862bac04ffeb6d3814c07"
     },
     "qualification/guarded-mlp-active-pause-v1/README.md": {
-      "bytes": 7584,
-      "sha256": "3e5607fd69dd062b531897a4a9028b6445bedffe2084e4da34d40bae7ff98620"
+      "bytes": 9407,
+      "sha256": "d0d3dd35fe38b22b2e64ce86ec68d8e73dc56a616019918d91b8b457ed69441a"
     }
   },
   "ferric_branch": "codex/p227-finite-prefix-integration-v1",
@@ -1254,6 +1254,93 @@
   "inherited_failures_credited": false,
   "kernel_math_changed": false,
   "native_admission": false,
+  "native_workflow_cpu": {
+    "arms": {
+      "candidate": {
+        "archive": {
+          "bytes": 9048216,
+          "file": "native-admission-cpu-v2.tar.gz",
+          "sha256": "a0a51e79b5b088556ca79232da47c7247a33af352df87e93c9ae3637f941641c"
+        },
+        "elapsed_seconds": 168.8898847529199,
+        "export_manifest": {
+          "bytes": 72897,
+          "sha256": "c2ffe4342900c6a69c32cacaee43d690f63e6f65402ebd7e6cf0e09bd0844cca"
+        },
+        "gpu_execution": false,
+        "legacy_tests": 227,
+        "live_child_usage": false,
+        "members": 423,
+        "native_execution": false,
+        "numerical_acceptance": false,
+        "owned_phases": 8,
+        "passed_tests": 336,
+        "performance_claim": false,
+        "raw_files": 42,
+        "source_files": 377,
+        "synthetic_and_actual_artifact_backed_tests": true,
+        "terminal": {
+          "bytes": 406080,
+          "sha256": "e18ccf07b8c10bce37eb7437cba13735b6c7704a7391c76445dad5312525cb48"
+        },
+        "usage_tests": 14
+      },
+      "control": {
+        "archive": {
+          "bytes": 9046022,
+          "file": "control-native-admission-cpu-v1.tar.gz",
+          "sha256": "43ac0ac1c84d225688bf258864ecf2608176d24a82100374b3c47c1cec8a5ff4"
+        },
+        "elapsed_seconds": 166.2232721389737,
+        "export_manifest": {
+          "bytes": 72905,
+          "sha256": "f9474ff45d6ca0bf97126a7906b3448a65f001b090ef8c21b78eeb1ea7f63761"
+        },
+        "gpu_execution": false,
+        "legacy_tests": 227,
+        "live_child_usage": false,
+        "members": 423,
+        "native_execution": false,
+        "numerical_acceptance": false,
+        "owned_phases": 8,
+        "passed_tests": 330,
+        "performance_claim": false,
+        "raw_files": 42,
+        "source_files": 377,
+        "synthetic_and_actual_artifact_backed_tests": true,
+        "terminal": {
+          "bytes": 411174,
+          "sha256": "6aceca40884c44eb1aad8f8b4b40e7a6119a47559035146144ef1a80f620cc74"
+        },
+        "usage_tests": 14
+      }
+    },
+    "native_workflow_cpu_qualified": true,
+    "predecessor_manifest": {
+      "bytes": 55139,
+      "sha256": "57ffb8b08f8e3db95962a9a3a60d59537f1f8e2e8351e126c562ff31d01f601e"
+    },
+    "tools": {
+      "qualification/guarded-mlp-active-pause-v1/native-workflow-tools/candidate/export_native_cpu.py": {
+        "bytes": 14754,
+        "sha256": "9ca79d053b674f5935c3e6bd54d24fb35ce5479cb95907d6973aad7631671c8e"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-workflow-tools/candidate/stage_layer_native.py": {
+        "bytes": 21156,
+        "sha256": "50a56ee68141df0b87e64c494fd7f1596bdaa2a2f815f542f6662d4f6f7980bd"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-workflow-tools/control/export_native_cpu.py": {
+        "bytes": 14800,
+        "sha256": "27ed5b6c54ae7d8ff407d39ce4741d6bc6541b26f9e44200ffb619574c072477"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-workflow-tools/control/stage_layer_native.py": {
+        "bytes": 21228,
+        "sha256": "b28fc4d714fb1a0c1d567215c8e6900f45f8f8fcb6ace12b78262d1cb502641c"
+      }
+    },
+    "unique_test_sum_claim": false,
+    "unrun_candidate_335_credited": false
+  },
   "numerical_acceptance": false,
   "performance_claim": false,
   "polling_pause_changed": true,

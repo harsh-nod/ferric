@@ -27,8 +27,19 @@ invocations across 58 scopes from a 1,047-name library inventory, in 67 phases
 and 458.703164435 seconds. All six CPU qualifications are complete. Twelve new
 pause tests are exercised in each runtime mode, not 24 distinct definitions.
 
-No active-pause GPU measurement or performance gain is claimed. The next gate
-is strict native workflow admission; subsequent fresh ABBA cases must preserve the
+The candidate/control native-workflow CPU suites now pass 336/330 tests in
+eight natural, reaped phases each, with unchanged sources and absent owned
+process groups. The [candidate archive](../qualification/guarded-mlp-active-pause-v1/native-admission-cpu-v2.tar.gz)
+and [control archive](../qualification/guarded-mlp-active-pause-v1/control-native-admission-cpu-v1.tar.gz)
+each retain 423 members. These totals overlap the 227 predecessor workflow
+tests and 14 usage tests; they are not 666 distinct tests. The earlier
+335-test candidate v1 was staged but unrun and receives no credit.
+These are actual-artifact-backed and synthetic CPU checks, not native model
+execution or measured live resource accounting.
+
+No active-pause GPU measurement or performance gain is claimed. Both CPU
+workflow qualifications are complete; fresh serial ABBA cases, each with its
+own prepared and identity-bound native admission, must preserve the
 40-prompt profile, original payload/semantic checks and 4,000/4,300-second
 native/whole-case bounds. Report CPU/resource consumption with the timing
 comparison; both paired poll and complete warm-forward body must improve.
@@ -2209,9 +2220,11 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Complete strict native workflow admission for the CPU-qualified
-   [active-pause candidate](../qualification/guarded-mlp-active-pause-v1/README.md), then run a fresh
-   control/candidate/candidate/control comparison. Require both lower paired
+1. Following the completed candidate/control CPU workflow qualifications,
+   run a fresh serial control/candidate/candidate/control comparison of the
+   [active-pause candidate](../qualification/guarded-mlp-active-pause-v1/README.md).
+   Bind each separately prepared native case to its own admitted artifacts.
+   Require both lower paired
    poll time and lower complete warm-forward body time, with CPU/resource
    consumption reported at its measured scope. The source candidate remains
    archive-only until measured promotion; do not install it as a production

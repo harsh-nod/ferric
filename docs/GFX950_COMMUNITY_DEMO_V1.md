@@ -21,9 +21,19 @@ ignores each. Diagnostic/default parents pass 641/584 selected invocations
 across 61/58 scopes. All six CPU qualifications have completed. Twelve new
 pause tests run in both runtime modes, not 24 distinct cases.
 
-No candidate GPU run or gain has been observed. The next gate is strict native
-workflow admission, followed by fresh control/candidate/candidate/control
-measurement with matching artifacts,
+The candidate/control native-workflow CPU suites now pass 336/330 tests in
+eight natural, reaped phases each, with unchanged sources and absent owned
+process groups. The [candidate archive](../qualification/guarded-mlp-active-pause-v1/native-admission-cpu-v2.tar.gz)
+and [control archive](../qualification/guarded-mlp-active-pause-v1/control-native-admission-cpu-v1.tar.gz)
+each retain 423 members. These totals overlap the 227 predecessor workflow
+tests and 14 usage tests; they are not 666 distinct tests. The earlier
+335-test candidate v1 was staged but unrun and receives no credit.
+These are actual-artifact-backed and synthetic CPU checks, not native model
+execution or measured live resource accounting.
+
+No candidate GPU result or gain has been observed. The next gate is fresh,
+serial control/candidate/candidate/control measurement with matching artifacts
+and separately prepared, identity-bound native cases,
 the same 40 prompt forwards and historical payload checks, unchanged bounds,
 and explicit CPU/resource cost. Both paired poll and complete warm-forward
 body must improve before promotion. The earlier 30.941303993-second poll
