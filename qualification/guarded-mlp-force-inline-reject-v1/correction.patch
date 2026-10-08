@@ -1,0 +1,134 @@
+--- a/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs
++++ b/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs
+@@ -825,6 +825,7 @@
+     pub fn lane(&self) -> usize {
+         self.lane
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn reject(&mut self) {
+         *self.valid = false;
+     }
+--- a/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs
++++ b/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs
+@@ -25,6 +25,69 @@
+         rounds: 0,
+         empty_probes: 0,
+     }
++}
++
++#[test]
++fn norm_reject_preserves_payload_and_uses_ordinary_error_retirement() {
++    let mut f = Fixture::new();
++    let mut results = [observation(); WAVE_LANES];
++    let mut retired = [false; WAVE_LANES];
++    let token = begin_round_claim(&f.state, 0, 0, &mut retired[0], &mut results[0]);
++    assert_eq!(token, 1);
++    let before = snapshot(&f.state);
++    {
++        let storage = f.storage();
++        for lane in 0..WAVE_LANES {
++            let (mut written, mut valid, mut callbacks) = (0, true, 0);
++            execute_task_at_v2(
++                &storage,
++                token,
++                lane,
++                &mut written,
++                &mut valid,
++                &mut |task| match task {
++                    WaveMlpTileTaskV2::Norm(mut task) => {
++                        callbacks += 1;
++                        assert_eq!(task.lane(), lane);
++                        task.reject();
++                        task.reject();
++                        assert!(!task.write_component(0, 0x1234));
++                    }
++                    _ => panic!("norm token must issue a norm task"),
++                },
++            );
++            assert_eq!((callbacks, written, valid), (1, 0, false));
++            assert!(!complete_coverage(token, lane, written, valid));
++            assert_eq!(snapshot(storage.state()), before);
++        }
++    }
++    assert!(f.normalized.iter().all(|&word| word == 0xa55a));
++    assert!(f.gate.iter().all(|&word| word == 0xa55a));
++    assert!(f.up.iter().all(|&word| word == 0xa55a));
++    assert!(f.activation.iter().all(|&word| word == 0xa55a));
++    assert!(f.down.iter().all(|value| value.to_bits() == 0x7fc0_1234));
++    for lane in 0..WAVE_LANES {
++        finish_round_completion(
++            &f.state,
++            token,
++            false,
++            &mut retired[lane],
++            &mut results[lane],
++        );
++        assert!(retired[lane]);
++        assert_eq!(results[lane].error, INCOMPLETE_WRITES);
++        assert_eq!(results[lane].executed_tasks, 0);
++    }
++    assert_eq!(f.state[ERRORS].load(Ordering::Acquire), INCOMPLETE_WRITES);
++    assert_eq!(f.state[ARRIVALS].load(Ordering::Acquire), 0);
++    assert_eq!(f.state[DONE].load(Ordering::Acquire), 0);
++    let failed = snapshot(&f.state);
++    assert_eq!(
++        begin_round_claim(&f.state, 0, 0, &mut retired[0], &mut results[0]),
++        STOP
++    );
++    finish_round_completion(&f.state, STOP, true, &mut retired[0], &mut results[0]);
++    assert_eq!(snapshot(&f.state), failed);
+ }
+ 
+ #[test]
+--- a/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs
++++ b/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs
+@@ -51,8 +51,8 @@
+ const WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1: &[u8] =
+     b"FE2O3/WORKGROUP-SYNC-PROVIDER-SOURCE-CLOSURE/V1\0";
+ const REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1: [u8; 32] = [
+-    0x03, 0x7e, 0x47, 0x2e, 0xa2, 0x4d, 0x73, 0x37, 0xf8, 0x80, 0x28, 0xed, 0x65, 0xcb, 0x3d, 0x6e,
+-    0xa6, 0xe0, 0xc0, 0x68, 0x15, 0x38, 0xe6, 0x12, 0x1a, 0xb7, 0x82, 0x40, 0xc4, 0x4e, 0xf6, 0x75,
++    0xd6, 0xac, 0x31, 0x89, 0x8b, 0x9e, 0x4d, 0x59, 0x4d, 0x3a, 0xa3, 0x6d, 0x6c, 0x5c, 0xed, 0x37,
++    0x80, 0x59, 0xa4, 0xff, 0xff, 0x54, 0x88, 0x14, 0x63, 0xf5, 0x7c, 0x10, 0xeb, 0xa0, 0x56, 0x3c,
+ ];
+ 
+ const PROVIDER_SEMANTIC_DEFINITION_TRANSCRIPT_DOMAIN_V1: &[u8] =
+@@ -3732,9 +3732,37 @@
+         .unwrap();
+         assert_eq!(
+             closure,
+-            digest("037e472ea24d7337f88028ed65cb3d6ea6e0c0681538e6121ab78240c44ef675")
++            digest("d6ac31898b9e4d594d3aa36d6c5ced378059a4ffff54881463f57c10eba0563c")
+         );
+         assert_eq!(closure, super::REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1);
++    }
++
++    #[test]
++    fn norm_reject_inline_source_is_reviewed_and_old_closure_is_refused() {
++        let source_path = Path::new(super::REVIEWED_FE2O3_DEVICE_SOURCE_ROOT)
++            .join("finite_join/wave_mlp_tiles_v2.rs");
++        let source = fs::read_to_string(&source_path).unwrap();
++        let norm = source.split("impl MlpNormTileV2<'_, '_> {").nth(1).unwrap();
++        let before_input = norm.split("    pub fn input(").next().unwrap();
++        assert!(before_input.ends_with(
++            "    #[cfg_attr(target_arch = \"amdgpu\", rustc_force_inline)]\n    pub fn reject(&mut self) {\n        *self.valid = false;\n    }\n"
++        ));
++        assert!(
++            reviewed_provider_source_closure_from_definition(
++                &source_path,
++                WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
++                super::REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1,
++            )
++            .is_ok()
++        );
++        assert!(
++            reviewed_provider_source_closure_from_definition(
++                &source_path,
++                WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
++                digest("037e472ea24d7337f88028ed65cb3d6ea6e0c0681538e6121ab78240c44ef675"),
++            )
++            .is_err()
++        );
+     }
+ 
+     #[test]

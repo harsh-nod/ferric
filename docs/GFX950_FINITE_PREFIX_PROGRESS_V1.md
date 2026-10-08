@@ -6,7 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler checkpoint: [explicit semantic diagnostic capture](../qualification/guarded-mlp-semantic-capture-v1/README.md)
+Latest compiler checkpoint: [canonical helper diagnosis and exact device inlining](../qualification/guarded-mlp-force-inline-reject-v1/README.md)
+adds a bounded canonical reader (seven tests) and binds the original failure
+to `MlpNormTileV2::reject`. One AMDGPU-only force-inline attribute and the
+matching strict 53-file provider source pin now pass the full compiler
+library suite (1,329 passed, 24 unchanged ignores) and device library suite
+(357 passed, no ignores), across 11 clean phases on MI350. Existing helper
+ABI and source-authentication predicates are unchanged.
+
+Both fresh V9 compiler retries still fail naturally, but at a different
+helper: `MlpDownTileV2::input`, independently decoded and joined to its exact
+source bytes in both arms. No HSACO, new GPU execution, numerical result or
+speedup is claimed. The next source correction is consistent AMDGPU inlining
+for the remaining small tile-view accessors, followed by checked compilation
+and native validation. Source patches and original successes and failures are
+published as a qualification candidate; all decode and milestone gates remain open.
+
+Previous compiler checkpoint: [explicit semantic diagnostic capture](../qualification/guarded-mlp-semantic-capture-v1/README.md)
 passes 25 frontend tests in seven clean phases and 11 backend capture tests
 plus 14 existing helper controls in eight clean phases on MI350. The frontend
 pins a fresh private diagnostic directory; the backend retains bounded MIR
@@ -15,8 +31,8 @@ and source-map outputs without changing admission or lowering results.
 Both subsequent V8 compiler attempts retain complete snapshots through the
 real Cargo/extractor path, but still exit 1 at the unchanged mutable aggregate
 helper-parameter check. Fixed/early MIR captures contain 924,436/925,515 bytes.
-The exact typed canonical helper/source-span join is the next step, not an
-achieved result. Source patches and original CPU/failure/capture evidence are
+At that checkpoint the exact typed canonical helper/source-span join was still
+pending; the latest checkpoint above supplies it. Source patches and original CPU/failure/capture evidence are
 published as a qualification candidate; no HSACO, GPU kernel or speedup is
 promoted, and all native decode and milestone gates remain open.
 

@@ -1,0 +1,12 @@
+
+running 7 tests
+test tests::digest_extent_identity_and_schema_mismatches_are_rejected ... ok
+test tests::exact_canonical_roundtrip_reports_one_helper_without_authority ... ok
+test tests::map_files_are_bounded_sorted_unique_and_strict ... ok
+test tests::oversized_inputs_are_rejected_before_decode ... ok
+test tests::relative_file_and_argument_count_are_refused ... ok
+test tests::source_origin_requires_full_identity_and_bounded_extent ... ok
+test tests::truncated_trailing_and_noncanonical_mir_are_rejected ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
