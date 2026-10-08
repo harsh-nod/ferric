@@ -2,8 +2,8 @@
 
 This opt-in extension attributes host time inside the actual guarded forward
 sequence. It changes neither kernel arithmetic nor currentness policy. The
-new phase timings have not yet been measured in a GPU run, and do not establish
-Full2303 correctness, GPU overlap, a speedup or the 700 tokens/s target.
+CPU checkpoint does not establish a new GPU measurement, Full2303 correctness,
+GPU overlap, a speedup or the 700 tokens/s target.
 
 ## Why Add It
 
@@ -124,13 +124,22 @@ tests on MI350: the unchanged 126-test suite plus 20 new tests, across two
 naturally retired supervised processes. Its original evidence and separate
 source/data review are retained. These synthetic checks are not GPU execution.
 
-The previous two-record workflow qualification does not qualify the new
-preparer, launcher or retainer. Their fresh qualification and a bounded native
-run are required before reporting new timings.
-The new adapter must preserve whole-original stderr admission and all existing
-two-record tests, explicitly admit the new CPU receipt schema and unchanged
-runtime predecessor, and bind the new worker/parent ELFs. Shortening the stderr
-file, fabricating predecessor fields or relabeling old measurements is invalid.
+The [new native-admission workflow qualification](native-admission-cpu-v1/README.md)
+also passes all 227 tests in 112.153889 seconds: 171 unchanged legacy tests,
+29 CPU-admission tests, 12 three-record retention tests and 15 preparation tests.
+All four supervised children exited naturally and were reaped with absent
+process groups. The 146 checker tests and 227 workflow tests overlap in their
+inherited cases; they are not 373 distinct tests.
+
+The new tests exercise the real admission/preparation entry points against
+authenticated MI350 CPU receipts, source maps and ELF bytes, plus synthetic
+retention success/failure/absence cases. They preserve whole-original stderr
+and all existing two-record tests. The complete 389-member workflow archive
+is retained without duplicating its 364 source/fixture bodies in this directory.
+Data-only native request preparation has separately passed. Native GPU results
+remain separate evidence and are not established by this CPU checkpoint.
+Shortening stderr, fabricating predecessor fields or relabeling old measurements
+remains invalid.
 
 Full2303 GPU execution, exact independent 256 generated IDs and raw decoded
 bytes, sustained throughput and issue #42 M0-M7 remain open.

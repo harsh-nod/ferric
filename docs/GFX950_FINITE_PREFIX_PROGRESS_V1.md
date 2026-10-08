@@ -17,9 +17,14 @@ accounting around the real Sequence with unchanged backend/deadline ordering,
 not new GPU timing or numerical acceptance. Its new third diagnostic record
 now has a [146-test checker qualification](../qualification/guarded-mlp-forward-phases-v1/checker-cpu-v1/README.md),
 including all 126 unchanged tests and 20 new cases. Both processes retired
-naturally. Fresh preparer/launcher/retainer qualification and an actual GPU
-run are still required before measurement; the earlier two-record workflow
-qualification does not cover them.
+naturally. The separate [three-record native-admission workflow qualification](../qualification/guarded-mlp-forward-phases-v1/native-admission-cpu-v1/README.md)
+now passes 227 tests in 112.153889 seconds across four naturally retired
+processes: 171 unchanged legacy tests plus 29 CPU-admission, 12 retention and
+15 preparation tests. Actual-artifact-backed and synthetic tests preserve
+original stderr custody; no native/model execution occurs in this gate.
+The 146 and 227 suites overlap inherited cases, not 373 distinct tests.
+Data-only request preparation has separately passed. Native GPU results require
+separate evidence; this CPU checkpoint establishes no GPU result or new timing.
 
 Latest native measurement: optional
 [currentness-duration instrumentation](../qualification/guarded-mlp-currentness-duration-v1/README.md)

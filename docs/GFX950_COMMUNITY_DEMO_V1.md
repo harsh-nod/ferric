@@ -27,11 +27,14 @@ The newer [nine-phase diagnostic CPU checkpoint](../qualification/guarded-mlp-fo
 is a separate implementation step: worker builds pass 885/838 tests with the
 feature enabled/disabled, and parent selected scopes pass 622/584 tests. It
 attributes the whole forward body without changing kernel arithmetic or
-currentness policy. It has not yet run on the GPU. The earlier 126 checker
-tests and 171 workflow tests cover the old two-record protocol, not this new
-three-record protocol. Its [new checker now passes 146 tests](../qualification/guarded-mlp-forward-phases-v1/checker-cpu-v1/README.md),
-but native preparation/launch/retention qualification and a GPU run remain
-pending. The chart below remains the original measured result.
+currentness policy. Its [new checker passes 146 tests](../qualification/guarded-mlp-forward-phases-v1/checker-cpu-v1/README.md),
+and the [three-record native-admission workflow passes 227 tests](../qualification/guarded-mlp-forward-phases-v1/native-admission-cpu-v1/README.md)
+in four cleanly retired CPU-only processes. These suites retain the earlier
+126 checker and 171 workflow cases; their overlapping inherited tests must
+not be counted as 373 distinct tests. The new workflow tests use authenticated
+CPU artifacts and synthetic retention cases, not a model/GPU run. Data-only
+request preparation has separately passed. Any new native GPU result requires
+its own evidence; the chart below remains the original measured result.
 
 ## New Host Attribution
 

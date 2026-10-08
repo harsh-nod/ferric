@@ -265,20 +265,24 @@
   },
   "documents": {
     "docs/GFX950_COMMUNITY_DEMO_V1.md": {
-      "bytes": 11524,
-      "sha256": "55b912a57682ff47d2cb776f3f1e58572beebe00d8ab8d3573a91ee6235dfea9"
+      "bytes": 11831,
+      "sha256": "21236ced57d16740c5d6304b9c9f7e9ebd84a3ecd404de63672bc9765222695f"
     },
     "docs/GFX950_FINITE_PREFIX_PROGRESS_V1.md": {
-      "bytes": 160445,
-      "sha256": "c01c9f699d7e90849feaf8f903db00ed508e061e5e84a8c18ea0071cfd90d71c"
+      "bytes": 160949,
+      "sha256": "4d34518102b9b78fb99d850eb85c89a64cfee26d16fdfc0d68ea515467be1df5"
     },
     "qualification/guarded-mlp-forward-phases-v1/README.md": {
-      "bytes": 7524,
-      "sha256": "d0cdf613f58f5005f2ce67154a95add83d471410ab99a00054399aded2284625"
+      "bytes": 8070,
+      "sha256": "1270eaedb7712caf80b45d80ad2539966d2412d89b4e9ff14611136f56114b34"
     },
     "qualification/guarded-mlp-forward-phases-v1/checker-cpu-v1/README.md": {
       "bytes": 2458,
       "sha256": "410d6fe66f0e3d9a383a56b98a81aaf341c023dc5a3c3e8e3ee072e601aad50f"
+    },
+    "qualification/guarded-mlp-forward-phases-v1/native-admission-cpu-v1/README.md": {
+      "bytes": 4599,
+      "sha256": "c266a1cbc9e30fd7bdcf2aa35a33d8b230d59f526375228766e8540e8b4128d0"
     },
     "qualification/guarded-mlp-readiness40-causal-layer0-v1/DECODE-GATES.md": {
       "bytes": 4851,
@@ -291,6 +295,44 @@
   },
   "full2303_executed": false,
   "gpu_execution": false,
+  "native_admission_qualification": {
+    "actual_cpu_artifact_reads": true,
+    "archive": {
+      "bytes": 8952922,
+      "path": "native-admission-cpu-v1.tar.gz",
+      "sha256": "31da38260d164196ef984af1bb708ba84780c08abe7916cdbbaa77c419945090"
+    },
+    "checker_and_workflow_counts_are_additive": false,
+    "elapsed_seconds": 112.15388928295579,
+    "fixture_copies": 2,
+    "gpu_execution": false,
+    "leaves": {
+      "forward-cpu-tests": 29,
+      "forward-preparation-tests": 15,
+      "forward-retention-tests": 12,
+      "legacy-tests": 171
+    },
+    "legacy_tests": 171,
+    "manifest_pins": 388,
+    "model_execution": false,
+    "native_parent_execution": false,
+    "new_tests": 56,
+    "numerical_acceptance": false,
+    "original_fixture_files": 152,
+    "original_member_count": 389,
+    "passed_tests": 227,
+    "performance_claim": false,
+    "production_authority": false,
+    "raw_files": 22,
+    "source_files": 364,
+    "supervised_steps": 4,
+    "synthetic_and_actual_artifact_backed_tests": true,
+    "terminal": {
+      "bytes": 355146,
+      "path": "native-admission-cpu-v1/complete.json",
+      "sha256": "e5ecec31ead47b13b6fb7eaab5fbc17ed46f2744bd47eb9fd7be6267fc210ac0"
+    }
+  },
   "numerical_acceptance": false,
   "performance_claim": false,
   "proposal": {
