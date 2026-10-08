@@ -1,0 +1,404 @@
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1.rs
+@@ -1853,12 +1853,43 @@
+     summary: DeterministicDivisorSummaryDiagnosticV1,
+ }
+ 
++#[derive(Clone, Copy, Debug, Eq, PartialEq)]
++pub(crate) enum RankedStructuralValidationStageV1 {
++    FiniteReplay,
++    WaveReplay,
++    FiniteSourceSelection,
++    WaveSourceSelection,
++    FiniteSourceCall,
++    FiniteGeneratedEffects,
++    RankedCandidateCustody,
++}
++
++impl RankedStructuralValidationStageV1 {
++    const fn label(self) -> &'static str {
++        match self {
++            Self::FiniteReplay => "finite-replay",
++            Self::WaveReplay => "wave-replay",
++            Self::FiniteSourceSelection => "finite-source-selection",
++            Self::WaveSourceSelection => "wave-source-selection",
++            Self::FiniteSourceCall => "finite-source-call",
++            Self::FiniteGeneratedEffects => "finite-generated-effects",
++            Self::RankedCandidateCustody => "ranked-candidate-custody",
++        }
++    }
++}
++
+ #[derive(Debug)]
+ pub(crate) enum ProductionRankedProjectionErrorV1 {
+     SemanticSsa(ProductionSemanticSsaErrorV1),
+     CanonicalAssertions(CanonicalAssertionErrorV1),
+     SemanticU32Induction(fe2o3_mir_model::SemanticU32InductionAnalysisErrorV1),
+     StructuralValidation(fe2o3_lower_mir_kernel::ProductionSemanticKirErrorV1),
++    StructuralValidationAt {
++        stage: RankedStructuralValidationStageV1,
++        root: Option<SemanticFunctionIdV1>,
++        body: SemanticFunctionIdV1,
++        error: fe2o3_lower_mir_kernel::ProductionSemanticKirErrorV1,
++    },
+     FiniteJoinProtocol(fe2o3_kernel_ir::FiniteJoinProtocolErrorV1),
+     Incomplete(&'static str),
+     CfgBlockLimit(Box<CfgBlockLimitDiagnosticV1>),
+@@ -1916,7 +1947,16 @@
+         body: SemanticFunctionIdV1,
+         name: &[u8],
+     ) -> Self {
+-        if let Self::UnprovenDeterministicDivisor(diagnostic) = &mut self {
++        if let Self::StructuralValidationAt {
++            root: selected_root,
++            ..
++        } = &mut self
++        {
++            // Add missing outer context without replacing the failed body's identity.
++            if selected_root.is_none() {
++                *selected_root = Some(root);
++            }
++        } else if let Self::UnprovenDeterministicDivisor(diagnostic) = &mut self {
+             diagnostic.root = Some(DeterministicProjectionRootDiagnosticV1::new(
+                 root, body, name,
+             ));
+@@ -1976,6 +2016,23 @@
+                     formatter,
+                     "ranked projection structural validation failed: {error}"
+                 )
++            }
++            Self::StructuralValidationAt {
++                stage,
++                root,
++                body,
++                error,
++            } => {
++                write!(
++                    formatter,
++                    "ranked projection structural validation failed: stage {}; root ",
++                    stage.label(),
++                )?;
++                match root {
++                    Some(root) => write!(formatter, "{}", root.index())?,
++                    None => formatter.write_str("unknown")?,
++                }
++                write!(formatter, "; body {}: {error}", body.index())
+             }
+             Self::FiniteJoinProtocol(error) => {
+                 write!(
+@@ -2131,6 +2188,7 @@
+             Self::SemanticSsa(error) => Some(error),
+             Self::SemanticU32Induction(error) => Some(error),
+             Self::StructuralValidation(error) => Some(error),
++            Self::StructuralValidationAt { error, .. } => Some(error),
+             Self::FiniteJoinProtocol(error) => Some(error),
+             Self::Recipe(error) => Some(error),
+             Self::Compile { error, .. } => Some(error.as_ref()),
+@@ -3330,10 +3388,11 @@
+                 .ok_or(ProductionRankedProjectionErrorV1::Unsupported(
+                     "a semantic KernelRoot without one direct body or transparent Result wrapper",
+                 ))?;
+-            let mut finite_join_view = source.finite_join_view_for_root(semantic_root)?;
++            let mut finite_join_view =
++                source.finite_join_view_for_root(semantic_root, selection.body())?;
+             let mut facts = session.for_source(semantic_root, selection.body());
+             let wave_view = facts.with_canonical_budget_v1(|budget| {
+-                source.wave_task_view_for_root(semantic_root, budget)
++                source.wave_task_view_for_root(semantic_root, selection.body(), budget)
+             })?;
+             let wave_storage = wave_view.as_ref().map_or(0, |view| view.retained_storage());
+             let wave_frame = if let Some(view) = wave_view.as_ref() {
+@@ -3383,7 +3442,12 @@
+                 &root.access_sources,
+                 &root.executable_effect_sources,
+             )
+-            .map_err(ProductionRankedProjectionErrorV1::StructuralValidation)?;
++            .map_err(|error| ProductionRankedProjectionErrorV1::StructuralValidationAt {
++                stage: RankedStructuralValidationStageV1::RankedCandidateCustody,
++                root: Some(semantic_root),
++                body: selection.body(),
++                error,
++            })?;
+             roots.push(root);
+         }
+         source
+@@ -3478,12 +3542,26 @@
+     }
+     if let Some(view) = finite_join_view.as_deref() {
+         view.validate_source_selection(semantic, selection.root(), selection.body())
+-            .map_err(ProductionRankedProjectionErrorV1::StructuralValidation)?;
++            .map_err(
++                |error| ProductionRankedProjectionErrorV1::StructuralValidationAt {
++                    stage: RankedStructuralValidationStageV1::FiniteSourceSelection,
++                    root: Some(selection.root()),
++                    body: selection.body(),
++                    error,
++                },
++            )?;
+     }
+     let constants = constant_locals(function)?;
+     if let Some(view) = wave_view {
+         view.validate_source_selection(semantic, selection.root(), selection.body())
+-            .map_err(ProductionRankedProjectionErrorV1::StructuralValidation)?;
++            .map_err(
++                |error| ProductionRankedProjectionErrorV1::StructuralValidationAt {
++                    stage: RankedStructuralValidationStageV1::WaveSourceSelection,
++                    root: Some(selection.root()),
++                    body: selection.body(),
++                    error,
++                },
++            )?;
+         if finite_join_view.is_some() || !reference_bindings.as_slice().is_empty() {
+             return Err(wave_projection_reject_v1());
+         }
+@@ -3951,7 +4029,14 @@
+         // Replay-derived source/KIR facts join these raw effects before any
+         // mandatory ranked report exists. This is not publication discharge.
+         view.validate_generated_effects(&kernel, &executable_effect_sources)
+-            .map_err(ProductionRankedProjectionErrorV1::StructuralValidation)?;
++            .map_err(
++                |error| ProductionRankedProjectionErrorV1::StructuralValidationAt {
++                    stage: RankedStructuralValidationStageV1::FiniteGeneratedEffects,
++                    root: Some(selection.root()),
++                    body: selection.body(),
++                    error,
++                },
++            )?;
+     }
+     let lowering = if let Some(view) = wave_view {
+         compile_projected_wave_tasks_v1(
+@@ -7860,7 +7945,14 @@
+                 *dispatch,
+                 *result,
+             )
+-            .map_err(ProductionRankedProjectionErrorV1::StructuralValidation)?;
++            .map_err(|error| {
++                ProductionRankedProjectionErrorV1::StructuralValidationAt {
++                    stage: RankedStructuralValidationStageV1::FiniteSourceCall,
++                    root: None,
++                    body: function_id,
++                    error,
++                }
++            })?;
+         }
+     } else if !grouped_uses.is_empty() {
+         return Err(ProductionRankedProjectionErrorV1::Incomplete(
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/projection_01_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/projection_01_tests.rs
+@@ -977,3 +977,164 @@
+         u32::BITS - (elements - 1).leading_zeros()
+     }
+ }
++
++#[test]
++fn structural_validation_stage_diagnostic_preserves_tags_and_error_sources() {
++    use RankedStructuralValidationStageV1 as Stage;
++    use fe2o3_lower_mir_kernel::{
++        ProductionMirPlironTranslationErrorV1 as Translation, ProductionSemanticKirErrorV1 as Cause,
++    };
++    use std::error::Error;
++
++    let stages = [
++        (Stage::FiniteReplay, "finite-replay"),
++        (Stage::WaveReplay, "wave-replay"),
++        (Stage::FiniteSourceSelection, "finite-source-selection"),
++        (Stage::WaveSourceSelection, "wave-source-selection"),
++        (Stage::FiniteSourceCall, "finite-source-call"),
++        (Stage::FiniteGeneratedEffects, "finite-generated-effects"),
++        (Stage::RankedCandidateCustody, "ranked-candidate-custody"),
++    ];
++    for (stage, label) in stages {
++        let diagnostic = ProductionRankedProjectionErrorV1::StructuralValidationAt {
++            stage,
++            root: Some(SemanticFunctionIdV1::from_index(u32::MAX)),
++            body: SemanticFunctionIdV1::from_index(u32::MAX),
++            error: Cause::CorrespondenceMismatch,
++        };
++        assert_eq!(
++            diagnostic.to_string(),
++            format!(
++                "ranked projection structural validation failed: stage {label}; root 4294967295; body 4294967295: {}",
++                Cause::CorrespondenceMismatch,
++            ),
++        );
++        assert!(matches!(
++            diagnostic.source().unwrap().downcast_ref::<Cause>(),
++            Some(Cause::CorrespondenceMismatch),
++        ));
++        assert!(diagnostic.source().unwrap().source().is_none());
++
++        let nested = ProductionRankedProjectionErrorV1::StructuralValidationAt {
++            stage,
++            root: None,
++            body: SemanticFunctionIdV1::from_index(0),
++            error: Cause::MirPlironTranslation(Translation::ResourceLimit),
++        };
++        assert!(matches!(
++            nested.source().unwrap().downcast_ref::<Cause>(),
++            Some(Cause::MirPlironTranslation(Translation::ResourceLimit)),
++        ));
++        assert!(matches!(
++            nested
++                .source()
++                .unwrap()
++                .source()
++                .unwrap()
++                .downcast_ref::<Translation>(),
++            Some(Translation::ResourceLimit),
++        ));
++    }
++}
++
++#[test]
++fn structural_validation_stage_context_preserves_inner_identity_and_legacy_display() {
++    use fe2o3_lower_mir_kernel::ProductionSemanticKirErrorV1 as Cause;
++    use std::error::Error;
++    let id = SemanticFunctionIdV1::from_index;
++    let make = |root| ProductionRankedProjectionErrorV1::StructuralValidationAt {
++        stage: RankedStructuralValidationStageV1::FiniteSourceCall,
++        root,
++        body: id(17),
++        error: Cause::CorrespondenceMismatch,
++    };
++    assert!(make(None).to_string().contains("; root unknown; body 17:"));
++    assert!(make(Some(id(0))).to_string().contains("; root 0; body 17:"));
++    for (original, expected) in [(None, id(23)), (Some(id(11)), id(11))] {
++        let diagnostic = make(original).with_deterministic_root_context(id(23), id(99), b"outer");
++        assert!(matches!(
++            diagnostic,
++            ProductionRankedProjectionErrorV1::StructuralValidationAt {
++                stage: RankedStructuralValidationStageV1::FiniteSourceCall,
++                root: Some(root),
++                body,
++                error: Cause::CorrespondenceMismatch,
++            } if root == expected && body == id(17)
++        ));
++    }
++    let legacy =
++        ProductionRankedProjectionErrorV1::StructuralValidation(Cause::CorrespondenceMismatch)
++            .with_deterministic_root_context(id(23), id(99), b"outer");
++    assert_eq!(
++        legacy.to_string(),
++        format!(
++            "ranked projection structural validation failed: {}",
++            Cause::CorrespondenceMismatch
++        ),
++    );
++    assert!(matches!(
++        legacy.source().unwrap().downcast_ref::<Cause>(),
++        Some(Cause::CorrespondenceMismatch),
++    ));
++}
++
++#[test]
++fn structural_validation_stage_replay_tags_real_owner_refusals() {
++    use RankedStructuralValidationStageV1 as Stage;
++    use fe2o3_lower_mir_kernel::ProductionSemanticKirErrorV1 as Cause;
++
++    let program = neutral_ranked_program_v1();
++    let source = RankedProjectionSourceV1::from_legacy(&program.materialized).unwrap();
++    let semantic = source.semantic_ssa().source_semantic();
++    let root = semantic.roots()[0];
++    let body = semantic
++        .select_kernel_body_for_root_v1(root)
++        .unwrap()
++        .body();
++    let foreign = SemanticFunctionIdV1::from_index(u32::MAX);
++    assert!(!semantic.roots().contains(&foreign));
++    assert!(
++        source
++            .finite_join_view_for_root(root, body)
++            .unwrap()
++            .is_none()
++    );
++    let finite = match source.finite_join_view_for_root(foreign, body) {
++        Err(error) => error,
++        Ok(_) => panic!("foreign finite replay root must be refused"),
++    };
++    assert!(matches!(
++        finite,
++        ProductionRankedProjectionErrorV1::StructuralValidationAt {
++            stage: Stage::FiniteReplay,
++            root: Some(selected),
++            body: failed_body,
++            error: Cause::CorrespondenceMismatch,
++        } if selected == foreign && failed_body == body
++    ));
++    with_projection_source_budget_v1(&source, |budget| {
++        let floor = budget.storage();
++        assert!(
++            source
++                .wave_task_view_for_root(root, body, budget)?
++                .is_none()
++        );
++        assert_eq!(budget.storage(), floor);
++        let wave = match source.wave_task_view_for_root(foreign, body, budget) {
++            Err(error) => error,
++            Ok(_) => panic!("foreign wave replay root must be refused"),
++        };
++        assert!(matches!(
++            wave,
++            ProductionRankedProjectionErrorV1::StructuralValidationAt {
++                stage: Stage::WaveReplay,
++                root: Some(selected),
++                body: failed_body,
++                error: Cause::CorrespondenceMismatch,
++            } if selected == foreign && failed_body == body
++        ));
++        assert_eq!(budget.storage(), floor);
++        Ok(())
++    })
++    .unwrap();
++}
+--- a/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/ranked_projection_source_v1.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_ranked_projection_v1/ranked_projection_source_v1.rs
+@@ -11,7 +11,10 @@
+ };
+ use fe2o3_pliron::ProductionSemanticSsaOwnerV1;
+ 
+-use super::{CanonicalAssertionErrorV1, ProductionRankedProjectionErrorV1 as Error};
++use super::{
++    CanonicalAssertionErrorV1, ProductionRankedProjectionErrorV1 as Error,
++    RankedStructuralValidationStageV1 as Stage,
++};
+ 
+ pub(super) struct RankedProjectionSourceV1<'s> {
+     owner: &'s ProductionPreRankedKirOwnerV1,
+@@ -48,10 +51,16 @@
+     pub(super) fn finite_join_view_for_root(
+         &self,
+         root: fe2o3_mir_model::semantic_mir_v1::SemanticFunctionIdV1,
++        body: fe2o3_mir_model::semantic_mir_v1::SemanticFunctionIdV1,
+     ) -> Result<Option<ProductionPreRankedFiniteJoinViewV1<'s>>, Error> {
+         self.owner
+             .replay_finite_join_view_for_root_v1(root)
+-            .map_err(Error::StructuralValidation)
++            .map_err(|error| Error::StructuralValidationAt {
++                stage: Stage::FiniteReplay,
++                root: Some(root),
++                body,
++                error,
++            })
+     }
+ 
+     pub(super) const fn source_launch(&self) -> &'s ProductionSourceLaunchRosterV1 {
+@@ -61,12 +70,18 @@
+     pub(super) fn wave_task_view_for_root(
+         &self,
+         root: fe2o3_mir_model::semantic_mir_v1::SemanticFunctionIdV1,
++        body: fe2o3_mir_model::semantic_mir_v1::SemanticFunctionIdV1,
+         budget: &mut Budget<'_>,
+     ) -> Result<Option<fe2o3_lower_mir_kernel::ProductionPreRankedWaveTaskRecipeV1<'s>>, Error>
+     {
+         self.owner
+             .replay_wave_task_recipe_for_root_v1(root, budget)
+-            .map_err(Error::StructuralValidation)
++            .map_err(|error| Error::StructuralValidationAt {
++                stage: Stage::WaveReplay,
++                root: Some(root),
++                body,
++                error,
++            })
+     }
+ 
+     pub(super) const fn executable(&self) -> &'s VerifiedCanonicalKernelIrModuleV12 {

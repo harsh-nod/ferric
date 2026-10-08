@@ -6,7 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler checkpoint: [checked Index-to-U64 helper arguments](../qualification/guarded-mlp-call-index-transport-v1/README.md)
+Latest compiler diagnostic: [ranked validation boundary](../qualification/guarded-mlp-ranked-stage-diagnostic-v1/README.md)
+preserves all acceptance predicates and original error chains while adding
+one of seven fixed stage tags and numeric root/body context. All 1,339
+compiler tests (24 unchanged ignores), 359 device tests, 125 integration
+tests and 766 lowerer unit tests pass in 19 clean MI350 CPU phases.
+
+Both actual V15 worker retries still exit naturally with status 1 and no
+HSACO, now identifying `wave-replay; root 1; body 1` before ranked root
+projection and CFG compaction. This identifies the failing boundary, not
+its internal predicate. Retained defined-helper effect handling is a
+source-review candidate requiring a genuine reproducer and exact-owner
+evidence across all downstream checks. No GPU, model output, speedup or
+milestone closure is claimed; the device-completion hold remains unresolved.
+
+Previous compiler checkpoint: [checked Index-to-U64 helper arguments](../qualification/guarded-mlp-call-index-transport-v1/README.md)
 uses the existing checked emitter for this exact one-way scalar bridge.
 All 1,336 compiler tests (24 unchanged ignores), 359 device tests, 125
 integration tests and 766 lowerer unit tests pass in 19 clean MI350 CPU
