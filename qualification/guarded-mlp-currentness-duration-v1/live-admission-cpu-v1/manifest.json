@@ -1,0 +1,67 @@
+{
+  "data_only": true,
+  "external_products_packed": false,
+  "external_readset_rehashed": 37,
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 29728,
+      "sha256": "961a3df2f7a6def7639a3b06912be6d2cf6ffb5b64c31ddb57bb3491f6bbaff7"
+    },
+    "evidence/live-admission.command.json": {
+      "bytes": 923,
+      "sha256": "d8e18ea32cb242de5f07e2ec5b175c86fc2d07625986ff3fd4e0b979e02f9335"
+    },
+    "evidence/live-admission.result.json": {
+      "bytes": 1570,
+      "sha256": "c563bd9eb01c1a2cafae8e92f8d9053e310de1cb54d3c0f65beb2fdc3e187f4d"
+    },
+    "evidence/live-admission.started.json": {
+      "bytes": 374,
+      "sha256": "02fda5f9fe97b90ef3f207e8054bae7273e296c064b93dfaaa27c4bff9f3bf31"
+    },
+    "evidence/live-admission.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/live-admission.stdout": {
+      "bytes": 18802,
+      "sha256": "15516133f681ce409c176fdab6d8ac0ab59f63ef334426324548c219fa3bded3"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 1465,
+      "sha256": "0b09f7d9b5c55cf57a06abb45d6fe8dce81004552b7d8c755192a411f141e4fb"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 1465,
+      "sha256": "0b09f7d9b5c55cf57a06abb45d6fe8dce81004552b7d8c755192a411f141e4fb"
+    },
+    "library_audit.py": {
+      "bytes": 25872,
+      "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+    },
+    "live_admission.py": {
+      "bytes": 5451,
+      "sha256": "fd8c84dc601262c73c398d3abdf34f8db3ca1b7f0b212470d8e473de28f37b25"
+    },
+    "run_cpu.py": {
+      "bytes": 8210,
+      "sha256": "396a95c918da63233f1db760a29c74a3e71810967ffe519a62c2a66afc6b831d"
+    },
+    "run_model_gpu.py": {
+      "bytes": 54215,
+      "sha256": "2803e5783d9afaf2b58c704b2bf7dddc053ee44aca29a5c1fbf1a845c887daba"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    }
+  },
+  "gpu_execution": false,
+  "schema": "ferric-currentness-duration-live-cpu-originals-v1",
+  "source_root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-live-admission-cpu-v228-v1",
+  "terminal": {
+    "bytes": 29728,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-live-admission-cpu-v228-v1/evidence/complete.json",
+    "sha256": "961a3df2f7a6def7639a3b06912be6d2cf6ffb5b64c31ddb57bb3491f6bbaff7"
+  }
+}

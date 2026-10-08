@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=536870912",
+    "--cpu=60",
+    "--fsize=16777216",
+    "--core=0",
+    "--",
+    "/usr/bin/python3.12",
+    "-I",
+    "-B",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-live-admission-cpu-v228-v1/live_admission.py"
+  ],
+  "pgid": 3800683,
+  "pid": 3800683
+}

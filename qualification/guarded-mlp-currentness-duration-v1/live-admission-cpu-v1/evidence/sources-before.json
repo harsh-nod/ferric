@@ -1,0 +1,27 @@
+{
+  "library_audit.py": {
+    "bytes": 25872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-live-admission-cpu-v228-v1/library_audit.py",
+    "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+  },
+  "live_admission.py": {
+    "bytes": 5451,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-live-admission-cpu-v228-v1/live_admission.py",
+    "sha256": "fd8c84dc601262c73c398d3abdf34f8db3ca1b7f0b212470d8e473de28f37b25"
+  },
+  "run_cpu.py": {
+    "bytes": 8210,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-live-admission-cpu-v228-v1/run_cpu.py",
+    "sha256": "396a95c918da63233f1db760a29c74a3e71810967ffe519a62c2a66afc6b831d"
+  },
+  "run_model_gpu.py": {
+    "bytes": 54215,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-live-admission-cpu-v228-v1/run_model_gpu.py",
+    "sha256": "2803e5783d9afaf2b58c704b2bf7dddc053ee44aca29a5c1fbf1a845c887daba"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-live-admission-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  }
+}

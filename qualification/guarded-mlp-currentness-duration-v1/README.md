@@ -54,7 +54,13 @@ codec and complete original-stderr parser. Their four actual tested parent
 files are [integrated](parent-integration-v1/README.md) with a complete
 1,299-Ferric / 827-runtime postcheck, preserving all 236 worker bodies.
 
-Native admission qualification, actual instrumented GPU execution,
+The [live CPU-admission check](live-admission-cpu-v1/README.md) also passes
+against the actual diagnostic worker, parent and checker originals on MI350.
+It invokes the production admission functions without a native launch and
+rehashes all 37 inputs; it does not rerun the earlier qualification suites.
+The separate synthetic native-workflow suite is still pending.
+
+Complete native admission qualification, actual instrumented GPU execution,
 original-evidence validation and a measured duration breakdown remain pending. No result from
 this work is substituted for independent numerical acceptance or full-request
 feasibility. The [community demo](../../docs/GFX950_COMMUNITY_DEMO_V1.md) still
