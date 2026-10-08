@@ -1,0 +1,825 @@
+{
+  "controller": {
+    "bytes": 11202,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/run_cpu.py",
+    "sha256": "f736cf91f2ce80402bf561664a0597acb060e96b9eb9d1bf8ae135e9eef364de"
+  },
+  "elapsed_seconds": 73.69125784002244,
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "HIP_VISIBLE_DEVICES": "",
+    "HOME": "/home/harmenon",
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PATH": "/usr/bin:/bin",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONNOUSERSITE": "1",
+    "PYTHONPATH": "",
+    "ROCR_VISIBLE_DEVICES": "",
+    "TZ": "UTC"
+  },
+  "failure": null,
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "input_manifest": {
+    "bytes": 19380,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/input-manifest.json",
+    "sha256": "ffc3d34d7913433ab83d373b1e36cd5f6f5e5592cb8ab13f79063074df84f2c7"
+  },
+  "leaf_tests": {
+    "forward": {
+      "errors": 0,
+      "failed": 0,
+      "names": [
+        "test_forward.ForwardTests.test_aggregate_hour_bound_is_not_only_a_per_row_bound",
+        "test_forward.ForwardTests.test_complete_case_preserves_first_two_records_and124_spans",
+        "test_forward.ForwardTests.test_each_identity_and_lf_inclusive_original_hash_is_required",
+        "test_forward.ForwardTests.test_exact_disjoint_sum_overflow_and_per_row_hour_bound",
+        "test_forward.ForwardTests.test_exact_forty_ordered_rows_without_aliasing_or_duplicate_positions",
+        "test_forward.ForwardTests.test_exact_three_lf_lines_and_canonical_json",
+        "test_forward.ForwardTests.test_full_case_rechecks_whole_original_stderr_frames_capture_and_timing",
+        "test_forward.ForwardTests.test_full_case_rejects_semantic_third_drift_even_with_fresh_whole_file_pin",
+        "test_forward.ForwardTests.test_large_integer_original_callback_counts_remain_exact",
+        "test_forward.ForwardTests.test_nine_phase_order_extent_and_names_are_fixed",
+        "test_forward.ForwardTests.test_old_callback_predicates_cannot_be_laundered_by_a_new_third_hash",
+        "test_forward.ForwardTests.test_old_routes_and_three_record_route_are_distinct",
+        "test_forward.ForwardTests.test_row_integer_types_and_unsigned_widths_are_strict",
+        "test_forward.ForwardTests.test_same_side_comparison_rechecks_all_original_record_copies",
+        "test_forward.ForwardTests.test_same_side_comparison_rereads_entire_third_line_not_only_old_prefix",
+        "test_forward.ForwardTests.test_schema_and_all_authority_flags_are_exact_typed_values",
+        "test_forward.ForwardTests.test_third_and_combined_caps_are_enforced_before_parsing",
+        "test_forward.ForwardTests.test_unknown_fields_and_canonical_nested_order_are_rejected",
+        "test_forward.ForwardTests.test_warm_bank_layer_and_tail_containment_survives_exact_sum_repinning",
+        "test_forward.ForwardTests.test_zero_durations_and_exact_aggregate_boundary_are_valid"
+      ],
+      "passed": 20,
+      "skipped": 0
+    },
+    "legacy": {
+      "errors": 0,
+      "failed": 0,
+      "names": [
+        "test_bank_scoped.BankScopedTests.test_all_policy_flags_identity_close_and_profile_remain_closed",
+        "test_bank_scoped.BankScopedTests.test_bank_policy_is_one_canonical_bounded_record_not_v1_or_shared",
+        "test_bank_scoped.BankScopedTests.test_bank_scalar_types_generations_and_every_counter_relation_are_strict",
+        "test_bank_scoped.BankScopedTests.test_large_integer_counters_remain_exact_and_overflow_is_refused",
+        "test_bank_scoped.BankScopedTests.test_layer_counts_cannot_be_replaced_by_bank_counts_or_weakened",
+        "test_bank_scoped.BankScopedTests.test_original40_chain_payloads_policy_accounting_and_timing_are_required",
+        "test_bank_scoped.BankScopedTests.test_original_bank_record_retains_separate_layers_banks_and124_spans",
+        "test_bank_scoped.BankScopedTests.test_pair_checks_every_semantic_record_and_complete_selected_payload",
+        "test_bank_scoped.BankScopedTests.test_pair_rechecks_both_original_policy_files_and_no_relabelled_authority",
+        "test_bank_scoped.BankScopedTests.test_pair_requires_same_all_cpu_product_pins_and_distinct_cases",
+        "test_bank_scoped.BankScopedTests.test_same_elf_scoped_control_and_bank_candidate_preserve_both_original_policies",
+        "test_bank_scoped.BankScopedTests.test_timing_byte_cap_and_native_close_cannot_be_upgraded_by_wrapper",
+        "test_census.CensusTests.test_census_all_policy_flags_identity_close_and_profile_remain_closed",
+        "test_census.CensusTests.test_census_bank_policy_is_one_canonical_bounded_record_not_v1_or_shared",
+        "test_census.CensusTests.test_census_bank_scalar_types_generations_and_every_counter_relation_are_strict",
+        "test_census.CensusTests.test_census_every_subset_scalar_and_nested_field_is_strict",
+        "test_census.CensusTests.test_census_exact_owner_assertion_is_ranked_non_authoritative_and_not_equalized",
+        "test_census.CensusTests.test_census_large_integer_counters_remain_exact_and_overflow_is_refused",
+        "test_census.CensusTests.test_census_layer_counts_cannot_be_replaced_by_bank_counts_or_weakened",
+        "test_census.CensusTests.test_census_original40_chain_payloads_policy_accounting_and_timing_are_required",
+        "test_census.CensusTests.test_census_original_bank_record_retains_separate_layers_banks_and124_spans",
+        "test_census.CensusTests.test_census_pair_checks_every_semantic_record_and_complete_selected_payload",
+        "test_census.CensusTests.test_census_pair_rechecks_both_original_policy_files_and_no_relabelled_authority",
+        "test_census.CensusTests.test_census_pair_refuses_subset_relabel_and_each_forward_timeline_gap",
+        "test_census.CensusTests.test_census_pair_requires_same_all_cpu_product_pins_and_distinct_cases",
+        "test_census.CensusTests.test_census_same_elf_bank_control_and_census_candidate_preserve_both_original_policies",
+        "test_census.CensusTests.test_census_subset_is_not_added_twice_and_remaining_layer_work_is_required",
+        "test_census.CensusTests.test_census_timing_byte_cap_and_native_close_cannot_be_upgraded_by_wrapper",
+        "test_duration.DurationTests.test_call_and_duration_types_widths_bounds_and_bank_containment",
+        "test_duration.DurationTests.test_complete_case_retains_both_original_records_and124_spans",
+        "test_duration.DurationTests.test_every_category_count_joins_each_original_scope",
+        "test_duration.DurationTests.test_every_identity_and_claim_flag_is_bound_to_healthy_policy",
+        "test_duration.DurationTests.test_exact_two_canonical_bounded_original_lines",
+        "test_duration.DurationTests.test_fixed_order_presence_and_unmeasured_first_two_forwards",
+        "test_duration.DurationTests.test_full_case_rechecks_original_files_capture_and_timing",
+        "test_duration.DurationTests.test_large_integer_variable_poll_counts_remain_exact",
+        "test_duration.DurationTests.test_original_policy_and_instrumented_routes_cannot_admit_each_other",
+        "test_duration.DurationTests.test_per_forward_bank_census_cannot_cancel_between_rows",
+        "test_duration.DurationTests.test_same_side_comparison_rechecks_both_diagnostic_copies_and_original_file",
+        "test_duration.DurationTests.test_unknown_fields_and_noncanonical_nested_key_order_are_rejected",
+        "test_matched.MatchedTests.test_both_original_modes_join_policy_timeline_and_false_authority",
+        "test_matched.MatchedTests.test_combined_policy_joins_original_worker_transcript_and_flags",
+        "test_matched.MatchedTests.test_default_empty_stderr_and_shared_original_record_remain_separate",
+        "test_matched.MatchedTests.test_explicit_mode_and_exact_wrapper_cannot_be_inferred_or_relabelled",
+        "test_matched.MatchedTests.test_full_ordinary_frames_captures_and_close_precede_timing",
+        "test_matched.MatchedTests.test_matched_pair_requires_same_all_four_cpu_and_product_pins",
+        "test_matched.MatchedTests.test_original_policy_missing_suffix_changed_bytes_and_budgets_refuse",
+        "test_matched.MatchedTests.test_pair_checks_every_semantic_record_and_complete_selected_payload",
+        "test_matched.MatchedTests.test_pair_refuses_same_worker_identity_or_same_mode",
+        "test_matched.MatchedTests.test_shared_sidecar_actual_path_hash_extent_and_ordinary_pin",
+        "test_matched.MatchedTests.test_shared_timeline_strict_scalars_order_and_exact_disjoint_sum",
+        "test_matched.MatchedTests.test_shared_timing_retention_close_and_false_authority_are_not_relaxed",
+        "test_readiness.ReadinessTests.test_all144_pages_and_page_boundary_are_closed",
+        "test_readiness.ReadinessTests.test_authentic_prompt_only_not_argmax_feedback",
+        "test_readiness.ReadinessTests.test_bank_retirement_local_generation_and_bool_are_checked",
+        "test_readiness.ReadinessTests.test_capture_path_digest_order_and_truncation",
+        "test_readiness.ReadinessTests.test_close_generated_tokens_and_native_retirement",
+        "test_readiness.ReadinessTests.test_complete40_original_chain_and_four_selected_payloads",
+        "test_readiness.ReadinessTests.test_extra_fields_authority_and_observer_stderr_refused",
+        "test_readiness.ReadinessTests.test_frame_order_missing_and_extra_are_refused",
+        "test_readiness.ReadinessTests.test_full2303_and_legacy_profiles_are_refused",
+        "test_readiness.ReadinessTests.test_marker_alone_never_substitutes_owned_lineage",
+        "test_readiness.ReadinessTests.test_original_readiness_profile_and_schema_are_refused",
+        "test_readiness.ReadinessTests.test_payload_finite_lowest_tie_and_signed_zero",
+        "test_readiness.ReadinessTests.test_readiness_marker_is_distinct_and_unique",
+        "test_readiness.ReadinessTests.test_selected_guard_and_queue_words_are_independently_checked",
+        "test_readiness.ReadinessTests.test_stream_and_retention_accounting_are_exact",
+        "test_readiness.ReadinessTests.test_strict_json_scalars_and_boolean_identity",
+        "test_readiness.ReadinessTests.test_unselected_hashes_and_chains_remain_authenticated",
+        "test_scoped.ScopedTests.test_counter_census_and_checked_relations_refuse_missing_warm_calls",
+        "test_scoped.ScopedTests.test_counter_scalars_are_exact_unsigned_integers_not_bool_float_or_overflow",
+        "test_scoped.ScopedTests.test_default_shared_and_scoped_policy_routes_are_not_interchangeable",
+        "test_scoped.ScopedTests.test_every_policy_flag_and_execution_identity_is_closed",
+        "test_scoped.ScopedTests.test_explicit_wrapper_and_mode_cannot_relabel_ordinary_or_shared",
+        "test_scoped.ScopedTests.test_large_valid_poll_dependent_counters_preserve_all_integer_bits",
+        "test_scoped.ScopedTests.test_ordinary_and_timed_scoped_keep_original_policy_bytes_without_shared_label",
+        "test_scoped.ScopedTests.test_original_pinned_stderr_all40_frames_four_captures_and_retention_stay_required",
+        "test_scoped.ScopedTests.test_parity_checks_every_semantic_record_and_all_four_complete_payloads",
+        "test_scoped.ScopedTests.test_parity_rejects_relabelled_policy_or_another_admitted_summary",
+        "test_scoped.ScopedTests.test_policy_requires_single_canonical_ordered_bounded_record",
+        "test_scoped.ScopedTests.test_real_close_and_position5_are_required_not_full_or_old_readiness",
+        "test_scoped.ScopedTests.test_record_joins_bootstrap_session_devices_worker_profile_and_transcript",
+        "test_scoped.ScopedTests.test_timed_route_preserves_all124_spans_exact_pins_caps_and_false_authority",
+        "test_scoped_pair.ScopedPairTests.test_pair_rejects_wrong_mode_summary_timeline_and_original_policy_body",
+        "test_scoped_pair.ScopedPairTests.test_pair_requires_each_same_actual_cpu_and_product_pin",
+        "test_scoped_pair.ScopedPairTests.test_same_binary_pair_preserves_original_policy_and_host_timing_without_authority",
+        "test_shared.SharedTests.test_canonical_single_record_no_suffix_duplicates_or_reordering",
+        "test_shared.SharedTests.test_complete_policy_keeps_original_stderr_and_ordinary_contract",
+        "test_shared.SharedTests.test_default_empty_stderr_and_shared_opt_in_are_not_interchangeable",
+        "test_shared.SharedTests.test_every_policy_flag_is_closed_and_bool_is_not_integer",
+        "test_shared.SharedTests.test_exact_extent_captures_schema_and_no_extra_fields",
+        "test_shared.SharedTests.test_identity_scope_hash_and_device_order_are_joined",
+        "test_shared.SharedTests.test_parity_compares_all40_records_and_all_four_payloads",
+        "test_shared.SharedTests.test_parity_ignores_only_independently_admitted_control_timer_bytes",
+        "test_shared.SharedTests.test_parity_refuses_same_session_model_drift_or_numerical_authority",
+        "test_shared.SharedTests.test_pinned_original_bytes_and_all40_chain_still_required",
+        "test_shared.SharedTests.test_real_close_and_position5_only_precede_policy_admission",
+        "test_shared.SharedTests.test_wrapper_cannot_relabel_ordinary_timing_or_different_policy",
+        "test_tail.TailTests.test_tail_all_counter_fields_and_fixed_extent_relations_are_closed",
+        "test_tail.TailTests.test_tail_and_old_policy_routes_cannot_admit_each_other",
+        "test_tail.TailTests.test_tail_case_and_pair_nonclaims_cannot_be_promoted_to_native_acceptance",
+        "test_tail.TailTests.test_tail_counts_never_replace_or_relax_inherited_layer_bank_census",
+        "test_tail.TailTests.test_tail_one_original_canonical_bounded_record_is_required",
+        "test_tail.TailTests.test_tail_original40_chain_capture_accounting_and_timing_are_required",
+        "test_tail.TailTests.test_tail_original_record_keeps_separate_counters_bytes_and124_spans",
+        "test_tail.TailTests.test_tail_pair_checks_all40_semantic_records_and_four_complete_payloads",
+        "test_tail.TailTests.test_tail_pair_preserves_original_v3_v4_policies_and_exact_payload_parity",
+        "test_tail.TailTests.test_tail_pair_rechecks_both_original_files_and_policy_authority",
+        "test_tail.TailTests.test_tail_pair_requires_all_four_same_cpu_product_identities",
+        "test_tail.TailTests.test_tail_same_side_requires_independent_scope_flags_and_rehashes_policy",
+        "test_tail.TailTests.test_tail_scalar_types_widths_and_checked_overflow_are_strict",
+        "test_tail.TailTests.test_tail_scope_flags_identities_close_and_profile_cannot_be_relabelled",
+        "test_tail.TailTests.test_tail_variable_periodic_checks_and_large_integers_are_exact",
+        "test_tail.TailTests.test_tail_wrapper_cannot_replace_policy_or_timing_and_bounds",
+        "test_timing.TimingTests.test_close_and_false_authority_are_required",
+        "test_timing.TimingTests.test_complete_timeline_zero_spans_and_large_integer_precision",
+        "test_timing.TimingTests.test_exact_retention_accounting_and_unchanged_bound",
+        "test_timing.TimingTests.test_gaps_overlap_regression_and_duration_are_refused",
+        "test_timing.TimingTests.test_order_extent_and_forward_sum_are_closed",
+        "test_timing.TimingTests.test_parity_accepts_distinct_sessions_and_rejects_any_record_change",
+        "test_timing.TimingTests.test_parity_compares_payload_not_control_timer_bytes",
+        "test_timing.TimingTests.test_parity_rejects_same_session_model_drift_and_authority",
+        "test_timing.TimingTests.test_report_hashes_scope_and_capture_set_are_joined",
+        "test_timing.TimingTests.test_sidecar_actual_body_path_hash_and_size_are_joined",
+        "test_timing.TimingTests.test_strict_u64_refuses_bool_float_negative_and_overflow",
+        "test_timing.TimingTests.test_wrapper_and_ordinary_admission_are_not_interchangeable"
+      ],
+      "passed": 126,
+      "skipped": 0
+    }
+  },
+  "limits": {
+    "address_space_bytes": 536870912,
+    "affinity": [
+      8,
+      9
+    ],
+    "cleanup_reserve_seconds": 50,
+    "nice": 10,
+    "stream_bytes": 4194304,
+    "test_seconds": 120,
+    "whole_seconds": 300
+  },
+  "model_execution": false,
+  "native_parent_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "performance_claim": false,
+  "phases": [
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=536870912",
+        "--cpu=120",
+        "--fsize=16777216",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-B",
+        "-c",
+        "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1');suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(n) for n in ['test_bank_scoped', 'test_census', 'test_duration', 'test_matched', 'test_readiness', 'test_scoped', 'test_scoped_pair', 'test_shared', 'test_tail', 'test_timing']);result=unittest.TextTestRunner(verbosity=2).run(suite);sys.exit(not result.wasSuccessful())"
+      ],
+      "command": {
+        "bytes": 1310,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/legacy-tests.command.json",
+        "sha256": "91e85b374926660fb3942db9b9bff3891fdc0ad6cb18a5b0ea33867b02b16ac8"
+      },
+      "elapsed_ns": 71752182258,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "legacy-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 540509,
+      "pid": 540509,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 20598,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/legacy-tests.stderr",
+        "sha256": "bb2ae27a18f81af89cd26eebbac411bf2b57b347689d4dd0f5e24400efcab491"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/legacy-tests.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    },
+    {
+      "adopted_reaped": [],
+      "argv": [
+        "/usr/bin/prlimit",
+        "--as=536870912",
+        "--cpu=120",
+        "--fsize=16777216",
+        "--core=0",
+        "--",
+        "/usr/bin/python3.12",
+        "-I",
+        "-B",
+        "-c",
+        "import sys,unittest;sys.path.insert(0,'/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1');suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(n) for n in ['test_forward']);result=unittest.TextTestRunner(verbosity=2).run(suite);sys.exit(not result.wasSuccessful())"
+      ],
+      "command": {
+        "bytes": 1162,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/forward-tests.command.json",
+        "sha256": "88b66ed8c80c8139516e4cefe18a0d2c3ece8b57733cdced20874c4938030513"
+      },
+      "elapsed_ns": 1902087019,
+      "exception": null,
+      "exit_code": 0,
+      "forced_cleanup": false,
+      "label": "forward-tests",
+      "natural_exit": true,
+      "observed_signals": [],
+      "pgid": 552602,
+      "pid": 552602,
+      "process_group_absent": true,
+      "reaped": true,
+      "stderr": {
+        "bytes": 3229,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/forward-tests.stderr",
+        "sha256": "f9dbee9c488b3a984762e038e998494cfcf8f3796363766db63bc69579da5623"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/forward-tests.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "storage_failure": null,
+      "timed_out": false
+    }
+  ],
+  "postcheck_errors": [],
+  "production_authority": false,
+  "raw": {
+    "forward-tests.command.json": {
+      "bytes": 1162,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/forward-tests.command.json",
+      "sha256": "88b66ed8c80c8139516e4cefe18a0d2c3ece8b57733cdced20874c4938030513"
+    },
+    "forward-tests.result.json": {
+      "bytes": 1815,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/forward-tests.result.json",
+      "sha256": "fa6a1502929c0842075541d842df60d9cfbb7b6ebb00999a9975387008507573"
+    },
+    "forward-tests.started.json": {
+      "bytes": 604,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/forward-tests.started.json",
+      "sha256": "e81a84f1e4d551afee9fb20c64f7f2447869c3eb1daa12518d3b8da5586a60a9"
+    },
+    "forward-tests.stderr": {
+      "bytes": 3229,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/forward-tests.stderr",
+      "sha256": "f9dbee9c488b3a984762e038e998494cfcf8f3796363766db63bc69579da5623"
+    },
+    "forward-tests.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/forward-tests.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "legacy-tests.command.json": {
+      "bytes": 1310,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/legacy-tests.command.json",
+      "sha256": "91e85b374926660fb3942db9b9bff3891fdc0ad6cb18a5b0ea33867b02b16ac8"
+    },
+    "legacy-tests.result.json": {
+      "bytes": 1961,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/legacy-tests.result.json",
+      "sha256": "58a597a98110a3ce9cd57bd81183421e1b1accb430c8d74222020fe4e4596ed9"
+    },
+    "legacy-tests.started.json": {
+      "bytes": 752,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/legacy-tests.started.json",
+      "sha256": "b58365755d752f80328feac663ee16f47d03fac3eaf67350d12a8a8184b3f601"
+    },
+    "legacy-tests.stderr": {
+      "bytes": 20598,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/legacy-tests.stderr",
+      "sha256": "bb2ae27a18f81af89cd26eebbac411bf2b57b347689d4dd0f5e24400efcab491"
+    },
+    "legacy-tests.stdout": {
+      "bytes": 0,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/legacy-tests.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sources-after.json": {
+      "bytes": 8541,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/sources-after.json",
+      "sha256": "d1026358a76e918e789f237e7d3f1e1b0af3747467162af4820e292456c1d0e8"
+    },
+    "sources-before.json": {
+      "bytes": 8541,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/evidence/sources-before.json",
+      "sha256": "d1026358a76e918e789f237e7d3f1e1b0af3747467162af4820e292456c1d0e8"
+    }
+  },
+  "schema": "ferric-guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v1",
+  "source_unchanged": true,
+  "sources_after": {
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/readiness_announcement.py",
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 11202,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/run_cpu.py",
+      "sha256": "f736cf91f2ce80402bf561664a0597acb060e96b9eb9d1bf8ae135e9eef364de"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_bank_scoped.py": {
+      "bytes": 14853,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_bank_scoped.py",
+      "sha256": "3ecc622e660cb6e0790a18ff8bb022a84535c91466d02d6fdbb8625ae080a99b"
+    },
+    "test_census.py": {
+      "bytes": 19688,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_census.py",
+      "sha256": "aca29934c68523dbc91b30439a2c7a5ae552b64a9faf077ddb99b97c861cb5b0"
+    },
+    "test_duration.py": {
+      "bytes": 13609,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_duration.py",
+      "sha256": "3f88f035e3f08644dadf393620557b84d7827876fb3e992e498fd6e2950d3fb5"
+    },
+    "test_forward.py": {
+      "bytes": 20872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_forward.py",
+      "sha256": "e39afc63a07b5b3b43cffafabb3f5775eeff7794cf97a4edba1fbb630466b735"
+    },
+    "test_matched.py": {
+      "bytes": 15400,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_matched.py",
+      "sha256": "d5a6b522a1effe29e1ee08430754163cc217cf34c3713ce234926b7c860f9647"
+    },
+    "test_readiness.py": {
+      "bytes": 17802,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_readiness.py",
+      "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+    },
+    "test_scoped.py": {
+      "bytes": 15936,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_scoped.py",
+      "sha256": "4c015cdfa072943960e0ffa1f25e0e604790e8dbe222875b4bed207be6563fdc"
+    },
+    "test_scoped_pair.py": {
+      "bytes": 3629,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_scoped_pair.py",
+      "sha256": "aa95ff79fd3c72ee3658d66e4117738a06f7984a2a77dcc6712b28a272e57f8f"
+    },
+    "test_shared.py": {
+      "bytes": 10737,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_shared.py",
+      "sha256": "a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96"
+    },
+    "test_tail.py": {
+      "bytes": 19524,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_tail.py",
+      "sha256": "2235e1c4b97b396094df484ccaedb25619f70c757ed1656e5eaf6b92f8140c4a"
+    },
+    "test_timing.py": {
+      "bytes": 10433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_timing.py",
+      "sha256": "630febf4d840081887692144cc570d70c1d67f9ad3bb5bab1fd6d7d1f61cedb1"
+    },
+    "validate_bank_pair.py": {
+      "bytes": 4428,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_bank_pair.py",
+      "sha256": "9d3f1470f6e9d7a17f3c91d1deb29a54c6fa7e8c766dc358e9d7d73e15c4e004"
+    },
+    "validate_bank_scoped.py": {
+      "bytes": 9534,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_bank_scoped.py",
+      "sha256": "2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772"
+    },
+    "validate_census.py": {
+      "bytes": 10392,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_census.py",
+      "sha256": "090431e59a481d5b681311d5a015ddfd35705cc828c920118d4f0043b862ec9f"
+    },
+    "validate_census_pair.py": {
+      "bytes": 4730,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_census_pair.py",
+      "sha256": "d4f50afe412b68c4066e934a80b96b5a5c0f83ef8ea33c59c53380aa1ab819c4"
+    },
+    "validate_duration.py": {
+      "bytes": 9343,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_duration.py",
+      "sha256": "d7ed85d14191e735490170a606a06cefb331e17b07c36a4a4d34ef38a5cf19bd"
+    },
+    "validate_forward.py": {
+      "bytes": 9585,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_forward.py",
+      "sha256": "2a238ab236d86be4762738df0b70aff603794a9198e2b214580a56184986a89b"
+    },
+    "validate_matched.py": {
+      "bytes": 9362,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_matched.py",
+      "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_readiness.py",
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_scoped.py": {
+      "bytes": 9184,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_scoped.py",
+      "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+    },
+    "validate_scoped_pair.py": {
+      "bytes": 3233,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_scoped_pair.py",
+      "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+    },
+    "validate_shared.py": {
+      "bytes": 8015,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_shared.py",
+      "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+    },
+    "validate_tail.py": {
+      "bytes": 10447,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_tail.py",
+      "sha256": "696e55d4bebea97ab82e5b613a76978c5e191087789d299551c304527e598d49"
+    },
+    "validate_tail_pair.py": {
+      "bytes": 4883,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_tail_pair.py",
+      "sha256": "ab69bcafcc245b8eca05d7e625c42eec7aaec2de4084e719090de1894f4d6995"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_timing.py",
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "sources_before": {
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/readiness_announcement.py",
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 11202,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/run_cpu.py",
+      "sha256": "f736cf91f2ce80402bf561664a0597acb060e96b9eb9d1bf8ae135e9eef364de"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/supervisor.py",
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_bank_scoped.py": {
+      "bytes": 14853,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_bank_scoped.py",
+      "sha256": "3ecc622e660cb6e0790a18ff8bb022a84535c91466d02d6fdbb8625ae080a99b"
+    },
+    "test_census.py": {
+      "bytes": 19688,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_census.py",
+      "sha256": "aca29934c68523dbc91b30439a2c7a5ae552b64a9faf077ddb99b97c861cb5b0"
+    },
+    "test_duration.py": {
+      "bytes": 13609,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_duration.py",
+      "sha256": "3f88f035e3f08644dadf393620557b84d7827876fb3e992e498fd6e2950d3fb5"
+    },
+    "test_forward.py": {
+      "bytes": 20872,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_forward.py",
+      "sha256": "e39afc63a07b5b3b43cffafabb3f5775eeff7794cf97a4edba1fbb630466b735"
+    },
+    "test_matched.py": {
+      "bytes": 15400,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_matched.py",
+      "sha256": "d5a6b522a1effe29e1ee08430754163cc217cf34c3713ce234926b7c860f9647"
+    },
+    "test_readiness.py": {
+      "bytes": 17802,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_readiness.py",
+      "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+    },
+    "test_scoped.py": {
+      "bytes": 15936,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_scoped.py",
+      "sha256": "4c015cdfa072943960e0ffa1f25e0e604790e8dbe222875b4bed207be6563fdc"
+    },
+    "test_scoped_pair.py": {
+      "bytes": 3629,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_scoped_pair.py",
+      "sha256": "aa95ff79fd3c72ee3658d66e4117738a06f7984a2a77dcc6712b28a272e57f8f"
+    },
+    "test_shared.py": {
+      "bytes": 10737,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_shared.py",
+      "sha256": "a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96"
+    },
+    "test_tail.py": {
+      "bytes": 19524,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_tail.py",
+      "sha256": "2235e1c4b97b396094df484ccaedb25619f70c757ed1656e5eaf6b92f8140c4a"
+    },
+    "test_timing.py": {
+      "bytes": 10433,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/test_timing.py",
+      "sha256": "630febf4d840081887692144cc570d70c1d67f9ad3bb5bab1fd6d7d1f61cedb1"
+    },
+    "validate_bank_pair.py": {
+      "bytes": 4428,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_bank_pair.py",
+      "sha256": "9d3f1470f6e9d7a17f3c91d1deb29a54c6fa7e8c766dc358e9d7d73e15c4e004"
+    },
+    "validate_bank_scoped.py": {
+      "bytes": 9534,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_bank_scoped.py",
+      "sha256": "2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772"
+    },
+    "validate_census.py": {
+      "bytes": 10392,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_census.py",
+      "sha256": "090431e59a481d5b681311d5a015ddfd35705cc828c920118d4f0043b862ec9f"
+    },
+    "validate_census_pair.py": {
+      "bytes": 4730,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_census_pair.py",
+      "sha256": "d4f50afe412b68c4066e934a80b96b5a5c0f83ef8ea33c59c53380aa1ab819c4"
+    },
+    "validate_duration.py": {
+      "bytes": 9343,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_duration.py",
+      "sha256": "d7ed85d14191e735490170a606a06cefb331e17b07c36a4a4d34ef38a5cf19bd"
+    },
+    "validate_forward.py": {
+      "bytes": 9585,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_forward.py",
+      "sha256": "2a238ab236d86be4762738df0b70aff603794a9198e2b214580a56184986a89b"
+    },
+    "validate_matched.py": {
+      "bytes": 9362,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_matched.py",
+      "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_readiness.py",
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_scoped.py": {
+      "bytes": 9184,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_scoped.py",
+      "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+    },
+    "validate_scoped_pair.py": {
+      "bytes": 3233,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_scoped_pair.py",
+      "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+    },
+    "validate_shared.py": {
+      "bytes": 8015,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_shared.py",
+      "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+    },
+    "validate_tail.py": {
+      "bytes": 10447,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_tail.py",
+      "sha256": "696e55d4bebea97ab82e5b613a76978c5e191087789d299551c304527e598d49"
+    },
+    "validate_tail_pair.py": {
+      "bytes": 4883,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_tail_pair.py",
+      "sha256": "ab69bcafcc245b8eca05d7e625c42eec7aaec2de4084e719090de1894f4d6995"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/validate_timing.py",
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "supervisor": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-forward-duration-checker-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "synthetic_data_tests_only": true,
+  "tests": {
+    "errors": 0,
+    "failed": 0,
+    "names": [
+      "test_bank_scoped.BankScopedTests.test_all_policy_flags_identity_close_and_profile_remain_closed",
+      "test_bank_scoped.BankScopedTests.test_bank_policy_is_one_canonical_bounded_record_not_v1_or_shared",
+      "test_bank_scoped.BankScopedTests.test_bank_scalar_types_generations_and_every_counter_relation_are_strict",
+      "test_bank_scoped.BankScopedTests.test_large_integer_counters_remain_exact_and_overflow_is_refused",
+      "test_bank_scoped.BankScopedTests.test_layer_counts_cannot_be_replaced_by_bank_counts_or_weakened",
+      "test_bank_scoped.BankScopedTests.test_original40_chain_payloads_policy_accounting_and_timing_are_required",
+      "test_bank_scoped.BankScopedTests.test_original_bank_record_retains_separate_layers_banks_and124_spans",
+      "test_bank_scoped.BankScopedTests.test_pair_checks_every_semantic_record_and_complete_selected_payload",
+      "test_bank_scoped.BankScopedTests.test_pair_rechecks_both_original_policy_files_and_no_relabelled_authority",
+      "test_bank_scoped.BankScopedTests.test_pair_requires_same_all_cpu_product_pins_and_distinct_cases",
+      "test_bank_scoped.BankScopedTests.test_same_elf_scoped_control_and_bank_candidate_preserve_both_original_policies",
+      "test_bank_scoped.BankScopedTests.test_timing_byte_cap_and_native_close_cannot_be_upgraded_by_wrapper",
+      "test_census.CensusTests.test_census_all_policy_flags_identity_close_and_profile_remain_closed",
+      "test_census.CensusTests.test_census_bank_policy_is_one_canonical_bounded_record_not_v1_or_shared",
+      "test_census.CensusTests.test_census_bank_scalar_types_generations_and_every_counter_relation_are_strict",
+      "test_census.CensusTests.test_census_every_subset_scalar_and_nested_field_is_strict",
+      "test_census.CensusTests.test_census_exact_owner_assertion_is_ranked_non_authoritative_and_not_equalized",
+      "test_census.CensusTests.test_census_large_integer_counters_remain_exact_and_overflow_is_refused",
+      "test_census.CensusTests.test_census_layer_counts_cannot_be_replaced_by_bank_counts_or_weakened",
+      "test_census.CensusTests.test_census_original40_chain_payloads_policy_accounting_and_timing_are_required",
+      "test_census.CensusTests.test_census_original_bank_record_retains_separate_layers_banks_and124_spans",
+      "test_census.CensusTests.test_census_pair_checks_every_semantic_record_and_complete_selected_payload",
+      "test_census.CensusTests.test_census_pair_rechecks_both_original_policy_files_and_no_relabelled_authority",
+      "test_census.CensusTests.test_census_pair_refuses_subset_relabel_and_each_forward_timeline_gap",
+      "test_census.CensusTests.test_census_pair_requires_same_all_cpu_product_pins_and_distinct_cases",
+      "test_census.CensusTests.test_census_same_elf_bank_control_and_census_candidate_preserve_both_original_policies",
+      "test_census.CensusTests.test_census_subset_is_not_added_twice_and_remaining_layer_work_is_required",
+      "test_census.CensusTests.test_census_timing_byte_cap_and_native_close_cannot_be_upgraded_by_wrapper",
+      "test_duration.DurationTests.test_call_and_duration_types_widths_bounds_and_bank_containment",
+      "test_duration.DurationTests.test_complete_case_retains_both_original_records_and124_spans",
+      "test_duration.DurationTests.test_every_category_count_joins_each_original_scope",
+      "test_duration.DurationTests.test_every_identity_and_claim_flag_is_bound_to_healthy_policy",
+      "test_duration.DurationTests.test_exact_two_canonical_bounded_original_lines",
+      "test_duration.DurationTests.test_fixed_order_presence_and_unmeasured_first_two_forwards",
+      "test_duration.DurationTests.test_full_case_rechecks_original_files_capture_and_timing",
+      "test_duration.DurationTests.test_large_integer_variable_poll_counts_remain_exact",
+      "test_duration.DurationTests.test_original_policy_and_instrumented_routes_cannot_admit_each_other",
+      "test_duration.DurationTests.test_per_forward_bank_census_cannot_cancel_between_rows",
+      "test_duration.DurationTests.test_same_side_comparison_rechecks_both_diagnostic_copies_and_original_file",
+      "test_duration.DurationTests.test_unknown_fields_and_noncanonical_nested_key_order_are_rejected",
+      "test_forward.ForwardTests.test_aggregate_hour_bound_is_not_only_a_per_row_bound",
+      "test_forward.ForwardTests.test_complete_case_preserves_first_two_records_and124_spans",
+      "test_forward.ForwardTests.test_each_identity_and_lf_inclusive_original_hash_is_required",
+      "test_forward.ForwardTests.test_exact_disjoint_sum_overflow_and_per_row_hour_bound",
+      "test_forward.ForwardTests.test_exact_forty_ordered_rows_without_aliasing_or_duplicate_positions",
+      "test_forward.ForwardTests.test_exact_three_lf_lines_and_canonical_json",
+      "test_forward.ForwardTests.test_full_case_rechecks_whole_original_stderr_frames_capture_and_timing",
+      "test_forward.ForwardTests.test_full_case_rejects_semantic_third_drift_even_with_fresh_whole_file_pin",
+      "test_forward.ForwardTests.test_large_integer_original_callback_counts_remain_exact",
+      "test_forward.ForwardTests.test_nine_phase_order_extent_and_names_are_fixed",
+      "test_forward.ForwardTests.test_old_callback_predicates_cannot_be_laundered_by_a_new_third_hash",
+      "test_forward.ForwardTests.test_old_routes_and_three_record_route_are_distinct",
+      "test_forward.ForwardTests.test_row_integer_types_and_unsigned_widths_are_strict",
+      "test_forward.ForwardTests.test_same_side_comparison_rechecks_all_original_record_copies",
+      "test_forward.ForwardTests.test_same_side_comparison_rereads_entire_third_line_not_only_old_prefix",
+      "test_forward.ForwardTests.test_schema_and_all_authority_flags_are_exact_typed_values",
+      "test_forward.ForwardTests.test_third_and_combined_caps_are_enforced_before_parsing",
+      "test_forward.ForwardTests.test_unknown_fields_and_canonical_nested_order_are_rejected",
+      "test_forward.ForwardTests.test_warm_bank_layer_and_tail_containment_survives_exact_sum_repinning",
+      "test_forward.ForwardTests.test_zero_durations_and_exact_aggregate_boundary_are_valid",
+      "test_matched.MatchedTests.test_both_original_modes_join_policy_timeline_and_false_authority",
+      "test_matched.MatchedTests.test_combined_policy_joins_original_worker_transcript_and_flags",
+      "test_matched.MatchedTests.test_default_empty_stderr_and_shared_original_record_remain_separate",
+      "test_matched.MatchedTests.test_explicit_mode_and_exact_wrapper_cannot_be_inferred_or_relabelled",
+      "test_matched.MatchedTests.test_full_ordinary_frames_captures_and_close_precede_timing",
+      "test_matched.MatchedTests.test_matched_pair_requires_same_all_four_cpu_and_product_pins",
+      "test_matched.MatchedTests.test_original_policy_missing_suffix_changed_bytes_and_budgets_refuse",
+      "test_matched.MatchedTests.test_pair_checks_every_semantic_record_and_complete_selected_payload",
+      "test_matched.MatchedTests.test_pair_refuses_same_worker_identity_or_same_mode",
+      "test_matched.MatchedTests.test_shared_sidecar_actual_path_hash_extent_and_ordinary_pin",
+      "test_matched.MatchedTests.test_shared_timeline_strict_scalars_order_and_exact_disjoint_sum",
+      "test_matched.MatchedTests.test_shared_timing_retention_close_and_false_authority_are_not_relaxed",
+      "test_readiness.ReadinessTests.test_all144_pages_and_page_boundary_are_closed",
+      "test_readiness.ReadinessTests.test_authentic_prompt_only_not_argmax_feedback",
+      "test_readiness.ReadinessTests.test_bank_retirement_local_generation_and_bool_are_checked",
+      "test_readiness.ReadinessTests.test_capture_path_digest_order_and_truncation",
+      "test_readiness.ReadinessTests.test_close_generated_tokens_and_native_retirement",
+      "test_readiness.ReadinessTests.test_complete40_original_chain_and_four_selected_payloads",
+      "test_readiness.ReadinessTests.test_extra_fields_authority_and_observer_stderr_refused",
+      "test_readiness.ReadinessTests.test_frame_order_missing_and_extra_are_refused",
+      "test_readiness.ReadinessTests.test_full2303_and_legacy_profiles_are_refused",
+      "test_readiness.ReadinessTests.test_marker_alone_never_substitutes_owned_lineage",
+      "test_readiness.ReadinessTests.test_original_readiness_profile_and_schema_are_refused",
+      "test_readiness.ReadinessTests.test_payload_finite_lowest_tie_and_signed_zero",
+      "test_readiness.ReadinessTests.test_readiness_marker_is_distinct_and_unique",
+      "test_readiness.ReadinessTests.test_selected_guard_and_queue_words_are_independently_checked",
+      "test_readiness.ReadinessTests.test_stream_and_retention_accounting_are_exact",
+      "test_readiness.ReadinessTests.test_strict_json_scalars_and_boolean_identity",
+      "test_readiness.ReadinessTests.test_unselected_hashes_and_chains_remain_authenticated",
+      "test_scoped.ScopedTests.test_counter_census_and_checked_relations_refuse_missing_warm_calls",
+      "test_scoped.ScopedTests.test_counter_scalars_are_exact_unsigned_integers_not_bool_float_or_overflow",
+      "test_scoped.ScopedTests.test_default_shared_and_scoped_policy_routes_are_not_interchangeable",
+      "test_scoped.ScopedTests.test_every_policy_flag_and_execution_identity_is_closed",
+      "test_scoped.ScopedTests.test_explicit_wrapper_and_mode_cannot_relabel_ordinary_or_shared",
+      "test_scoped.ScopedTests.test_large_valid_poll_dependent_counters_preserve_all_integer_bits",
+      "test_scoped.ScopedTests.test_ordinary_and_timed_scoped_keep_original_policy_bytes_without_shared_label",
+      "test_scoped.ScopedTests.test_original_pinned_stderr_all40_frames_four_captures_and_retention_stay_required",
+      "test_scoped.ScopedTests.test_parity_checks_every_semantic_record_and_all_four_complete_payloads",
+      "test_scoped.ScopedTests.test_parity_rejects_relabelled_policy_or_another_admitted_summary",
+      "test_scoped.ScopedTests.test_policy_requires_single_canonical_ordered_bounded_record",
+      "test_scoped.ScopedTests.test_real_close_and_position5_are_required_not_full_or_old_readiness",
+      "test_scoped.ScopedTests.test_record_joins_bootstrap_session_devices_worker_profile_and_transcript",
+      "test_scoped.ScopedTests.test_timed_route_preserves_all124_spans_exact_pins_caps_and_false_authority",
+      "test_scoped_pair.ScopedPairTests.test_pair_rejects_wrong_mode_summary_timeline_and_original_policy_body",
+      "test_scoped_pair.ScopedPairTests.test_pair_requires_each_same_actual_cpu_and_product_pin",
+      "test_scoped_pair.ScopedPairTests.test_same_binary_pair_preserves_original_policy_and_host_timing_without_authority",
+      "test_shared.SharedTests.test_canonical_single_record_no_suffix_duplicates_or_reordering",
+      "test_shared.SharedTests.test_complete_policy_keeps_original_stderr_and_ordinary_contract",
+      "test_shared.SharedTests.test_default_empty_stderr_and_shared_opt_in_are_not_interchangeable",
+      "test_shared.SharedTests.test_every_policy_flag_is_closed_and_bool_is_not_integer",
+      "test_shared.SharedTests.test_exact_extent_captures_schema_and_no_extra_fields",
+      "test_shared.SharedTests.test_identity_scope_hash_and_device_order_are_joined",
+      "test_shared.SharedTests.test_parity_compares_all40_records_and_all_four_payloads",
+      "test_shared.SharedTests.test_parity_ignores_only_independently_admitted_control_timer_bytes",
+      "test_shared.SharedTests.test_parity_refuses_same_session_model_drift_or_numerical_authority",
+      "test_shared.SharedTests.test_pinned_original_bytes_and_all40_chain_still_required",
+      "test_shared.SharedTests.test_real_close_and_position5_only_precede_policy_admission",
+      "test_shared.SharedTests.test_wrapper_cannot_relabel_ordinary_timing_or_different_policy",
+      "test_tail.TailTests.test_tail_all_counter_fields_and_fixed_extent_relations_are_closed",
+      "test_tail.TailTests.test_tail_and_old_policy_routes_cannot_admit_each_other",
+      "test_tail.TailTests.test_tail_case_and_pair_nonclaims_cannot_be_promoted_to_native_acceptance",
+      "test_tail.TailTests.test_tail_counts_never_replace_or_relax_inherited_layer_bank_census",
+      "test_tail.TailTests.test_tail_one_original_canonical_bounded_record_is_required",
+      "test_tail.TailTests.test_tail_original40_chain_capture_accounting_and_timing_are_required",
+      "test_tail.TailTests.test_tail_original_record_keeps_separate_counters_bytes_and124_spans",
+      "test_tail.TailTests.test_tail_pair_checks_all40_semantic_records_and_four_complete_payloads",
+      "test_tail.TailTests.test_tail_pair_preserves_original_v3_v4_policies_and_exact_payload_parity",
+      "test_tail.TailTests.test_tail_pair_rechecks_both_original_files_and_policy_authority",
+      "test_tail.TailTests.test_tail_pair_requires_all_four_same_cpu_product_identities",
+      "test_tail.TailTests.test_tail_same_side_requires_independent_scope_flags_and_rehashes_policy",
+      "test_tail.TailTests.test_tail_scalar_types_widths_and_checked_overflow_are_strict",
+      "test_tail.TailTests.test_tail_scope_flags_identities_close_and_profile_cannot_be_relabelled",
+      "test_tail.TailTests.test_tail_variable_periodic_checks_and_large_integers_are_exact",
+      "test_tail.TailTests.test_tail_wrapper_cannot_replace_policy_or_timing_and_bounds",
+      "test_timing.TimingTests.test_close_and_false_authority_are_required",
+      "test_timing.TimingTests.test_complete_timeline_zero_spans_and_large_integer_precision",
+      "test_timing.TimingTests.test_exact_retention_accounting_and_unchanged_bound",
+      "test_timing.TimingTests.test_gaps_overlap_regression_and_duration_are_refused",
+      "test_timing.TimingTests.test_order_extent_and_forward_sum_are_closed",
+      "test_timing.TimingTests.test_parity_accepts_distinct_sessions_and_rejects_any_record_change",
+      "test_timing.TimingTests.test_parity_compares_payload_not_control_timer_bytes",
+      "test_timing.TimingTests.test_parity_rejects_same_session_model_drift_and_authority",
+      "test_timing.TimingTests.test_report_hashes_scope_and_capture_set_are_joined",
+      "test_timing.TimingTests.test_sidecar_actual_body_path_hash_and_size_are_joined",
+      "test_timing.TimingTests.test_strict_u64_refuses_bool_float_negative_and_overflow",
+      "test_timing.TimingTests.test_wrapper_and_ordinary_admission_are_not_interchangeable"
+    ],
+    "passed": 146,
+    "skipped": 0
+  },
+  "tool_pins": {
+    "prlimit": {
+      "bytes": 27536,
+      "path": "/usr/bin/prlimit",
+      "sha256": "17064f67e650d6152a6902b013aab496b54c87587c8eea6f5023aafee6154069"
+    },
+    "python": {
+      "bytes": 8020928,
+      "path": "/usr/bin/python3.12",
+      "sha256": "e1efa562c2cc2e35521a5c9c9b9939921001ff8ca9708a13ef15ace68cc2ccd7"
+    }
+  }
+}

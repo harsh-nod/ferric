@@ -1,0 +1,25 @@
+test_aggregate_hour_bound_is_not_only_a_per_row_bound (test_forward.ForwardTests.test_aggregate_hour_bound_is_not_only_a_per_row_bound) ... ok
+test_complete_case_preserves_first_two_records_and124_spans (test_forward.ForwardTests.test_complete_case_preserves_first_two_records_and124_spans) ... ok
+test_each_identity_and_lf_inclusive_original_hash_is_required (test_forward.ForwardTests.test_each_identity_and_lf_inclusive_original_hash_is_required) ... ok
+test_exact_disjoint_sum_overflow_and_per_row_hour_bound (test_forward.ForwardTests.test_exact_disjoint_sum_overflow_and_per_row_hour_bound) ... ok
+test_exact_forty_ordered_rows_without_aliasing_or_duplicate_positions (test_forward.ForwardTests.test_exact_forty_ordered_rows_without_aliasing_or_duplicate_positions) ... ok
+test_exact_three_lf_lines_and_canonical_json (test_forward.ForwardTests.test_exact_three_lf_lines_and_canonical_json) ... ok
+test_full_case_rechecks_whole_original_stderr_frames_capture_and_timing (test_forward.ForwardTests.test_full_case_rechecks_whole_original_stderr_frames_capture_and_timing) ... ok
+test_full_case_rejects_semantic_third_drift_even_with_fresh_whole_file_pin (test_forward.ForwardTests.test_full_case_rejects_semantic_third_drift_even_with_fresh_whole_file_pin) ... ok
+test_large_integer_original_callback_counts_remain_exact (test_forward.ForwardTests.test_large_integer_original_callback_counts_remain_exact) ... ok
+test_nine_phase_order_extent_and_names_are_fixed (test_forward.ForwardTests.test_nine_phase_order_extent_and_names_are_fixed) ... ok
+test_old_callback_predicates_cannot_be_laundered_by_a_new_third_hash (test_forward.ForwardTests.test_old_callback_predicates_cannot_be_laundered_by_a_new_third_hash) ... ok
+test_old_routes_and_three_record_route_are_distinct (test_forward.ForwardTests.test_old_routes_and_three_record_route_are_distinct) ... ok
+test_row_integer_types_and_unsigned_widths_are_strict (test_forward.ForwardTests.test_row_integer_types_and_unsigned_widths_are_strict) ... ok
+test_same_side_comparison_rechecks_all_original_record_copies (test_forward.ForwardTests.test_same_side_comparison_rechecks_all_original_record_copies) ... ok
+test_same_side_comparison_rereads_entire_third_line_not_only_old_prefix (test_forward.ForwardTests.test_same_side_comparison_rereads_entire_third_line_not_only_old_prefix) ... ok
+test_schema_and_all_authority_flags_are_exact_typed_values (test_forward.ForwardTests.test_schema_and_all_authority_flags_are_exact_typed_values) ... ok
+test_third_and_combined_caps_are_enforced_before_parsing (test_forward.ForwardTests.test_third_and_combined_caps_are_enforced_before_parsing) ... ok
+test_unknown_fields_and_canonical_nested_order_are_rejected (test_forward.ForwardTests.test_unknown_fields_and_canonical_nested_order_are_rejected) ... ok
+test_warm_bank_layer_and_tail_containment_survives_exact_sum_repinning (test_forward.ForwardTests.test_warm_bank_layer_and_tail_containment_survives_exact_sum_repinning) ... ok
+test_zero_durations_and_exact_aggregate_boundary_are_valid (test_forward.ForwardTests.test_zero_durations_and_exact_aggregate_boundary_are_valid) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 1.753s
+
+OK

@@ -1,0 +1,183 @@
+{
+  "files": {
+    "evidence/complete.json": {
+      "bytes": 57594,
+      "sha256": "e3e65540576213ecd394be09e7c87ad9ac0a763e4e0c7954d84cd3e04b1b6d19"
+    },
+    "evidence/forward-tests.command.json": {
+      "bytes": 1162,
+      "sha256": "88b66ed8c80c8139516e4cefe18a0d2c3ece8b57733cdced20874c4938030513"
+    },
+    "evidence/forward-tests.result.json": {
+      "bytes": 1815,
+      "sha256": "fa6a1502929c0842075541d842df60d9cfbb7b6ebb00999a9975387008507573"
+    },
+    "evidence/forward-tests.started.json": {
+      "bytes": 604,
+      "sha256": "e81a84f1e4d551afee9fb20c64f7f2447869c3eb1daa12518d3b8da5586a60a9"
+    },
+    "evidence/forward-tests.stderr": {
+      "bytes": 3229,
+      "sha256": "f9dbee9c488b3a984762e038e998494cfcf8f3796363766db63bc69579da5623"
+    },
+    "evidence/forward-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/legacy-tests.command.json": {
+      "bytes": 1310,
+      "sha256": "91e85b374926660fb3942db9b9bff3891fdc0ad6cb18a5b0ea33867b02b16ac8"
+    },
+    "evidence/legacy-tests.result.json": {
+      "bytes": 1961,
+      "sha256": "58a597a98110a3ce9cd57bd81183421e1b1accb430c8d74222020fe4e4596ed9"
+    },
+    "evidence/legacy-tests.started.json": {
+      "bytes": 752,
+      "sha256": "b58365755d752f80328feac663ee16f47d03fac3eaf67350d12a8a8184b3f601"
+    },
+    "evidence/legacy-tests.stderr": {
+      "bytes": 20598,
+      "sha256": "bb2ae27a18f81af89cd26eebbac411bf2b57b347689d4dd0f5e24400efcab491"
+    },
+    "evidence/legacy-tests.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/sources-after.json": {
+      "bytes": 8541,
+      "sha256": "d1026358a76e918e789f237e7d3f1e1b0af3747467162af4820e292456c1d0e8"
+    },
+    "evidence/sources-before.json": {
+      "bytes": 8541,
+      "sha256": "d1026358a76e918e789f237e7d3f1e1b0af3747467162af4820e292456c1d0e8"
+    },
+    "input-manifest.json": {
+      "bytes": 19380,
+      "sha256": "ffc3d34d7913433ab83d373b1e36cd5f6f5e5592cb8ab13f79063074df84f2c7"
+    },
+    "readiness_announcement.py": {
+      "bytes": 3246,
+      "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+    },
+    "run_cpu.py": {
+      "bytes": 11202,
+      "sha256": "f736cf91f2ce80402bf561664a0597acb060e96b9eb9d1bf8ae135e9eef364de"
+    },
+    "supervisor.py": {
+      "bytes": 41485,
+      "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+    },
+    "test_bank_scoped.py": {
+      "bytes": 14853,
+      "sha256": "3ecc622e660cb6e0790a18ff8bb022a84535c91466d02d6fdbb8625ae080a99b"
+    },
+    "test_census.py": {
+      "bytes": 19688,
+      "sha256": "aca29934c68523dbc91b30439a2c7a5ae552b64a9faf077ddb99b97c861cb5b0"
+    },
+    "test_duration.py": {
+      "bytes": 13609,
+      "sha256": "3f88f035e3f08644dadf393620557b84d7827876fb3e992e498fd6e2950d3fb5"
+    },
+    "test_forward.py": {
+      "bytes": 20872,
+      "sha256": "e39afc63a07b5b3b43cffafabb3f5775eeff7794cf97a4edba1fbb630466b735"
+    },
+    "test_matched.py": {
+      "bytes": 15400,
+      "sha256": "d5a6b522a1effe29e1ee08430754163cc217cf34c3713ce234926b7c860f9647"
+    },
+    "test_readiness.py": {
+      "bytes": 17802,
+      "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+    },
+    "test_scoped.py": {
+      "bytes": 15936,
+      "sha256": "4c015cdfa072943960e0ffa1f25e0e604790e8dbe222875b4bed207be6563fdc"
+    },
+    "test_scoped_pair.py": {
+      "bytes": 3629,
+      "sha256": "aa95ff79fd3c72ee3658d66e4117738a06f7984a2a77dcc6712b28a272e57f8f"
+    },
+    "test_shared.py": {
+      "bytes": 10737,
+      "sha256": "a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96"
+    },
+    "test_tail.py": {
+      "bytes": 19524,
+      "sha256": "2235e1c4b97b396094df484ccaedb25619f70c757ed1656e5eaf6b92f8140c4a"
+    },
+    "test_timing.py": {
+      "bytes": 10433,
+      "sha256": "630febf4d840081887692144cc570d70c1d67f9ad3bb5bab1fd6d7d1f61cedb1"
+    },
+    "validate_bank_pair.py": {
+      "bytes": 4428,
+      "sha256": "9d3f1470f6e9d7a17f3c91d1deb29a54c6fa7e8c766dc358e9d7d73e15c4e004"
+    },
+    "validate_bank_scoped.py": {
+      "bytes": 9534,
+      "sha256": "2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772"
+    },
+    "validate_census.py": {
+      "bytes": 10392,
+      "sha256": "090431e59a481d5b681311d5a015ddfd35705cc828c920118d4f0043b862ec9f"
+    },
+    "validate_census_pair.py": {
+      "bytes": 4730,
+      "sha256": "d4f50afe412b68c4066e934a80b96b5a5c0f83ef8ea33c59c53380aa1ab819c4"
+    },
+    "validate_duration.py": {
+      "bytes": 9343,
+      "sha256": "d7ed85d14191e735490170a606a06cefb331e17b07c36a4a4d34ef38a5cf19bd"
+    },
+    "validate_forward.py": {
+      "bytes": 9585,
+      "sha256": "2a238ab236d86be4762738df0b70aff603794a9198e2b214580a56184986a89b"
+    },
+    "validate_matched.py": {
+      "bytes": 9362,
+      "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+    },
+    "validate_readiness.py": {
+      "bytes": 19800,
+      "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+    },
+    "validate_scoped.py": {
+      "bytes": 9184,
+      "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+    },
+    "validate_scoped_pair.py": {
+      "bytes": 3233,
+      "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+    },
+    "validate_shared.py": {
+      "bytes": 8015,
+      "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+    },
+    "validate_tail.py": {
+      "bytes": 10447,
+      "sha256": "696e55d4bebea97ab82e5b613a76978c5e191087789d299551c304527e598d49"
+    },
+    "validate_tail_pair.py": {
+      "bytes": 4883,
+      "sha256": "ab69bcafcc245b8eca05d7e625c42eec7aaec2de4084e719090de1894f4d6995"
+    },
+    "validate_timing.py": {
+      "bytes": 10104,
+      "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+    }
+  },
+  "gpu_execution": false,
+  "legacy_tests": 126,
+  "new_tests": 20,
+  "numerical_acceptance": false,
+  "passed_tests": 146,
+  "performance_claim": false,
+  "schema": "ferric-forward-checker-export-v1",
+  "terminal": {
+    "bytes": 57594,
+    "sha256": "e3e65540576213ecd394be09e7c87ad9ac0a763e4e0c7954d84cd3e04b1b6d19"
+  }
+}

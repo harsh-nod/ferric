@@ -15,8 +15,11 @@ unchanged hardware ignores each) and parent selected CPU scopes (622/584 tests,
 not repeated. The original staging refusal is preserved. This adds host-phase
 accounting around the real Sequence with unchanged backend/deadline ordering,
 not new GPU timing or numerical acceptance. Its new third diagnostic record
-still needs a fresh native checker/preparer/launcher/retainer qualification
-before measurement; the earlier two-record qualifications do not cover it.
+now has a [146-test checker qualification](../qualification/guarded-mlp-forward-phases-v1/checker-cpu-v1/README.md),
+including all 126 unchanged tests and 20 new cases. Both processes retired
+naturally. Fresh preparer/launcher/retainer qualification and an actual GPU
+run are still required before measurement; the earlier two-record workflow
+qualification does not cover them.
 
 Latest native measurement: optional
 [currentness-duration instrumentation](../qualification/guarded-mlp-currentness-duration-v1/README.md)

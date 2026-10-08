@@ -29,7 +29,9 @@ feature enabled/disabled, and parent selected scopes pass 622/584 tests. It
 attributes the whole forward body without changing kernel arithmetic or
 currentness policy. It has not yet run on the GPU. The earlier 126 checker
 tests and 171 workflow tests cover the old two-record protocol, not this new
-three-record protocol. The chart below remains the original measured result.
+three-record protocol. Its [new checker now passes 146 tests](../qualification/guarded-mlp-forward-phases-v1/checker-cpu-v1/README.md),
+but native preparation/launch/retention qualification and a GPU run remain
+pending. The chart below remains the original measured result.
 
 ## New Host Attribution
 

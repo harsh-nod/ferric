@@ -119,9 +119,14 @@ separate retained-evidence report and requires no new model launch.
 
 ## Next Native Gate
 
-The previous two-record native checker and workflow qualifications do not
-qualify this three-record protocol. A fresh checker/preparer/launcher/retainer
-qualification and bounded native run are required before reporting new timings.
+The [new three-record checker](checker-cpu-v1/README.md) now passes all 146
+tests on MI350: the unchanged 126-test suite plus 20 new tests, across two
+naturally retired supervised processes. Its original evidence and separate
+source/data review are retained. These synthetic checks are not GPU execution.
+
+The previous two-record workflow qualification does not qualify the new
+preparer, launcher or retainer. Their fresh qualification and a bounded native
+run are required before reporting new timings.
 The new adapter must preserve whole-original stderr admission and all existing
 two-record tests, explicitly admit the new CPU receipt schema and unchanged
 runtime predecessor, and bind the new worker/parent ELFs. Shortening the stderr

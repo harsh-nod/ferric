@@ -244,18 +244,41 @@
     }
   },
   "authored_and_tested_on": "mi350",
+  "checker_qualification": {
+    "archive": {
+      "bytes": 83731,
+      "path": "checker-cpu-v1.tar.gz",
+      "sha256": "f880721598ebd3b6b386df0da53df0bc4913e274f92e16ce7e52d557760cd7f0"
+    },
+    "gpu_execution": false,
+    "legacy_tests": 126,
+    "new_tests": 20,
+    "numerical_acceptance": false,
+    "passed_tests": 146,
+    "performance_claim": false,
+    "supervised_steps": 2,
+    "terminal": {
+      "bytes": 57594,
+      "path": "checker-cpu-v1/evidence/complete.json",
+      "sha256": "e3e65540576213ecd394be09e7c87ad9ac0a763e4e0c7954d84cd3e04b1b6d19"
+    }
+  },
   "documents": {
     "docs/GFX950_COMMUNITY_DEMO_V1.md": {
-      "bytes": 11327,
-      "sha256": "2b99cd2b27034c8b60845f798f13747fb315862e3f9c1d8573c35ca1ca4da341"
+      "bytes": 11524,
+      "sha256": "55b912a57682ff47d2cb776f3f1e58572beebe00d8ab8d3573a91ee6235dfea9"
     },
     "docs/GFX950_FINITE_PREFIX_PROGRESS_V1.md": {
-      "bytes": 160218,
-      "sha256": "20eb3d74404923dedf01ee5003afd5e449e009155e2e41309f8c9c3b0fb9a05a"
+      "bytes": 160445,
+      "sha256": "c01c9f699d7e90849feaf8f903db00ed508e061e5e84a8c18ea0071cfd90d71c"
     },
     "qualification/guarded-mlp-forward-phases-v1/README.md": {
-      "bytes": 7253,
-      "sha256": "d22cbf38cf766adc4165158261f31e11f8feff15e8393479c28bc005e01990a0"
+      "bytes": 7524,
+      "sha256": "d0cdf613f58f5005f2ce67154a95add83d471410ab99a00054399aded2284625"
+    },
+    "qualification/guarded-mlp-forward-phases-v1/checker-cpu-v1/README.md": {
+      "bytes": 2458,
+      "sha256": "410d6fe66f0e3d9a383a56b98a81aaf341c023dc5a3c3e8e3ee072e601aad50f"
     },
     "qualification/guarded-mlp-readiness40-causal-layer0-v1/DECODE-GATES.md": {
       "bytes": 4851,
