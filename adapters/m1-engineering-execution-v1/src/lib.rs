@@ -2346,6 +2346,9 @@ pub mod finite_guarded_mlp_readiness_currentness_durations_v1;
 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
 #[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_forward_durations_v1.rs"]
 pub mod finite_guarded_mlp_readiness_forward_durations_v1;
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_layer_durations_v2.rs"]
+pub mod finite_guarded_mlp_readiness_layer_durations_v2;
 #[cfg(feature = "guarded-mlp-model-engineering")]
 #[path = "../../tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_scoped_v1.rs"]
 pub mod finite_guarded_mlp_readiness_scoped_v1;

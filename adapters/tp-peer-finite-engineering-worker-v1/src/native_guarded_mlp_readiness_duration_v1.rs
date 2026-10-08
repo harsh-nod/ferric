@@ -2,19 +2,23 @@
 use super::*;
 use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as wire;
 use crate::finite_guarded_mlp_readiness_forward_durations_v1 as forward;
+use crate::finite_guarded_mlp_readiness_layer_durations_v2 as stages;
 use fe2o3_kfd::Gfx950EngineeringCurrentnessDurationsV1 as RuntimeDurations;
+use fe2o3_kfd::Gfx950EngineeringPeerScopedLayerDurationsV1 as RuntimeLayer;
 
 #[derive(Default)]
 pub(super) struct Trace {
     rows: Vec<wire::ForwardRow>,
-    forward_rows: Vec<forward::ForwardRow>,
+    forward_rows: Vec<stages::ForwardRow>,
     forward_body_ns: u64,
     pending: Option<Pending>,
+    completed_layers: Option<(u32, Option<stages::LayerMetrics>)>,
 }
 struct Pending {
     bank: Option<(wire::Durations, u64)>,
     layers: wire::Durations,
     next_layer: usize,
+    layer_stages: stages::LayerMetrics,
 }
 fn convert(value: RuntimeDurations, counts: Currentness) -> io::Result<wire::Durations> {
     let pair = |p: fe2o3_kfd::Gfx950EngineeringCurrentnessCallDurationV1| wire::CallDuration {
@@ -57,6 +61,7 @@ impl Trace {
     ) -> io::Result<()> {
         require(
             self.pending.is_none()
+                && self.completed_layers.is_none()
                 && self.rows.len() == position as usize
                 && self.forward_rows.len() == position as usize
                 && position < 40,
@@ -79,6 +84,7 @@ impl Trace {
             bank,
             layers: wire::Durations::default(),
             next_layer: 0,
+            layer_stages: stages::LayerMetrics::default(),
         });
         Ok(())
     }
@@ -88,6 +94,7 @@ impl Trace {
         layer: usize,
         counts: Option<Currentness>,
         value: Option<RuntimeDurations>,
+        layer_value: Option<RuntimeLayer>,
     ) -> io::Result<()> {
         require(
             self.rows.len() == position as usize,
@@ -101,9 +108,31 @@ impl Trace {
             layer == pending.next_layer && layer < 36,
             "diagnostic fixed layer order",
         )?;
-        if let Some(value) = observed(position, counts, value)? {
+        let duration = observed(position, counts, value)?;
+        let metrics = match (position < 2, layer_value, duration.as_ref()) {
+            (true, None, None) => None,
+            (false, Some(value), Some(callbacks)) => {
+                require(
+                    callbacks.elapsed_subtotal()? <= value.layer_body_ns,
+                    "diagnostic same-layer callback containment",
+                )?;
+                let one = stages::LayerMetrics {
+                    layers: 1,
+                    phase_ns: value.phase_ns,
+                    layer_body_ns: value.layer_body_ns,
+                    paired_mlp_phase_ns: value.paired_mlp_phase_ns,
+                    paired_mlp_body_ns: value.paired_mlp_body_ns,
+                };
+                Some(pending.layer_stages.checked_add(one)?)
+            }
+            _ => return Err(io::Error::other("diagnostic cold/warm layer stages")),
+        };
+        if let Some(value) = duration {
             require(value.discover.calls == 2, "diagnostic two layer boundaries")?;
             pending.layers = pending.layers.checked_add(value)?;
+        }
+        if let Some(metrics) = metrics {
+            pending.layer_stages = metrics;
         }
         pending.next_layer += 1;
         Ok(())
@@ -123,6 +152,20 @@ impl Trace {
             .as_ref()
             .ok_or_else(|| io::Error::other("diagnostic absent forward"))?;
         require(pending.next_layer == 36, "diagnostic all thirty-six layers")?;
+        let layer_metrics = if position < 2 {
+            require(
+                pending.layer_stages == stages::LayerMetrics::default(),
+                "diagnostic cold layer stages absent",
+            )?;
+            None
+        } else {
+            pending.layer_stages.validate()?;
+            require(
+                pending.layer_stages.layers == 36,
+                "diagnostic thirty-six measured layers",
+            )?;
+            Some(pending.layer_stages)
+        };
         let measured = match (pending.bank, observed(position, counts, value)?) {
             (None, None) => {
                 require(
@@ -148,6 +191,7 @@ impl Trace {
             }
         };
         self.rows.push(wire::ForwardRow { position, measured });
+        self.completed_layers = Some((position, layer_metrics));
         self.pending = None;
         Ok(())
     }
@@ -163,6 +207,20 @@ impl Trace {
             .get(row.position as usize)
             .ok_or_else(|| io::Error::other("diagnostic forward callbacks absent"))?;
         row.validate_against(callbacks)?;
+        let (position, layer_metrics) = self
+            .completed_layers
+            .ok_or_else(|| io::Error::other("diagnostic completed layer stages absent"))?;
+        require(
+            position == row.position,
+            "diagnostic completed layer stage position",
+        )?;
+        let row = stages::ForwardRow {
+            position: row.position,
+            phase_ns: row.phase_ns,
+            forward_body_ns: row.forward_body_ns,
+            layer_metrics,
+        };
+        row.validate_against(callbacks)?;
         let total = self
             .forward_body_ns
             .checked_add(row.forward_body_ns)
@@ -172,6 +230,7 @@ impl Trace {
             "diagnostic forward total extent",
         )?;
         self.forward_rows.push(row);
+        self.completed_layers = None;
         self.forward_body_ns = total;
         Ok(())
     }
@@ -247,8 +306,12 @@ impl State {
         layer: usize,
         call: impl FnOnce(
             bool,
-        )
-            -> io::Result<(O, Option<(Currentness, Census)>, Option<RuntimeDurations>)>,
+        ) -> io::Result<(
+            O,
+            Option<(Currentness, Census)>,
+            Option<RuntimeDurations>,
+            Option<RuntimeLayer>,
+        )>,
     ) -> io::Result<O> {
         let mut a = Attempt {
             state: self,
@@ -260,10 +323,12 @@ impl State {
         )?;
         let mut observed_counts = None;
         let mut observed_time = None;
+        let mut layer_time = None;
         let result = a.state.dispatch(position, layer, |warm| {
-            let (result, counts, duration) = call(warm)?;
+            let (result, counts, duration, stages) = call(warm)?;
             observed_counts = counts.map(|v| v.0);
             observed_time = duration;
+            layer_time = stages;
             Ok((result, counts))
         })?;
         a.state.diagnostic.as_mut().unwrap().layer(
@@ -271,6 +336,7 @@ impl State {
             layer,
             observed_counts,
             observed_time,
+            layer_time,
         )?;
         a.committed = true;
         Ok(result)
@@ -327,7 +393,7 @@ impl State {
         )?;
         Ok(trace.rows.clone())
     }
-    pub(in super::super) fn forward_rows(&self) -> io::Result<Vec<forward::ForwardRow>> {
+    pub(in super::super) fn forward_rows(&self) -> io::Result<Vec<stages::ForwardRow>> {
         require(
             !self.terminal && !self.active && self.next == 40,
             "diagnostic healthy complete forward phases",
@@ -337,7 +403,10 @@ impl State {
             .as_ref()
             .ok_or_else(|| io::Error::other("diagnostic forward trace absent"))?;
         require(
-            trace.pending.is_none() && trace.forward_rows.len() == 40 && trace.rows.len() == 40,
+            trace.pending.is_none()
+                && trace.completed_layers.is_none()
+                && trace.forward_rows.len() == 40
+                && trace.rows.len() == 40,
             "diagnostic all forty phase rows before Close",
         )?;
         for (row, callbacks) in trace.forward_rows.iter().zip(&trace.rows) {

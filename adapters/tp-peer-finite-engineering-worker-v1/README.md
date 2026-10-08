@@ -90,8 +90,8 @@ alignment, overlap or throughput claim follows from these raw observations.
 
 The finite worker uses `../../../fe2o3/crates/fe2o3-kfd`, a sibling checkout
 relative to this repository. Its matching engineering runtime is published at
-[fe2o3 `27b53d2b7`](https://github.com/harsh-nod/fe2o3/commit/27b53d2b74c1f239988a891a4aed39e089b05663),
-also available in the [mirror](https://github.com/powderluv/fe2o3/commit/27b53d2b74c1f239988a891a4aed39e089b05663).
+[fe2o3 `bf8b33dcb0`](https://github.com/harsh-nod/fe2o3/commit/bf8b33dcb0f40a4781f7f3ac5e76f6fe6d4c5fd5),
+also available in the [mirror](https://github.com/powderluv/fe2o3/commit/bf8b33dcb0f40a4781f7f3ac5e76f6fe6d4c5fd5).
 An arbitrary fe2o3 checkout, or the parent adapter's pinned fe2o3 Git revision,
 is not an equivalent dependency. The parent dependency graph remains unchanged.
 
@@ -112,7 +112,7 @@ To select the current integration branch and its required runtime:
 
 ```sh
 git clone --branch codex/p228-finite-runtime-integration-v1 https://github.com/harsh-nod/fe2o3.git fe2o3
-git -C fe2o3 checkout --detach 27b53d2b74c1f239988a891a4aed39e089b05663
+git -C fe2o3 checkout --detach bf8b33dcb0f40a4781f7f3ac5e76f6fe6d4c5fd5
 git clone --branch codex/p227-finite-prefix-integration-v1 https://github.com/harsh-nod/ferric.git ferric
 cd ferric
 ```

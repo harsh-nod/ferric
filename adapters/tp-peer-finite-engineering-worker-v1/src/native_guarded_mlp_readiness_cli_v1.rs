@@ -197,7 +197,7 @@ struct Native {
     duration_rows:
         Option<Vec<crate::finite_guarded_mlp_readiness_currentness_durations_v1::ForwardRow>>,
     #[cfg(feature = "engineering-currentness-duration-diagnostics")]
-    forward_rows: Option<Vec<crate::finite_guarded_mlp_readiness_forward_durations_v1::ForwardRow>>,
+    forward_rows: Option<Vec<crate::finite_guarded_mlp_readiness_layer_durations_v2::ForwardRow>>,
 }
 impl Backend for Native {
     fn run(&mut self, request: &long::Request) -> io::Result<Produced> {
@@ -817,11 +817,11 @@ fn write_forward_diagnostics(
     output: &mut dyn Write,
     policy: &tail_scoped::PolicyRecord,
     rows: Vec<crate::finite_guarded_mlp_readiness_currentness_durations_v1::ForwardRow>,
-    forward_rows: Vec<crate::finite_guarded_mlp_readiness_forward_durations_v1::ForwardRow>,
+    forward_rows: Vec<crate::finite_guarded_mlp_readiness_layer_durations_v2::ForwardRow>,
     deadline: Instant,
 ) -> io::Result<()> {
     use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as diagnostic;
-    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as forward;
+    use crate::finite_guarded_mlp_readiness_layer_durations_v2 as forward;
     let old = diagnostic::Record::new(policy, rows)?;
     let phases = forward::Record::new(policy, &old, forward_rows)?;
     let records = [policy.encode()?, old.encode()?, phases.encode()?];

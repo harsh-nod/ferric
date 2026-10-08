@@ -31,6 +31,8 @@ struct CensusLayerResult {
     )>,
     #[cfg(feature = "engineering-currentness-duration-diagnostics")]
     durations: Option<fe2o3_kfd::Gfx950EngineeringCurrentnessDurationsV1>,
+    #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+    layer_durations: Option<fe2o3_kfd::Gfx950EngineeringPeerScopedLayerDurationsV1>,
 }
 struct TailResult {
     value: (u32, [u64; 3], Vec<u8>, Vec<u8>),
@@ -463,7 +465,7 @@ impl Owner {
     ) -> io::Result<(
         crate::finite_guarded_mlp_readiness_bank_scoped_census_tail_v4::Counts,
         Vec<crate::finite_guarded_mlp_readiness_currentness_durations_v1::ForwardRow>,
-        Vec<crate::finite_guarded_mlp_readiness_forward_durations_v1::ForwardRow>,
+        Vec<crate::finite_guarded_mlp_readiness_layer_durations_v2::ForwardRow>,
     )> {
         let mut admission = Admission {
             base: &mut self.base,
@@ -706,6 +708,8 @@ impl<'a> Driver<'a> {
                 counters: None,
                 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
                 durations: None,
+                #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+                layer_durations: None,
             });
         }
         let mut native = self.native()?;
@@ -761,6 +765,8 @@ impl<'a> Driver<'a> {
             counters: Some((observed.layer.currentness, observed.census)),
             #[cfg(feature = "engineering-currentness-duration-diagnostics")]
             durations: Some(observed.currentness_durations),
+            #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+            layer_durations: Some(observed.layer_durations),
         })
     }
     fn execute_tail(&mut self, warm: bool) -> io::Result<TailResult> {
@@ -1058,6 +1064,7 @@ impl Backend for Driver<'_> {
                     (value.completion, value.hidden),
                     value.counters,
                     value.durations,
+                    value.layer_durations,
                 ))
             });
             self.tail_scoped = Some(state);

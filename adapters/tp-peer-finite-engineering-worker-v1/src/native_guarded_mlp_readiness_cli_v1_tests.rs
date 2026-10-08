@@ -914,7 +914,7 @@ fn tail_scoped_cli_refuses_all_other_policies_before_io_and_keeps_deadline() {
 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
 #[test]
 fn forward_phase_cli_three_records_preserve_original_first_two_bytes() {
-    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as phases;
+    use crate::finite_guarded_mlp_readiness_layer_durations_v2 as phases;
     let (b, policy, old, record) = phases::tests::fixture();
     let original = [policy.encode().unwrap(), old.encode().unwrap()].concat();
     let mut output = Vec::new();
@@ -937,7 +937,7 @@ fn forward_phase_cli_three_records_preserve_original_first_two_bytes() {
 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
 #[test]
 fn forward_phase_cli_invalid_late_record_writes_no_policy_prefix() {
-    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as phases;
+    use crate::finite_guarded_mlp_readiness_layer_durations_v2 as phases;
     for case in 0..5 {
         let (_, policy, mut old, mut record) = phases::tests::fixture();
         match case {
@@ -977,7 +977,7 @@ fn forward_phase_cli_invalid_late_record_writes_no_policy_prefix() {
 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
 #[test]
 fn forward_phase_cli_writer_deadline_and_each_write_flush_refusal_propagate() {
-    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as phases;
+    use crate::finite_guarded_mlp_readiness_layer_durations_v2 as phases;
     struct Output {
         fail_write: Option<usize>,
         fail_flush: bool,
@@ -1045,4 +1045,72 @@ fn forward_phase_cli_writer_deadline_and_each_write_flush_refusal_propagate() {
             assert!(output.bytes.is_empty());
         }
     }
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn layer_stage_cli_invalid_nested_record_refuses_before_any_stderr_write() {
+    use crate::finite_guarded_mlp_readiness_layer_durations_v2 as phases;
+    for which in 0..5 {
+        let (_, policy, old, mut record) = phases::tests::fixture();
+        match which {
+            0 => record.forwards[2].layer_metrics = None,
+            1 => record.forwards[0].layer_metrics = record.forwards[2].layer_metrics,
+            2 => record.forwards[39].layer_metrics.as_mut().unwrap().layers = 35,
+            3 => {
+                record.forwards[39]
+                    .layer_metrics
+                    .as_mut()
+                    .unwrap()
+                    .layer_body_ns += 1
+            }
+            _ => {
+                record.forwards[39]
+                    .layer_metrics
+                    .as_mut()
+                    .unwrap()
+                    .paired_mlp_body_ns += 1
+            }
+        }
+        let mut output = Vec::new();
+        assert!(
+            write_forward_diagnostics(
+                &mut output,
+                &policy,
+                old.forwards,
+                record.forwards,
+                Instant::now() + Duration::from_secs(1)
+            )
+            .is_err()
+        );
+        assert!(output.is_empty());
+    }
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn layer_stage_cli_new_record_is_not_admitted_by_old_forward_decoder() {
+    use crate::finite_guarded_mlp_readiness_layer_durations_v2 as phases;
+    let (b, policy, old, record) = phases::tests::fixture();
+    let mut output = Vec::new();
+    write_forward_diagnostics(
+        &mut output,
+        &policy,
+        old.forwards.clone(),
+        record.forwards,
+        Instant::now() + Duration::from_secs(1),
+    )
+    .unwrap();
+    assert!(
+        crate::finite_guarded_mlp_readiness_forward_durations_v1::decode_stderr(
+            &output,
+            &b,
+            policy.transcript_sha256,
+            policy.worker_sha256
+        )
+        .is_err()
+    );
+    let (_, admitted, _) =
+        phases::decode_stderr(&output, &b, policy.transcript_sha256, policy.worker_sha256).unwrap();
+    assert_eq!(admitted, old);
 }

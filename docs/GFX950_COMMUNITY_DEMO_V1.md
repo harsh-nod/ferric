@@ -6,6 +6,18 @@ service, accepted full-model decode or a 700 tokens/s result. The measured
 workload is 40 authentic prompt forwards through all 36 layers, with **zero
 generated tokens**.
 
+## Next Measurement: CPU-Qualified
+
+The [closed-layer phase diagnostic](../qualification/guarded-mlp-layer-phases-v1/README.md)
+now passes six MI350 feature-on/off CPU configurations: runtime primary suites
+1,209/1,180, worker suites 911/838, and parent selected scopes 641/584.
+Its six layer stages and seven nested paired-MLP stages will distinguish
+where the enclosing layer time is spent. The documentation separates repeated
+test scopes, retained failures and the reduced qualification workspace.
+The new V2 diagnostic still needs native admission and a GPU run; it adds no
+new measured bars, overlap, numerical acceptance or inference speedup to this
+demo. The chart below remains the earlier nine-phase native measurement.
+
 ## Latest Forward Attribution
 
 The [nine-phase GPU diagnostic](../qualification/guarded-mlp-forward-phases-v1/native-gpu-v1/README.md)

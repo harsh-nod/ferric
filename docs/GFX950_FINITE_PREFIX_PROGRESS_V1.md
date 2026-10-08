@@ -6,7 +6,25 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest implementation: the opt-in
+Latest implementation: the default-off
+[closed-layer phase diagnostic](../qualification/guarded-mlp-layer-phases-v1/README.md)
+passes all six MI350 CPU configurations. Runtime primary suites pass
+1,209/1,180 tests with the feature on/off, worker suites pass 911/838, and
+parent selected scopes pass 641/584 test instances. The eight runtime and
+four worker ignores are unchanged; focused runtime reruns and ten rustdocs
+are reported separately. These runs use the inherited reduced qualification
+workspace, not a repository-wide test selection. All 24 new Rust postimages
+are integrated: 12 runtime and 12 worker/parent paths. The matching runtime
+is published on both forks at `bf8b33dcb0`.
+
+The V2 record adds six closed-layer stages and seven nested paired-MLP stages
+inside the existing nine forward intervals. Both earlier failed attempts are
+retained; kernel arithmetic, currentness policy and deadlines are unchanged.
+This is CPU qualification only. A distinct V2 native checker/admission path
+and actual retained GPU run remain next; the earlier GPU results below do
+not qualify the new record or establish Full2303/256-output acceptance.
+
+Preceding implementation: the opt-in
 [nine-phase forward diagnostic](../qualification/guarded-mlp-forward-phases-v1/README.md)
 passes fresh MI350 worker builds with the feature on/off (885/838 tests, four
 unchanged hardware ignores each) and parent selected CPU scopes (622/584 tests,

@@ -13,6 +13,8 @@ pub(crate) struct WarmCensusCompletion {
     pub(crate) census: Census,
     #[cfg(feature = "engineering-currentness-duration-diagnostics")]
     pub(crate) currentness_durations: fe2o3_kfd::Gfx950EngineeringCurrentnessDurationsV1,
+    #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+    pub(crate) layer_durations: fe2o3_kfd::Gfx950EngineeringPeerScopedLayerDurationsV1,
 }
 fn validate_census(c: &Census, current: Currentness, expected: [usize; 2]) -> Result<()> {
     let expected = [
@@ -146,6 +148,8 @@ impl Roster {
                 Ok(WarmCensusCompletion {
                     #[cfg(feature = "engineering-currentness-duration-diagnostics")]
                     currentness_durations: done.currentness_durations,
+                    #[cfg(feature = "engineering-currentness-duration-diagnostics")]
+                    layer_durations: done.layer_durations,
                     layer: WarmCompletion {
                         prefix_states: done.prefix.final_states,
                         prefix_ns: done.prefix.dispatch_elapsed_ns,

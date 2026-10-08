@@ -5,7 +5,7 @@ use crate::finite_guarded_mlp_readiness_bank_scoped_census_tail_v4::{
 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
 use crate::finite_guarded_mlp_readiness_currentness_durations_v1 as diagnostic;
 #[cfg(feature = "engineering-currentness-duration-diagnostics")]
-use crate::finite_guarded_mlp_readiness_forward_durations_v1 as phases;
+use crate::finite_guarded_mlp_readiness_layer_durations_v2 as phases;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 fn bootstrap() -> ready::Bootstrap {
@@ -435,6 +435,120 @@ fn bank_scoped_census_tail_parent_refuses_old_policies_duplicate_and_oversized_s
         assert!(read_policy(&file.0, &b, [7; 32], [8; 32]).is_err());
     }
 }
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn layer_duration_parent_refuses_prior_forward_schema_without_relabeling_it() {
+    use crate::finite_guarded_mlp_readiness_forward_durations_v1 as prior;
+    let (b, policy, callbacks) = diagnostic::tests::fixture();
+    let old = prior::Record::new(&policy, &callbacks, prior::tests::rows_for(&callbacks)).unwrap();
+    let raw = [
+        policy.encode().unwrap(),
+        callbacks.encode().unwrap(),
+        old.encode().unwrap(),
+    ]
+    .concat();
+    prior::decode_stderr(&raw, &b, [7; 32], [8; 32]).unwrap();
+    let file = PolicyFile::new(&raw);
+    assert!(read_policy(&file.0, &b, [7; 32], [8; 32]).is_err());
+    let current = policy_file(&policy);
+    assert_eq!(
+        read_policy(&current.0, &b, [7; 32], [8; 32]).unwrap(),
+        policy
+    );
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn layer_duration_parent_refuses_rehashed_presence_count_and_stage_order_drift() {
+    let (b, policy, callbacks) = diagnostic::tests::fixture();
+    let original =
+        phases::Record::new(&policy, &callbacks, phases::tests::rows_for(&callbacks)).unwrap();
+    for mutation in 0..9 {
+        let mut changed = original.clone();
+        match mutation {
+            0 => changed.forwards[0].layer_metrics = changed.forwards[2].layer_metrics,
+            1 => changed.forwards[2].layer_metrics = None,
+            2 => changed.forwards[2].layer_metrics.as_mut().unwrap().layers = 35,
+            3 => changed.forwards[2].layer_metrics.as_mut().unwrap().layers = 37,
+            4 => changed.layer_stage_order.swap(0, 1),
+            5 => changed.paired_mlp_stage_order.swap(0, 1),
+            6 => changed.forwards[39].layer_metrics = None,
+            7 => changed.layer_durations_nested = false,
+            _ => changed.paired_mlp_durations_nested = false,
+        }
+        let file = PolicyFile::new(
+            &[
+                policy.encode().unwrap(),
+                callbacks.encode().unwrap(),
+                changed.encode().unwrap(),
+            ]
+            .concat(),
+        );
+        assert!(
+            read_policy(&file.0, &b, [7; 32], [8; 32]).is_err(),
+            "{mutation}"
+        );
+    }
+}
+
+#[cfg(feature = "engineering-currentness-duration-diagnostics")]
+#[test]
+fn layer_duration_parent_refuses_rehashed_nested_sum_overflow_and_containment_drift() {
+    let (b, policy, callbacks) = diagnostic::tests::fixture();
+    let original =
+        phases::Record::new(&policy, &callbacks, phases::tests::rows_for(&callbacks)).unwrap();
+    for mutation in 0..8 {
+        let mut changed = original.clone();
+        let row = &mut changed.forwards[2];
+        let enclosing = row.phase_ns[4];
+        let metrics = row.layer_metrics.as_mut().unwrap();
+        match mutation {
+            0 => metrics.layer_body_ns += 1,
+            1 => metrics.paired_mlp_body_ns += 1,
+            2 => {
+                metrics.phase_ns[0] = u64::MAX;
+                metrics.layer_body_ns = u64::MAX;
+            }
+            3 => {
+                metrics.paired_mlp_phase_ns[0] = u64::MAX;
+                metrics.paired_mlp_body_ns = u64::MAX;
+            }
+            4 => {
+                metrics.phase_ns = [0; 6];
+                metrics.phase_ns[2] = enclosing + 1;
+                metrics.layer_body_ns = enclosing + 1;
+            }
+            5 => {
+                metrics.paired_mlp_phase_ns = [0; 7];
+                metrics.paired_mlp_phase_ns[4] = metrics.phase_ns[2] + 1;
+                metrics.paired_mlp_body_ns = metrics.phase_ns[2] + 1;
+            }
+            6 => {
+                metrics.phase_ns[0] = 3_600_000_000_001;
+                metrics.layer_body_ns = 3_600_000_000_001;
+            }
+            _ => {
+                metrics.phase_ns = [0; 6];
+                metrics.layer_body_ns = 0;
+                metrics.paired_mlp_phase_ns = [0; 7];
+                metrics.paired_mlp_body_ns = 0;
+            }
+        }
+        let file = PolicyFile::new(
+            &[
+                policy.encode().unwrap(),
+                callbacks.encode().unwrap(),
+                changed.encode().unwrap(),
+            ]
+            .concat(),
+        );
+        assert!(
+            read_policy(&file.0, &b, [7; 32], [8; 32]).is_err(),
+            "{mutation}"
+        );
+    }
+}
+
 #[test]
 fn bank_scoped_census_tail_parent_refuses_rehashed_counter_and_policy_drift() {
     let b = bootstrap();

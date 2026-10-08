@@ -1,0 +1,1717 @@
+{
+  "archives": {
+    "parent-default-cpu-v1.tar.gz": {
+      "archive": {
+        "bytes": 3000224,
+        "sha256": "376ee5d4d8907e48e24eae5f86aebd9eea18cfb3f3d7a1187341c3794905e86a"
+      },
+      "artifact_live_rehash_by_assembler": false,
+      "attempt": "v1",
+      "cpu_passed": true,
+      "doc_tests": {},
+      "elapsed_seconds": 456.748789823032,
+      "elf_bodies_archived": false,
+      "elf_products": {
+        "ferric-qwen3-finite-guarded-mlp-decode-engineering": {
+          "bytes": 13934912,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-default-cpu-v228-v1/target/debug/ferric-qwen3-finite-guarded-mlp-decode-engineering",
+          "sha256": "a8cd6c2c873bbe17414e64717214f23b5344c2cc528814a6c57bac1859523cdd"
+        },
+        "ferric-qwen3-finite-projection-residual-decode-engineering": {
+          "bytes": 14104072,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-default-cpu-v228-v1/target/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+          "sha256": "09c124466b8e946a0e5615546677c1613c4fd2adac5752a9d5b5863928222bb0"
+        },
+        "ferric-qwen3-finite-projection-residual-decode-host-engineering": {
+          "bytes": 14126152,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-default-cpu-v228-v1/target/debug/ferric-qwen3-finite-projection-residual-decode-host-engineering",
+          "sha256": "c5836974337a5d2bedacb881b9494a6d99f4a731b22f7d86769cb78c8f705061"
+        },
+        "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering": {
+          "bytes": 14126872,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-default-cpu-v228-v1/target/debug/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering",
+          "sha256": "df08eae3fd9e20579075c9e4adc78dc581b44b8337ffbbac6a048b452cf3900c"
+        },
+        "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering": {
+          "bytes": 14126904,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-default-cpu-v228-v1/target/debug/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering",
+          "sha256": "f836fb31c50862a5f8a31add2d54b52c8f4d44c1b2155f697348cd202a0faece"
+        },
+        "ferric-qwen3-guarded-mlp-full2303-engineering": {
+          "bytes": 13904600,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-default-cpu-v228-v1/target/debug/ferric-qwen3-guarded-mlp-full2303-engineering",
+          "sha256": "72f3fef57130755f85d0de26620a529cb15481e3e86155f9aec26a8518bdd290"
+        },
+        "ferric-qwen3-guarded-mlp-readiness-engineering": {
+          "bytes": 14195992,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-default-cpu-v228-v1/target/debug/ferric-qwen3-guarded-mlp-readiness-engineering",
+          "sha256": "6bb5a5bedb64d09e5bdab93c7cd638b9ec5447d7838f564e83fdc9606342350d"
+        }
+      },
+      "export_manifest": {
+        "bytes": 59961,
+        "sha256": "7c85d19e35de338558cf243a205a739a07ce377b718a782d5b991b15a8eb3e2b"
+      },
+      "failed_attempts_credited": false,
+      "failure_preserved": false,
+      "focused_reruns": {},
+      "inventory_names": 1047,
+      "mode": "default",
+      "new_named_tests": 0,
+      "original_member_count": 349,
+      "primary_or_selected": {
+        "kind": "selected_parent_scopes",
+        "scopes": {
+          "ferric-qwen3-finite-long-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-device-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-host-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-layer-capture-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-layer-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-decode-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-decode-host-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-queued-mlp-comparison-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-queued-projection-comparison-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-rearm-smoke-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-tiles-decode-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-two-forward-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "full2303-bin-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 4
+          },
+          "guarded-bin-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-added-0": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-1": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-2": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-3": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-4": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-5": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-6": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-7": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-client": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 292
+          },
+          "parent-clock-data": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-decode-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 10
+          },
+          "parent-device-data": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 12
+          },
+          "parent-full2303-bank-census-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 16
+          },
+          "parent-full2303-scoped-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 5
+          },
+          "parent-full2303-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 4
+          },
+          "parent-guarded-host": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 11
+          },
+          "parent-guarded-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "parent-host-data-v1": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-host-data-v2": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "parent-long-guarded-sequence": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "parent-long-guarded-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 13
+          },
+          "parent-long-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 8
+          },
+          "parent-old-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 5
+          },
+          "parent-prefix-decode-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "parent-prefix-layer-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 8
+          },
+          "parent-projection-host-report": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 16
+          },
+          "parent-projection-residual-decode-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-projection-residual-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 4
+          },
+          "parent-projection-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-queued-mlp-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 6
+          },
+          "parent-readiness-bank-scoped-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 28
+          },
+          "parent-readiness-scoped-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-readiness-shared-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 6
+          },
+          "parent-readiness-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 4
+          },
+          "parent-smoke-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 8
+          },
+          "parent-tiles-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "readiness-bin-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 10
+          }
+        },
+        "totals": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 584
+        }
+      },
+      "project_source_closure": 2138,
+      "raw_bodies": 338,
+      "role": "parent",
+      "source_closure": 2141,
+      "source_map": {
+        "bytes": 867570,
+        "sha256": "0055b9c78906d63a9f8898055060952db711c9104e0416dfa313b5695820b781"
+      },
+      "supervised_steps": 67,
+      "terminal_receipt": {
+        "bytes": 7538774,
+        "sha256": "30ad6ecd2a52cc68d10a148933656a1556752b93718b7babf2a1315abf19bbb5"
+      },
+      "test_scopes": 58,
+      "unique_across_scopes_claim": false
+    },
+    "parent-diagnostic-cpu-v1.tar.gz": {
+      "archive": {
+        "bytes": 3009961,
+        "sha256": "bb68ec8c4de3e5f70e67a717b71084d4c8319adb4e596044714711d0d6d701eb"
+      },
+      "artifact_live_rehash_by_assembler": false,
+      "attempt": "v1",
+      "cpu_passed": true,
+      "doc_tests": {},
+      "elapsed_seconds": 463.8420205699513,
+      "elf_bodies_archived": false,
+      "elf_products": {
+        "ferric-qwen3-finite-guarded-mlp-decode-engineering": {
+          "bytes": 13988272,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-diagnostic-cpu-v228-v1/target/debug/ferric-qwen3-finite-guarded-mlp-decode-engineering",
+          "sha256": "ae355285fe29c6193cdc4d0d68845c917dea69c6638c93e567c9309c5233227a"
+        },
+        "ferric-qwen3-finite-projection-residual-decode-engineering": {
+          "bytes": 14150240,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-diagnostic-cpu-v228-v1/target/debug/ferric-qwen3-finite-projection-residual-decode-engineering",
+          "sha256": "254073d5ad1379d5a37e9e935854ebaae4f9b7a43b90595733c8c5178c2c3458"
+        },
+        "ferric-qwen3-finite-projection-residual-decode-host-engineering": {
+          "bytes": 14178808,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-diagnostic-cpu-v228-v1/target/debug/ferric-qwen3-finite-projection-residual-decode-host-engineering",
+          "sha256": "1b5bc354be9f429a14f29ec535f02dd64e2ff1ceef6e753b2d7871729b7081c3"
+        },
+        "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering": {
+          "bytes": 14176040,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-diagnostic-cpu-v228-v1/target/debug/ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering",
+          "sha256": "e4d28d10c1f7cda45ff34fc4acd28a639be2201cc4ce39a69c6d2c7e0d914e34"
+        },
+        "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering": {
+          "bytes": 14179560,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-diagnostic-cpu-v228-v1/target/debug/ferric-qwen3-finite-projection-residual-decode-shared-host-engineering",
+          "sha256": "ff4efda35b7a391e40d2ec8b632318ee5208188ccd276892639703da4313c665"
+        },
+        "ferric-qwen3-guarded-mlp-full2303-engineering": {
+          "bytes": 13928320,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-diagnostic-cpu-v228-v1/target/debug/ferric-qwen3-guarded-mlp-full2303-engineering",
+          "sha256": "66e0968dfa1cf84f6bff0f553dea545945fc3c7d77baa639eaac2168294c9c5d"
+        },
+        "ferric-qwen3-guarded-mlp-readiness-engineering": {
+          "bytes": 14397976,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-parent-diagnostic-cpu-v228-v1/target/debug/ferric-qwen3-guarded-mlp-readiness-engineering",
+          "sha256": "84fb1d82a7e598e393d7a02642b6f001c4ac85222da621c4d2a50b3be1ad74d2"
+        }
+      },
+      "export_manifest": {
+        "bytes": 62497,
+        "sha256": "8184f01f0471674311fd6236bf7fa3ed2b5c01d858f654869ab2f67c575cb5d8"
+      },
+      "failed_attempts_credited": false,
+      "failure_preserved": false,
+      "focused_reruns": {},
+      "inventory_names": 1104,
+      "mode": "diagnostic",
+      "new_named_tests": 46,
+      "original_member_count": 364,
+      "primary_or_selected": {
+        "kind": "selected_parent_scopes",
+        "scopes": {
+          "ferric-qwen3-finite-long-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-mlp-tiles-comparison-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-device-clock-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-device-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-host-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-decode-host-policy-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-layer-capture-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-prefix-layer-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-decode-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-decode-host-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-decode-ordered-host-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-decode-shared-host-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-projection-residual-layer-capture-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-queued-mlp-comparison-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-queued-projection-comparison-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-rearm-smoke-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-tiles-decode-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "ferric-qwen3-finite-two-forward-engineering-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "full2303-bin-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 4
+          },
+          "guarded-bin-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-added-0": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-1": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-2": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-3": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-4": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-5": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-6": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-added-7": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1
+          },
+          "parent-client": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 300
+          },
+          "parent-clock-data": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-currentness-duration-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "parent-decode-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 10
+          },
+          "parent-device-data": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 12
+          },
+          "parent-forward-phase-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 17
+          },
+          "parent-full2303-bank-census-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 16
+          },
+          "parent-full2303-scoped-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 5
+          },
+          "parent-full2303-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 4
+          },
+          "parent-guarded-host": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 11
+          },
+          "parent-guarded-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "parent-host-data-v1": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-host-data-v2": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "parent-layer-phase-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 16
+          },
+          "parent-long-guarded-sequence": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 16
+          },
+          "parent-long-guarded-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 13
+          },
+          "parent-long-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 8
+          },
+          "parent-old-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 5
+          },
+          "parent-prefix-decode-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "parent-prefix-layer-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 8
+          },
+          "parent-projection-host-report": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 16
+          },
+          "parent-projection-residual-decode-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-projection-residual-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 4
+          },
+          "parent-projection-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-queued-mlp-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 6
+          },
+          "parent-readiness-bank-scoped-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 28
+          },
+          "parent-readiness-scoped-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 7
+          },
+          "parent-readiness-shared-policy": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 6
+          },
+          "parent-readiness-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 4
+          },
+          "parent-smoke-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 8
+          },
+          "parent-tiles-wire": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 9
+          },
+          "readiness-bin-tests": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 10
+          }
+        },
+        "totals": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 641
+        }
+      },
+      "project_source_closure": 2138,
+      "raw_bodies": 353,
+      "role": "parent",
+      "source_closure": 2141,
+      "source_map": {
+        "bytes": 873993,
+        "sha256": "30a55c3955c7d43833652c9c7cf4c10ce4b6f1589b7573da815340a9cf7651c2"
+      },
+      "supervised_steps": 70,
+      "terminal_receipt": {
+        "bytes": 7627326,
+        "sha256": "22cf285a8c3caef27c366424c817e0126d1df80dccc7dea36814f01281744078"
+      },
+      "test_scopes": 61,
+      "unique_across_scopes_claim": false
+    },
+    "runtime-default-cpu-v1.tar.gz": {
+      "archive": {
+        "bytes": 1677214,
+        "sha256": "08e03fff9d82344c3262d3f40bdf931630f25aac264efa3a7621365784629bc0"
+      },
+      "artifact_live_rehash_by_assembler": false,
+      "attempt": "v1",
+      "cpu_passed": true,
+      "doc_tests": {
+        "interface-doc-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 10
+        }
+      },
+      "elapsed_seconds": 76.87359555298463,
+      "elf_bodies_archived": false,
+      "elf_products": {
+        "debug-trap-test": {
+          "bytes": 1051520,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-default-cpu-v228-v1/target/debug/deps/kfd_debug_trap_live-bae73a537360105c",
+          "sha256": "90ef2466ced611e276fc27a89ee35f1e4901bba6055b159a38b243606bbb79d0"
+        },
+        "engineering-worker-test": {
+          "bytes": 1051584,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-default-cpu-v228-v1/target/debug/deps/fe2o3_gfx950_engineering_worker-798dcc99f7ec8797",
+          "sha256": "d9028e7766beb5c3ca8e3de5848360ea5b0613d100428d01afc6e89dbb559846"
+        },
+        "guarded-facade-test": {
+          "bytes": 1052768,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-default-cpu-v228-v1/target/debug/deps/guarded_mlp_facade_v1-e9e263317025a672",
+          "sha256": "0a67e4b8a473b81b53db5c69c2f76face76a17081b8ce92cdca75e6359059797"
+        },
+        "kfd-lib": {
+          "bytes": 12153040,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-default-cpu-v228-v1/target/debug/deps/fe2o3_kfd-11448a9880d552d9",
+          "sha256": "48d5894bb7a42263be3883f7ba5c10ce98e598cb275151f4152b82aebfc495f9"
+        },
+        "telemetry-env-test": {
+          "bytes": 1429504,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-default-cpu-v228-v1/target/debug/deps/target_debug_telemetry_env_v1-9e3f10bafd572490",
+          "sha256": "36da5b35b18a19c592b0fc5011aa15a38cf36c545d08b2934b8d004e2ecc4ad9"
+        },
+        "telemetry-test": {
+          "bytes": 1421792,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-default-cpu-v228-v1/target/debug/deps/target_debug_telemetry_v1-e8d864b2f1065cd0",
+          "sha256": "245941c5e73a7171b765df1aa80333b12ce8069c7d81da412075aa71fdc08079"
+        }
+      },
+      "export_manifest": {
+        "bytes": 18233,
+        "sha256": "f4ecd68a80c0b8e2a0c8d371cb5de36c315a86e634aa3dd8d6dceb3f2702d92f"
+      },
+      "failed_attempts_credited": false,
+      "failure_preserved": false,
+      "focused_reruns": {
+        "arena-memory-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 2
+        },
+        "arena-reuse-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 7
+        },
+        "mixed-bank-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 22
+        },
+        "peer-read-pair-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 7
+        },
+        "retained-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 20
+        },
+        "scoped-checkpoint-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 16
+        },
+        "scoped-group-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 1
+        },
+        "scoped-layer-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 14
+        },
+        "scoped-tail-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 15
+        },
+        "terminal-pair-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 9
+        }
+      },
+      "inventory_names": 1188,
+      "mode": "default",
+      "new_named_tests": 0,
+      "original_member_count": 114,
+      "primary_or_selected": {
+        "kind": "primary_full_suite",
+        "scopes": {
+          "kfd-tests": {
+            "failed": 0,
+            "ignored": 8,
+            "passed": 1180
+          }
+        },
+        "totals": {
+          "failed": 0,
+          "ignored": 8,
+          "passed": 1180
+        }
+      },
+      "project_source_closure": 2138,
+      "raw_bodies": 103,
+      "role": "runtime",
+      "source_closure": 2141,
+      "source_map": {
+        "bytes": 869711,
+        "sha256": "05792054a991a06df9c593024e154b3e69bab88a17418d522f89055e82d4d3fb"
+      },
+      "supervised_steps": 20,
+      "terminal_receipt": {
+        "bytes": 3265278,
+        "sha256": "2878ecc145bda9c556454d618d87de9346a5ddae15e9c1a86be2c1525ac4232a"
+      },
+      "test_scopes": 12,
+      "unique_across_scopes_claim": false
+    },
+    "runtime-diagnostic-cpu-v3.tar.gz": {
+      "archive": {
+        "bytes": 1684605,
+        "sha256": "d653d9bfff1316c0f7c915c269f243bc4a16ad57cccd9ac266ee2ef312640bcb"
+      },
+      "artifact_live_rehash_by_assembler": false,
+      "attempt": "v3",
+      "cpu_passed": true,
+      "doc_tests": {
+        "interface-doc-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 10
+        }
+      },
+      "elapsed_seconds": 74.81124173500575,
+      "elf_bodies_archived": false,
+      "elf_products": {
+        "debug-trap-test": {
+          "bytes": 1051520,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-diagnostic-cpu-v228-v3/target/debug/deps/kfd_debug_trap_live-a58a07bd3152000f",
+          "sha256": "81a1d70a2903193bfd04e462dcda90b3ede750a455f4c56b6d63c31423a7cf11"
+        },
+        "engineering-worker-test": {
+          "bytes": 1051584,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-diagnostic-cpu-v228-v3/target/debug/deps/fe2o3_gfx950_engineering_worker-5a46abb33ed13f07",
+          "sha256": "a8403949a89a74cde443f5d70883788f20972c576f59b6c32f8c61a7d07f239d"
+        },
+        "guarded-facade-test": {
+          "bytes": 1052776,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-diagnostic-cpu-v228-v3/target/debug/deps/guarded_mlp_facade_v1-e87085979130e434",
+          "sha256": "c8c56e7c5ba3207b322fa543f36f2a338b4e20c4a470ae985b2022f05e49d1bf"
+        },
+        "kfd-lib": {
+          "bytes": 12443008,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-diagnostic-cpu-v228-v3/target/debug/deps/fe2o3_kfd-f1c902009db4124a",
+          "sha256": "5c0569b4033544f1fdab435c7b5b7b18a239a20760e75ac11c85da7981cb6986"
+        },
+        "telemetry-env-test": {
+          "bytes": 1430352,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-diagnostic-cpu-v228-v3/target/debug/deps/target_debug_telemetry_env_v1-f5507922f4e493c3",
+          "sha256": "9f34560d66227347a3f511bf856574a4017f7625ad57a2fcfd52c9446de897cd"
+        },
+        "telemetry-test": {
+          "bytes": 1422464,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-runtime-diagnostic-cpu-v228-v3/target/debug/deps/target_debug_telemetry_v1-bc10dd0783c60963",
+          "sha256": "6a6a9014f326888a6045db63bc15078f42332d9945ca02bd36fcaafa28bbc1b2"
+        }
+      },
+      "export_manifest": {
+        "bytes": 18237,
+        "sha256": "b0113cd99e5f3354a9ef019053a8480ce15508cdc8bef90064bd7d3d86b9b8d2"
+      },
+      "failed_attempts_credited": false,
+      "failure_preserved": false,
+      "focused_reruns": {
+        "arena-memory-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 2
+        },
+        "arena-reuse-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 7
+        },
+        "mixed-bank-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 23
+        },
+        "peer-read-pair-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 7
+        },
+        "retained-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 20
+        },
+        "scoped-checkpoint-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 27
+        },
+        "scoped-group-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 1
+        },
+        "scoped-layer-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 20
+        },
+        "scoped-tail-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 15
+        },
+        "terminal-pair-tests": {
+          "failed": 0,
+          "ignored": 0,
+          "passed": 9
+        }
+      },
+      "inventory_names": 1217,
+      "mode": "diagnostic",
+      "new_named_tests": 17,
+      "original_member_count": 114,
+      "primary_or_selected": {
+        "kind": "primary_full_suite",
+        "scopes": {
+          "kfd-tests": {
+            "failed": 0,
+            "ignored": 8,
+            "passed": 1209
+          }
+        },
+        "totals": {
+          "failed": 0,
+          "ignored": 8,
+          "passed": 1209
+        }
+      },
+      "project_source_closure": 2138,
+      "raw_bodies": 103,
+      "role": "runtime",
+      "source_closure": 2141,
+      "source_map": {
+        "bytes": 876134,
+        "sha256": "4a9a3370f55ce81e7ce4e8367f38922a4fd69e274f579349f5f66564c4f3a1e1"
+      },
+      "supervised_steps": 20,
+      "terminal_receipt": {
+        "bytes": 3301993,
+        "sha256": "5d1d0d6ac7af9cf94a5883486d41f61812238ac1ae593f26830e3113c1673d13"
+      },
+      "test_scopes": 12,
+      "unique_across_scopes_claim": false
+    },
+    "runtime-diagnostic-failed-v1.tar.gz": {
+      "archive": {
+        "bytes": 1631261,
+        "sha256": "8aa2b56c53afd622c7c8934abeceb69909927860075327957f31eb548b450fb4"
+      },
+      "attempt": "v1",
+      "cpu_passed": false,
+      "elapsed_seconds": 69.80680595198646,
+      "export_manifest": {
+        "bytes": 8739,
+        "sha256": "33693c74c79c4ee5906c66d1a619619464da2dd7bb08ff6cc7a3cfff2010f5d4"
+      },
+      "failed_attempts_credited": false,
+      "failure": "RuntimeError('kfd-tests did not finish naturally/reaped/successfully')",
+      "failure_preserved": true,
+      "mode": "diagnostic",
+      "original_member_count": 54,
+      "project_source_closure": 2138,
+      "raw_bodies": 43,
+      "role": "runtime",
+      "source_closure": 2141,
+      "source_map": {
+        "bytes": 876134,
+        "sha256": "764a391bb39f2fd75f4f83b9b370beb97e13e0f589a9e638b10cdff163d8c410"
+      },
+      "supervised_steps": 8,
+      "terminal_receipt": {
+        "bytes": 3003633,
+        "sha256": "89a95768d36e4dac9fcd61335ba10cd10b0671c4d53584290b4b0ad1c42567d1"
+      }
+    },
+    "runtime-diagnostic-failed-v2.tar.gz": {
+      "archive": {
+        "bytes": 1631235,
+        "sha256": "df61a5bad2738af5e4824f7a25dbee26f22800793f447c6143fe928674137821"
+      },
+      "attempt": "v2",
+      "cpu_passed": false,
+      "elapsed_seconds": 70.22272336110473,
+      "export_manifest": {
+        "bytes": 8739,
+        "sha256": "c84f721d620a1b1dcf9122f53352982f1165dc01b8f8c43753f6a4aedfd20282"
+      },
+      "failed_attempts_credited": false,
+      "failure": "RuntimeError('malformed worker libtest result')",
+      "failure_preserved": true,
+      "mode": "diagnostic",
+      "original_member_count": 54,
+      "project_source_closure": 2138,
+      "raw_bodies": 43,
+      "role": "runtime",
+      "source_closure": 2141,
+      "source_map": {
+        "bytes": 876134,
+        "sha256": "a69d999c5a26f912050550737dc47285f4e9d9814e24d4d74fcbfe4dc8181859"
+      },
+      "supervised_steps": 8,
+      "terminal_receipt": {
+        "bytes": 3003608,
+        "sha256": "4434ce2f285cd548b5ed16be7261c005657429784b46e22dc129ec87ae7a0a69"
+      }
+    },
+    "source-v2.tar.gz": {
+      "archive": {
+        "bytes": 1782989,
+        "sha256": "1e3cb071edaa860622da75e08a5b6266245453ea88e72b4d2899dd47240bba26"
+      },
+      "cpu_qualification_claim": false,
+      "export_manifest": {
+        "bytes": 14788,
+        "sha256": "1597038eed94ac22c4dbeaa6dfb177c2ef428cbaa35c603440fd174348a1d072"
+      },
+      "generated_patch_count": 2,
+      "original_member_count": 68
+    },
+    "worker-default-cpu-v1.tar.gz": {
+      "archive": {
+        "bytes": 1621178,
+        "sha256": "bba00866eb5f6446951d0def7e4a4dd3c8e77081540c4c8df3de3229770d49a9"
+      },
+      "artifact_live_rehash_by_assembler": false,
+      "attempt": "v1",
+      "cpu_passed": true,
+      "doc_tests": {},
+      "elapsed_seconds": 122.61828143906314,
+      "elf_bodies_archived": false,
+      "elf_products": {
+        "worker": {
+          "bytes": 6549736,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-default-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+          "sha256": "c0d74228de4bc5b71e6b850e3c386a249f86a1b9cbc9453d559018f66fe5d1fa"
+        },
+        "worker-bin-test": {
+          "bytes": 1051648,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-default-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-55d10db5a26152b5",
+          "sha256": "5e535420aeaa09d3be6c40bb8201dbf87e2e5bd44e17b4d5b821603818f60247"
+        },
+        "worker-lib": {
+          "bytes": 13189896,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-default-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-dd1061c92e902f34",
+          "sha256": "8fe1e0aebde7b9f0b8be12b5aec015b81941201341cb4339b958f501c1a14715"
+        },
+        "worker-readiness-test": {
+          "bytes": 1131000,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-default-cpu-v228-v1/target/debug/deps/readiness_cli-5aa84519caed75b7",
+          "sha256": "99d640569bf4ad890c986e4b959bdfa457216bcd78a8a6f8f3950066befc892b"
+        },
+        "worker-wire-test": {
+          "bytes": 2402648,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-default-cpu-v228-v1/target/debug/deps/shared_wire-94a87557b618d200",
+          "sha256": "fb1f41b853f4e83c21a5e14b6a6429d0e4ad372abde088df450afb75fc003be2"
+        }
+      },
+      "export_manifest": {
+        "bytes": 8756,
+        "sha256": "286eead9bd725e1e1aaecb83ef4103ac02a229024d0c233b60fe33a57be18665"
+      },
+      "failed_attempts_credited": false,
+      "failure_preserved": false,
+      "focused_reruns": {},
+      "inventory_names": 842,
+      "mode": "default",
+      "new_named_tests": 0,
+      "original_member_count": 54,
+      "primary_or_selected": {
+        "kind": "primary_full_suite",
+        "scopes": {
+          "worker-tests": {
+            "failed": 0,
+            "ignored": 4,
+            "passed": 838
+          }
+        },
+        "totals": {
+          "failed": 0,
+          "ignored": 4,
+          "passed": 838
+        }
+      },
+      "project_source_closure": 2138,
+      "raw_bodies": 43,
+      "role": "worker",
+      "source_closure": 2141,
+      "source_map": {
+        "bytes": 867570,
+        "sha256": "af9972d032afcdf9966db3f3a7466ceedc080e79e33f9a52d1e49ba5aa716e6d"
+      },
+      "supervised_steps": 8,
+      "terminal_receipt": {
+        "bytes": 3043729,
+        "sha256": "6f7daedb4e4480d6d4b5f2f40ab35c8ce12f56c84fb0967ea41222eb264f80b7"
+      },
+      "test_scopes": 1,
+      "unique_across_scopes_claim": false
+    },
+    "worker-diagnostic-cpu-v1.tar.gz": {
+      "archive": {
+        "bytes": 1629721,
+        "sha256": "8e8ab47c2c51cfc09d9570c994bb1211ad0430d44c37e2d27bd11050add5ce99"
+      },
+      "artifact_live_rehash_by_assembler": false,
+      "attempt": "v1",
+      "cpu_passed": true,
+      "doc_tests": {},
+      "elapsed_seconds": 122.90094673400745,
+      "elf_bodies_archived": false,
+      "elf_products": {
+        "worker": {
+          "bytes": 6683640,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-diagnostic-cpu-v228-v1/target/debug/ferric-tp-peer-finite-engineering-worker-v1",
+          "sha256": "a907e189118a35842f45c8c5f0bb43cc37c540e862d274386184ab4ce85af784"
+        },
+        "worker-bin-test": {
+          "bytes": 1051648,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-diagnostic-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-c50b9549a9c43919",
+          "sha256": "6007740b061ad176128e5134125a77b9dbda9aeb9a20612823581927f1fda84f"
+        },
+        "worker-lib": {
+          "bytes": 14051120,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-diagnostic-cpu-v228-v1/target/debug/deps/ferric_tp_peer_finite_engineering_worker_v1-b35dbeadca227afb",
+          "sha256": "118570edde6ce4fbacfd5d8be3086100a7f986d8bc5f3245d37ad6e79f26e6a3"
+        },
+        "worker-readiness-test": {
+          "bytes": 1131000,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-diagnostic-cpu-v228-v1/target/debug/deps/readiness_cli-ba5ef7240215c8bb",
+          "sha256": "4b10d0b508c9c3d2f3ecea1b2a5b236432565d378ff0fe44e26e1d57f24f7f36"
+        },
+        "worker-wire-test": {
+          "bytes": 2412712,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-worker-diagnostic-cpu-v228-v1/target/debug/deps/shared_wire-d8e6eb1dade1c148",
+          "sha256": "b4b708cf87ac041f564f0caa6d78b0c9bf9d5d01d615a91080224ebc30c9a25c"
+        }
+      },
+      "export_manifest": {
+        "bytes": 8760,
+        "sha256": "599d990558e4b594686180d2d07c8891a9b5a8f40a44a46463aa609c69aa179c"
+      },
+      "failed_attempts_credited": false,
+      "failure_preserved": false,
+      "focused_reruns": {},
+      "inventory_names": 915,
+      "mode": "diagnostic",
+      "new_named_tests": 58,
+      "original_member_count": 54,
+      "primary_or_selected": {
+        "kind": "primary_full_suite",
+        "scopes": {
+          "worker-tests": {
+            "failed": 0,
+            "ignored": 4,
+            "passed": 911
+          }
+        },
+        "totals": {
+          "failed": 0,
+          "ignored": 4,
+          "passed": 911
+        }
+      },
+      "project_source_closure": 2138,
+      "raw_bodies": 43,
+      "role": "worker",
+      "source_closure": 2141,
+      "source_map": {
+        "bytes": 873993,
+        "sha256": "767da06dcaeb617b1f4555b354b4125ea34f0ad315d1ad43aa3096e3d381326b"
+      },
+      "supervised_steps": 8,
+      "terminal_receipt": {
+        "bytes": 3090092,
+        "sha256": "b5a0c018ed45b739b535901831e6914a68c7c17dee202a4c67077075cea10c7d"
+      },
+      "test_scopes": 1,
+      "unique_across_scopes_claim": false
+    }
+  },
+  "assembler": {
+    "bytes": 34313,
+    "sha256": "8f1594861473fd84b884c3ababcfff577514f8864ac5b8f4cbd2c2aee3b1342b"
+  },
+  "authored_and_tested_on": "mi350",
+  "cpu_qualification_only": true,
+  "currentness_policy_changed": false,
+  "documents": {
+    "adapters/tp-peer-finite-engineering-worker-v1/README.md": {
+      "bytes": 11896,
+      "sha256": "bcbea4cb0b5649950c3bc6318eb9f3b866466602dc9362082a157866278416dd"
+    },
+    "docs/GFX950_COMMUNITY_DEMO_V1.md": {
+      "bytes": 13748,
+      "sha256": "f09d11191f1da388297ef7c23a9352db5ea1ebbb07e5584f8944cab1613efbd8"
+    },
+    "docs/GFX950_FINITE_PREFIX_PROGRESS_V1.md": {
+      "bytes": 163491,
+      "sha256": "019998587d5708714a8deebe159c20aeecd98ae082d2d3e0ccddd06ac4bba1f8"
+    },
+    "qualification/guarded-mlp-layer-phases-v1/README.md": {
+      "bytes": 10339,
+      "sha256": "d4bfda9f6542499c8d317beeadf1ce07952c88323aace259eff01093afbc462b"
+    }
+  },
+  "failed_attempts_credited": false,
+  "failed_attempts_retained": 2,
+  "ferric_branch": "codex/p227-finite-prefix-integration-v1",
+  "full2303_deadline_changed": false,
+  "full2303_executed": false,
+  "full2303_feasibility": false,
+  "gpu_execution": false,
+  "kernel_math_changed": false,
+  "native_admission": false,
+  "numerical_acceptance": false,
+  "performance_claim": false,
+  "predecessor_proposal": {
+    "bytes": 429829,
+    "sha256": "7ecf02cba32b1435f1e01a0bd6ed100961f68495067419d5935bdc73e6a27c6a"
+  },
+  "proposal": {
+    "bytes": 440584,
+    "sha256": "937393856017d088991e20df697b1b12df449b08a9151e65a968dbdf8603491f"
+  },
+  "publication_input": {
+    "bytes": 4337,
+    "sha256": "b2b75a748772a0ab370de5f2a36379894b7ceda92d93677a50c0781f32f167b1"
+  },
+  "runtime_dependency": {
+    "branch": "codex/p228-finite-runtime-integration-v1",
+    "commit": "bf8b33dcb0f40a4781f7f3ac5e76f6fe6d4c5fd5",
+    "git_network_verification_by_assembler": false,
+    "pushed_attestation_supplied_by_root": true
+  },
+  "runtime_tests_repeated": true,
+  "schema": "ferric-readiness40-layer-phases-checkpoint-v1",
+  "source_census": {
+    "ferric": 1305,
+    "project": 2138,
+    "qualification_with_helpers": 2141,
+    "runtime": 833,
+    "worker": 242
+  },
+  "source_integrated_by_assembler": false,
+  "source_overlay": {
+    "cumulative_patches_must_not_be_blindly_applied": true,
+    "cumulative_paths": 30,
+    "cumulative_reconstruction": {
+      "fe2o3": {
+        "crates/fe2o3-kfd/src/engineering_gfx950.rs": {
+          "bytes": 83698,
+          "sha256": "ed9275235073b4d0e74732ecd385c5bdd35ea6e95f44f4df33c68aedc7c6167f"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs": {
+          "bytes": 36313,
+          "sha256": "247b9b8a55edfad138f1b1968b294923b951631416c05933eee51801545f86a1"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_duration_v1_tests.rs": {
+          "bytes": 9348,
+          "sha256": "d1ab5e3243b5bd603439b6e59eb8fbaeb14037e45e2d622c22ab40b1464be541"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs": {
+          "bytes": 17626,
+          "sha256": "80fc1e494a9afcbda658b2da7b6a21f57a4ec50869f6fd251f522093dc595b22"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1_tests.rs": {
+          "bytes": 35412,
+          "sha256": "87e3db7a53c98cac64f5036747cb6ae761263dfa338207343ccdba25a2f7a400"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_layer_duration_v1.rs": {
+          "bytes": 3781,
+          "sha256": "491c10e1f889a4708151e57fabc02e109a4b7596260e004e5017a64754ce2250"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_layer_duration_v1_tests.rs": {
+          "bytes": 4235,
+          "sha256": "63309aeb7597d322313523c7cd79254c52ce6bf52b3acc6456b88c11c2a00866"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_census_layer_v1.rs": {
+          "bytes": 5050,
+          "sha256": "0d82d2aac308c43ff60d63f24b7d44be336ec8ef2e53118f943493bdb0608ae0"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_duration_v1_tests.rs": {
+          "bytes": 6368,
+          "sha256": "6ef93690c2f06337e26342cc6a952065af23b47fbad27d527757c1961872a2b3"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1.rs": {
+          "bytes": 18100,
+          "sha256": "8cf3772d7f2d14843f4b717710b40dc8ce873d70cdeea8c7b400ccc4da4e3c17"
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1_tests.rs": {
+          "bytes": 5903,
+          "sha256": "dc9fc6f16769f30978f8f70d18f80c880271fbcaabc622833d4306ba5cbc169c"
+        },
+        "crates/fe2o3-kfd/src/lib.rs": {
+          "bytes": 21522,
+          "sha256": "3f7b92431bdbe8b36031a5e20aa307d6ac19c30fcb44e76d3e490e4ebf8f8982"
+        }
+      },
+      "ferric": {
+        "adapters/m1-engineering-execution-v1/src/lib.rs": {
+          "bytes": 92789,
+          "sha256": "0f04ee3b7db7ea07a128fa36f8e75fd2f25987b37a7cecb401470b326fac3267"
+        },
+        "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_census_tail.rs": {
+          "bytes": 2188,
+          "sha256": "0cd9ef84dbd8d93cd6a97946a40a29b1c99ef76a41aa28e2002378f69c97ee47"
+        },
+        "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_census_tail_tests.rs": {
+          "bytes": 24778,
+          "sha256": "6086ecb14c10a3bd04b6c60d42a7ccb122ab9bbee33150e8f12fc52c68f48b51"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_forward_durations_v1.rs": {
+          "bytes": 6869,
+          "sha256": "b2c1e3b46e0c04bb58b7c30ffbc188622fa8aa773166d61a55da4a1f7f68ee46"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_forward_durations_v1_tests.rs": {
+          "bytes": 15778,
+          "sha256": "01e82dc4a878fa54ee72105e43915f84c19fc281a1173362712aefd48e431dad"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_layer_durations_v2.rs": {
+          "bytes": 9458,
+          "sha256": "43edb4e62f7a4db52abe7ee340ec9b20c63bb87e6a203fc4c750aedc928cdcfb"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_layer_durations_v2_tests.rs": {
+          "bytes": 16405,
+          "sha256": "0bf2dcefbf8648cb037438ba1a4d2ccbd0ad8b6c83b76cbf4a347473501879f3"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2.rs": {
+          "bytes": 7924,
+          "sha256": "42ffbbdfb2400e9f78ee27068ddf23c9cb917e0d18f07f834c84b294800ef79d"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2_tests.rs": {
+          "bytes": 12756,
+          "sha256": "cc8489b36eab49af1ba437e362ef6babc6185f6a76a2b99cd78ff786e523b517"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2_timing.rs": {
+          "bytes": 2294,
+          "sha256": "e0ff1826057b47a0e70870dc85a317d1d3060a28f568ab15a9b456893b365d79"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/guarded_mlp_long_sequence_v2_timing_tests.rs": {
+          "bytes": 11379,
+          "sha256": "fe2bba1b349fc10170a985e4b2d1c7e2ad817501b696b0a5718ac74d476f53e0"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs": {
+          "bytes": 3587,
+          "sha256": "43de6c6fa0306454b7bd40a4f729bc945b3403582d94c310a0ab1030d89ab37a"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1.rs": {
+          "bytes": 30718,
+          "sha256": "f8a3fa7ecf6ca15d81fbe769be8759324f3de07a5c97caeeb45ab2c19351620b"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs": {
+          "bytes": 34660,
+          "sha256": "673618262256ee2c8f71ec12927b2d833f7190d41cecc4fd459ff3b1acc77e7b"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_duration_v1.rs": {
+          "bytes": 14666,
+          "sha256": "dd11dc25cf71673b70cfee573c5c779604182d89b2df9f6f838217a69bebc53b"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_duration_v1_tests.rs": {
+          "bytes": 17916,
+          "sha256": "a525c2486a515f1a70056c28026a490f7fdfc26e004764ede084255362607885"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs": {
+          "bytes": 47666,
+          "sha256": "3ab7980e2e948b19bfb12457dd74ab43488b9ff81eb47dec5679ea717a964201"
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_census_v1.rs": {
+          "bytes": 12317,
+          "sha256": "9815d2c33232d09190caa411d1d145be007bbca9528dc568ef9f4a340e5551ae"
+        }
+      }
+    },
+    "live_delta_against_predecessor": {
+      "fe2o3": {
+        "crates/fe2o3-kfd/src/engineering_gfx950.rs": {
+          "after": {
+            "bytes": 83698,
+            "sha256": "ed9275235073b4d0e74732ecd385c5bdd35ea6e95f44f4df33c68aedc7c6167f"
+          },
+          "before": {
+            "bytes": 83574,
+            "sha256": "6906931207c551703d4e2ae15fd359ce233172e903fd481b84a3ba837e903538"
+          }
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer.rs": {
+          "after": {
+            "bytes": 36313,
+            "sha256": "247b9b8a55edfad138f1b1968b294923b951631416c05933eee51801545f86a1"
+          },
+          "before": {
+            "bytes": 36164,
+            "sha256": "90463c8ad6f6bc54c2024104dd48a00f5cae7bfe07dab8ebf06c82ad2f4171f5"
+          }
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_duration_v1_tests.rs": {
+          "after": {
+            "bytes": 9348,
+            "sha256": "d1ab5e3243b5bd603439b6e59eb8fbaeb14037e45e2d622c22ab40b1464be541"
+          },
+          "before": null
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1.rs": {
+          "after": {
+            "bytes": 17626,
+            "sha256": "80fc1e494a9afcbda658b2da7b6a21f57a4ec50869f6fd251f522093dc595b22"
+          },
+          "before": {
+            "bytes": 15452,
+            "sha256": "2ba6221db544e03a0f21607bb8d399407ed01f3050eccc7225a6ddcb2f92f714"
+          }
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_combined_mlp_paired_v1_tests.rs": {
+          "after": {
+            "bytes": 35412,
+            "sha256": "87e3db7a53c98cac64f5036747cb6ae761263dfa338207343ccdba25a2f7a400"
+          },
+          "before": {
+            "bytes": 35256,
+            "sha256": "bd05c6d9a51d1595a354548fddfb9f992b645a0dfb8abcc8f078e1fd745353ce"
+          }
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_layer_duration_v1.rs": {
+          "after": {
+            "bytes": 3781,
+            "sha256": "491c10e1f889a4708151e57fabc02e109a4b7596260e004e5017a64754ce2250"
+          },
+          "before": null
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_layer_duration_v1_tests.rs": {
+          "after": {
+            "bytes": 4235,
+            "sha256": "63309aeb7597d322313523c7cd79254c52ce6bf52b3acc6456b88c11c2a00866"
+          },
+          "before": null
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_census_layer_v1.rs": {
+          "after": {
+            "bytes": 5050,
+            "sha256": "0d82d2aac308c43ff60d63f24b7d44be336ec8ef2e53118f943493bdb0608ae0"
+          },
+          "before": {
+            "bytes": 4729,
+            "sha256": "c511297726e0fd16f9d2d3db4c1dac663a2f9e41593a5bf9258b61c7cb23040b"
+          }
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_duration_v1_tests.rs": {
+          "after": {
+            "bytes": 6368,
+            "sha256": "6ef93690c2f06337e26342cc6a952065af23b47fbad27d527757c1961872a2b3"
+          },
+          "before": null
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1.rs": {
+          "after": {
+            "bytes": 18100,
+            "sha256": "8cf3772d7f2d14843f4b717710b40dc8ce873d70cdeea8c7b400ccc4da4e3c17"
+          },
+          "before": {
+            "bytes": 14052,
+            "sha256": "46ba745a0aebfdabf21dc9b765d4b3d4847268cb03185aec2337e28268b554b7"
+          }
+        },
+        "crates/fe2o3-kfd/src/engineering_gfx950_peer_scoped_layer_v1_tests.rs": {
+          "after": {
+            "bytes": 5903,
+            "sha256": "dc9fc6f16769f30978f8f70d18f80c880271fbcaabc622833d4306ba5cbc169c"
+          },
+          "before": {
+            "bytes": 5754,
+            "sha256": "d8d71780e9b613be1f0e5bbdc0269523bc30ef05dcb8679825586498d4b43c73"
+          }
+        },
+        "crates/fe2o3-kfd/src/lib.rs": {
+          "after": {
+            "bytes": 21522,
+            "sha256": "3f7b92431bdbe8b36031a5e20aa307d6ac19c30fcb44e76d3e490e4ebf8f8982"
+          },
+          "before": {
+            "bytes": 21319,
+            "sha256": "f9ad5b5e36ba3efa01f3f8ed368b380b2af120b6b3d9ce838e5ce261ee8d7f5b"
+          }
+        }
+      },
+      "ferric": {
+        "adapters/m1-engineering-execution-v1/src/lib.rs": {
+          "after": {
+            "bytes": 92789,
+            "sha256": "0f04ee3b7db7ea07a128fa36f8e75fd2f25987b37a7cecb401470b326fac3267"
+          },
+          "before": {
+            "bytes": 92557,
+            "sha256": "70251695d768eda995a7f848e3ce7a11dc6b8a644f78192cdb156d9c8b354394"
+          }
+        },
+        "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_census_tail.rs": {
+          "after": {
+            "bytes": 2188,
+            "sha256": "0cd9ef84dbd8d93cd6a97946a40a29b1c99ef76a41aa28e2002378f69c97ee47"
+          },
+          "before": {
+            "bytes": 2190,
+            "sha256": "fe4a8f7ce4fc9d3b951244e5f406458b3fad19c7cd50543d9beeec05c76c85aa"
+          }
+        },
+        "adapters/m1-engineering-execution-v1/src/tp_finite_client/long/readiness_bank_scoped_census_tail_tests.rs": {
+          "after": {
+            "bytes": 24778,
+            "sha256": "6086ecb14c10a3bd04b6c60d42a7ccb122ab9bbee33150e8f12fc52c68f48b51"
+          },
+          "before": {
+            "bytes": 20434,
+            "sha256": "ac2e14054e00ff4bba6db1eccf68d8f364a8a0c119ab9d547bfc4842acf68c7a"
+          }
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_layer_durations_v2.rs": {
+          "after": {
+            "bytes": 9458,
+            "sha256": "43edb4e62f7a4db52abe7ee340ec9b20c63bb87e6a203fc4c750aedc928cdcfb"
+          },
+          "before": null
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/finite_guarded_mlp_readiness_layer_durations_v2_tests.rs": {
+          "after": {
+            "bytes": 16405,
+            "sha256": "0bf2dcefbf8648cb037438ba1a4d2ccbd0ad8b6c83b76cbf4a347473501879f3"
+          },
+          "before": null
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/lib.rs": {
+          "after": {
+            "bytes": 3587,
+            "sha256": "43de6c6fa0306454b7bd40a4f729bc945b3403582d94c310a0ab1030d89ab37a"
+          },
+          "before": {
+            "bytes": 3465,
+            "sha256": "16da1c8cd7467efcd1e5f25847af1d705fd3999964e513156b69cdb3cba91c00"
+          }
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1.rs": {
+          "after": {
+            "bytes": 30718,
+            "sha256": "f8a3fa7ecf6ca15d81fbe769be8759324f3de07a5c97caeeb45ab2c19351620b"
+          },
+          "before": {
+            "bytes": 30724,
+            "sha256": "b39d68fbda548f8ef82799b6528295606216a34ed95d59b72286847bef3b20da"
+          }
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_cli_v1_tests.rs": {
+          "after": {
+            "bytes": 34660,
+            "sha256": "673618262256ee2c8f71ec12927b2d833f7190d41cecc4fd459ff3b1acc77e7b"
+          },
+          "before": {
+            "bytes": 32413,
+            "sha256": "f3fdbf64b19b6412ef88ea056c18519cce1e77c0de322dc31151a8eac9a940dd"
+          }
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_duration_v1.rs": {
+          "after": {
+            "bytes": 14666,
+            "sha256": "dd11dc25cf71673b70cfee573c5c779604182d89b2df9f6f838217a69bebc53b"
+          },
+          "before": {
+            "bytes": 11899,
+            "sha256": "267197adba52693e65875fbb7c9adcf2fe301585279979557c3d4ca6e796502b"
+          }
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_duration_v1_tests.rs": {
+          "after": {
+            "bytes": 17916,
+            "sha256": "a525c2486a515f1a70056c28026a490f7fdfc26e004764ede084255362607885"
+          },
+          "before": {
+            "bytes": 9843,
+            "sha256": "1c1a85cfb6742fafbb0db27873049eb778c1601e7331de95f5377a0127b06ada"
+          }
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/native_guarded_mlp_readiness_v1.rs": {
+          "after": {
+            "bytes": 47666,
+            "sha256": "3ab7980e2e948b19bfb12457dd74ab43488b9ff81eb47dec5679ea717a964201"
+          },
+          "before": {
+            "bytes": 47213,
+            "sha256": "94ec56ee506402a65d28ebcf0db4c567ca5d099c05db6981fd60900082abd7a6"
+          }
+        },
+        "adapters/tp-peer-finite-engineering-worker-v1/src/state_roster/guarded_mlp_decode_v1/scoped_census_v1.rs": {
+          "after": {
+            "bytes": 12317,
+            "sha256": "9815d2c33232d09190caa411d1d145be007bbca9528dc568ef9f4a340e5551ae"
+          },
+          "before": {
+            "bytes": 12016,
+            "sha256": "504a6b22e1496c983ea9caaa0743a6dbda2c1c62a8c6638c2a70ad787aed469b"
+          }
+        }
+      }
+    },
+    "live_delta_paths": 24,
+    "predecessor": {
+      "bytes": 429829,
+      "sha256": "7ecf02cba32b1435f1e01a0bd6ed100961f68495067419d5935bdc73e6a27c6a"
+    }
+  },
+  "successful_role_modes": 6,
+  "unique_test_sum_claim": false
+}
