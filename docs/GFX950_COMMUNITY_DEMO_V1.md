@@ -6,6 +6,30 @@ service, accepted full-model decode or a 700 tokens/s result. The measured
 workload is 40 authentic prompt forwards through all 36 layers, with **zero
 generated tokens**.
 
+## Active-Pause Candidate
+
+A new [Scoped active-pause candidate](../qualification/guarded-mlp-active-pause-v1/README.md)
+is retained as an isolated qualification archive, not installed on the runtime
+production branch. It changes three private runtime source paths: the existing
+Scoped pause uses at most 4,096 spin hints toward the same 50-microsecond budget,
+then sleeps a positive remainder. The Full currentness branch retains its old
+sleep. Currentness checks, ownership, kernel arithmetic and deadlines are unchanged.
+
+Both runtime CPU modes pass, with 1,221/1,192 primary tests and eight unchanged
+ignores each; diagnostic/default workers pass 911/838 tests with four unchanged
+ignores each. Diagnostic/default parents pass 641/584 selected invocations
+across 61/58 scopes. All six CPU qualifications have completed. Twelve new
+pause tests run in both runtime modes, not 24 distinct cases.
+
+No candidate GPU run or gain has been observed. The next gate is strict native
+workflow admission, followed by fresh control/candidate/candidate/control
+measurement with matching artifacts,
+the same 40 prompt forwards and historical payload checks, unchanged bounds,
+and explicit CPU/resource cost. Both paired poll and complete warm-forward
+body must improve before promotion. The earlier 30.941303993-second poll
+bucket below includes required checks and device waiting; it is not all
+removable. Full2303, exact 256-output acceptance and 700 tokens/s remain open.
+
 ## Latest Closed-Layer Attribution
 
 The [closed-layer phase diagnostic](../qualification/guarded-mlp-layer-phases-v1/README.md)

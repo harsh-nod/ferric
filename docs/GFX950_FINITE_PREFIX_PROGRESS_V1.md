@@ -6,7 +6,37 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest implementation: the default-off
+Latest candidate: the [Scoped active-pause experiment](../qualification/guarded-mlp-active-pause-v1/README.md)
+is retained as a qualification archive only; runtime production sources remain
+unchanged. Three private runtime paths differ from the qualified closed-layer
+source. The existing Scoped pause uses at most 4,096 spin hints toward the same
+50-microsecond target, sleeping a positive remainder; the Full currentness
+branch keeps its original sleep. This does not widen currentness windows,
+remove checks, change kernel arithmetic or raise any deadline.
+
+Both runtime CPU modes pass: diagnostic 1,221 primary tests in 20 phases and
+75.875883734 seconds; default 1,192 in 20 phases and 72.781956167 seconds, with
+eight unchanged ignores each. Their 131/113 focused repeat invocations and ten
+rustdocs per mode are separate from primary counts. The diagnostic worker
+passes 911 tests with four unchanged ignores in eight phases and 122.739846744
+seconds. The diagnostic parent passes 641 selected invocations across 61 scopes
+from a 1,104-name library inventory, in 70 phases and 462.325766680 seconds.
+The default worker also passes 838 tests with four unchanged ignores in eight
+phases and 121.707246545 seconds. The default parent passes 584 selected
+invocations across 58 scopes from a 1,047-name library inventory, in 67 phases
+and 458.703164435 seconds. All six CPU qualifications are complete. Twelve new
+pause tests are exercised in each runtime mode, not 24 distinct definitions.
+
+No active-pause GPU measurement or performance gain is claimed. The next gate
+is strict native workflow admission; subsequent fresh ABBA cases must preserve the
+40-prompt profile, original payload/semantic checks and 4,000/4,300-second
+native/whole-case bounds. Report CPU/resource consumption with the timing
+comparison; both paired poll and complete warm-forward body must improve.
+The previous 30.941303993 warm poll seconds mix required checks and device
+waiting, not a wholly removable delay. Full2303/256-output and 700 tokens/s
+acceptance and all M0-M7 milestones remain open.
+
+Latest integrated implementation: the default-off
 [closed-layer phase diagnostic](../qualification/guarded-mlp-layer-phases-v1/README.md)
 passes all six MI350 CPU configurations. Runtime primary suites pass
 1,209/1,180 tests with the feature on/off, worker suites pass 911/838, and
@@ -2179,15 +2209,16 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Review a bounded optimization candidate against the measured closed-layer
-   and paired-MLP paths before changing execution policy. The new native
-   attribution identifies 30.941303993 warm seconds in paired poll and
-   18.863720373 seconds in closed prefix work. The source audit must distinguish
-   repeated host work from required currentness, deadline, poison, completion
-   and durability checks; a concrete candidate and its qualification remain
-   pending. Keep callbacks and paired intervals nested, not additive.
-   Do not reduce checks, polls, durability or deadlines on the strength of
-   an attribution bucket, or infer a speedup or removable fraction from it.
+1. Complete strict native workflow admission for the CPU-qualified
+   [active-pause candidate](../qualification/guarded-mlp-active-pause-v1/README.md), then run a fresh
+   control/candidate/candidate/control comparison. Require both lower paired
+   poll time and lower complete warm-forward body time, with CPU/resource
+   consumption reported at its measured scope. The source candidate remains
+   archive-only until measured promotion; do not install it as a production
+   optimization on CPU tests alone. Preserve currentness, deadline, poison,
+   completion and durability checks. The prior 30.941303993-second poll bucket
+   includes device waiting and required host work; it is not a removable
+   fraction. Keep nested callbacks and paired intervals non-additive.
 2. Establish launch feasibility for the CPU-qualified Full2303 route before
    running it on the GPU. The distinct long wire and bounded four-capture
    selection are implemented; readiness still executes only forty prompt

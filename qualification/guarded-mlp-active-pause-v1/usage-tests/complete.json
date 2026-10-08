@@ -1,0 +1,91 @@
+{
+  "actual_archive_read": false,
+  "actual_rusage_read": false,
+  "argv": [
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-native-source-v228-v1/run_usage_tests.py",
+    "fdbc40c116f5943b763100a770fc9c0efa4a0201b7a3b4f45e17518a4ac9313e",
+    "b44ae8a99e43179932174cb2d2f010aa97811511409631ddd5cc4b5186a144f8",
+    "c75f37dcd74b7b7c5419e55805c1203baa6eeb66c7efca359297d2a25667b487"
+  ],
+  "child_processes_started": 0,
+  "controller": {
+    "bytes": 5180,
+    "sha256": "4f68f3bef0bde98806a4c4d07561cc6de03cc07176224f9bdac186961ac609b6"
+  },
+  "elapsed_seconds": 0.09272703807801008,
+  "expected_names": [
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_incomplete_record_rejects_hidden_delta_and_malformed_failure",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_incomplete_sample_is_failure_only_and_preserves_valid_raw_snapshot",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_native_samples_bracket_spawn_and_complete_owned_cleanup_before_save",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_nonzero_cumulative_baseline_is_subtracted_exactly",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_record_rejects_unknown_scope_keys_and_missing_snapshots",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_record_rejects_wrong_delta_values_types_or_fields",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_retainer_checks_current_parent_only_and_preserves_historical_function",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_runner_and_retainer_use_identical_pure_validation",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_sampling_error_or_malformed_kernel_tuple_is_not_coerced",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_sampling_failure_handlers_cannot_bypass_owned_finally",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_snapshot_has_exact_selected_fields_and_ignores_maxrss",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_snapshot_refuses_bad_shape_and_nonexact_numeric_types",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_snapshot_refuses_nonfinite_negative_and_decreasing_values",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_zero_delta_preserves_float_seconds_and_integer_counts"
+  ],
+  "failure": null,
+  "gpu_execution": false,
+  "limits": {
+    "address_space_bytes": 536870912,
+    "affinity": [
+      8,
+      9
+    ],
+    "cpu_seconds": 120,
+    "nice": 10,
+    "wall_seconds": 90
+  },
+  "native_execution": false,
+  "numerical_acceptance": false,
+  "passed": true,
+  "passed_names": [
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_incomplete_record_rejects_hidden_delta_and_malformed_failure",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_incomplete_sample_is_failure_only_and_preserves_valid_raw_snapshot",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_native_samples_bracket_spawn_and_complete_owned_cleanup_before_save",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_nonzero_cumulative_baseline_is_subtracted_exactly",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_record_rejects_unknown_scope_keys_and_missing_snapshots",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_record_rejects_wrong_delta_values_types_or_fields",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_retainer_checks_current_parent_only_and_preserves_historical_function",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_runner_and_retainer_use_identical_pure_validation",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_sampling_error_or_malformed_kernel_tuple_is_not_coerced",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_sampling_failure_handlers_cannot_bypass_owned_finally",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_snapshot_has_exact_selected_fields_and_ignores_maxrss",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_snapshot_refuses_bad_shape_and_nonexact_numeric_types",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_snapshot_refuses_nonfinite_negative_and_decreasing_values",
+    "test_layer_cpu_usage.LayerCpuUsageTests.test_zero_delta_preserves_float_seconds_and_integer_counts"
+  ],
+  "raw": {
+    "stderr": {
+      "bytes": 2529,
+      "sha256": "fa058d168fb2bfc356c3cb0d6ebc5d6f243faa52f8efa37697b80c7cb3327e06"
+    },
+    "stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "schema": "ferric-active-pause-usage-pure-tests-v1",
+  "single_process": true,
+  "source_unchanged": true,
+  "sources": {
+    "layer_retention_tool.py": {
+      "bytes": 50039,
+      "sha256": "b44ae8a99e43179932174cb2d2f010aa97811511409631ddd5cc4b5186a144f8"
+    },
+    "run_layer_model_gpu.py": {
+      "bytes": 46637,
+      "sha256": "fdbc40c116f5943b763100a770fc9c0efa4a0201b7a3b4f45e17518a4ac9313e"
+    },
+    "test_layer_cpu_usage.py": {
+      "bytes": 13294,
+      "sha256": "c75f37dcd74b7b7c5419e55805c1203baa6eeb66c7efca359297d2a25667b487"
+    }
+  },
+  "tests_run": 14
+}
