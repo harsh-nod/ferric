@@ -70,17 +70,17 @@ jobs:
             test "$(stat -c %h "public/$file")" -eq 1
             total=$((total + $(stat -c %s "public/$file")))
           done
-          test "$total" -eq 904145
+          test "$total" -eq 906227
           test "$total" -le 2097152
 
-          # October 7 projection swarm: artifact manifest SHA256: 1f9d852bf9b21908dcae872e93e547f1118895798a8c9ff84531bc21738af2d8.
+          # October 7 scoped same-day comparison: artifact manifest SHA256: cdf8bf40f9b391c0e2513ae5646024055ec33304173d0d84661fa3fae68ddfa3.
           # Validated and staged on mi300x-2; no build or test runs in this deploy-only job.
           sha256sum --check --strict <<'SHA256'
-          ee2fcba689d979e9aee595dcfae1751865d44035b25ed97af5bd30c9b0088091  public/app.js
+          f634e4c1fbc7aaa242a16679cef2ba2bdce052a077e92ed88625312a8bce52fb  public/app.js
           07291c88f57be83ac12bccc73876fb67158ed96ca8efc2e5717d50d98ad9cb69  public/assets/architecture.svg
           5ddc6e2efcaa8eea3fd8f5607cae74813da636f180a34a5ba72cd879e1b6b809  public/assets/mark.svg
           43fe0f336555f2f08740a8538013a80c3d853893ffb88ca9108820b30a9ae7fe  public/data/performance.js
-          b78527150d9d48e365882b342664f7d6350986fd69398965be8f86e6298cc3f1  public/data/project.js
+          0316cacef9eb519b2db14dd50b4ba6a88e0e932bdca28ce125cf5e83a342b846  public/data/project.js
           b71965abbd0e9304327dd2992ae4f930930f26d056730e03e4ccefd8498948b1  public/index.html
           41921ee0f120656ab2b13075077948324e6c56d124497886169dbd20d51fdc58  public/styles.css
           SHA256

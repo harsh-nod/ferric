@@ -73,7 +73,8 @@
   const resident = project.residentCheckpoint;
   const residentProgress = document.querySelector("[data-resident-progress]");
   residentProgress.append(element("p", "performance-scope", resident.scope),
-    element("h3", "", "Current Performance: Width55c Matched HTTP"));
+    ...resident.currentCpuOverview.split("\n\n").slice(0, 2).map((paragraph) => element("p", "", paragraph)),
+    element("h3", "", "Latest Completed Same-Source Pair: Width55c"));
   const matchedWidth = window.FERRIC_PERFORMANCE.matchedHttpWidth55c;
   performanceTable("Width55c same-plan matched HTTP: 30 measured requests per engine",
     ["Engine", "Median TTFT (ms)", "p95 TTFT (ms)", "Median TPOT (ms)", "p95 TPOT (ms)", "Finite output tokens/s"],
@@ -81,7 +82,7 @@
       engine.p95TtftMs.toFixed(3), engine.medianTpotMs.toFixed(3), engine.p95TpotMs.toFixed(3),
       engine.finiteOutputTokensPerSecond.toFixed(3)]), residentProgress);
   residentProgress.append(
-    ...resident.currentCpuOverview.split("\n\n").map((paragraph) => element("p", "", paragraph)),
+    ...resident.currentCpuOverview.split("\n\n").slice(2).map((paragraph) => element("p", "", paragraph)),
     element("h3", "", "Historical a167 source and GPU2 host-residual pair"),
     element("p", "", resident.integration.currentA167HostResidualPair.detail),
     element("p", "performance-scope", "The retained checkpoints below preserve their original dates, source identities, evidence and then-current limitations."),
