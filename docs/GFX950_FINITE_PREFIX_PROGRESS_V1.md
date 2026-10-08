@@ -6,7 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler checkpoint: [canonical helper diagnosis and exact device inlining](../qualification/guarded-mlp-force-inline-reject-v1/README.md)
+Latest compiler checkpoint: [consistent MLP tile-view inlining](../qualification/guarded-mlp-force-inline-accessors-v1/README.md)
+adds 19 AMDGPU-only attributes without changing any method body or signature.
+All 25 methods of the five tile views now use the existing convention.
+The strict provider source pin and new boundary/refusal regressions pass
+the full compiler library (1,330 passed, 24 unchanged ignores) and device
+library (358 passed, no ignores), across 11 clean MI350 CPU phases.
+
+Both fresh V10 compiler attempts still exit naturally with status 1 and no
+HSACO. Their canonical typed/source joins identify the next helper as
+`WaveMlpTileWorkerV2::observations`, not the previous Down input accessor.
+Original commands, source preimages/postimages, complete CPU results and both
+failed compiler attempts are retained. Next is the same narrow annotation
+for the final two borrowed-self accessors, `state()` and `observations()`,
+followed by checked compilation and native validation. No new GPU result,
+numerical acceptance, speedup or milestone closure is claimed.
+
+Previous compiler checkpoint: [canonical helper diagnosis and exact device inlining](../qualification/guarded-mlp-force-inline-reject-v1/README.md)
 adds a bounded canonical reader (seven tests) and binds the original failure
 to `MlpNormTileV2::reject`. One AMDGPU-only force-inline attribute and the
 matching strict 53-file provider source pin now pass the full compiler

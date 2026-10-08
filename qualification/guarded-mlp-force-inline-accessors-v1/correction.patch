@@ -1,0 +1,375 @@
+--- a/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs
++++ b/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs
+@@ -822,6 +822,7 @@
+     valid: &'claim mut bool,
+ }
+ impl MlpNormTileV2<'_, '_> {
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn lane(&self) -> usize {
+         self.lane
+     }
+@@ -829,6 +830,7 @@
+     pub fn reject(&mut self) {
+         *self.valid = false;
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn input(&self, column: usize) -> Option<u16> {
+         if column >= NORM_ELEMENTS {
+             return None;
+@@ -836,6 +838,7 @@
+         // SAFETY: this initialized immutable read root lives through dispatch.
+         Some(unsafe { (*self.storage.input)[column] })
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn weight(&self, column: usize) -> Option<u16> {
+         if column >= NORM_ELEMENTS {
+             return None;
+@@ -866,12 +869,15 @@
+     valid: &'claim mut bool,
+ }
+ impl MlpGateTileV2<'_, '_> {
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn lane(&self) -> usize {
+         self.lane
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn reject(&mut self) {
+         *self.valid = false;
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn input(&self, inner: usize) -> Option<u16> {
+         if !*self.valid || inner >= NORM_ELEMENTS {
+             return None;
+@@ -879,6 +885,7 @@
+         // SAFETY: this lane acquired Norm DONE before the claim was issued.
+         Some(unsafe { (*self.storage.normalized)[inner] })
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn weight(&self, row: usize, inner: usize) -> Option<u16> {
+         if row >= TILE_ROWS || inner >= NORM_ELEMENTS {
+             return None;
+@@ -909,18 +916,22 @@
+     valid: &'claim mut bool,
+ }
+ impl MlpUpTileV2<'_, '_> {
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn lane(&self) -> usize {
+         self.lane
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn reject(&mut self) {
+         *self.valid = false;
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn input(&self, inner: usize) -> Option<u16> {
+         if !*self.valid || inner >= NORM_ELEMENTS {
+             return None;
+         }
+         Some(unsafe { (*self.storage.normalized)[inner] })
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn weight(&self, row: usize, inner: usize) -> Option<u16> {
+         if row >= TILE_ROWS || inner >= NORM_ELEMENTS {
+             return None;
+@@ -949,18 +960,22 @@
+     valid: &'claim mut bool,
+ }
+ impl MlpSwiGluTileV2<'_, '_> {
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn lane(&self) -> usize {
+         self.lane
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn reject(&mut self) {
+         *self.valid = false;
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn gate(&self, column: usize) -> Option<u16> {
+         if !*self.valid || column >= INTERMEDIATE_ELEMENTS {
+             return None;
+         }
+         Some(unsafe { (*self.storage.gate)[column] })
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn up(&self, column: usize) -> Option<u16> {
+         if !*self.valid || column >= INTERMEDIATE_ELEMENTS {
+             return None;
+@@ -990,18 +1005,22 @@
+     valid: &'claim mut bool,
+ }
+ impl MlpDownTileV2<'_, '_> {
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn lane(&self) -> usize {
+         self.lane
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn reject(&mut self) {
+         *self.valid = false;
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn input(&self, inner: usize) -> Option<u16> {
+         if !*self.valid || inner >= INTERMEDIATE_ELEMENTS {
+             return None;
+         }
+         Some(unsafe { (*self.storage.activation)[inner] })
+     }
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn weight(&self, row: usize, inner: usize) -> Option<u16> {
+         if row >= TILE_ROWS || inner >= INTERMEDIATE_ELEMENTS {
+             return None;
+--- a/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs
++++ b/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs
+@@ -25,6 +25,141 @@
+         rounds: 0,
+         empty_probes: 0,
+     }
++}
++
++#[test]
++fn tile_accessor_bounds_and_rejection_preserve_existing_read_semantics() {
++    let mut f = Fixture::new();
++    let before = snapshot(&f.state);
++    for token in [1, 2, 97, 98, 193, 194, 195, 258] {
++        for lane in 0..WAVE_LANES {
++            let (mut written, mut valid, mut callbacks) = (0, true, 0);
++            let storage = f.storage();
++            execute_task_at_v2(
++                &storage,
++                token,
++                lane,
++                &mut written,
++                &mut valid,
++                &mut |task| {
++                    callbacks += 1;
++                    match task {
++                        WaveMlpTileTaskV2::Norm(mut task) => {
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.input(NORM_ELEMENTS - 1), Some(0x3f80));
++                            assert_eq!(task.weight(NORM_ELEMENTS - 1), Some(0x4000));
++                            for index in [NORM_ELEMENTS, usize::MAX] {
++                                assert_eq!(task.input(index), None);
++                                assert_eq!(task.weight(index), None);
++                            }
++                            task.reject();
++                            task.reject();
++                            assert_eq!(task.lane(), lane);
++                            // Immutable Norm roots remain readable after local rejection.
++                            assert_eq!(task.input(0), Some(0x3f80));
++                            assert_eq!(task.weight(0), Some(0x4000));
++                            assert!(!task.write_component(0, 0x1234));
++                        }
++                        WaveMlpTileTaskV2::Gate(mut task) => {
++                            let row = (token as usize - 2) * TILE_ROWS + TILE_ROWS - 1;
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.input(NORM_ELEMENTS - 1), Some(0xa55a));
++                            assert_eq!(
++                                task.weight(TILE_ROWS - 1, NORM_ELEMENTS - 1),
++                                Some(row as u16)
++                            );
++                            for index in [NORM_ELEMENTS, usize::MAX] {
++                                assert_eq!(task.input(index), None);
++                                assert_eq!(task.weight(0, index), None);
++                            }
++                            for row in [TILE_ROWS, usize::MAX] {
++                                assert_eq!(task.weight(row, 0), None);
++                            }
++                            task.reject();
++                            task.reject();
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.input(0), None);
++                            assert_eq!(
++                                task.weight(TILE_ROWS - 1, NORM_ELEMENTS - 1),
++                                Some(row as u16)
++                            );
++                            assert!(!task.write_column(0, 0x1234));
++                        }
++                        WaveMlpTileTaskV2::Up(mut task) => {
++                            let row = (token as usize - 98) * TILE_ROWS + TILE_ROWS - 1;
++                            let expected = Some(row as u16 + 8192);
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.input(NORM_ELEMENTS - 1), Some(0xa55a));
++                            assert_eq!(task.weight(TILE_ROWS - 1, NORM_ELEMENTS - 1), expected);
++                            for index in [NORM_ELEMENTS, usize::MAX] {
++                                assert_eq!(task.input(index), None);
++                                assert_eq!(task.weight(0, index), None);
++                            }
++                            for row in [TILE_ROWS, usize::MAX] {
++                                assert_eq!(task.weight(row, 0), None);
++                            }
++                            task.reject();
++                            task.reject();
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.input(0), None);
++                            assert_eq!(task.weight(TILE_ROWS - 1, NORM_ELEMENTS - 1), expected);
++                            assert!(!task.write_column(0, 0x1234));
++                        }
++                        WaveMlpTileTaskV2::SwiGlu(mut task) => {
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.gate(INTERMEDIATE_ELEMENTS - 1), Some(0xa55a));
++                            assert_eq!(task.up(INTERMEDIATE_ELEMENTS - 1), Some(0xa55a));
++                            for index in [INTERMEDIATE_ELEMENTS, usize::MAX] {
++                                assert_eq!(task.gate(index), None);
++                                assert_eq!(task.up(index), None);
++                            }
++                            task.reject();
++                            task.reject();
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.gate(0), None);
++                            assert_eq!(task.up(0), None);
++                            assert!(!task.write_component(0, 0x1234));
++                        }
++                        WaveMlpTileTaskV2::Down(mut task) => {
++                            let row = (token as usize - 195) * TILE_ROWS + TILE_ROWS - 1;
++                            let expected = Some(row as u16 + 16384);
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.input(INTERMEDIATE_ELEMENTS - 1), Some(0xa55a));
++                            assert_eq!(
++                                task.weight(TILE_ROWS - 1, INTERMEDIATE_ELEMENTS - 1),
++                                expected
++                            );
++                            for index in [INTERMEDIATE_ELEMENTS, usize::MAX] {
++                                assert_eq!(task.input(index), None);
++                                assert_eq!(task.weight(0, index), None);
++                            }
++                            for row in [TILE_ROWS, usize::MAX] {
++                                assert_eq!(task.weight(row, 0), None);
++                            }
++                            task.reject();
++                            task.reject();
++                            assert_eq!(task.lane(), lane);
++                            assert_eq!(task.input(0), None);
++                            assert_eq!(
++                                task.weight(TILE_ROWS - 1, INTERMEDIATE_ELEMENTS - 1),
++                                expected
++                            );
++                            assert!(!task.write_output(0, 123.0));
++                        }
++                    }
++                },
++            );
++            assert_eq!((callbacks, written, valid), (1, 0, false));
++            assert!(!complete_coverage(token, lane, written, valid));
++            assert_eq!(snapshot(storage.state()), before);
++        }
++    }
++    assert!(f.normalized.iter().all(|&word| word == 0xa55a));
++    assert!(f.gate.iter().all(|&word| word == 0xa55a));
++    assert!(f.up.iter().all(|&word| word == 0xa55a));
++    assert!(f.activation.iter().all(|&word| word == 0xa55a));
++    assert!(f.down.iter().all(|value| value.to_bits() == 0x7fc0_1234));
++    assert_eq!(snapshot(&f.state), before);
+ }
+ 
+ #[test]
+--- a/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs
++++ b/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs
+@@ -51,8 +51,8 @@
+ const WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1: &[u8] =
+     b"FE2O3/WORKGROUP-SYNC-PROVIDER-SOURCE-CLOSURE/V1\0";
+ const REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1: [u8; 32] = [
+-    0xd6, 0xac, 0x31, 0x89, 0x8b, 0x9e, 0x4d, 0x59, 0x4d, 0x3a, 0xa3, 0x6d, 0x6c, 0x5c, 0xed, 0x37,
+-    0x80, 0x59, 0xa4, 0xff, 0xff, 0x54, 0x88, 0x14, 0x63, 0xf5, 0x7c, 0x10, 0xeb, 0xa0, 0x56, 0x3c,
++    0xf5, 0x8f, 0xbb, 0xbb, 0xcd, 0x00, 0x35, 0x46, 0x71, 0x9c, 0xdd, 0xc2, 0x01, 0x76, 0x81, 0x31,
++    0x35, 0x3c, 0x21, 0x1f, 0x3c, 0xa5, 0x7f, 0xd3, 0x13, 0xd6, 0xb9, 0x43, 0xa0, 0x40, 0xa7, 0xe5,
+ ];
+ 
+ const PROVIDER_SEMANTIC_DEFINITION_TRANSCRIPT_DOMAIN_V1: &[u8] =
+@@ -3732,7 +3732,7 @@
+         .unwrap();
+         assert_eq!(
+             closure,
+-            digest("d6ac31898b9e4d594d3aa36d6c5ced378059a4ffff54881463f57c10eba0563c")
++            digest("f58fbbbbcd003546719cddc201768131353c211f3ca57fd313d6b943a040a7e5")
+         );
+         assert_eq!(closure, super::REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1);
+     }
+@@ -3745,7 +3745,7 @@
+         let norm = source.split("impl MlpNormTileV2<'_, '_> {").nth(1).unwrap();
+         let before_input = norm.split("    pub fn input(").next().unwrap();
+         assert!(before_input.ends_with(
+-            "    #[cfg_attr(target_arch = \"amdgpu\", rustc_force_inline)]\n    pub fn reject(&mut self) {\n        *self.valid = false;\n    }\n"
++            "    #[cfg_attr(target_arch = \"amdgpu\", rustc_force_inline)]\n    pub fn reject(&mut self) {\n        *self.valid = false;\n    }\n    #[cfg_attr(target_arch = \"amdgpu\", rustc_force_inline)]\n"
+         ));
+         assert!(
+             reviewed_provider_source_closure_from_definition(
+@@ -3760,6 +3760,80 @@
+                 &source_path,
+                 WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
+                 digest("037e472ea24d7337f88028ed65cb3d6ea6e0c0681538e6121ab78240c44ef675"),
++            )
++            .is_err()
++        );
++    }
++
++    #[test]
++    fn mlp_tile_accessors_inline_source_is_reviewed_and_previous_closure_is_refused() {
++        let source_path = Path::new(super::REVIEWED_FE2O3_DEVICE_SOURCE_ROOT)
++            .join("finite_join/wave_mlp_tiles_v2.rs");
++        let source = fs::read_to_string(&source_path).unwrap();
++        for (name, methods) in [
++            (
++                "MlpNormTileV2",
++                ["lane", "reject", "input", "weight", "write_component"],
++            ),
++            (
++                "MlpGateTileV2",
++                ["lane", "reject", "input", "weight", "write_column"],
++            ),
++            (
++                "MlpUpTileV2",
++                ["lane", "reject", "input", "weight", "write_column"],
++            ),
++            (
++                "MlpSwiGluTileV2",
++                ["lane", "reject", "gate", "up", "write_component"],
++            ),
++            (
++                "MlpDownTileV2",
++                ["lane", "reject", "input", "weight", "write_output"],
++            ),
++        ] {
++            let marker = format!("impl {name}<'_, '_> {{\n");
++            assert_eq!(source.matches(&marker).count(), 1);
++            let implementation = source
++                .split_once(&marker)
++                .unwrap()
++                .1
++                .split_once("\n}\n")
++                .unwrap()
++                .0;
++            let lines = implementation.lines().collect::<Vec<_>>();
++            let mut actual = Vec::new();
++            for (index, line) in lines.iter().enumerate() {
++                if let Some(signature) = line.strip_prefix("    pub fn ") {
++                    assert!(index > 0);
++                    assert_eq!(
++                        lines[index - 1],
++                        "    #[cfg_attr(target_arch = \"amdgpu\", rustc_force_inline)]"
++                    );
++                    actual.push(signature.split_once('(').unwrap().0);
++                }
++            }
++            assert_eq!(actual, methods);
++            assert_eq!(
++                implementation
++                    .matches("#[cfg_attr(target_arch = \"amdgpu\", rustc_force_inline)]")
++                    .count(),
++                5
++            );
++        }
++        assert!(
++            reviewed_provider_source_closure_from_definition(
++                &source_path,
++                WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
++                super::REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1,
++            )
++            .is_ok()
++        );
++        assert!(
++            reviewed_provider_source_closure_from_definition(
++                &source_path,
++                WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
++                digest("d6ac31898b9e4d594d3aa36d6c5ced378059a4ffff54881463f57c10eba0563c"),
+             )
+             .is_err()
+         );
