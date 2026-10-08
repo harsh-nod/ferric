@@ -31,14 +31,31 @@ tests and 14 usage tests; they are not 666 distinct tests. The earlier
 These are actual-artifact-backed and synthetic CPU checks, not native model
 execution or measured live resource accounting.
 
-No candidate GPU result or gain has been observed. The next gate is fresh,
-serial control/candidate/candidate/control measurement with matching artifacts
-and separately prepared, identity-bound native cases,
-the same 40 prompt forwards and historical payload checks, unchanged bounds,
-and explicit CPU/resource cost. Both paired poll and complete warm-forward
-body must improve before promotion. The earlier 30.941303993-second poll
-bucket below includes required checks and device waiting; it is not all
-removable. Full2303, exact 256-output acceptance and 700 tokens/s remain open.
+One fresh exploratory control/candidate pair now passes native execution:
+each arm validates 40 semantic records and four numeric payload captures
+against the historical Ferric baseline, its own transcript, 11 cleanly retired
+phases and six idle audits. It still generates zero tokens.
+[Original archives and per-arm reports](../qualification/guarded-mlp-active-pause-v1/README.md#exploratory-native-a1b1-pair)
+retain the complete evidence.
+
+Warm forward bodies are 68.170672568 seconds for A1 and 68.744251921 for B1;
+nested paired poll is 30.965124989 versus 30.890521610 seconds. The candidate
+has a slower warm body (+0.8413872585%) despite a small poll decrease
+(-0.2409271044%), so it fails the joint gate and is not promoted. Whole-parent
+user plus system CPU rises from 398.77562900000002 to 425.51485499999998 seconds
+(+6.7053310322%); that scope includes startup and all 40 forwards, not warm
+work alone. Warm layer before/after calls each rise from 562,496 to 752,888,
+root-generation calls from 613,112 to 803,504, while full discoveries remain
+2,736. Nested layer callback time rises from 19.809675266 to 25.464895006
+seconds; it overlaps other intervals and is not an additive or removable cost.
+This is consistent with more polling iterations of unchanged checks, not
+proof of exclusive time attribution. Predicates and checkpoint ordering are
+unchanged, but elapsed scheduling and observed iteration counts differ.
+
+ABBA was not run. This one ordered pair provides no statistical finding,
+measured gain, overlap, throughput or independent-accuracy claim. The source
+candidate remains archive-only, runtime production sources are unchanged,
+and Full2303/256-output acceptance, 700 tokens/s and M0-M7 remain open.
 
 ## Latest Closed-Layer Attribution
 

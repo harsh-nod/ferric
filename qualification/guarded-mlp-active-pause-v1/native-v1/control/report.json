@@ -1,0 +1,4793 @@
+{
+  "arm": "control",
+  "forwards": [
+    {
+      "forward_body_ns": 12870599208,
+      "layer_metrics": null,
+      "measured_callbacks": null,
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 16138410,
+        "whole_forward": 18854332
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 12886737618,
+        "forward": 12889453540,
+        "prepare_write": 194951,
+        "validate_retain_commit": 2520971
+      },
+      "phase_ns": {
+        "bank": 13757728,
+        "commit": 13607268,
+        "embedding": 58588177,
+        "fence": 13662929,
+        "frame": 907590,
+        "input": 5110,
+        "layers": 12547454608,
+        "metadata": 81440540,
+        "tail": 141175258
+      },
+      "position": 0
+    },
+    {
+      "forward_body_ns": 12913929076,
+      "layer_metrics": null,
+      "measured_callbacks": null,
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1070610,
+        "whole_forward": 1641081
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 12914999686,
+        "forward": 12915570157,
+        "prepare_write": 46050,
+        "validate_retain_commit": 524421
+      },
+      "phase_ns": {
+        "bank": 13646019,
+        "commit": 13811899,
+        "embedding": 58574206,
+        "fence": 13662408,
+        "frame": 965411,
+        "input": 5070,
+        "layers": 12586608502,
+        "metadata": 81283871,
+        "tail": 145371690
+      },
+      "position": 1
+    },
+    {
+      "forward_body_ns": 1789876769,
+      "layer_metrics": {
+        "layer_body_ns": 1557067765,
+        "layers": 36,
+        "paired_mlp_body_ns": 876843694,
+        "paired_mlp_phase_ns": {
+          "consume": 3882503,
+          "poll": 809664654,
+          "preflight": 40037129,
+          "publish": 7777433,
+          "reserve": 12460,
+          "retire": 20940,
+          "terminal": 15448575
+        },
+        "phase_ns": {
+          "commit_prepare": 39680,
+          "enter_pre_census": 75201338,
+          "full_exit": 65125967,
+          "hidden_post_census": 39596438,
+          "mlp_retired_seal": 882721257,
+          "prefix": 494383085
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22942314,
+        "callback_ns": {
+          "bank": 22407164,
+          "layers": 522478049,
+          "tail": 4894433
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3687242
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11151287
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3387102
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4181533
+            }
+          },
+          "bank_guarded_body_ns": 22942314,
+          "layers": {
+            "after": {
+              "calls": 14720,
+              "elapsed_ns": 74398978
+            },
+            "before": {
+              "calls": 14720,
+              "elapsed_ns": 228075906
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124774833
+            },
+            "root_generation": {
+              "calls": 16052,
+              "elapsed_ns": 95228332
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 241230
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 739501
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3531042
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 382660
+            }
+          }
+        },
+        "layer_other_ns": 1034839667
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1011491,
+        "whole_forward": 1317981
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1790888260,
+        "forward": 1791194750,
+        "prepare_write": 54490,
+        "validate_retain_commit": 252000
+      },
+      "phase_ns": {
+        "bank": 22952094,
+        "commit": 13814368,
+        "embedding": 58562136,
+        "fence": 13801969,
+        "frame": 939210,
+        "input": 4890,
+        "layers": 1557317716,
+        "metadata": 82446671,
+        "tail": 40037715
+      },
+      "position": 2
+    },
+    {
+      "forward_body_ns": 1797050194,
+      "layer_metrics": {
+        "layer_body_ns": 1566896791,
+        "layers": 36,
+        "paired_mlp_body_ns": 884137976,
+        "paired_mlp_phase_ns": {
+          "consume": 3885693,
+          "poll": 817183065,
+          "preflight": 39883310,
+          "publish": 7740988,
+          "reserve": 12500,
+          "retire": 20950,
+          "terminal": 15411470
+        },
+        "phase_ns": {
+          "commit_prepare": 36350,
+          "enter_pre_census": 74722190,
+          "full_exit": 64772170,
+          "hidden_post_census": 39894262,
+          "mlp_retired_seal": 889923022,
+          "prefix": 497548797
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22924004,
+        "callback_ns": {
+          "bank": 22433054,
+          "layers": 522822060,
+          "tail": 4735013
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3678634
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11167526
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3401292
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4185602
+            }
+          },
+          "bank_guarded_body_ns": 22924004,
+          "layers": {
+            "after": {
+              "calls": 14832,
+              "elapsed_ns": 74400992
+            },
+            "before": {
+              "calls": 14832,
+              "elapsed_ns": 228848889
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124124068
+            },
+            "root_generation": {
+              "calls": 16164,
+              "elapsed_ns": 95448111
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233280
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 714291
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3421252
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 366190
+            }
+          }
+        },
+        "layer_other_ns": 1044305361
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 998041,
+        "whole_forward": 1315101
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1798048235,
+        "forward": 1798365295,
+        "prepare_write": 26430,
+        "validate_retain_commit": 290630
+      },
+      "phase_ns": {
+        "bank": 22931624,
+        "commit": 13632818,
+        "embedding": 59383137,
+        "fence": 13641899,
+        "frame": 874540,
+        "input": 4740,
+        "layers": 1567127421,
+        "metadata": 83753582,
+        "tail": 35700433
+      },
+      "position": 3
+    },
+    {
+      "forward_body_ns": 1793385731,
+      "layer_metrics": {
+        "layer_body_ns": 1561303388,
+        "layers": 36,
+        "paired_mlp_body_ns": 880510838,
+        "paired_mlp_phase_ns": {
+          "consume": 3811683,
+          "poll": 813904683,
+          "preflight": 39587273,
+          "publish": 7719566,
+          "reserve": 12670,
+          "retire": 20580,
+          "terminal": 15454383
+        },
+        "phase_ns": {
+          "commit_prepare": 33200,
+          "enter_pre_census": 74633125,
+          "full_exit": 64864462,
+          "hidden_post_census": 39325474,
+          "mlp_retired_seal": 886284569,
+          "prefix": 496162558
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22719884,
+        "callback_ns": {
+          "bank": 22270424,
+          "layers": 520946059,
+          "tail": 4695463
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3621371
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11064336
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3426092
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4158625
+            }
+          },
+          "bank_guarded_body_ns": 22719884,
+          "layers": {
+            "after": {
+              "calls": 14786,
+              "elapsed_ns": 74274051
+            },
+            "before": {
+              "calls": 14786,
+              "elapsed_ns": 227924702
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124069527
+            },
+            "root_generation": {
+              "calls": 16118,
+              "elapsed_ns": 94677779
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233420
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 716750
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3381572
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 363721
+            }
+          }
+        },
+        "layer_other_ns": 1040608259
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 999831,
+        "whole_forward": 1287531
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1794385562,
+        "forward": 1794673262,
+        "prepare_write": 23750,
+        "validate_retain_commit": 263950
+      },
+      "phase_ns": {
+        "bank": 22727374,
+        "commit": 13481318,
+        "embedding": 58503476,
+        "fence": 13538858,
+        "frame": 876131,
+        "input": 4670,
+        "layers": 1561554318,
+        "metadata": 82641601,
+        "tail": 40057985
+      },
+      "position": 4
+    },
+    {
+      "forward_body_ns": 1791270151,
+      "layer_metrics": {
+        "layer_body_ns": 1560453798,
+        "layers": 36,
+        "paired_mlp_body_ns": 879661765,
+        "paired_mlp_phase_ns": {
+          "consume": 3816222,
+          "poll": 813099943,
+          "preflight": 39558890,
+          "publish": 7780326,
+          "reserve": 12160,
+          "retire": 20940,
+          "terminal": 15373284
+        },
+        "phase_ns": {
+          "commit_prepare": 37930,
+          "enter_pre_census": 74320086,
+          "full_exit": 64328790,
+          "hidden_post_census": 40368865,
+          "mlp_retired_seal": 885465067,
+          "prefix": 495933060
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22660914,
+        "callback_ns": {
+          "bank": 22191814,
+          "layers": 519932762,
+          "tail": 4716843
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3650452
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11022529
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3373482
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4145351
+            }
+          },
+          "bank_guarded_body_ns": 22660914,
+          "layers": {
+            "after": {
+              "calls": 14784,
+              "elapsed_ns": 73867101
+            },
+            "before": {
+              "calls": 14784,
+              "elapsed_ns": 228274916
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123379386
+            },
+            "root_generation": {
+              "calls": 16116,
+              "elapsed_ns": 94411359
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 234510
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 720930
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3395362
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 366041
+            }
+          }
+        },
+        "layer_other_ns": 1040773506
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 2666371,
+        "whole_forward": 5170663
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1793936522,
+        "forward": 1796440814,
+        "prepare_write": 25310,
+        "validate_retain_commit": 2478982
+      },
+      "phase_ns": {
+        "bank": 22668314,
+        "commit": 13525139,
+        "embedding": 58945646,
+        "fence": 13534898,
+        "frame": 877661,
+        "input": 4670,
+        "layers": 1560706268,
+        "metadata": 81021661,
+        "tail": 39985894
+      },
+      "position": 5
+    },
+    {
+      "forward_body_ns": 1793491772,
+      "layer_metrics": {
+        "layer_body_ns": 1561728679,
+        "layers": 36,
+        "paired_mlp_body_ns": 881705513,
+        "paired_mlp_phase_ns": {
+          "consume": 3881905,
+          "poll": 814694516,
+          "preflight": 39942702,
+          "publish": 7714905,
+          "reserve": 11860,
+          "retire": 20920,
+          "terminal": 15438705
+        },
+        "phase_ns": {
+          "commit_prepare": 37230,
+          "enter_pre_census": 74381643,
+          "full_exit": 64554898,
+          "hidden_post_census": 40146661,
+          "mlp_retired_seal": 887495696,
+          "prefix": 495112551
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22713824,
+        "callback_ns": {
+          "bank": 22266274,
+          "layers": 521242622,
+          "tail": 4734494
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3615233
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11067678
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3406862
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4176501
+            }
+          },
+          "bank_guarded_body_ns": 22713824,
+          "layers": {
+            "after": {
+              "calls": 14802,
+              "elapsed_ns": 74073848
+            },
+            "before": {
+              "calls": 14802,
+              "elapsed_ns": 229106925
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123577634
+            },
+            "root_generation": {
+              "calls": 16134,
+              "elapsed_ns": 94484215
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 234070
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 720621
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3404692
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 375111
+            }
+          }
+        },
+        "layer_other_ns": 1040726337
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 993720,
+        "whole_forward": 1307790
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1794485492,
+        "forward": 1794799562,
+        "prepare_write": 24390,
+        "validate_retain_commit": 289680
+      },
+      "phase_ns": {
+        "bank": 22721314,
+        "commit": 13589229,
+        "embedding": 59707877,
+        "fence": 13595308,
+        "frame": 875791,
+        "input": 4620,
+        "layers": 1561968959,
+        "metadata": 81103740,
+        "tail": 39924934
+      },
+      "position": 6
+    },
+    {
+      "forward_body_ns": 1793504742,
+      "layer_metrics": {
+        "layer_body_ns": 1561116938,
+        "layers": 36,
+        "paired_mlp_body_ns": 880895509,
+        "paired_mlp_phase_ns": {
+          "consume": 3815465,
+          "poll": 814239706,
+          "preflight": 39723393,
+          "publish": 7676403,
+          "reserve": 12220,
+          "retire": 20870,
+          "terminal": 15407452
+        },
+        "phase_ns": {
+          "commit_prepare": 33810,
+          "enter_pre_census": 74573384,
+          "full_exit": 64769374,
+          "hidden_post_census": 39534842,
+          "mlp_retired_seal": 886662812,
+          "prefix": 495542716
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 23587244,
+        "callback_ns": {
+          "bank": 23130343,
+          "layers": 521037208,
+          "tail": 4784442
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3751611
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11548757
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3490872
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4339103
+            }
+          },
+          "bank_guarded_body_ns": 23587244,
+          "layers": {
+            "after": {
+              "calls": 14792,
+              "elapsed_ns": 74171834
+            },
+            "before": {
+              "calls": 14792,
+              "elapsed_ns": 228429949
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123884019
+            },
+            "root_generation": {
+              "calls": 16124,
+              "elapsed_ns": 94551406
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 239200
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 729010
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3442422
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 373810
+            }
+          }
+        },
+        "layer_other_ns": 1040304450
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1012231,
+        "whole_forward": 1390111
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1794516973,
+        "forward": 1794894853,
+        "prepare_write": 21720,
+        "validate_retain_commit": 356160
+      },
+      "phase_ns": {
+        "bank": 23594964,
+        "commit": 13607528,
+        "embedding": 59250877,
+        "fence": 13576939,
+        "frame": 878690,
+        "input": 4640,
+        "layers": 1561341658,
+        "metadata": 81306581,
+        "tail": 39942865
+      },
+      "position": 7
+    },
+    {
+      "forward_body_ns": 1795190833,
+      "layer_metrics": {
+        "layer_body_ns": 1562602898,
+        "layers": 36,
+        "paired_mlp_body_ns": 882123976,
+        "paired_mlp_phase_ns": {
+          "consume": 3859260,
+          "poll": 815564639,
+          "preflight": 39453129,
+          "publish": 7741319,
+          "reserve": 12210,
+          "retire": 20360,
+          "terminal": 15473059
+        },
+        "phase_ns": {
+          "commit_prepare": 39240,
+          "enter_pre_census": 74814173,
+          "full_exit": 64637000,
+          "hidden_post_census": 40261327,
+          "mlp_retired_seal": 887896817,
+          "prefix": 494954341
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22937724,
+        "callback_ns": {
+          "bank": 22483194,
+          "layers": 522197610,
+          "tail": 4875602
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3667461
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11179357
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3412442
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4223934
+            }
+          },
+          "bank_guarded_body_ns": 22937724,
+          "layers": {
+            "after": {
+              "calls": 14816,
+              "elapsed_ns": 74211424
+            },
+            "before": {
+              "calls": 14816,
+              "elapsed_ns": 228863900
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123975076
+            },
+            "root_generation": {
+              "calls": 16148,
+              "elapsed_ns": 95147210
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 238520
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 775010
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3478822
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 383250
+            }
+          }
+        },
+        "layer_other_ns": 1040643889
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 998651,
+        "whole_forward": 1293991
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1796189484,
+        "forward": 1796484824,
+        "prepare_write": 23520,
+        "validate_retain_commit": 271820
+      },
+      "phase_ns": {
+        "bank": 22945294,
+        "commit": 13555018,
+        "embedding": 58549586,
+        "fence": 13717969,
+        "frame": 939341,
+        "input": 4780,
+        "layers": 1562841499,
+        "metadata": 81385511,
+        "tail": 41251835
+      },
+      "position": 8
+    },
+    {
+      "forward_body_ns": 1795258723,
+      "layer_metrics": {
+        "layer_body_ns": 1562944229,
+        "layers": 36,
+        "paired_mlp_body_ns": 884997179,
+        "paired_mlp_phase_ns": {
+          "consume": 3818802,
+          "poll": 818297999,
+          "preflight": 39641694,
+          "publish": 7767004,
+          "reserve": 12690,
+          "retire": 21070,
+          "terminal": 15437920
+        },
+        "phase_ns": {
+          "commit_prepare": 37610,
+          "enter_pre_census": 74398045,
+          "full_exit": 64440092,
+          "hidden_post_census": 39987554,
+          "mlp_retired_seal": 890765564,
+          "prefix": 493315364
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22988095,
+        "callback_ns": {
+          "bank": 22486903,
+          "layers": 523114301,
+          "tail": 4778692
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3663851
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11200188
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3393092
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4229772
+            }
+          },
+          "bank_guarded_body_ns": 22988095,
+          "layers": {
+            "after": {
+              "calls": 14842,
+              "elapsed_ns": 74704971
+            },
+            "before": {
+              "calls": 14842,
+              "elapsed_ns": 229402098
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123543197
+            },
+            "root_generation": {
+              "calls": 16174,
+              "elapsed_ns": 95464035
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 236800
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 730000
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3437832
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 374060
+            }
+          }
+        },
+        "layer_other_ns": 1040078148
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1020210,
+        "whole_forward": 1392220
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1796278933,
+        "forward": 1796650943,
+        "prepare_write": 23590,
+        "validate_retain_commit": 348420
+      },
+      "phase_ns": {
+        "bank": 22996925,
+        "commit": 13864699,
+        "embedding": 58746146,
+        "fence": 13876359,
+        "frame": 883890,
+        "input": 4590,
+        "layers": 1563192449,
+        "metadata": 80990120,
+        "tail": 40703545
+      },
+      "position": 9
+    },
+    {
+      "forward_body_ns": 1788682319,
+      "layer_metrics": {
+        "layer_body_ns": 1557954216,
+        "layers": 36,
+        "paired_mlp_body_ns": 878616880,
+        "paired_mlp_phase_ns": {
+          "consume": 3832804,
+          "poll": 811737721,
+          "preflight": 39848715,
+          "publish": 7696565,
+          "reserve": 12440,
+          "retire": 20830,
+          "terminal": 15467805
+        },
+        "phase_ns": {
+          "commit_prepare": 37630,
+          "enter_pre_census": 74453336,
+          "full_exit": 64374118,
+          "hidden_post_census": 40494977,
+          "mlp_retired_seal": 884437224,
+          "prefix": 494156931
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22758274,
+        "callback_ns": {
+          "bank": 22253014,
+          "layers": 521015200,
+          "tail": 4755113
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3650802
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11100506
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3367552
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4134154
+            }
+          },
+          "bank_guarded_body_ns": 22758274,
+          "layers": {
+            "after": {
+              "calls": 14754,
+              "elapsed_ns": 74362725
+            },
+            "before": {
+              "calls": 14754,
+              "elapsed_ns": 228399222
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123493015
+            },
+            "root_generation": {
+              "calls": 16086,
+              "elapsed_ns": 94760238
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 235761
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 718260
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3435102
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 365990
+            }
+          }
+        },
+        "layer_other_ns": 1037180496
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 992741,
+        "whole_forward": 1224961
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1789675060,
+        "forward": 1789907280,
+        "prepare_write": 31430,
+        "validate_retain_commit": 200790
+      },
+      "phase_ns": {
+        "bank": 22766204,
+        "commit": 13807058,
+        "embedding": 58314726,
+        "fence": 13800159,
+        "frame": 879190,
+        "input": 4810,
+        "layers": 1558195696,
+        "metadata": 81054521,
+        "tail": 39859955
+      },
+      "position": 10
+    },
+    {
+      "forward_body_ns": 1793955562,
+      "layer_metrics": {
+        "layer_body_ns": 1562196588,
+        "layers": 36,
+        "paired_mlp_body_ns": 882379086,
+        "paired_mlp_phase_ns": {
+          "consume": 3833831,
+          "poll": 815513048,
+          "preflight": 39731356,
+          "publish": 7895485,
+          "reserve": 12630,
+          "retire": 20960,
+          "terminal": 15371776
+        },
+        "phase_ns": {
+          "commit_prepare": 38370,
+          "enter_pre_census": 74554536,
+          "full_exit": 64591371,
+          "hidden_post_census": 40517506,
+          "mlp_retired_seal": 888191790,
+          "prefix": 494303015
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22745295,
+        "callback_ns": {
+          "bank": 22286795,
+          "layers": 522418893,
+          "tail": 4725164
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3635153
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11127278
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3388143
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4136221
+            }
+          },
+          "bank_guarded_body_ns": 22745295,
+          "layers": {
+            "after": {
+              "calls": 14798,
+              "elapsed_ns": 74367167
+            },
+            "before": {
+              "calls": 14798,
+              "elapsed_ns": 229147258
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123851516
+            },
+            "root_generation": {
+              "calls": 16130,
+              "elapsed_ns": 95052952
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233530
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 717391
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3399432
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 374811
+            }
+          }
+        },
+        "layer_other_ns": 1040016585
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 989701,
+        "whole_forward": 1257061
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1794945263,
+        "forward": 1795212623,
+        "prepare_write": 21050,
+        "validate_retain_commit": 246310
+      },
+      "phase_ns": {
+        "bank": 22752735,
+        "commit": 13811059,
+        "embedding": 58178686,
+        "fence": 13608528,
+        "frame": 876401,
+        "input": 4680,
+        "layers": 1562435478,
+        "metadata": 81365170,
+        "tail": 40922825
+      },
+      "position": 11
+    },
+    {
+      "forward_body_ns": 1791205710,
+      "layer_metrics": {
+        "layer_body_ns": 1559078907,
+        "layers": 36,
+        "paired_mlp_body_ns": 879781925,
+        "paired_mlp_phase_ns": {
+          "consume": 3812642,
+          "poll": 813053584,
+          "preflight": 39759155,
+          "publish": 7678512,
+          "reserve": 12170,
+          "retire": 20820,
+          "terminal": 15445042
+        },
+        "phase_ns": {
+          "commit_prepare": 38530,
+          "enter_pre_census": 74451413,
+          "full_exit": 64736590,
+          "hidden_post_census": 40489057,
+          "mlp_retired_seal": 885564676,
+          "prefix": 493798641
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22726094,
+        "callback_ns": {
+          "bank": 22294264,
+          "layers": 520407000,
+          "tail": 4725274
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3644403
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11102076
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3383072
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4164713
+            }
+          },
+          "bank_guarded_body_ns": 22726094,
+          "layers": {
+            "after": {
+              "calls": 14780,
+              "elapsed_ns": 74162577
+            },
+            "before": {
+              "calls": 14780,
+              "elapsed_ns": 227944345
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123726047
+            },
+            "root_generation": {
+              "calls": 16112,
+              "elapsed_ns": 94574031
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233160
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 718471
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3405892
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 367751
+            }
+          }
+        },
+        "layer_other_ns": 1038907617
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 990901,
+        "whole_forward": 1194471
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1792196611,
+        "forward": 1792400181,
+        "prepare_write": 21380,
+        "validate_retain_commit": 182190
+      },
+      "phase_ns": {
+        "bank": 22733654,
+        "commit": 13599318,
+        "embedding": 58376086,
+        "fence": 13600819,
+        "frame": 938410,
+        "input": 4590,
+        "layers": 1559314617,
+        "metadata": 82279201,
+        "tail": 40359015
+      },
+      "position": 12
+    },
+    {
+      "forward_body_ns": 1793607462,
+      "layer_metrics": {
+        "layer_body_ns": 1561555289,
+        "layers": 36,
+        "paired_mlp_body_ns": 883094715,
+        "paired_mlp_phase_ns": {
+          "consume": 3825403,
+          "poll": 816382135,
+          "preflight": 39680578,
+          "publish": 7765772,
+          "reserve": 12450,
+          "retire": 21390,
+          "terminal": 15406987
+        },
+        "phase_ns": {
+          "commit_prepare": 37700,
+          "enter_pre_census": 74410247,
+          "full_exit": 64421546,
+          "hidden_post_census": 40179028,
+          "mlp_retired_seal": 888879139,
+          "prefix": 493627629
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22719794,
+        "callback_ns": {
+          "bank": 22287144,
+          "layers": 521828478,
+          "tail": 4736253
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3628401
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11099410
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3378672
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4180661
+            }
+          },
+          "bank_guarded_body_ns": 22719794,
+          "layers": {
+            "after": {
+              "calls": 14822,
+              "elapsed_ns": 74451896
+            },
+            "before": {
+              "calls": 14822,
+              "elapsed_ns": 228965962
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123449502
+            },
+            "root_generation": {
+              "calls": 16154,
+              "elapsed_ns": 94961118
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 235121
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 720980
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3408552
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 371600
+            }
+          }
+        },
+        "layer_other_ns": 1039969331
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 959520,
+        "whole_forward": 1192420
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1794566982,
+        "forward": 1794799882,
+        "prepare_write": 34350,
+        "validate_retain_commit": 198550
+      },
+      "phase_ns": {
+        "bank": 22727314,
+        "commit": 13604899,
+        "embedding": 58595596,
+        "fence": 13574918,
+        "frame": 879201,
+        "input": 4640,
+        "layers": 1561797809,
+        "metadata": 82502091,
+        "tail": 39920994
+      },
+      "position": 13
+    },
+    {
+      "forward_body_ns": 1795684614,
+      "layer_metrics": {
+        "layer_body_ns": 1562190338,
+        "layers": 36,
+        "paired_mlp_body_ns": 881339026,
+        "paired_mlp_phase_ns": {
+          "consume": 3851384,
+          "poll": 814440073,
+          "preflight": 39682447,
+          "publish": 7791832,
+          "reserve": 12100,
+          "retire": 20550,
+          "terminal": 15540640
+        },
+        "phase_ns": {
+          "commit_prepare": 38580,
+          "enter_pre_census": 74579426,
+          "full_exit": 64722031,
+          "hidden_post_census": 40157804,
+          "mlp_retired_seal": 887238859,
+          "prefix": 495453638
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22721334,
+        "callback_ns": {
+          "bank": 22288394,
+          "layers": 523712252,
+          "tail": 4744625
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3631234
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11090256
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3409502
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4157402
+            }
+          },
+          "bank_guarded_body_ns": 22721334,
+          "layers": {
+            "after": {
+              "calls": 14792,
+              "elapsed_ns": 74515572
+            },
+            "before": {
+              "calls": 14792,
+              "elapsed_ns": 229623818
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123874688
+            },
+            "root_generation": {
+              "calls": 16124,
+              "elapsed_ns": 95698174
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233491
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 720681
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3421653
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 368800
+            }
+          }
+        },
+        "layer_other_ns": 1038720326
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 995610,
+        "whole_forward": 1253500
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1796680224,
+        "forward": 1796938114,
+        "prepare_write": 20970,
+        "validate_retain_commit": 236920
+      },
+      "phase_ns": {
+        "bank": 22728694,
+        "commit": 13678949,
+        "embedding": 58471846,
+        "fence": 13659948,
+        "frame": 877571,
+        "input": 4690,
+        "layers": 1562432578,
+        "metadata": 82427502,
+        "tail": 41402836
+      },
+      "position": 14
+    },
+    {
+      "forward_body_ns": 1795217133,
+      "layer_metrics": {
+        "layer_body_ns": 1562385089,
+        "layers": 36,
+        "paired_mlp_body_ns": 881644873,
+        "paired_mlp_phase_ns": {
+          "consume": 3884602,
+          "poll": 814559965,
+          "preflight": 39943952,
+          "publish": 7720447,
+          "reserve": 12630,
+          "retire": 21150,
+          "terminal": 15502127
+        },
+        "phase_ns": {
+          "commit_prepare": 38600,
+          "enter_pre_census": 74428016,
+          "full_exit": 64670450,
+          "hidden_post_census": 39795845,
+          "mlp_retired_seal": 887453658,
+          "prefix": 495998520
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22895684,
+        "callback_ns": {
+          "bank": 22463954,
+          "layers": 522227224,
+          "tail": 4753704
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3651343
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11166017
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3431602
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4214992
+            }
+          },
+          "bank_guarded_body_ns": 22895684,
+          "layers": {
+            "after": {
+              "calls": 14790,
+              "elapsed_ns": 74280571
+            },
+            "before": {
+              "calls": 14790,
+              "elapsed_ns": 229225697
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123713038
+            },
+            "root_generation": {
+              "calls": 16122,
+              "elapsed_ns": 95007918
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 236280
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 724321
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3417853
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 375250
+            }
+          }
+        },
+        "layer_other_ns": 1040397815
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 966481,
+        "whole_forward": 1610371
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1796183614,
+        "forward": 1796827504,
+        "prepare_write": 24120,
+        "validate_retain_commit": 619770
+      },
+      "phase_ns": {
+        "bank": 22903194,
+        "commit": 13703128,
+        "embedding": 58994146,
+        "fence": 13673349,
+        "frame": 908550,
+        "input": 4590,
+        "layers": 1562625039,
+        "metadata": 82583672,
+        "tail": 39821465
+      },
+      "position": 15
+    },
+    {
+      "forward_body_ns": 1797675965,
+      "layer_metrics": {
+        "layer_body_ns": 1563643520,
+        "layers": 36,
+        "paired_mlp_body_ns": 883028455,
+        "paired_mlp_phase_ns": {
+          "consume": 3839535,
+          "poll": 816117453,
+          "preflight": 39839468,
+          "publish": 7772682,
+          "reserve": 12450,
+          "retire": 21110,
+          "terminal": 15425757
+        },
+        "phase_ns": {
+          "commit_prepare": 41470,
+          "enter_pre_census": 74269271,
+          "full_exit": 64287877,
+          "hidden_post_census": 40172379,
+          "mlp_retired_seal": 888875758,
+          "prefix": 495996765
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22963594,
+        "callback_ns": {
+          "bank": 22511544,
+          "layers": 522298814,
+          "tail": 4711842
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3662952
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11189845
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3404892
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4253855
+            }
+          },
+          "bank_guarded_body_ns": 22963594,
+          "layers": {
+            "after": {
+              "calls": 14814,
+              "elapsed_ns": 74151622
+            },
+            "before": {
+              "calls": 14814,
+              "elapsed_ns": 229474608
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123244225
+            },
+            "root_generation": {
+              "calls": 16146,
+              "elapsed_ns": 95428359
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 234580
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 722930
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3386082
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 368250
+            }
+          }
+        },
+        "layer_other_ns": 1041599976
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 2733541,
+        "whole_forward": 5326713
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1800409506,
+        "forward": 1803002678,
+        "prepare_write": 23400,
+        "validate_retain_commit": 2569772
+      },
+      "phase_ns": {
+        "bank": 22970904,
+        "commit": 13747099,
+        "embedding": 59507387,
+        "fence": 13628728,
+        "frame": 960741,
+        "input": 4690,
+        "layers": 1563898790,
+        "metadata": 82377701,
+        "tail": 40579925
+      },
+      "position": 16
+    },
+    {
+      "forward_body_ns": 1797985234,
+      "layer_metrics": {
+        "layer_body_ns": 1565512441,
+        "layers": 36,
+        "paired_mlp_body_ns": 881492793,
+        "paired_mlp_phase_ns": {
+          "consume": 3840274,
+          "poll": 814786184,
+          "preflight": 39598836,
+          "publish": 7783735,
+          "reserve": 12860,
+          "retire": 21030,
+          "terminal": 15449874
+        },
+        "phase_ns": {
+          "commit_prepare": 39170,
+          "enter_pre_census": 75086972,
+          "full_exit": 64958959,
+          "hidden_post_census": 40068261,
+          "mlp_retired_seal": 887293765,
+          "prefix": 498065314
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22853034,
+        "callback_ns": {
+          "bank": 22321114,
+          "layers": 523854308,
+          "tail": 4782332
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3612584
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11183927
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3368642
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4155961
+            }
+          },
+          "bank_guarded_body_ns": 22853034,
+          "layers": {
+            "after": {
+              "calls": 14798,
+              "elapsed_ns": 74608906
+            },
+            "before": {
+              "calls": 14798,
+              "elapsed_ns": 229263849
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124447083
+            },
+            "root_generation": {
+              "calls": 16130,
+              "elapsed_ns": 95534470
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 237930
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 722840
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3450812
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 370750
+            }
+          }
+        },
+        "layer_other_ns": 1041903743
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1010491,
+        "whole_forward": 1406281
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1798995725,
+        "forward": 1799391515,
+        "prepare_write": 40790,
+        "validate_retain_commit": 355000
+      },
+      "phase_ns": {
+        "bank": 22862874,
+        "commit": 13608598,
+        "embedding": 59377187,
+        "fence": 13614948,
+        "frame": 888481,
+        "input": 4780,
+        "layers": 1565758051,
+        "metadata": 80980340,
+        "tail": 40889975
+      },
+      "position": 17
+    },
+    {
+      "forward_body_ns": 1789061569,
+      "layer_metrics": {
+        "layer_body_ns": 1555472384,
+        "layers": 36,
+        "paired_mlp_body_ns": 875306384,
+        "paired_mlp_phase_ns": {
+          "consume": 3828222,
+          "poll": 808825471,
+          "preflight": 39463104,
+          "publish": 7726346,
+          "reserve": 11950,
+          "retire": 20390,
+          "terminal": 15430901
+        },
+        "phase_ns": {
+          "commit_prepare": 38420,
+          "enter_pre_census": 74346896,
+          "full_exit": 64402270,
+          "hidden_post_census": 39865332,
+          "mlp_retired_seal": 881064000,
+          "prefix": 495755466
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 23060694,
+        "callback_ns": {
+          "bank": 22562134,
+          "layers": 518314777,
+          "tail": 4715472
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3648122
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11265384
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3423802
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4224826
+            }
+          },
+          "bank_guarded_body_ns": 23060694,
+          "layers": {
+            "after": {
+              "calls": 14726,
+              "elapsed_ns": 73450787
+            },
+            "before": {
+              "calls": 14726,
+              "elapsed_ns": 227163120
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123410577
+            },
+            "root_generation": {
+              "calls": 16058,
+              "elapsed_ns": 94290293
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 232590
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 717900
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3398052
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 366930
+            }
+          }
+        },
+        "layer_other_ns": 1037395407
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 995871,
+        "whole_forward": 1548091
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1790057440,
+        "forward": 1790609660,
+        "prepare_write": 25040,
+        "validate_retain_commit": 527180
+      },
+      "phase_ns": {
+        "bank": 23068284,
+        "commit": 13558978,
+        "embedding": 59365647,
+        "fence": 13558819,
+        "frame": 935750,
+        "input": 4670,
+        "layers": 1555710184,
+        "metadata": 81451611,
+        "tail": 41407626
+      },
+      "position": 18
+    },
+    {
+      "forward_body_ns": 1788963649,
+      "layer_metrics": {
+        "layer_body_ns": 1562055969,
+        "layers": 36,
+        "paired_mlp_body_ns": 881613186,
+        "paired_mlp_phase_ns": {
+          "consume": 3882183,
+          "poll": 814623942,
+          "preflight": 39910332,
+          "publish": 7728058,
+          "reserve": 12330,
+          "retire": 21320,
+          "terminal": 15435021
+        },
+        "phase_ns": {
+          "commit_prepare": 38500,
+          "enter_pre_census": 74690619,
+          "full_exit": 64775017,
+          "hidden_post_census": 39985226,
+          "mlp_retired_seal": 887396850,
+          "prefix": 495169757
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 23185384,
+        "callback_ns": {
+          "bank": 22723344,
+          "layers": 522760208,
+          "tail": 4866123
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3675992
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11341207
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3452422
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4253723
+            }
+          },
+          "bank_guarded_body_ns": 23185384,
+          "layers": {
+            "after": {
+              "calls": 14794,
+              "elapsed_ns": 74050270
+            },
+            "before": {
+              "calls": 14794,
+              "elapsed_ns": 228936176
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124086313
+            },
+            "root_generation": {
+              "calls": 16126,
+              "elapsed_ns": 95687449
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 239141
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 731990
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3502802
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 392190
+            }
+          }
+        },
+        "layer_other_ns": 1039537561
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1001591,
+        "whole_forward": 1236061
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1789965240,
+        "forward": 1790199710,
+        "prepare_write": 22460,
+        "validate_retain_commit": 212010
+      },
+      "phase_ns": {
+        "bank": 23192774,
+        "commit": 13788208,
+        "embedding": 58592976,
+        "fence": 13763799,
+        "frame": 878750,
+        "input": 4760,
+        "layers": 1562297769,
+        "metadata": 81177881,
+        "tail": 35266732
+      },
+      "position": 19
+    },
+    {
+      "forward_body_ns": 1798870255,
+      "layer_metrics": {
+        "layer_body_ns": 1564615690,
+        "layers": 36,
+        "paired_mlp_body_ns": 883662797,
+        "paired_mlp_phase_ns": {
+          "consume": 3838331,
+          "poll": 816907374,
+          "preflight": 39751338,
+          "publish": 7678594,
+          "reserve": 12270,
+          "retire": 21150,
+          "terminal": 15453740
+        },
+        "phase_ns": {
+          "commit_prepare": 42130,
+          "enter_pre_census": 74689520,
+          "full_exit": 64494760,
+          "hidden_post_census": 39434453,
+          "mlp_retired_seal": 889468931,
+          "prefix": 496485896
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 23203774,
+        "callback_ns": {
+          "bank": 22745054,
+          "layers": 522236259,
+          "tail": 4836674
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3647221
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11436190
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3460542
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4201101
+            }
+          },
+          "bank_guarded_body_ns": 23203774,
+          "layers": {
+            "after": {
+              "calls": 14834,
+              "elapsed_ns": 74301516
+            },
+            "before": {
+              "calls": 14834,
+              "elapsed_ns": 229360146
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123786616
+            },
+            "root_generation": {
+              "calls": 16166,
+              "elapsed_ns": 94787981
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 238862
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 731140
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3488162
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 378510
+            }
+          }
+        },
+        "layer_other_ns": 1042621951
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 985941,
+        "whole_forward": 1228661
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1799856196,
+        "forward": 1800098916,
+        "prepare_write": 24930,
+        "validate_retain_commit": 217790
+      },
+      "phase_ns": {
+        "bank": 23211634,
+        "commit": 13572128,
+        "embedding": 59397117,
+        "fence": 13777119,
+        "frame": 878910,
+        "input": 4850,
+        "layers": 1564858210,
+        "metadata": 82079211,
+        "tail": 41091076
+      },
+      "position": 20
+    },
+    {
+      "forward_body_ns": 1793422602,
+      "layer_metrics": {
+        "layer_body_ns": 1561541727,
+        "layers": 36,
+        "paired_mlp_body_ns": 881365114,
+        "paired_mlp_phase_ns": {
+          "consume": 3838051,
+          "poll": 814673966,
+          "preflight": 39605521,
+          "publish": 7707406,
+          "reserve": 13150,
+          "retire": 21400,
+          "terminal": 15505620
+        },
+        "phase_ns": {
+          "commit_prepare": 39900,
+          "enter_pre_census": 74780033,
+          "full_exit": 64724151,
+          "hidden_post_census": 39837626,
+          "mlp_retired_seal": 887230737,
+          "prefix": 494929280
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22836714,
+        "callback_ns": {
+          "bank": 22364184,
+          "layers": 523229676,
+          "tail": 4759432
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3664163
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11143286
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3404952
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4151783
+            }
+          },
+          "bank_guarded_body_ns": 22836714,
+          "layers": {
+            "after": {
+              "calls": 14790,
+              "elapsed_ns": 74408185
+            },
+            "before": {
+              "calls": 14790,
+              "elapsed_ns": 229407478
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124017637
+            },
+            "root_generation": {
+              "calls": 16122,
+              "elapsed_ns": 95396376
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 237200
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 721230
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3431732
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 369270
+            }
+          }
+        },
+        "layer_other_ns": 1038560782
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1005000,
+        "whole_forward": 1209010
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1794427602,
+        "forward": 1794631612,
+        "prepare_write": 26740,
+        "validate_retain_commit": 177270
+      },
+      "phase_ns": {
+        "bank": 22844404,
+        "commit": 13860319,
+        "embedding": 58390377,
+        "fence": 13835489,
+        "frame": 877970,
+        "input": 4790,
+        "layers": 1561790458,
+        "metadata": 81600710,
+        "tail": 40218085
+      },
+      "position": 21
+    },
+    {
+      "forward_body_ns": 1789940570,
+      "layer_metrics": {
+        "layer_body_ns": 1558718616,
+        "layers": 36,
+        "paired_mlp_body_ns": 879706725,
+        "paired_mlp_phase_ns": {
+          "consume": 3835072,
+          "poll": 812999226,
+          "preflight": 39754202,
+          "publish": 7764253,
+          "reserve": 12690,
+          "retire": 20800,
+          "terminal": 15320482
+        },
+        "phase_ns": {
+          "commit_prepare": 38000,
+          "enter_pre_census": 74356374,
+          "full_exit": 64341962,
+          "hidden_post_census": 39746833,
+          "mlp_retired_seal": 885511088,
+          "prefix": 494724359
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22760514,
+        "callback_ns": {
+          "bank": 22294674,
+          "layers": 519949294,
+          "tail": 4736472
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3607393
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11073595
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3438582
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4175104
+            }
+          },
+          "bank_guarded_body_ns": 22760514,
+          "layers": {
+            "after": {
+              "calls": 14786,
+              "elapsed_ns": 74057119
+            },
+            "before": {
+              "calls": 14786,
+              "elapsed_ns": 227947215
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123346908
+            },
+            "root_generation": {
+              "calls": 16118,
+              "elapsed_ns": 94598052
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233540
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 737600
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3396782
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 368550
+            }
+          }
+        },
+        "layer_other_ns": 1039008322
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1019540,
+        "whole_forward": 1263461
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1790960110,
+        "forward": 1791204031,
+        "prepare_write": 23440,
+        "validate_retain_commit": 220481
+      },
+      "phase_ns": {
+        "bank": 22768114,
+        "commit": 13664449,
+        "embedding": 58209516,
+        "fence": 13505228,
+        "frame": 887411,
+        "input": 4720,
+        "layers": 1558957616,
+        "metadata": 81213661,
+        "tail": 40729855
+      },
+      "position": 22
+    },
+    {
+      "forward_body_ns": 1790103249,
+      "layer_metrics": {
+        "layer_body_ns": 1563677429,
+        "layers": 36,
+        "paired_mlp_body_ns": 882422066,
+        "paired_mlp_phase_ns": {
+          "consume": 3806312,
+          "poll": 815878295,
+          "preflight": 39575614,
+          "publish": 7775707,
+          "reserve": 12490,
+          "retire": 21050,
+          "terminal": 15352598
+        },
+        "phase_ns": {
+          "commit_prepare": 39230,
+          "enter_pre_census": 74426577,
+          "full_exit": 64353032,
+          "hidden_post_census": 39880603,
+          "mlp_retired_seal": 888232061,
+          "prefix": 496745926
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22783355,
+        "callback_ns": {
+          "bank": 22296564,
+          "layers": 520355600,
+          "tail": 4738172
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3653134
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11122706
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3376723
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4144001
+            }
+          },
+          "bank_guarded_body_ns": 22783355,
+          "layers": {
+            "after": {
+              "calls": 14818,
+              "elapsed_ns": 74153152
+            },
+            "before": {
+              "calls": 14818,
+              "elapsed_ns": 228311423
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123359128
+            },
+            "root_generation": {
+              "calls": 16150,
+              "elapsed_ns": 94531897
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233690
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 724030
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3414102
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 366350
+            }
+          }
+        },
+        "layer_other_ns": 1043561799
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 961911,
+        "whole_forward": 1175301
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1791065160,
+        "forward": 1791278550,
+        "prepare_write": 29950,
+        "validate_retain_commit": 183440
+      },
+      "phase_ns": {
+        "bank": 22791915,
+        "commit": 13557458,
+        "embedding": 58217656,
+        "fence": 13586178,
+        "frame": 877771,
+        "input": 5010,
+        "layers": 1563917399,
+        "metadata": 81821620,
+        "tail": 35328242
+      },
+      "position": 23
+    },
+    {
+      "forward_body_ns": 1785529397,
+      "layer_metrics": {
+        "layer_body_ns": 1559329866,
+        "layers": 36,
+        "paired_mlp_body_ns": 879531945,
+        "paired_mlp_phase_ns": {
+          "consume": 3815504,
+          "poll": 812825411,
+          "preflight": 39655002,
+          "publish": 7725087,
+          "reserve": 12370,
+          "retire": 20570,
+          "terminal": 15478001
+        },
+        "phase_ns": {
+          "commit_prepare": 39150,
+          "enter_pre_census": 74408043,
+          "full_exit": 64522213,
+          "hidden_post_census": 40031325,
+          "mlp_retired_seal": 885317727,
+          "prefix": 495011408
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22906815,
+        "callback_ns": {
+          "bank": 22424154,
+          "layers": 521325720,
+          "tail": 4724873
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3622130
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11107267
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3511863
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4182894
+            }
+          },
+          "bank_guarded_body_ns": 22906815,
+          "layers": {
+            "after": {
+              "calls": 14776,
+              "elapsed_ns": 74130836
+            },
+            "before": {
+              "calls": 14776,
+              "elapsed_ns": 228867421
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123465036
+            },
+            "root_generation": {
+              "calls": 16108,
+              "elapsed_ns": 94862427
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 232060
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 717351
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3407942
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 367520
+            }
+          }
+        },
+        "layer_other_ns": 1038242406
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1028471,
+        "whole_forward": 1255781
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1786557868,
+        "forward": 1786785178,
+        "prepare_write": 35810,
+        "validate_retain_commit": 191500
+      },
+      "phase_ns": {
+        "bank": 22914245,
+        "commit": 13735689,
+        "embedding": 58383916,
+        "fence": 13596208,
+        "frame": 939691,
+        "input": 4650,
+        "layers": 1559568126,
+        "metadata": 82430921,
+        "tail": 33955951
+      },
+      "position": 24
+    },
+    {
+      "forward_body_ns": 1792999781,
+      "layer_metrics": {
+        "layer_body_ns": 1561532168,
+        "layers": 36,
+        "paired_mlp_body_ns": 881290069,
+        "paired_mlp_phase_ns": {
+          "consume": 3815277,
+          "poll": 814845434,
+          "preflight": 39527733,
+          "publish": 7703061,
+          "reserve": 12640,
+          "retire": 21200,
+          "terminal": 15364724
+        },
+        "phase_ns": {
+          "commit_prepare": 38550,
+          "enter_pre_census": 74304026,
+          "full_exit": 64396602,
+          "hidden_post_census": 39696671,
+          "mlp_retired_seal": 887022143,
+          "prefix": 496074176
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22833314,
+        "callback_ns": {
+          "bank": 22372634,
+          "layers": 519688117,
+          "tail": 4719292
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3588964
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11102687
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3492192
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4188791
+            }
+          },
+          "bank_guarded_body_ns": 22833314,
+          "layers": {
+            "after": {
+              "calls": 14808,
+              "elapsed_ns": 73623622
+            },
+            "before": {
+              "calls": 14808,
+              "elapsed_ns": 228122236
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123333077
+            },
+            "root_generation": {
+              "calls": 16140,
+              "elapsed_ns": 94609182
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 230520
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 715630
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3406422
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 366720
+            }
+          }
+        },
+        "layer_other_ns": 1042082531
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 962391,
+        "whole_forward": 1166671
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1793962172,
+        "forward": 1794166452,
+        "prepare_write": 24800,
+        "validate_retain_commit": 179480
+      },
+      "phase_ns": {
+        "bank": 22840864,
+        "commit": 13555458,
+        "embedding": 58939747,
+        "fence": 13553379,
+        "frame": 877550,
+        "input": 4740,
+        "layers": 1561770648,
+        "metadata": 81949240,
+        "tail": 39508155
+      },
+      "position": 25
+    },
+    {
+      "forward_body_ns": 1791538720,
+      "layer_metrics": {
+        "layer_body_ns": 1559255457,
+        "layers": 36,
+        "paired_mlp_body_ns": 876927325,
+        "paired_mlp_phase_ns": {
+          "consume": 3815512,
+          "poll": 810555802,
+          "preflight": 39466569,
+          "publish": 7721123,
+          "reserve": 11780,
+          "retire": 21870,
+          "terminal": 15334669
+        },
+        "phase_ns": {
+          "commit_prepare": 37680,
+          "enter_pre_census": 74274586,
+          "full_exit": 64386988,
+          "hidden_post_census": 40239496,
+          "mlp_retired_seal": 882676569,
+          "prefix": 497640138
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22673534,
+        "callback_ns": {
+          "bank": 22222083,
+          "layers": 518304426,
+          "tail": 4700912
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3666193
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11064136
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3369132
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4122622
+            }
+          },
+          "bank_guarded_body_ns": 22673534,
+          "layers": {
+            "after": {
+              "calls": 14756,
+              "elapsed_ns": 73420367
+            },
+            "before": {
+              "calls": 14756,
+              "elapsed_ns": 227540187
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123349644
+            },
+            "root_generation": {
+              "calls": 16088,
+              "elapsed_ns": 93994228
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 232320
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 719930
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3384112
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 364550
+            }
+          }
+        },
+        "layer_other_ns": 1041185141
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 988421,
+        "whole_forward": 1173651
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1792527141,
+        "forward": 1792712371,
+        "prepare_write": 22980,
+        "validate_retain_commit": 162250
+      },
+      "phase_ns": {
+        "bank": 22680954,
+        "commit": 13612628,
+        "embedding": 59505217,
+        "fence": 13569808,
+        "frame": 938121,
+        "input": 4650,
+        "layers": 1559489567,
+        "metadata": 81315580,
+        "tail": 40422195
+      },
+      "position": 26
+    },
+    {
+      "forward_body_ns": 1795811453,
+      "layer_metrics": {
+        "layer_body_ns": 1564975781,
+        "layers": 36,
+        "paired_mlp_body_ns": 885489720,
+        "paired_mlp_phase_ns": {
+          "consume": 3875032,
+          "poll": 819060459,
+          "preflight": 39420305,
+          "publish": 7687164,
+          "reserve": 12590,
+          "retire": 20610,
+          "terminal": 15413560
+        },
+        "phase_ns": {
+          "commit_prepare": 39700,
+          "enter_pre_census": 74008617,
+          "full_exit": 64084553,
+          "hidden_post_census": 39536992,
+          "mlp_retired_seal": 891212905,
+          "prefix": 496093014
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22905094,
+        "callback_ns": {
+          "bank": 22453062,
+          "layers": 520465383,
+          "tail": 4695092
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3661192
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11154407
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3394142
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4243321
+            }
+          },
+          "bank_guarded_body_ns": 22905094,
+          "layers": {
+            "after": {
+              "calls": 14866,
+              "elapsed_ns": 73855982
+            },
+            "before": {
+              "calls": 14866,
+              "elapsed_ns": 229143800
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 122822587
+            },
+            "root_generation": {
+              "calls": 16198,
+              "elapsed_ns": 94643014
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 230160
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 714320
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3387862
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 362750
+            }
+          }
+        },
+        "layer_other_ns": 1044744648
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 959941,
+        "whole_forward": 1144561
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1796771394,
+        "forward": 1796956014,
+        "prepare_write": 20830,
+        "validate_retain_commit": 163790
+      },
+      "phase_ns": {
+        "bank": 22912554,
+        "commit": 13544978,
+        "embedding": 60104047,
+        "fence": 13498778,
+        "frame": 877591,
+        "input": 4660,
+        "layers": 1565210031,
+        "metadata": 83388912,
+        "tail": 36269902
+      },
+      "position": 27
+    },
+    {
+      "forward_body_ns": 1790280160,
+      "layer_metrics": {
+        "layer_body_ns": 1559996267,
+        "layers": 36,
+        "paired_mlp_body_ns": 879739825,
+        "paired_mlp_phase_ns": {
+          "consume": 3824055,
+          "poll": 813480102,
+          "preflight": 39400972,
+          "publish": 7707756,
+          "reserve": 12320,
+          "retire": 20520,
+          "terminal": 15294100
+        },
+        "phase_ns": {
+          "commit_prepare": 38580,
+          "enter_pre_census": 74177978,
+          "full_exit": 64440871,
+          "hidden_post_census": 39697841,
+          "mlp_retired_seal": 885475252,
+          "prefix": 496165745
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 23227075,
+        "callback_ns": {
+          "bank": 22782415,
+          "layers": 518625081,
+          "tail": 4770644
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3697740
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11375501
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3500363
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4208811
+            }
+          },
+          "bank_guarded_body_ns": 23227075,
+          "layers": {
+            "after": {
+              "calls": 14796,
+              "elapsed_ns": 73543974
+            },
+            "before": {
+              "calls": 14796,
+              "elapsed_ns": 227809061
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123305208
+            },
+            "root_generation": {
+              "calls": 16128,
+              "elapsed_ns": 93966838
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 235100
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 727151
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3437872
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 370521
+            }
+          }
+        },
+        "layer_other_ns": 1041605226
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 986790,
+        "whole_forward": 1207981
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1791266950,
+        "forward": 1791488141,
+        "prepare_write": 22190,
+        "validate_retain_commit": 199001
+      },
+      "phase_ns": {
+        "bank": 23234485,
+        "commit": 13574579,
+        "embedding": 58571246,
+        "fence": 13713828,
+        "frame": 878081,
+        "input": 4700,
+        "layers": 1560230307,
+        "metadata": 80876940,
+        "tail": 39195994
+      },
+      "position": 28
+    },
+    {
+      "forward_body_ns": 1797586614,
+      "layer_metrics": {
+        "layer_body_ns": 1566850361,
+        "layers": 36,
+        "paired_mlp_body_ns": 884160061,
+        "paired_mlp_phase_ns": {
+          "consume": 3806212,
+          "poll": 817628504,
+          "preflight": 39619018,
+          "publish": 7680052,
+          "reserve": 12490,
+          "retire": 21060,
+          "terminal": 15392725
+        },
+        "phase_ns": {
+          "commit_prepare": 39070,
+          "enter_pre_census": 74184742,
+          "full_exit": 64315411,
+          "hidden_post_census": 39968313,
+          "mlp_retired_seal": 889942702,
+          "prefix": 498400123
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22951674,
+        "callback_ns": {
+          "bank": 22507943,
+          "layers": 521278085,
+          "tail": 4783492
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3671712
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11187035
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3430692
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4218504
+            }
+          },
+          "bank_guarded_body_ns": 22951674,
+          "layers": {
+            "after": {
+              "calls": 14846,
+              "elapsed_ns": 74019997
+            },
+            "before": {
+              "calls": 14846,
+              "elapsed_ns": 229333940
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123217708
+            },
+            "root_generation": {
+              "calls": 16178,
+              "elapsed_ns": 94706440
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 237660
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 737460
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3432512
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 375860
+            }
+          }
+        },
+        "layer_other_ns": 1045810277
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 992100,
+        "whole_forward": 1211701
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1798578714,
+        "forward": 1798798315,
+        "prepare_write": 20580,
+        "validate_retain_commit": 199021
+      },
+      "phase_ns": {
+        "bank": 22958944,
+        "commit": 13568349,
+        "embedding": 58428946,
+        "fence": 13574308,
+        "frame": 878301,
+        "input": 4630,
+        "layers": 1567088362,
+        "metadata": 81088060,
+        "tail": 39996714
+      },
+      "position": 29
+    },
+    {
+      "forward_body_ns": 1795431263,
+      "layer_metrics": {
+        "layer_body_ns": 1564202020,
+        "layers": 36,
+        "paired_mlp_body_ns": 882593523,
+        "paired_mlp_phase_ns": {
+          "consume": 3815892,
+          "poll": 816057884,
+          "preflight": 39660856,
+          "publish": 7665417,
+          "reserve": 12740,
+          "retire": 20840,
+          "terminal": 15359894
+        },
+        "phase_ns": {
+          "commit_prepare": 41070,
+          "enter_pre_census": 74304830,
+          "full_exit": 64695379,
+          "hidden_post_census": 39710911,
+          "mlp_retired_seal": 888334524,
+          "prefix": 497115306
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22748644,
+        "callback_ns": {
+          "bank": 22284483,
+          "layers": 519869027,
+          "tail": 4777042
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3611643
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11033255
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3477792
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4161793
+            }
+          },
+          "bank_guarded_body_ns": 22748644,
+          "layers": {
+            "after": {
+              "calls": 14830,
+              "elapsed_ns": 73720176
+            },
+            "before": {
+              "calls": 14830,
+              "elapsed_ns": 227980042
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123743064
+            },
+            "root_generation": {
+              "calls": 16162,
+              "elapsed_ns": 94425745
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 236420
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 727750
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3439872
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 373000
+            }
+          }
+        },
+        "layer_other_ns": 1044575693
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 994350,
+        "whole_forward": 1207820
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1796425613,
+        "forward": 1796639083,
+        "prepare_write": 19230,
+        "validate_retain_commit": 194240
+      },
+      "phase_ns": {
+        "bank": 22756114,
+        "commit": 13555529,
+        "embedding": 58286476,
+        "fence": 13620338,
+        "frame": 879651,
+        "input": 4860,
+        "layers": 1564444720,
+        "metadata": 81009750,
+        "tail": 40873825
+      },
+      "position": 30
+    },
+    {
+      "forward_body_ns": 1795588843,
+      "layer_metrics": {
+        "layer_body_ns": 1569079172,
+        "layers": 36,
+        "paired_mlp_body_ns": 886424749,
+        "paired_mlp_phase_ns": {
+          "consume": 3825651,
+          "poll": 819648869,
+          "preflight": 39743307,
+          "publish": 7753293,
+          "reserve": 12430,
+          "retire": 21260,
+          "terminal": 15419939
+        },
+        "phase_ns": {
+          "commit_prepare": 39490,
+          "enter_pre_census": 74586479,
+          "full_exit": 64999031,
+          "hidden_post_census": 40181654,
+          "mlp_retired_seal": 892323022,
+          "prefix": 496949496
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22825454,
+        "callback_ns": {
+          "bank": 22338824,
+          "layers": 524931885,
+          "tail": 4780073
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3577555
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11141314
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3474332
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4145623
+            }
+          },
+          "bank_guarded_body_ns": 22825454,
+          "layers": {
+            "after": {
+              "calls": 14848,
+              "elapsed_ns": 74566771
+            },
+            "before": {
+              "calls": 14848,
+              "elapsed_ns": 230582050
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124094947
+            },
+            "root_generation": {
+              "calls": 16180,
+              "elapsed_ns": 95688117
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 238260
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 726000
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3436343
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 379470
+            }
+          }
+        },
+        "layer_other_ns": 1044387248
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1015271,
+        "whole_forward": 1295121
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1796604114,
+        "forward": 1796883964,
+        "prepare_write": 23380,
+        "validate_retain_commit": 256470
+      },
+      "phase_ns": {
+        "bank": 22833094,
+        "commit": 13849528,
+        "embedding": 58622526,
+        "fence": 13879139,
+        "frame": 878980,
+        "input": 4750,
+        "layers": 1569319133,
+        "metadata": 81753581,
+        "tail": 34448112
+      },
+      "position": 31
+    },
+    {
+      "forward_body_ns": 1797636595,
+      "layer_metrics": {
+        "layer_body_ns": 1565908780,
+        "layers": 36,
+        "paired_mlp_body_ns": 881308848,
+        "paired_mlp_phase_ns": {
+          "consume": 3858002,
+          "poll": 814686636,
+          "preflight": 39667979,
+          "publish": 7688445,
+          "reserve": 12530,
+          "retire": 20780,
+          "terminal": 15374476
+        },
+        "phase_ns": {
+          "commit_prepare": 38920,
+          "enter_pre_census": 74557572,
+          "full_exit": 64513701,
+          "hidden_post_census": 40086417,
+          "mlp_retired_seal": 887077718,
+          "prefix": 499634452
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22774984,
+        "callback_ns": {
+          "bank": 22283014,
+          "layers": 520617738,
+          "tail": 4777202
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3611243
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11088957
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3358952
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4223862
+            }
+          },
+          "bank_guarded_body_ns": 22774984,
+          "layers": {
+            "after": {
+              "calls": 14806,
+              "elapsed_ns": 74040641
+            },
+            "before": {
+              "calls": 14806,
+              "elapsed_ns": 228221985
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123740626
+            },
+            "root_generation": {
+              "calls": 16138,
+              "elapsed_ns": 94614486
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233190
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 738540
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3438242
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 367230
+            }
+          }
+        },
+        "layer_other_ns": 1045523513
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 995190,
+        "whole_forward": 1162190
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1798631785,
+        "forward": 1798798785,
+        "prepare_write": 25930,
+        "validate_retain_commit": 141070
+      },
+      "phase_ns": {
+        "bank": 22782864,
+        "commit": 13857819,
+        "embedding": 58389076,
+        "fence": 13836779,
+        "frame": 877200,
+        "input": 4640,
+        "layers": 1566141251,
+        "metadata": 81225141,
+        "tail": 40521825
+      },
+      "position": 32
+    },
+    {
+      "forward_body_ns": 1793791942,
+      "layer_metrics": {
+        "layer_body_ns": 1562236298,
+        "layers": 36,
+        "paired_mlp_body_ns": 880618696,
+        "paired_mlp_phase_ns": {
+          "consume": 3825872,
+          "poll": 814071467,
+          "preflight": 39667189,
+          "publish": 7689578,
+          "reserve": 12420,
+          "retire": 20830,
+          "terminal": 15331340
+        },
+        "phase_ns": {
+          "commit_prepare": 38660,
+          "enter_pre_census": 74134404,
+          "full_exit": 64324361,
+          "hidden_post_census": 39219614,
+          "mlp_retired_seal": 886365679,
+          "prefix": 498153580
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22749464,
+        "callback_ns": {
+          "bank": 22267604,
+          "layers": 519716453,
+          "tail": 4735702
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3621024
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11061237
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3413742
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4171601
+            }
+          },
+          "bank_guarded_body_ns": 22749464,
+          "layers": {
+            "after": {
+              "calls": 14804,
+              "elapsed_ns": 74084405
+            },
+            "before": {
+              "calls": 14804,
+              "elapsed_ns": 228318922
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123184467
+            },
+            "root_generation": {
+              "calls": 16136,
+              "elapsed_ns": 94128659
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 232840
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 723680
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3410572
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 368610
+            }
+          }
+        },
+        "layer_other_ns": 1042756496
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1001611,
+        "whole_forward": 1201811
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1794793553,
+        "forward": 1794993753,
+        "prepare_write": 22520,
+        "validate_retain_commit": 177680
+      },
+      "phase_ns": {
+        "bank": 22756864,
+        "commit": 13559448,
+        "embedding": 58510146,
+        "fence": 13551689,
+        "frame": 937380,
+        "input": 4720,
+        "layers": 1562472949,
+        "metadata": 81924761,
+        "tail": 40073985
+      },
+      "position": 33
+    },
+    {
+      "forward_body_ns": 1797094344,
+      "layer_metrics": {
+        "layer_body_ns": 1564579629,
+        "layers": 36,
+        "paired_mlp_body_ns": 882149406,
+        "paired_mlp_phase_ns": {
+          "consume": 3813152,
+          "poll": 815765616,
+          "preflight": 39579922,
+          "publish": 7692736,
+          "reserve": 12240,
+          "retire": 20780,
+          "terminal": 15264960
+        },
+        "phase_ns": {
+          "commit_prepare": 37710,
+          "enter_pre_census": 75477086,
+          "full_exit": 64634400,
+          "hidden_post_census": 39875935,
+          "mlp_retired_seal": 887878898,
+          "prefix": 496675600
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22744264,
+        "callback_ns": {
+          "bank": 22297644,
+          "layers": 522165826,
+          "tail": 4726724
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3612841
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11099829
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3386012
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4198962
+            }
+          },
+          "bank_guarded_body_ns": 22744264,
+          "layers": {
+            "after": {
+              "calls": 14810,
+              "elapsed_ns": 74204072
+            },
+            "before": {
+              "calls": 14810,
+              "elapsed_ns": 228733644
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124738147
+            },
+            "root_generation": {
+              "calls": 16142,
+              "elapsed_ns": 94489963
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233100
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 713260
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3416202
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 364162
+            }
+          }
+        },
+        "layer_other_ns": 1042648294
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 988641,
+        "whole_forward": 1179461
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1798082985,
+        "forward": 1798273805,
+        "prepare_write": 24550,
+        "validate_retain_commit": 166270
+      },
+      "phase_ns": {
+        "bank": 22751934,
+        "commit": 13543938,
+        "embedding": 58427496,
+        "fence": 13513239,
+        "frame": 936570,
+        "input": 4590,
+        "layers": 1564814120,
+        "metadata": 82238301,
+        "tail": 40864156
+      },
+      "position": 34
+    },
+    {
+      "forward_body_ns": 1798875255,
+      "layer_metrics": {
+        "layer_body_ns": 1567313812,
+        "layers": 36,
+        "paired_mlp_body_ns": 884979154,
+        "paired_mlp_phase_ns": {
+          "consume": 3807585,
+          "poll": 818286028,
+          "preflight": 39666932,
+          "publish": 7789304,
+          "reserve": 13650,
+          "retire": 21580,
+          "terminal": 15394075
+        },
+        "phase_ns": {
+          "commit_prepare": 43750,
+          "enter_pre_census": 74376683,
+          "full_exit": 65261871,
+          "hidden_post_census": 39953160,
+          "mlp_retired_seal": 890745435,
+          "prefix": 496932913
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22734724,
+        "callback_ns": {
+          "bank": 22280814,
+          "layers": 522330357,
+          "tail": 4705242
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3608532
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11148048
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3418392
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4105842
+            }
+          },
+          "bank_guarded_body_ns": 22734724,
+          "layers": {
+            "after": {
+              "calls": 14852,
+              "elapsed_ns": 74547391
+            },
+            "before": {
+              "calls": 14852,
+              "elapsed_ns": 229002682
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 124277197
+            },
+            "root_generation": {
+              "calls": 16184,
+              "elapsed_ns": 94503087
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 232180
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 715650
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3391702
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 365710
+            }
+          }
+        },
+        "layer_other_ns": 1045264235
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1076840,
+        "whole_forward": 1490391
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1799952095,
+        "forward": 1800365646,
+        "prepare_write": 21240,
+        "validate_retain_commit": 392311
+      },
+      "phase_ns": {
+        "bank": 22742024,
+        "commit": 13551269,
+        "embedding": 58397936,
+        "fence": 13516288,
+        "frame": 903091,
+        "input": 4710,
+        "layers": 1567594592,
+        "metadata": 82117241,
+        "tail": 40048104
+      },
+      "position": 35
+    },
+    {
+      "forward_body_ns": 1794699522,
+      "layer_metrics": {
+        "layer_body_ns": 1562200309,
+        "layers": 36,
+        "paired_mlp_body_ns": 881924699,
+        "paired_mlp_phase_ns": {
+          "consume": 3806333,
+          "poll": 815368273,
+          "preflight": 39670382,
+          "publish": 7680798,
+          "reserve": 12160,
+          "retire": 20530,
+          "terminal": 15366223
+        },
+        "phase_ns": {
+          "commit_prepare": 38950,
+          "enter_pre_census": 74416119,
+          "full_exit": 64604000,
+          "hidden_post_census": 39639742,
+          "mlp_retired_seal": 887685152,
+          "prefix": 495816346
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22843254,
+        "callback_ns": {
+          "bank": 22319244,
+          "layers": 520916629,
+          "tail": 4821024
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3601053
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11189398
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3388522
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4140271
+            }
+          },
+          "bank_guarded_body_ns": 22843254,
+          "layers": {
+            "after": {
+              "calls": 14808,
+              "elapsed_ns": 74034335
+            },
+            "before": {
+              "calls": 14808,
+              "elapsed_ns": 228188490
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123687539
+            },
+            "root_generation": {
+              "calls": 16140,
+              "elapsed_ns": 95006265
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 233940
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 725231
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3467093
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 394760
+            }
+          }
+        },
+        "layer_other_ns": 1041552610
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1005751,
+        "whole_forward": 1266831
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1795705273,
+        "forward": 1795966353,
+        "prepare_write": 43640,
+        "validate_retain_commit": 217440
+      },
+      "phase_ns": {
+        "bank": 22853274,
+        "commit": 13748888,
+        "embedding": 58728437,
+        "fence": 13701289,
+        "frame": 879210,
+        "input": 5300,
+        "layers": 1562469239,
+        "metadata": 81738160,
+        "tail": 40575725
+      },
+      "position": 36
+    },
+    {
+      "forward_body_ns": 1800168286,
+      "layer_metrics": {
+        "layer_body_ns": 1564580870,
+        "layers": 36,
+        "paired_mlp_body_ns": 881529925,
+        "paired_mlp_phase_ns": {
+          "consume": 3812442,
+          "poll": 814849196,
+          "preflight": 39671175,
+          "publish": 7822246,
+          "reserve": 11960,
+          "retire": 21380,
+          "terminal": 15341526
+        },
+        "phase_ns": {
+          "commit_prepare": 39020,
+          "enter_pre_census": 74268684,
+          "full_exit": 64415358,
+          "hidden_post_census": 39628489,
+          "mlp_retired_seal": 887299229,
+          "prefix": 498930090
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 23053575,
+        "callback_ns": {
+          "bank": 22552395,
+          "layers": 519861958,
+          "tail": 4760713
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3628301
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11230819
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3472942
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4220333
+            }
+          },
+          "bank_guarded_body_ns": 23053575,
+          "layers": {
+            "after": {
+              "calls": 14800,
+              "elapsed_ns": 74116204
+            },
+            "before": {
+              "calls": 14800,
+              "elapsed_ns": 227745743
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123312855
+            },
+            "root_generation": {
+              "calls": 16132,
+              "elapsed_ns": 94687156
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 234461
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 718060
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3394952
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 413240
+            }
+          }
+        },
+        "layer_other_ns": 1044953842
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 988030,
+        "whole_forward": 1245531
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1801156316,
+        "forward": 1801413817,
+        "prepare_write": 23730,
+        "validate_retain_commit": 233771
+      },
+      "phase_ns": {
+        "bank": 23060995,
+        "commit": 13648989,
+        "embedding": 59941297,
+        "fence": 13633638,
+        "frame": 938501,
+        "input": 4710,
+        "layers": 1564815800,
+        "metadata": 82545481,
+        "tail": 41578875
+      },
+      "position": 37
+    },
+    {
+      "forward_body_ns": 1794136982,
+      "layer_metrics": {
+        "layer_body_ns": 1562579029,
+        "layers": 36,
+        "paired_mlp_body_ns": 881366563,
+        "paired_mlp_phase_ns": {
+          "consume": 3873131,
+          "poll": 814738127,
+          "preflight": 39632537,
+          "publish": 7730733,
+          "reserve": 12410,
+          "retire": 20860,
+          "terminal": 15358765
+        },
+        "phase_ns": {
+          "commit_prepare": 38790,
+          "enter_pre_census": 74207106,
+          "full_exit": 64298178,
+          "hidden_post_census": 39936297,
+          "mlp_retired_seal": 887119947,
+          "prefix": 496978711
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22778464,
+        "callback_ns": {
+          "bank": 22324224,
+          "layers": 520292080,
+          "tail": 4709762
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3669895
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11120436
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3407742
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4126151
+            }
+          },
+          "bank_guarded_body_ns": 22778464,
+          "layers": {
+            "after": {
+              "calls": 14794,
+              "elapsed_ns": 74273544
+            },
+            "before": {
+              "calls": 14794,
+              "elapsed_ns": 228097360
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123181017
+            },
+            "root_generation": {
+              "calls": 16126,
+              "elapsed_ns": 94740159
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 234090
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 714640
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3391742
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 369290
+            }
+          }
+        },
+        "layer_other_ns": 1042524589
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 1008240,
+        "whole_forward": 1218691
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1795145222,
+        "forward": 1795355673,
+        "prepare_write": 28800,
+        "validate_retain_commit": 181651
+      },
+      "phase_ns": {
+        "bank": 22786114,
+        "commit": 13578229,
+        "embedding": 59315377,
+        "fence": 13576568,
+        "frame": 877811,
+        "input": 5490,
+        "layers": 1562816669,
+        "metadata": 81863330,
+        "tail": 39317394
+      },
+      "position": 38
+    },
+    {
+      "forward_body_ns": 1796098603,
+      "layer_metrics": {
+        "layer_body_ns": 1564264589,
+        "layers": 36,
+        "paired_mlp_body_ns": 882623008,
+        "paired_mlp_phase_ns": {
+          "consume": 3803072,
+          "poll": 816109539,
+          "preflight": 39532794,
+          "publish": 7695133,
+          "reserve": 12450,
+          "retire": 21300,
+          "terminal": 15448720
+        },
+        "phase_ns": {
+          "commit_prepare": 41690,
+          "enter_pre_census": 74209510,
+          "full_exit": 64692672,
+          "hidden_post_census": 40049655,
+          "mlp_retired_seal": 888372630,
+          "prefix": 496898432
+        }
+      },
+      "measured_callbacks": {
+        "bank_guarded_body_ns": 22653254,
+        "callback_ns": {
+          "bank": 22193294,
+          "layers": 520907847,
+          "tail": 4731443
+        },
+        "callbacks": {
+          "bank": {
+            "after": {
+              "calls": 726,
+              "elapsed_ns": 3611084
+            },
+            "before": {
+              "calls": 726,
+              "elapsed_ns": 11100595
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3373422
+            },
+            "root_generation": {
+              "calls": 725,
+              "elapsed_ns": 4108193
+            }
+          },
+          "bank_guarded_body_ns": 22653254,
+          "layers": {
+            "after": {
+              "calls": 14826,
+              "elapsed_ns": 74327675
+            },
+            "before": {
+              "calls": 14826,
+              "elapsed_ns": 228183001
+            },
+            "discover": {
+              "calls": 72,
+              "elapsed_ns": 123569845
+            },
+            "root_generation": {
+              "calls": 16158,
+              "elapsed_ns": 94827326
+            }
+          },
+          "tail": {
+            "after": {
+              "calls": 46,
+              "elapsed_ns": 238341
+            },
+            "before": {
+              "calls": 46,
+              "elapsed_ns": 719840
+            },
+            "discover": {
+              "calls": 2,
+              "elapsed_ns": 3407452
+            },
+            "root_generation": {
+              "calls": 63,
+              "elapsed_ns": 365810
+            }
+          }
+        },
+        "layer_other_ns": 1043612503
+      },
+      "parent_minus_body_ns": {
+        "flush_to_frame_read": 2737102,
+        "whole_forward": 5255603
+      },
+      "parent_ns": {
+        "flush_to_frame_read": 1798835705,
+        "forward": 1801354206,
+        "prepare_write": 21320,
+        "validate_retain_commit": 2497181
+      },
+      "phase_ns": {
+        "bank": 22660614,
+        "commit": 13597858,
+        "embedding": 59427087,
+        "fence": 13551529,
+        "frame": 908270,
+        "input": 4550,
+        "layers": 1564520350,
+        "metadata": 81305690,
+        "tail": 40122655
+      },
+      "position": 39
+    }
+  ],
+  "full2303_acceptance": false,
+  "generated_token_correctness": false,
+  "generated_tokens": 0,
+  "gpu_timing": false,
+  "layer_stage_order": [
+    "enter_pre_census",
+    "prefix",
+    "mlp_retired_seal",
+    "hidden_post_census",
+    "full_exit",
+    "commit_prepare"
+  ],
+  "matched_comparison": false,
+  "native_rerun": false,
+  "numerical_acceptance": false,
+  "optimization_ceiling_claim": false,
+  "overlap_claim": false,
+  "paired_mlp_stage_order": [
+    "preflight",
+    "consume",
+    "reserve",
+    "publish",
+    "poll",
+    "retire",
+    "terminal"
+  ],
+  "parent": {
+    "disjoint_spans": 124,
+    "groups_ns": {
+      "close_and_retirement": 30047628676,
+      "flush_to_frame_read": 94015448398,
+      "postcheck_and_ordinary_publication": 347884806,
+      "prepare_write": 1235781,
+      "source_preparation": 91723500399,
+      "spawn_to_setup_seal": 221612330444,
+      "validate_retain_commit": 19297633
+    },
+    "total_ns": 437767326137
+  },
+  "performance_claim": false,
+  "phase_order": [
+    "input",
+    "metadata",
+    "embedding",
+    "bank",
+    "layers",
+    "tail",
+    "frame",
+    "fence",
+    "commit"
+  ],
+  "polling_pause_changed": false,
+  "production_authority": false,
+  "prompt_forwards": 40,
+  "provenance": {
+    "archive": {
+      "bytes": 4655619,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-control-native-evidence-v228-v1.tar.gz",
+      "sha256": "b2a2094a4445e5952aac0ee1678c2e4da7854354e0671a49c32bcb4438707c4e"
+    },
+    "parent_result": {
+      "bytes": 2651,
+      "sha256": "2fe2b8aceba99b245c1d279fe0c5e24c7141953d31062ef0843f01df5b41370f"
+    },
+    "records": {
+      "currentness": {
+        "bytes": 25528,
+        "sha256": "484ec9d2874e2dce46fde064a7a9b1eb795479221a2f55e0b808d6279c756820"
+      },
+      "forward": {
+        "bytes": 15654,
+        "sha256": "5ad9aefb325eb8b84478e45c14c9bfa04df5fb5ee09acfd349ffc84bab538f76"
+      },
+      "policy": {
+        "bytes": 2742,
+        "sha256": "4630f46581fcf945d514626a4c4b9c6e1851be489f4a09e96fd8b55e9aaac43e"
+      }
+    },
+    "reducer": {
+      "bytes": 32087,
+      "sha256": "357e3ee2391b23bc8527a0d9bd515e1834422a09bbc5f51b38cf6c5c4198bb14"
+    },
+    "reporter": {
+      "bytes": 12441,
+      "sha256": "7dfa2f53faac106dcd6347f0cf0e4cf137cd727268424efded7786b841ef261b"
+    },
+    "retained_root": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-control-native-retained-v228-v1",
+    "retainer": {
+      "bytes": 51654,
+      "sha256": "2e41737a1bd01256a472e2655e769c6ec87475618d4f49d839611342f4f7858c"
+    },
+    "retention_receipt": {
+      "bytes": 146204,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-control-tools-v228-v1/retain-stdout.json",
+      "sha256": "4e5357be4d89a5c0035e16d496acbdf4382937b3285e1c45dda5bbc0d2348e91"
+    },
+    "terminal": {
+      "bytes": 912648,
+      "sha256": "9eb0b4e75b0484759a5abd6318d605afcbd95d33040e02b94536e885ed1f3d7a"
+    }
+  },
+  "schema": "ferric-active-pause-native-arm-host-report-v1",
+  "subsets": {
+    "all": {
+      "body_ns": 93955200852,
+      "parent_ns": {
+        "flush_to_frame_read": 94015448398,
+        "forward": 94035981812,
+        "prepare_write": 1235781,
+        "validate_retain_commit": 19297633
+      },
+      "phase_ns": {
+        "bank": 896790285,
+        "commit": 546134108,
+        "embedding": 2352779186,
+        "fence": 545684370,
+        "frame": 35969361,
+        "input": 190400,
+        "layers": 84516868956,
+        "metadata": 3271059859,
+        "tail": 1789724327
+      },
+      "phase_percent": {
+        "bank": "0.954487",
+        "commit": "0.581271",
+        "embedding": "2.504150",
+        "fence": "0.580792",
+        "frame": "0.038284",
+        "input": "0.000203",
+        "layers": "89.954434",
+        "metadata": "3.481510",
+        "tail": "1.904870"
+      },
+      "positions": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "signed_parent_minus_body_ns": {
+        "flush_to_frame_read": 60247546,
+        "whole_forward": 80780960
+      }
+    },
+    "first_use": {
+      "body_ns": 25784528284,
+      "parent_ns": {
+        "flush_to_frame_read": 25801737304,
+        "forward": 25805023697,
+        "prepare_write": 241001,
+        "validate_retain_commit": 3045392
+      },
+      "phase_ns": {
+        "bank": 27403747,
+        "commit": 27419167,
+        "embedding": 117162383,
+        "fence": 27325337,
+        "frame": 1873001,
+        "input": 10180,
+        "layers": 25134063110,
+        "metadata": 162724411,
+        "tail": 286546948
+      },
+      "phase_percent": {
+        "bank": "0.106280",
+        "commit": "0.106340",
+        "embedding": "0.454390",
+        "fence": "0.105976",
+        "frame": "0.007264",
+        "input": "0.000039",
+        "layers": "97.477304",
+        "metadata": "0.631093",
+        "tail": "1.111314"
+      },
+      "positions": [
+        0,
+        1
+      ],
+      "signed_parent_minus_body_ns": {
+        "flush_to_frame_read": 17209020,
+        "whole_forward": 20495413
+      }
+    },
+    "warm": {
+      "body_ns": 68170672568,
+      "parent_ns": {
+        "flush_to_frame_read": 68213711094,
+        "forward": 68230958115,
+        "prepare_write": 994780,
+        "validate_retain_commit": 16252241
+      },
+      "phase_ns": {
+        "bank": 869386538,
+        "commit": 518714941,
+        "embedding": 2235616803,
+        "fence": 518359033,
+        "frame": 34096360,
+        "input": 180220,
+        "layers": 59382805846,
+        "metadata": 3108335448,
+        "tail": 1503177379
+      },
+      "phase_percent": {
+        "bank": "1.275309",
+        "commit": "0.760906",
+        "embedding": "3.279441",
+        "fence": "0.760384",
+        "frame": "0.050016",
+        "input": "0.000264",
+        "layers": "87.109022",
+        "metadata": "4.559637",
+        "tail": "2.205021"
+      },
+      "positions": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "signed_parent_minus_body_ns": {
+        "flush_to_frame_read": 43038526,
+        "whole_forward": 60285547
+      }
+    }
+  },
+  "warm_layers": {
+    "closed_mlp_outside_paired_ns": 219914881,
+    "forward_layers_ns": 59382805846,
+    "forward_layers_outside_closed_ns": 9208749,
+    "layer_body_ns": 59373597097,
+    "layer_callbacks_ns": 19809675266,
+    "measured_forwards": 38,
+    "measured_layer_returns": 1368,
+    "paired_mlp_body_ns": 33498987991,
+    "paired_mlp_phase_ns": {
+      "consume": 145712903,
+      "poll": 30965124989,
+      "preflight": 1507554810,
+      "publish": 293835264,
+      "reserve": 472560,
+      "retire": 796550,
+      "terminal": 585490915
+    },
+    "paired_mlp_phase_percent": {
+      "consume": "0.434977",
+      "poll": "92.436001",
+      "preflight": "4.500300",
+      "publish": "0.877147",
+      "reserve": "0.001411",
+      "retire": "0.002378",
+      "terminal": "1.747787"
+    },
+    "phase_ns": {
+      "commit_prepare": 1472060,
+      "enter_pre_census": 2830463685,
+      "full_exit": 2453932476,
+      "hidden_post_census": 1517192865,
+      "mlp_retired_seal": 33718902872,
+      "prefix": 18851633139
+    },
+    "phase_percent": {
+      "commit_prepare": "0.002479",
+      "enter_pre_census": "4.767209",
+      "full_exit": "4.133037",
+      "hidden_post_census": "2.555333",
+      "mlp_retired_seal": "56.791073",
+      "prefix": "31.750869"
+    }
+  },
+  "warm_nested": {
+    "bank_guarded_body_ns": 869091128,
+    "callback_ns": {
+      "bank": 851265178,
+      "layers": 19809675266,
+      "tail": 180720866
+    },
+    "categories": {
+      "bank": {
+        "after": {
+          "calls": 27588,
+          "elapsed_ns": 138409854
+        },
+        "before": {
+          "calls": 27588,
+          "elapsed_ns": 424048262
+        },
+        "discover": {
+          "calls": 76,
+          "elapsed_ns": 129850570
+        },
+        "root_generation": {
+          "calls": 27550,
+          "elapsed_ns": 158956492
+        }
+      },
+      "layers": {
+        "after": {
+          "calls": 562496,
+          "elapsed_ns": 2817935256
+        },
+        "before": {
+          "calls": 562496,
+          "elapsed_ns": 8687968166
+        },
+        "discover": {
+          "calls": 2736,
+          "elapsed_ns": 4700156997
+        },
+        "root_generation": {
+          "calls": 613112,
+          "elapsed_ns": 3603614847
+        }
+      },
+      "tail": {
+        "after": {
+          "calls": 1748,
+          "elapsed_ns": 8930548
+        },
+        "before": {
+          "calls": 1748,
+          "elapsed_ns": 27530370
+        },
+        "discover": {
+          "calls": 76,
+          "elapsed_ns": 130100900
+        },
+        "root_generation": {
+          "calls": 2394,
+          "elapsed_ns": 14159048
+        }
+      }
+    },
+    "layer_other_ns": 39573130580
+  },
+  "whole_parent_resource_usage": {
+    "children_rusage": {
+      "after": {
+        "ru_majflt": 0,
+        "ru_minflt": 7413994,
+        "ru_nivcsw": 67473,
+        "ru_nvcsw": 990326,
+        "ru_stime": 187.28194,
+        "ru_utime": 211.796851
+      },
+      "before": {
+        "ru_majflt": 0,
+        "ru_minflt": 20049,
+        "ru_nivcsw": 34,
+        "ru_nvcsw": 98,
+        "ru_stime": 0.158401,
+        "ru_utime": 0.144761
+      },
+      "delta": {
+        "ru_majflt": 0,
+        "ru_minflt": 7393945,
+        "ru_nivcsw": 67439,
+        "ru_nvcsw": 990228,
+        "ru_stime": 187.123539,
+        "ru_utime": 211.65209000000002
+      },
+      "error": null,
+      "who": "RUSAGE_CHILDREN"
+    },
+    "parent_leaf_wall_seconds": 438.14048450801056,
+    "peak_memory_measured": false,
+    "peak_rss_delta_used": false,
+    "scope": "owned parent leaf and reaped descendants, before spawn through cleanup",
+    "user_plus_system_seconds_decimal": "398.77562900000002",
+    "warm_only": false
+  }
+}

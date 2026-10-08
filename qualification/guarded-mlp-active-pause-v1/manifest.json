@@ -1228,32 +1228,301 @@
     "sha256": "94b4258be44bd1c0d428fff96dac9291f7b465f5fac10aa6c99648370421c3cf"
   },
   "authored_and_tested_on": "mi350",
+  "candidate_disposition": "not_promoted",
   "candidate_failed_attempts_retained": 0,
   "candidate_source_archive_only": true,
-  "cpu_qualification_only": true,
+  "cpu_qualification_only": false,
   "currentness_policy_changed": false,
   "documents": {
     "docs/GFX950_COMMUNITY_DEMO_V1.md": {
-      "bytes": 17581,
-      "sha256": "46b49fb5c3da7e838ce254d24ff29e4437a2f1b0efe001eec5e3d9ecb32b4e09"
+      "bytes": 18725,
+      "sha256": "bb3522beb6e2bd8abc63e638665c51559c7f1b117270c1833f951b50e0f77cf0"
     },
     "docs/GFX950_FINITE_PREFIX_PROGRESS_V1.md": {
-      "bytes": 168635,
-      "sha256": "68aff60ba50bb69bd78624b0a3d24ba2b36ced1ab78862bac04ffeb6d3814c07"
+      "bytes": 169559,
+      "sha256": "40d23511dcbdca0a3d1a83a84124b79d52c1390364ba51f4ad5406fe8f140a0b"
     },
     "qualification/guarded-mlp-active-pause-v1/README.md": {
-      "bytes": 9407,
-      "sha256": "d0d3dd35fe38b22b2e64ce86ec68d8e73dc56a616019918d91b8b457ed69441a"
+      "bytes": 13597,
+      "sha256": "9936e923235bf30464b9744b72bfc6f8c297f1702b13103fa927f8e35e4fac20"
     }
   },
   "ferric_branch": "codex/p227-finite-prefix-integration-v1",
   "full2303_deadline_changed": false,
   "full2303_executed": false,
   "full2303_feasibility": false,
-  "gpu_execution": false,
+  "gpu_execution": true,
   "inherited_failures_credited": false,
   "kernel_math_changed": false,
-  "native_admission": false,
+  "native_admission": true,
+  "native_admission_scope": "two engineering TP2 readiness40 cases only; no production or generated-token acceptance",
+  "native_measurement": {
+    "abba_executed": false,
+    "arms": {
+      "candidate": {
+        "archive": {
+          "bytes": 4658680,
+          "sha256": "47dbaf0289bd8f8194e69cc04202ab838d1f7b23a31cb75a9e86b38b5cd8350d"
+        },
+        "archive_members": 170,
+        "clean_owned_phases": 11,
+        "generated_tokens": 0,
+        "historical_ferric_parity_passed": true,
+        "idle_checks": 6,
+        "independent_full_model_reference": false,
+        "native_checks_passed": true,
+        "plot": {
+          "bytes": 4217,
+          "sha256": "5f6856ee04e86de232ca4108ddedcb49805bf46707637fec7d59268b42807e2f"
+        },
+        "prompt_forwards": 40,
+        "raw_files": 73,
+        "report": {
+          "bytes": 124590,
+          "sha256": "9cecf668bb377489b3e5e9cfaa2d53448bef316d11fbb9094a7ef3b878fbd319"
+        },
+        "terminal": {
+          "bytes": 911640,
+          "sha256": "5fbcef4bad68019b3d096130e9f982c622e2f56ede24396e1f025628f0662300"
+        },
+        "warm_forward_body_ns": 68744251921,
+        "warm_layer_callbacks": {
+          "after": {
+            "calls": 752888,
+            "elapsed_ns": 3883135721
+          },
+          "before": {
+            "calls": 752888,
+            "elapsed_ns": 11789667961
+          },
+          "discover": {
+            "calls": 2736,
+            "elapsed_ns": 5082616129
+          },
+          "root_generation": {
+            "calls": 803504,
+            "elapsed_ns": 4709475195
+          }
+        },
+        "warm_paired_poll_ns": 30890521610,
+        "whole_parent_resource_usage": {
+          "children_rusage": {
+            "after": {
+              "ru_majflt": 0,
+              "ru_minflt": 7415980,
+              "ru_nivcsw": 64452,
+              "ru_nvcsw": 787746,
+              "ru_stime": 199.310209,
+              "ru_utime": 226.529824
+            },
+            "before": {
+              "ru_majflt": 0,
+              "ru_minflt": 20029,
+              "ru_nivcsw": 40,
+              "ru_nvcsw": 104,
+              "ru_stime": 0.179921,
+              "ru_utime": 0.145257
+            },
+            "delta": {
+              "ru_majflt": 0,
+              "ru_minflt": 7395951,
+              "ru_nivcsw": 64412,
+              "ru_nvcsw": 787642,
+              "ru_stime": 199.13028799999998,
+              "ru_utime": 226.384567
+            },
+            "error": null,
+            "who": "RUSAGE_CHILDREN"
+          },
+          "parent_leaf_wall_seconds": 445.2193457860267,
+          "peak_memory_measured": false,
+          "peak_rss_delta_used": false,
+          "scope": "owned parent leaf and reaped descendants, before spawn through cleanup",
+          "user_plus_system_seconds_decimal": "425.51485499999998",
+          "warm_only": false
+        }
+      },
+      "control": {
+        "archive": {
+          "bytes": 4655619,
+          "sha256": "b2a2094a4445e5952aac0ee1678c2e4da7854354e0671a49c32bcb4438707c4e"
+        },
+        "archive_members": 170,
+        "clean_owned_phases": 11,
+        "generated_tokens": 0,
+        "historical_ferric_parity_passed": true,
+        "idle_checks": 6,
+        "independent_full_model_reference": false,
+        "native_checks_passed": true,
+        "plot": {
+          "bytes": 4217,
+          "sha256": "12802096180efb6a3b118f79bdd893c5918600c012cf02e416a53cd259912d60"
+        },
+        "prompt_forwards": 40,
+        "raw_files": 73,
+        "report": {
+          "bytes": 124545,
+          "sha256": "d458bb9233092b8c17f291c5b780fcfaca041d75dab2cdc91e3ff02037733e13"
+        },
+        "terminal": {
+          "bytes": 912648,
+          "sha256": "9eb0b4e75b0484759a5abd6318d605afcbd95d33040e02b94536e885ed1f3d7a"
+        },
+        "warm_forward_body_ns": 68170672568,
+        "warm_layer_callbacks": {
+          "after": {
+            "calls": 562496,
+            "elapsed_ns": 2817935256
+          },
+          "before": {
+            "calls": 562496,
+            "elapsed_ns": 8687968166
+          },
+          "discover": {
+            "calls": 2736,
+            "elapsed_ns": 4700156997
+          },
+          "root_generation": {
+            "calls": 613112,
+            "elapsed_ns": 3603614847
+          }
+        },
+        "warm_paired_poll_ns": 30965124989,
+        "whole_parent_resource_usage": {
+          "children_rusage": {
+            "after": {
+              "ru_majflt": 0,
+              "ru_minflt": 7413994,
+              "ru_nivcsw": 67473,
+              "ru_nvcsw": 990326,
+              "ru_stime": 187.28194,
+              "ru_utime": 211.796851
+            },
+            "before": {
+              "ru_majflt": 0,
+              "ru_minflt": 20049,
+              "ru_nivcsw": 34,
+              "ru_nvcsw": 98,
+              "ru_stime": 0.158401,
+              "ru_utime": 0.144761
+            },
+            "delta": {
+              "ru_majflt": 0,
+              "ru_minflt": 7393945,
+              "ru_nivcsw": 67439,
+              "ru_nvcsw": 990228,
+              "ru_stime": 187.123539,
+              "ru_utime": 211.65209000000002
+            },
+            "error": null,
+            "who": "RUSAGE_CHILDREN"
+          },
+          "parent_leaf_wall_seconds": 438.14048450801056,
+          "peak_memory_measured": false,
+          "peak_rss_delta_used": false,
+          "scope": "owned parent leaf and reaped descendants, before spawn through cleanup",
+          "user_plus_system_seconds_decimal": "398.77562900000002",
+          "warm_only": false
+        }
+      }
+    },
+    "direct_40_semantic_projections_equal": true,
+    "direct_four_payloads_equal": true,
+    "full2303_executed": false,
+    "generated_tokens": 0,
+    "independent_full_model_reference": false,
+    "joint_improvement_gate_passed": false,
+    "measured_speedup_claim": false,
+    "order": [
+      "control",
+      "candidate"
+    ],
+    "predecessor_manifest": {
+      "bytes": 58377,
+      "sha256": "9483e78dd8bc8a0e523aff109fcbb8351db1a2c42b6008e78550b6265cf8daa7"
+    },
+    "promoted": false,
+    "repetitions_per_arm": 1,
+    "request_differences": [
+      "worker",
+      "session",
+      "evidence_directory"
+    ],
+    "same_model_prompt_images_devices_bounds": true,
+    "source_and_asset_copies": {
+      "qualification/guarded-mlp-active-pause-v1/native-candidate-v1.tar.gz": {
+        "bytes": 4658680,
+        "sha256": "47dbaf0289bd8f8194e69cc04202ab838d1f7b23a31cb75a9e86b38b5cd8350d",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-native-evidence-v228-v1.tar.gz"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-control-v1.tar.gz": {
+        "bytes": 4655619,
+        "sha256": "b2a2094a4445e5952aac0ee1678c2e4da7854354e0671a49c32bcb4438707c4e",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-control-native-evidence-v228-v1.tar.gz"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/candidate/deployment.json": {
+        "bytes": 609457,
+        "sha256": "0d00b97312909f0edbc7c4d6b2de5ce6e580df03ae42fbaa62eec41b448caa01",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-tools-v228-v1/deployment.json"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/candidate/host-phases.svg": {
+        "bytes": 4217,
+        "sha256": "5f6856ee04e86de232ca4108ddedcb49805bf46707637fec7d59268b42807e2f",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-native-workflow-source-v228-v1/native-summary-v1/candidate/host-phases.svg"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/candidate/literal-binding.json": {
+        "bytes": 7015,
+        "sha256": "4d51d0fa6fa2750189b84f7e05f76bc2921ab459cacfc77dd7f2617099f868c8",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-tools-v228-v1/binding.json"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/candidate/report.json": {
+        "bytes": 124590,
+        "sha256": "9cecf668bb377489b3e5e9cfaa2d53448bef316d11fbb9094a7ef3b878fbd319",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-native-workflow-source-v228-v1/native-summary-v1/candidate/report.json"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/candidate/retention-result.json": {
+        "bytes": 146317,
+        "sha256": "ef71a5832287342f0d473714358afe2fd7b81a2cc3b3139ed7fc785cece66d9b",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-tools-v228-v1/retain-stdout.json"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/control/deployment.json": {
+        "bytes": 622446,
+        "sha256": "c08992155cee8cfe1c55675413b5789a78f561585933301aa30e202ea7ce5031",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-control-tools-v228-v1/deployment.json"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/control/host-phases.svg": {
+        "bytes": 4217,
+        "sha256": "12802096180efb6a3b118f79bdd893c5918600c012cf02e416a53cd259912d60",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-native-workflow-source-v228-v1/native-summary-v1/control/host-phases.svg"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/control/literal-binding.json": {
+        "bytes": 7045,
+        "sha256": "789c5867987d17285670d8ae51a21180a3bcad556e96ef08a8fa9eb7b6561315",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-control-tools-v228-v1/binding.json"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/control/report.json": {
+        "bytes": 124545,
+        "sha256": "d458bb9233092b8c17f291c5b780fcfaca041d75dab2cdc91e3ff02037733e13",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-native-workflow-source-v228-v1/native-summary-v1/control/report.json"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/control/retention-result.json": {
+        "bytes": 146204,
+        "sha256": "4e5357be4d89a5c0035e16d496acbdf4382937b3285e1c45dda5bbc0d2348e91",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-control-tools-v228-v1/retain-stdout.json"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/report_layer.py": {
+        "bytes": 32087,
+        "sha256": "357e3ee2391b23bc8527a0d9bd515e1834422a09bbc5f51b38cf6c5c4198bb14",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-layer-phases-native-source-v228-v1/report_layer.py"
+      },
+      "qualification/guarded-mlp-active-pause-v1/native-v1/summarize_native_arm.py": {
+        "bytes": 12441,
+        "sha256": "7dfa2f53faac106dcd6347f0cf0e4cf137cd727268424efded7786b841ef261b",
+        "source": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-active-pause-native-workflow-source-v228-v1/summarize_native_arm.py"
+      }
+    },
+    "statistical_significance_claim": false
+  },
   "native_workflow_cpu": {
     "arms": {
       "candidate": {
@@ -1348,6 +1617,7 @@
     "bytes": 440584,
     "sha256": "937393856017d088991e20df697b1b12df449b08a9151e65a968dbdf8603491f"
   },
+  "production_authority": false,
   "proposal": {
     "bytes": 444678,
     "sha256": "55f6af2baa21ed8be123ff815265966ba2b098cb856413eabd052fdee3e81161"
@@ -1358,7 +1628,7 @@
   },
   "runtime_production_sources_changed": false,
   "runtime_tests_repeated": true,
-  "schema": "ferric-readiness40-active-pause-checkpoint-v1",
+  "schema": "ferric-readiness40-active-pause-checkpoint-v2",
   "source_census": {
     "ferric": 1305,
     "project": 2139,

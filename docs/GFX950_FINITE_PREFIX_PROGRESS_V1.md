@@ -37,15 +37,31 @@ tests and 14 usage tests; they are not 666 distinct tests. The earlier
 These are actual-artifact-backed and synthetic CPU checks, not native model
 execution or measured live resource accounting.
 
-No active-pause GPU measurement or performance gain is claimed. Both CPU
-workflow qualifications are complete; fresh serial ABBA cases, each with its
-own prepared and identity-bound native admission, must preserve the
-40-prompt profile, original payload/semantic checks and 4,000/4,300-second
-native/whole-case bounds. Report CPU/resource consumption with the timing
-comparison; both paired poll and complete warm-forward body must improve.
-The previous 30.941303993 warm poll seconds mix required checks and device
-waiting, not a wholly removable delay. Full2303/256-output and 700 tokens/s
-acceptance and all M0-M7 milestones remain open.
+One fresh exploratory control/candidate pair now passes native execution:
+each arm validates 40 semantic records and four numeric payload captures
+against the historical Ferric baseline, its own transcript, 11 cleanly retired
+phases and six idle audits. It still generates zero tokens.
+[Original archives and per-arm reports](../qualification/guarded-mlp-active-pause-v1/README.md#exploratory-native-a1b1-pair)
+retain the complete evidence.
+
+Warm forward bodies are 68.170672568 seconds for A1 and 68.744251921 for B1;
+nested paired poll is 30.965124989 versus 30.890521610 seconds. The candidate
+has a slower warm body (+0.8413872585%) despite a small poll decrease
+(-0.2409271044%), so it fails the joint gate and is not promoted. Whole-parent
+user plus system CPU rises from 398.77562900000002 to 425.51485499999998 seconds
+(+6.7053310322%); that scope includes startup and all 40 forwards, not warm
+work alone. Warm layer before/after calls each rise from 562,496 to 752,888,
+root-generation calls from 613,112 to 803,504, while full discoveries remain
+2,736. Nested layer callback time rises from 19.809675266 to 25.464895006
+seconds; it overlaps other intervals and is not an additive or removable cost.
+This is consistent with more polling iterations of unchanged checks, not
+proof of exclusive time attribution. Predicates and checkpoint ordering are
+unchanged, but elapsed scheduling and observed iteration counts differ.
+
+ABBA was not run. This one ordered pair provides no statistical finding,
+measured gain, overlap, throughput or independent-accuracy claim. The source
+candidate remains archive-only, runtime production sources are unchanged,
+and Full2303/256-output acceptance, 700 tokens/s and M0-M7 remain open.
 
 Latest integrated implementation: the default-off
 [closed-layer phase diagnostic](../qualification/guarded-mlp-layer-phases-v1/README.md)
@@ -2220,18 +2236,15 @@ alone is not a self-contained reproducer or proof.
 
 ## Next Gates
 
-1. Following the completed candidate/control CPU workflow qualifications,
-   run a fresh serial control/candidate/candidate/control comparison of the
-   [active-pause candidate](../qualification/guarded-mlp-active-pause-v1/README.md).
-   Bind each separately prepared native case to its own admitted artifacts.
-   Require both lower paired
-   poll time and lower complete warm-forward body time, with CPU/resource
-   consumption reported at its measured scope. The source candidate remains
-   archive-only until measured promotion; do not install it as a production
-   optimization on CPU tests alone. Preserve currentness, deadline, poison,
-   completion and durability checks. The prior 30.941303993-second poll bucket
-   includes device waiting and required host work; it is not a removable
-   fraction. Keep nested callbacks and paired intervals non-additive.
+1. Do not promote the [active-pause candidate](../qualification/guarded-mlp-active-pause-v1/README.md):
+   its initial A1/B1 pair failed the joint poll/warm-body gate and increased
+   whole-parent CPU cost. ABBA was not run. Keep the candidate archive-only
+   and use the increased callback iteration counts to inform a next narrowly
+   scoped source hypothesis, not to skip predicates or widen safety windows.
+   Any new candidate needs its own qualification and fresh matching cases.
+   Preserve currentness, deadlines, poison, completion and durability checks;
+   keep nested intervals non-additive and require both warm-body and poll
+   improvement with explicitly scoped CPU/resource accounting.
 2. Establish launch feasibility for the CPU-qualified Full2303 route before
    running it on the GPU. The distinct long wire and bounded four-capture
    selection are implemented; readiness still executes only forty prompt

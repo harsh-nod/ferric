@@ -1,0 +1,182 @@
+{
+  "after": {
+    "retainer": {
+      "bytes": 51654,
+      "sha256": "2e41737a1bd01256a472e2655e769c6ec87475618d4f49d839611342f4f7858c"
+    },
+    "runner": {
+      "bytes": 46849,
+      "sha256": "bab44ebc17ed69ba30e59b30ca4263b885c140d81005f082bf6c74f3fffd8282"
+    }
+  },
+  "arm": "control",
+  "before": {
+    "retainer": {
+      "bytes": 50410,
+      "sha256": "d02593a2b05d5e8f3166056c0124b9b142858d2ae16fa5130eeec89938a51b03"
+    },
+    "runner": {
+      "bytes": 46787,
+      "sha256": "5d34a21bec81374ec0c59e1a9a7a23629e6995714e9d406a4fa981ec8e7c6de6"
+    }
+  },
+  "deployment": {
+    "bytes": 622446,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-control-tools-v228-v1/deployment.json",
+    "sha256": "c08992155cee8cfe1c55675413b5789a78f561585933301aa30e202ea7ce5031"
+  },
+  "gpu_execution": false,
+  "native_execution": false,
+  "only_literal_assignments_changed": true,
+  "plan": {
+    "bytes": 2927,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-control-gpu-v228-v1/tail_layer-input.json",
+    "sha256": "c9f20093301f8884af50e9e9eaa0987626eb010854682d23f66e2d47b4216eab"
+  },
+  "preparation": {
+    "bytes": 27669,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-control-gpu-v228-v1/prepared-inputs.json",
+    "sha256": "ab799f6f8afbc1d9b433b8a451dac36ccadba68b8d21977dafb02809400bcc3f"
+  },
+  "request": {
+    "bytes": 9191,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-active-pause-control-gpu-v228-v1/tail_layer-request.json",
+    "sha256": "609792109f56fb5b4cc12e267e53209fe8e8c81a941aa1aeaac5a1fa6cc9e01f"
+  },
+  "schema": "ferric-active-pause-native-literal-binding-v1",
+  "unchanged_production_scripts": 17,
+  "updates": {
+    "retainer": {
+      "ADMISSION": {
+        "parent": {
+          "bytes": 14397976,
+          "sha256": "84fb1d82a7e598e393d7a02642b6f001c4ac85222da621c4d2a50b3be1ad74d2"
+        },
+        "parent_cpu": {
+          "bytes": 7627326,
+          "sha256": "22cf285a8c3caef27c366424c817e0126d1df80dccc7dea36814f01281744078"
+        },
+        "parent_sources": {
+          "bytes": 873993,
+          "sha256": "30a55c3955c7d43833652c9c7cf4c10ce4b6f1589b7573da815340a9cf7651c2"
+        },
+        "runtime_cpu": {
+          "bytes": 3301993,
+          "sha256": "5d1d0d6ac7af9cf94a5883486d41f61812238ac1ae593f26830e3113c1673d13"
+        },
+        "runtime_sources": {
+          "bytes": 876134,
+          "sha256": "4a9a3370f55ce81e7ce4e8367f38922a4fd69e274f579349f5f66564c4f3a1e1"
+        },
+        "worker": {
+          "bytes": 6683640,
+          "sha256": "a907e189118a35842f45c8c5f0bb43cc37c540e862d274386184ab4ce85af784"
+        },
+        "worker_cpu": {
+          "bytes": 3090092,
+          "sha256": "b5a0c018ed45b739b535901831e6914a68c7c17dee202a4c67077075cea10c7d"
+        },
+        "worker_sources": {
+          "bytes": 873993,
+          "sha256": "767da06dcaeb617b1f4555b354b4125ea34f0ad315d1ad43aa3096e3d381326b"
+        }
+      },
+      "CHECKER": {
+        "bytes": 68280,
+        "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-readiness40-tail-layer-duration-checker-cpu-v228-v1/evidence/complete.json",
+        "sha256": "bff2af1ddf5bfe3247e69f48595c51bf062c9dbc09af1bddd94a9384ba6026aa"
+      },
+      "ROOT_PINS": {
+        "frozen_owned.py": {
+          "bytes": 30433,
+          "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+        },
+        "layer_cpu_admission.py": {
+          "bytes": 32495,
+          "sha256": "f1105fbef6aad492ef5f32bb7613a4f609134df9395cb1b2416c24e845109d28"
+        },
+        "library_audit.py": {
+          "bytes": 25872,
+          "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+        },
+        "prepare_layer_model_inputs.py": {
+          "bytes": 12637,
+          "sha256": "78187d59bec6c38b5990fc8d767783b968afef34a622f0676c8a2227514126e1"
+        },
+        "prepared-inputs.json": {
+          "bytes": 27669,
+          "sha256": "ab799f6f8afbc1d9b433b8a451dac36ccadba68b8d21977dafb02809400bcc3f"
+        },
+        "readiness_announcement.py": {
+          "bytes": 3246,
+          "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+        },
+        "run_layer_model_gpu.py": {
+          "bytes": 46849,
+          "sha256": "bab44ebc17ed69ba30e59b30ca4263b885c140d81005f082bf6c74f3fffd8282"
+        },
+        "tail_layer-input.json": {
+          "bytes": 2927,
+          "sha256": "c9f20093301f8884af50e9e9eaa0987626eb010854682d23f66e2d47b4216eab"
+        },
+        "tail_layer-request.json": {
+          "bytes": 9191,
+          "sha256": "609792109f56fb5b4cc12e267e53209fe8e8c81a941aa1aeaac5a1fa6cc9e01f"
+        },
+        "validate_bank_scoped.py": {
+          "bytes": 9534,
+          "sha256": "2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772"
+        },
+        "validate_census.py": {
+          "bytes": 10392,
+          "sha256": "090431e59a481d5b681311d5a015ddfd35705cc828c920118d4f0043b862ec9f"
+        },
+        "validate_duration.py": {
+          "bytes": 9343,
+          "sha256": "d7ed85d14191e735490170a606a06cefb331e17b07c36a4a4d34ef38a5cf19bd"
+        },
+        "validate_forward.py": {
+          "bytes": 9585,
+          "sha256": "2a238ab236d86be4762738df0b70aff603794a9198e2b214580a56184986a89b"
+        },
+        "validate_layer.py": {
+          "bytes": 12027,
+          "sha256": "337021cc59c91745a2d12708fd71c87d319e11eae325dceb5942a4e99e40d6c1"
+        },
+        "validate_matched.py": {
+          "bytes": 9362,
+          "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+        },
+        "validate_readiness.py": {
+          "bytes": 19800,
+          "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+        },
+        "validate_scoped.py": {
+          "bytes": 9184,
+          "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+        },
+        "validate_scoped_pair.py": {
+          "bytes": 3233,
+          "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+        },
+        "validate_shared.py": {
+          "bytes": 8015,
+          "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+        },
+        "validate_tail.py": {
+          "bytes": 10447,
+          "sha256": "696e55d4bebea97ab82e5b613a76978c5e191087789d299551c304527e598d49"
+        },
+        "validate_timing.py": {
+          "bytes": 10104,
+          "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+        }
+      }
+    },
+    "runner": {
+      "PLAN_SHA": {
+        "tail_layer": "c9f20093301f8884af50e9e9eaa0987626eb010854682d23f66e2d47b4216eab"
+      }
+    }
+  }
+}

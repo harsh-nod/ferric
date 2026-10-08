@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1360" viewBox="0 0 1200 1360">
+<rect width="1200" height="1360" fill="white"/>
+<g font-family="sans-serif" font-size="15" fill="#17212b">
+<text x="32" y="38" font-size="24">Warm nested host intervals</text>
+<text x="32" y="66">Positions 2-39. Separate scales; do not add the three levels.</text>
+<text x="32" y="108" font-size="20">Nine forward phases</text>
+<text x="32" y="133">38 warm forward bodies; includes the nested layer intervals below.</text>
+<text x="32" y="173">input</text>
+<rect x="270" y="153" width="0.002" height="26" fill="#27866b"/>
+<text x="944" y="173">0.000182 s</text>
+<text x="32" y="215">metadata</text>
+<rect x="270" y="195" width="33.964" height="26" fill="#27866b"/>
+<text x="944" y="215">3.128082 s</text>
+<text x="32" y="257">embedding</text>
+<rect x="270" y="237" width="24.565" height="26" fill="#27866b"/>
+<text x="944" y="257">2.262410 s</text>
+<text x="32" y="299">bank</text>
+<rect x="270" y="279" width="9.714" height="26" fill="#27866b"/>
+<text x="944" y="299">0.894655 s</text>
+<text x="32" y="341">layers</text>
+<rect x="270" y="321" width="650.000" height="26" fill="#27866b"/>
+<text x="944" y="341">59.865203 s</text>
+<text x="32" y="383">tail</text>
+<rect x="270" y="363" width="16.483" height="26" fill="#27866b"/>
+<text x="944" y="383">1.518118 s</text>
+<text x="32" y="425">frame</text>
+<rect x="270" y="405" width="0.394" height="26" fill="#27866b"/>
+<text x="944" y="425">0.036325 s</text>
+<text x="32" y="467">fence</text>
+<rect x="270" y="447" width="5.651" height="26" fill="#27866b"/>
+<text x="944" y="467">0.520424 s</text>
+<text x="32" y="509">commit</text>
+<rect x="270" y="489" width="5.634" height="26" fill="#27866b"/>
+<text x="944" y="509">0.518852 s</text>
+<text x="32" y="566" font-size="20">Six closed-layer stages</text>
+<text x="32" y="591">1,368 returns, already inside forward layers. Independent bar scale.</text>
+<text x="32" y="631">enter_pre_census</text>
+<rect x="270" y="611" width="55.586" height="26" fill="#3279ad"/>
+<text x="944" y="631">2.883682 s</text>
+<text x="32" y="673">prefix</text>
+<rect x="270" y="653" width="364.258" height="26" fill="#3279ad"/>
+<text x="944" y="673">18.896998 s</text>
+<text x="32" y="715">mlp_retired_seal</text>
+<rect x="270" y="695" width="650.000" height="26" fill="#3279ad"/>
+<text x="944" y="715">33.720705 s</text>
+<text x="32" y="757">hidden_post_census</text>
+<rect x="270" y="737" width="29.652" height="26" fill="#3279ad"/>
+<text x="944" y="757">1.538303 s</text>
+<text x="32" y="799">full_exit</text>
+<rect x="270" y="779" width="53.998" height="26" fill="#3279ad"/>
+<text x="944" y="799">2.801331 s</text>
+<text x="32" y="841">commit_prepare</text>
+<rect x="270" y="821" width="0.048" height="26" fill="#3279ad"/>
+<text x="944" y="841">0.002477 s</text>
+<text x="32" y="898" font-size="20">Seven paired-MLP stages</text>
+<text x="32" y="923">Already inside closed mlp_retired_seal. Independent bar scale.</text>
+<text x="32" y="963">preflight</text>
+<rect x="270" y="943" width="32.733" height="26" fill="#9b647d"/>
+<text x="944" y="963">1.555593 s</text>
+<text x="32" y="1005">consume</text>
+<rect x="270" y="985" width="3.122" height="26" fill="#9b647d"/>
+<text x="944" y="1005">0.148391 s</text>
+<text x="32" y="1047">reserve</text>
+<rect x="270" y="1027" width="0.013" height="26" fill="#9b647d"/>
+<text x="944" y="1047">0.000615 s</text>
+<text x="32" y="1089">publish</text>
+<rect x="270" y="1069" width="6.298" height="26" fill="#9b647d"/>
+<text x="944" y="1089">0.299298 s</text>
+<text x="32" y="1131">poll</text>
+<rect x="270" y="1111" width="650.000" height="26" fill="#9b647d"/>
+<text x="944" y="1131">30.890522 s</text>
+<text x="32" y="1173">retire</text>
+<rect x="270" y="1153" width="0.019" height="26" fill="#9b647d"/>
+<text x="944" y="1173">0.000914 s</text>
+<text x="32" y="1215">terminal</text>
+<rect x="270" y="1195" width="12.622" height="26" fill="#9b647d"/>
+<text x="944" y="1215">0.599848 s</text>
+<text x="32" y="1272">Host time includes checks and waiting; callbacks overlap these intervals.</text>
+<text x="32" y="1299">Not GPU timing, overlap, speedup, throughput or an optimization ceiling.</text>
+</g></svg>

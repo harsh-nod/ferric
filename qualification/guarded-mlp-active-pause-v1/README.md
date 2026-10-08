@@ -1,10 +1,10 @@
 # Scoped Active-Pause Candidate
 
-This is an isolated source and CPU-qualification candidate, not a measured
-optimization or a native GPU qualification. The candidate is retained in qualification
-archives only; it is not installed on the runtime production branch.
-No candidate GPU result, matched gain, full-model decode acceptance or throughput
-result has been observed.
+This isolated source candidate completed one exploratory native control/candidate
+pair after CPU qualification. It failed the warm-body improvement gate and is
+not promoted. The candidate remains in qualification archives only; runtime
+production sources are unchanged. No matched gain, full-model decode acceptance
+or throughput result is claimed.
 
 ## Change
 
@@ -117,8 +117,82 @@ and 14 usage tests, alongside the arm-specific admission/preparation/retention
 suites. They are not 666 distinct tests or native measurements. The earlier
 candidate 335-test v1 was staged but unrun; it is neither a failed attempt nor
 credited qualification. CPU qualification elapsed time is not an A/B native
-performance result. Live resource accounting and original native case
-retirement remain to be observed.
+performance result. The separately observed native cases and whole-parent
+resource accounting are recorded below.
+
+## Exploratory Native A1/B1 Pair
+
+One fresh control (A1), followed by one fresh candidate (B1), completed.
+Both passed the original native checks: 40 semantic completion records and
+four numeric payload captures agree with the historical Ferric baseline,
+each run's own transcript validates, and all 11 owned phases retired cleanly
+with six successful idle audits. Both retained archives contain 170 members.
+These are 40 prompt forwards and zero generated tokens, not independent
+full-model accuracy or generated-output acceptance.
+
+| Warm Host Measurement, Positions 2-39 | Control A1 (s) | Candidate B1 (s) |
+| --- | ---: | ---: |
+| Complete worker forward bodies | 68.170672568 | 68.744251921 |
+| Paired-MLP poll, nested inside those bodies | 30.965124989 | 30.890521610 |
+| Layer currentness callbacks, also nested | 19.809675266 | 25.464895006 |
+
+The candidate's warm body is 0.573579353 seconds slower (+0.8413872585%),
+while poll falls by only 0.074603379 seconds (-0.2409271044%).
+It fails the required joint improvement gate. **No promotion: the candidate
+remains archive-only and runtime production sources are unchanged.**
+ABBA was not run. This single ordered exploratory pair is not a statistical
+finding, an optimization gain or a sustained-throughput result.
+
+| Warm Layer Callback Calls | Control A1 | Candidate B1 |
+| --- | ---: | ---: |
+| Before | 562,496 | 752,888 |
+| After | 562,496 | 752,888 |
+| Root generation | 613,112 | 803,504 |
+| Full discovery | 2,736 | 2,736 |
+
+The candidate run records more callback iterations with changed pause
+scheduling, despite unchanged predicates, checkpoint placement and per-poll
+ordering.
+That is consistent with more repeated host checks and the higher CPU cost
+below; it does not prove exclusive time attribution or a removable fraction.
+Callback, poll and forward intervals overlap. Do not add their times.
+
+### Whole-Parent Resource Usage
+
+These original `RUSAGE_CHILDREN` deltas cover the owned parent leaf and reaped
+descendants, from before spawn through cleanup. They include startup and all
+40 forwards, not only warm work, and are not GPU utilization.
+The serialized floating-point CPU values are preserved below.
+
+| Whole-Parent Measurement | Control A1 | Candidate B1 |
+| --- | ---: | ---: |
+| Parent leaf wall seconds | 438.14048450801056 | 445.2193457860267 |
+| User CPU seconds | 211.65209000000002 | 226.384567 |
+| System CPU seconds | 187.123539 | 199.13028799999998 |
+| User + system seconds, Decimal sum of serialized deltas | 398.77562900000002 | 425.51485499999998 |
+| Voluntary context switches | 990,228 | 787,642 |
+| Involuntary context switches | 67,439 | 64,412 |
+| Minor faults | 7,393,945 | 7,395,951 |
+| Major faults | 0 | 0 |
+
+Whole-parent user plus system CPU increases by 6.7053310322% in this pair.
+It is not a warm-only cost. Peak memory was not sampled, and no cumulative
+peak-RSS subtraction is used. Parent, worker and nested intervals have
+different boundaries and must not be summed into an exclusive cost model.
+
+Original evidence and per-arm attribution:
+- [Control native archive](native-control-v1.tar.gz), terminal `9eb0b4e7`.
+- [Candidate native archive](native-candidate-v1.tar.gz), terminal `5fbcef4b`.
+- [Control integer report](native-v1/control/report.json) and [plot](native-v1/control/host-phases.svg).
+- [Candidate integer report](native-v1/candidate/report.json) and [plot](native-v1/candidate/host-phases.svg).
+- [Fixed two-arm summary recipe](native-v1/summarize_native_arm.py) and [qualified pure reducers](native-v1/report_layer.py).
+
+The two reports authenticate all original archive/retained bytes and retention
+receipts before reducing the nine forward, six closed-layer and seven paired
+stages. They preserve all 40 rows, nested callbacks, 124 parent spans and signed
+cross-process boundary comparisons. The separate plots have independent
+scales, not an overlap graph or a matched speedup claim.
+Full2303/256-output acceptance, 700 tokens/s and all M0-M7 milestones remain open.
 
 ## Measurement Gate
 
@@ -129,9 +203,11 @@ nested host intervals containing required checks and device waiting, not
 GPU compute, sleep-only cost or a removable fraction.
 
 All six artifact qualifications and both CPU workflow qualifications are
-complete. The next gate is fresh control/candidate/candidate/control (ABBA)
-GPU cases run serially, each with its own observed preparation and bound
-native admission.
+complete. The initial fresh A1/B1 native cases completed, but the candidate
+failed the joint improvement gate. No ABBA sequence was run and this candidate
+is not promoted. A further source candidate would need its own qualifications
+and fresh identity-bound measurement; no result may reuse an old case as a
+new control.
 A is the unchanged qualified closed-layer runtime; B is this isolated
 candidate. Each arm must have its own matching runtime, worker and parent
 artifact bindings, the same model/image/prompt pins and same 40-forward
@@ -150,7 +226,7 @@ counters and peak memory must be labeled at their actual measurement scope,
 not presented as warm-only costs. Do not subtract cumulative peak RSS values
 or mix nested timing levels into an additive savings estimate.
 
-No measured gain is claimed until that gate closes. A lower polling interval
+No measured gain is claimed, and this candidate is not promoted. A lower polling interval
 alone does not establish faster warm forwards, and increased CPU consumption
 must remain visible. No tolerance, exact-output requirement or abort bound
 may be relaxed to obtain a favorable result.
