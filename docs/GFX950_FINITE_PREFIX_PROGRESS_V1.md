@@ -6,14 +6,24 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest diagnostic checkpoint: [canonical defined-call diagnosis](../qualification/guarded-mlp-semantic-call-v1/README.md)
+Latest compiler diagnostic: [observed lowered helper-argument mismatch](../qualification/guarded-mlp-call-type-diagnostic-v1/README.md)
+adds bounded actual/expected scalar facts to the existing rejection. All
+1,336 compiler tests (24 unchanged ignores), 359 device tests and 124
+semantic-lowering integration tests pass in 15 clean MI350 CPU phases.
+Both actual V13 attempts now report Index-to-U64 mismatch at source argument1,
+caller0/callee2, fixed block348 and early block629. Both remain clean exit1
+failures with no HSACO. A narrow conversion candidate is being reviewed and
+is not yet qualified; no GPU/model/performance or milestone credit is claimed.
+
+Previous diagnostic checkpoint: [canonical defined-call diagnosis](../qualification/guarded-mlp-semantic-call-v1/README.md)
 adds a bounded call-site mode to the existing semantic inspector. All 14
 tests and 11 CPU phases pass; historical helper-mode JSON/stdout are unchanged.
 Both original V12 failures now join to `complete_coverage` at provider line798,
 with matching source-semantic arguments `u32, usize, usize, bool`. Predetermined
-source-file joins are independently audited. Actual transient Kernel IR types
-are not yet observed; no conversion, HSACO, GPU run, performance result or
-milestone closure is claimed. Next is an exact lowerer mismatch diagnostic.
+source-file joins are independently audited. At that checkpoint transient
+Kernel IR types were not yet observed; the diagnostic above now supplies
+them. No conversion, HSACO, GPU run, performance result or milestone closure
+is claimed by that source-only inspection.
 
 Previous compiler checkpoint: [bounded inlined static-callback source authentication](../qualification/guarded-mlp-inline-fndef-origin-v1/README.md)
 adds a real-source-scope fallback for fully inlined static callbacks. Exact

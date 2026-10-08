@@ -1,0 +1,273 @@
+--- a/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1.rs
++++ b/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1.rs
+@@ -816,6 +816,25 @@
+         statement: Option<u32>,
+         /// Stable rejection reason.
+         detail: &'static str,
++    },
++    /// A defined call disagrees with its lowered helper signature.
++    DefinedCallArgumentTypeMismatch {
++        /// Source semantic caller index.
++        function: u32,
++        /// Source semantic block index.
++        block: u32,
++        /// Exact semantic callee index.
++        callee: u32,
++        /// Original source argument before ABI expansion.
++        source_argument: u32,
++        /// RustCall tuple field, when present.
++        tuple_field: Option<u32>,
++        /// Flattened argument component, when present.
++        component: Option<usize>,
++        /// Exact scalar binding type; None denotes a non-scalar, not a dump.
++        actual_scalar: Option<ScalarType>,
++        /// Exact scalar parameter type; None denotes a non-scalar, not a dump.
++        expected_scalar: Option<ScalarType>,
+     },
+     /// An ordinary helper parameter has no admitted exact argument lowering.
+     HelperParameterUnavailable {
+@@ -972,6 +991,19 @@
+                 formatter,
+                 "semantic-to-Kernel-IR lowering rejected function {function}, block {block:?}, statement {statement:?}: {detail}",
+             ),
++            Self::DefinedCallArgumentTypeMismatch {
++                function,
++                block,
++                callee,
++                source_argument,
++                tuple_field,
++                component,
++                actual_scalar,
++                expected_scalar,
++            } => write!(
++                formatter,
++                "semantic-to-Kernel-IR lowering rejected function {function}, block Some({block}), statement None: defined call argument type changed; callee={callee}; source_argument={source_argument}; tuple_field={tuple_field:?}; component={component:?}; actual_scalar={actual_scalar:?}; expected_scalar={expected_scalar:?}",
++            ),
+             Self::HelperParameterUnavailable { function, context } => {
+                 write!(
+                     formatter,
+@@ -1144,6 +1176,7 @@
+             Self::ResourceLimit { .. }
+             | Self::AllocationFailure { .. }
+             | Self::Unsupported { .. }
++            | Self::DefinedCallArgumentTypeMismatch { .. }
+             | Self::HelperParameterUnavailable { .. }
+             | Self::FixedArrayIndexOutOfBounds { .. }
+             | Self::HelperEffectsUnavailable { .. }
+@@ -18703,7 +18736,18 @@
+                 }
+             };
+             if &actual != expected {
+-                return Err(failure("defined call argument type changed"));
++                return Err(
++                    ProductionSemanticKirErrorV1::DefinedCallArgumentTypeMismatch {
++                        function: self.semantic_function.index(),
++                        block: block.index(),
++                        callee: callee.index(),
++                        source_argument: projection.source_argument,
++                        tuple_field: projection.tuple_field,
++                        component: projection.component,
++                        actual_scalar: actual.as_scalar(),
++                        expected_scalar: expected.as_scalar(),
++                    },
++                );
+             }
+             arguments.push(value);
+         }
+--- a/crates/fe2o3-lower-mir-kernel/tests/production_semantic_kir_v1/shared_slice_helper_v1.rs
++++ b/crates/fe2o3-lower-mir-kernel/tests/production_semantic_kir_v1/shared_slice_helper_v1.rs
+@@ -402,6 +402,194 @@
+     }
+ }
+ 
++// Retain an Index-valued slice length across an ordinary scalar helper call.
++// Source-semantic U64 agrees with the helper ABI, but KIR transport differs.
++fn scalar_call_after_slice_length_owner(
++    move_argument: bool,
++    use_length: bool,
++) -> ProductionSemanticMirOwnerV1 {
++    let original = owner(Shape::Length, false);
++    let semantic = original.semantic();
++    let old = &semantic.functions()[1];
++    let mut locals = old.locals().to_vec();
++    locals.push(local(192, ty(4), SemanticLocalRoleV1::Temporary));
++    let value = if use_length {
++        SemanticRvalueKindV1::Unary {
++            operation: SemanticUnaryOpV1::PointerMetadata,
++            operand: SemanticOperandV1::Copy(local_place(1, ty(3))),
++        }
++    } else {
++        SemanticRvalueKindV1::Use(scalar_constant(ty(4), 7, 8))
++    };
++    let argument = if move_argument {
++        SemanticOperandV1::Move(local_place(2, ty(4)))
++    } else {
++        SemanticOperandV1::Copy(local_place(2, ty(4)))
++    };
++    let middle = SemanticFunctionDeclV1::new(
++        old.identity(),
++        old.role(),
++        old.item_definition_identity(),
++        old.monomorphization_identity(),
++        old.generic_type_arguments_identity(),
++        old.const_generic_arguments_identity(),
++        old.source(),
++        old.abi().clone(),
++        locals,
++        SemanticBlockIdV1::from_index(0),
++        vec![
++            block(
++                194,
++                vec![assign(local_place(2, ty(4)), value)],
++                SemanticTerminatorKindV1::Call(
++                    SemanticDirectCallV1::new_callable(
++                        SemanticCallableIdV1::from_index(2),
++                        vec![argument],
++                        Some(SemanticCallDestinationV1::new(
++                            local_place(0, ty(4)),
++                            edge(SemanticEdgeRoleV1::CallReturn, 1),
++                        )),
++                        SemanticUnwindActionV1::Unreachable,
++                    )
++                    .unwrap(),
++                ),
++            ),
++            block(195, vec![], SemanticTerminatorKindV1::Return),
++        ],
++    )
++    .unwrap();
++    let abi = SemanticFunctionAbiV1::from_rustc(
++        SemanticAbiIdentityV1::from_sha256(bytes(200)),
++        old.abi().layout_identity(),
++        SemanticCanonAbiV1::Rust,
++        SemanticExternAbiV1::Rust,
++        false,
++        false,
++        1,
++        vec![SemanticAbiArgumentV1::source(
++            old.abi().return_value().clone(),
++        )],
++        old.abi().return_value().clone(),
++    )
++    .unwrap()
++    .with_source_argument_ownership(vec![SemanticSourceArgumentOwnershipV1::ByValue])
++    .unwrap();
++    let leaf = SemanticFunctionDeclV1::new(
++        SemanticFunctionIdentityV1::from_sha256(bytes(201)),
++        SemanticFunctionRoleV1::InternalHelper,
++        SemanticItemDefinitionIdentityV1::from_sha256(bytes(202)),
++        SemanticMonomorphizationIdentityV1::from_sha256(bytes(203)),
++        SemanticGenericTypeArgumentsIdentityV1::from_sha256(bytes(204)),
++        SemanticConstGenericArgumentsIdentityV1::from_sha256(bytes(205)),
++        SemanticSourceProvenanceV1::unavailable(),
++        abi,
++        vec![
++            local(210, ty(4), SemanticLocalRoleV1::Return),
++            local(211, ty(4), SemanticLocalRoleV1::Argument(0)),
++        ],
++        SemanticBlockIdV1::from_index(0),
++        vec![block(
++            212,
++            vec![assign(
++                local_place(0, ty(4)),
++                SemanticRvalueKindV1::Use(SemanticOperandV1::Copy(local_place(1, ty(4)))),
++            )],
++            SemanticTerminatorKindV1::Return,
++        )],
++    )
++    .unwrap();
++    let admitted = InertSemanticMirRequestV1::new_with_callables(
++        semantic.target(),
++        semantic.types().to_vec(),
++        semantic.allocations().to_vec(),
++        semantic.statics().to_vec(),
++        semantic.vtables().to_vec(),
++        vec![semantic.functions()[0].clone(), middle, leaf],
++        (0..3)
++            .map(|index| SemanticCallableDeclV1::defined(SemanticFunctionIdV1::from_index(index)))
++            .collect(),
++        vec![SemanticFunctionIdV1::from_index(0)],
++    )
++    .unwrap()
++    .admit_current_production(SemanticMirLimitsV1::default())
++    .unwrap();
++    ProductionSemanticMirOwnerV1::try_new(admitted, ProductionSemanticMirLimitsV1::default())
++        .unwrap()
++}
++
++#[test]
++fn defined_call_type_diagnostic_observes_index_to_u64_copy_and_move() {
++    for move_argument in [false, true] {
++        let error = ProductionSemanticKirOwnerV1::try_lower(
++            scalar_call_after_slice_length_owner(move_argument, true),
++            ProductionSemanticKirLimitsV1::default(),
++        )
++        .unwrap_err();
++        assert!(matches!(
++            error,
++            ProductionSemanticKirErrorV1::DefinedCallArgumentTypeMismatch {
++                function: 1,
++                block: 0,
++                callee: 2,
++                source_argument: 0,
++                tuple_field: None,
++                component: Some(0),
++                actual_scalar: Some(ScalarType::Index),
++                expected_scalar: Some(ScalarType::U64),
++            }
++        ));
++        assert_eq!(
++            error.to_string(),
++            "semantic-to-Kernel-IR lowering rejected function 1, block Some(0), statement None: defined call argument type changed; callee=2; source_argument=0; tuple_field=None; component=Some(0); actual_scalar=Some(Index); expected_scalar=Some(U64)"
++        );
++    }
++}
++
++#[test]
++fn defined_call_type_diagnostic_preserves_exact_u64_copy_and_move() {
++    for move_argument in [false, true] {
++        let lowered = ProductionSemanticKirOwnerV1::try_lower(
++            scalar_call_after_slice_length_owner(move_argument, false),
++            ProductionSemanticKirLimitsV1::default(),
++        )
++        .unwrap();
++        lowered.verify_equivalence().unwrap();
++        verify_module(lowered.module()).unwrap();
++        let middle = lowered.module().functions[1].body.as_ref().unwrap();
++        let calls = middle
++            .blocks
++            .iter()
++            .flat_map(|block| &block.operations)
++            .filter(|operation| matches!(operation.kind, OperationKind::Call { .. }))
++            .count();
++        assert_eq!(calls, 1);
++    }
++}
++
++#[test]
++fn defined_call_type_diagnostic_display_is_bounded_and_preserves_scalar_kind() {
++    for (actual_scalar, expected_scalar) in [
++        (None, None),
++        (Some(ScalarType::I64), Some(ScalarType::U64)),
++        (Some(ScalarType::U32), Some(ScalarType::U64)),
++    ] {
++        let error = ProductionSemanticKirErrorV1::DefinedCallArgumentTypeMismatch {
++            function: u32::MAX,
++            block: u32::MAX,
++            callee: u32::MAX,
++            source_argument: u32::MAX,
++            tuple_field: Some(u32::MAX),
++            component: Some(usize::MAX),
++            actual_scalar,
++            expected_scalar,
++        };
++        let rendered = error.to_string();
++        assert!(rendered.len() < 512);
++        assert!(rendered.contains(&format!("actual_scalar={actual_scalar:?}")));
++        assert!(rendered.contains(&format!("expected_scalar={expected_scalar:?}")));
++    }
++}
++
+ #[test]
+ fn shared_slice_helper_calls_retain_actual_phi_carriers_and_multiplicity() {
+     let lowered = ProductionSemanticKirOwnerV1::try_lower(
