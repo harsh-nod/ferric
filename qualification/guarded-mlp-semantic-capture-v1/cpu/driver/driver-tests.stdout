@@ -1,0 +1,30 @@
+
+running 25 tests
+test engineering_hsaco::tests::build_std_vendor_checksum_substitution_is_rejected ... ok
+test engineering_hsaco::tests::claimed_host_linker_path_swap_cannot_change_executed_bytes ... ok
+test engineering_hsaco::tests::complete_versioned_build_std_vendor_closure_is_admitted ... ok
+test engineering_hsaco::tests::content_namespace_binds_manifest_and_hsaco ... ok
+test engineering_hsaco::tests::diagnostic_capture_uses_only_explicit_pinned_directory_after_env_clear ... ok
+test engineering_hsaco::tests::diagnostic_child_writes_only_retained_directory_after_path_substitution ... ok
+test engineering_hsaco::tests::diagnostic_directory_refuses_aliases_and_keeps_existing_bytes ... ok
+test engineering_hsaco::tests::diagnostic_semantic_directory_option_is_default_off_and_strict ... ok
+test engineering_hsaco::tests::empty_build_std_registry_closure_is_rejected ... ok
+test engineering_hsaco::tests::extraction_flags_follow_the_requested_profile_without_cargo_overrides ... ok
+test engineering_hsaco::tests::incomplete_build_std_vendor_fails_before_extraction_command_preparation ... ok
+test engineering_hsaco::tests::inline_hint_profile_preserves_defaults_and_exact_target_flags ... ok
+test engineering_hsaco::tests::inline_hint_profile_rejects_unversioned_injected_and_duplicate_selectors ... ok
+test engineering_hsaco::tests::isolated_build_std_command_clears_caller_channel_and_owns_fixed_arguments ... ok
+test engineering_hsaco::tests::manifest_fixed_options_bind_each_normalization_and_unchanged_checks ... ok
+test engineering_hsaco::tests::manifest_profile_guard_rejects_both_cross_target_directions ... ok
+test engineering_hsaco::tests::optimized_inline_normalization_is_explicit_and_has_fixed_flags ... ok
+test engineering_hsaco::tests::output_namespace_is_fresh_and_never_uses_production_names ... ok
+test engineering_hsaco::tests::parses_only_exact_target_profiles_cov_and_namespace ... ok
+test engineering_hsaco::tests::publication_failure_retains_partial_output_without_cleanup ... ok
+test engineering_hsaco::tests::rejects_hostile_identities_providers_limits_and_cargo_overrides ... ok
+test engineering_hsaco::tests::rejects_loader_and_cargo_selection_environment ... ok
+test engineering_hsaco::tests::source_has_no_production_or_supervisor_adoption_path ... ok
+test engineering_hsaco::tests::substituted_scratch_path_is_never_removed ... ok
+test engineering_hsaco::tests::vendor_configuration_is_closed_and_injection_resistant ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 384 filtered out; finished in 0.04s
+

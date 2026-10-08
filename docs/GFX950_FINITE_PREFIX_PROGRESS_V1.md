@@ -6,7 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler checkpoint: the [opt-in MIR threshold profile](../qualification/guarded-mlp-inline-hint-v1/README.md)
+Latest compiler checkpoint: [explicit semantic diagnostic capture](../qualification/guarded-mlp-semantic-capture-v1/README.md)
+passes 25 frontend tests in seven clean phases and 11 backend capture tests
+plus 14 existing helper controls in eight clean phases on MI350. The frontend
+pins a fresh private diagnostic directory; the backend retains bounded MIR
+and source-map outputs without changing admission or lowering results.
+
+Both subsequent V8 compiler attempts retain complete snapshots through the
+real Cargo/extractor path, but still exit 1 at the unchanged mutable aggregate
+helper-parameter check. Fixed/early MIR captures contain 924,436/925,515 bytes.
+The exact typed canonical helper/source-span join is the next step, not an
+achieved result. Source patches and original CPU/failure/capture evidence are
+published as a qualification candidate; no HSACO, GPU kernel or speedup is
+promoted, and all native decode and milestone gates remain open.
+
+Previous compiler checkpoint: the [opt-in MIR threshold profile](../qualification/guarded-mlp-inline-hint-v1/README.md)
 adds exactly `-Zinline-mir-hint-threshold=16384`, preserving the old/default
 profiles and all backend checks. The fresh MI350 frontend passes 21 focused
 tests in seven clean phases. Its source patch is retained as a qualification

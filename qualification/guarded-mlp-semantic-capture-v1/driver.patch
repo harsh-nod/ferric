@@ -1,0 +1,312 @@
+--- a/crates/cargo-fe2o3/src/engineering_hsaco.rs
++++ b/crates/cargo-fe2o3/src/engineering_hsaco.rs
+@@ -27,6 +27,10 @@
+ use support::*;
+ 
+ const NAMESPACE: &str = "fe2o3-engineering-v1";
++const DIAGNOSTIC_NAMESPACE: &str = "fe2o3-engineering-diagnostics-v1";
++const DIAGNOSTIC_CHILD_FD: std::os::fd::RawFd = 210;
++const SEMANTIC_CAPTURE_ENV: &str = "FE2O3_DIAGNOSTIC_SEMANTIC_MIR_PATH_V1";
++const SOURCE_MAP_CAPTURE_ENV: &str = "FE2O3_DIAGNOSTIC_SEMANTIC_SOURCE_MAP_PATH_V1";
+ const MANIFEST_SCHEMA: &str = "EngineeringHsacoObservationV1";
+ const CODE_OBJECT_VERSION: u8 = 6;
+ const MAX_HANDOFF_BYTES: u64 = 64 * 1024 * 1024;
+@@ -42,6 +46,13 @@
+ const HOST_LINKER_CHILD_FD: std::os::fd::RawFd = 207;
+ const HOST_LLD_CHILD_FD: std::os::fd::RawFd = 208;
+ const HOST_LLD_PROXY_CHILD_FD: std::os::fd::RawFd = 209;
++const _: () = assert!(DIAGNOSTIC_CHILD_FD != EXTRACTOR_CHILD_FD);
++const _: () = assert!(DIAGNOSTIC_CHILD_FD != VENDOR_CHILD_FD);
++const _: () = assert!(DIAGNOSTIC_CHILD_FD != HOST_LINKER_CHILD_FD);
++const _: () = assert!(DIAGNOSTIC_CHILD_FD != HOST_LLD_CHILD_FD);
++const _: () = assert!(DIAGNOSTIC_CHILD_FD != HOST_LLD_PROXY_CHILD_FD);
++const _: () = assert!(DIAGNOSTIC_CHILD_FD != crate::RUSTC_LIBRARY_CHILD_FD);
++const _: () = assert!(DIAGNOSTIC_CHILD_FD != crate::RUSTC_CHILD_FD);
+ const _: () = assert!(EXTRACTOR_CHILD_FD != VENDOR_CHILD_FD);
+ const _: () = assert!(EXTRACTOR_CHILD_FD != crate::RUSTC_LIBRARY_CHILD_FD);
+ const _: () = assert!(EXTRACTOR_CHILD_FD != crate::RUSTC_CHILD_FD);
+@@ -103,6 +114,7 @@
+     mir_normalization: MirNormalizationV1,
+     crate_name: String,
+     output_root: PathBuf,
++    diagnostic_semantic_dir: Option<PathBuf>,
+     extractor: FileClaim,
+     extractor_backend: FileClaim,
+     worker: FileClaim,
+@@ -309,6 +321,7 @@
+     let mut timeout_seconds = None;
+     let mut max_output_bytes = None;
+     let mut mir_normalization = None;
++    let mut diagnostic_semantic_dir = None;
+     let mut providers = Vec::new();
+     let mut cargo_args = Vec::new();
+     let mut args = args.iter();
+@@ -358,6 +371,9 @@
+             "--timeout-seconds" => set_once_u64(&mut timeout_seconds, value, argument)?,
+             "--max-output-bytes" => set_once_u64(&mut max_output_bytes, value, argument)?,
+             "--mir-normalization" => set_once_string(&mut mir_normalization, value, argument)?,
++            "--diagnostic-semantic-dir" => {
++                set_once_path(&mut diagnostic_semantic_dir, value, argument)?
++            }
+             "--provider" => providers.push(parse_provider(value, current_dir)?),
+             _ => {
+                 return Err(format!(
+@@ -439,11 +455,15 @@
+         }
+     };
+ 
++    if let Some(path) = &diagnostic_semantic_dir {
++        validate_diagnostic_semantic_directory(path)?;
++    }
+     Ok(Options {
+         profile,
+         mir_normalization,
+         crate_name,
+         output_root,
++        diagnostic_semantic_dir,
+         extractor: required_file_claim(
+             current_dir,
+             extractor,
+@@ -782,7 +802,7 @@
+ const fn usage() -> &'static str {
+     concat!(
+         "usage: cargo fe2o3 engineering hsaco --crate <rustc-crate-name> --output-root </fresh/fe2o3-engineering-v1> --target <gfx942:xnack-|gfx950:xnack-> --code-object-version 6 --extractor <absolute-path> --extractor-sha256 <hex> --extractor-backend <absolute-path> --extractor-backend-sha256 <hex> --worker <absolute-path> --worker-sha256 <hex> --worker-build-id <id> --llvm-build-id <id> --cargo <absolute-path> --cargo-sha256 <hex> --rustc <absolute-path> --rustc-sha256 <hex> --host-linker <absolute-clang-path> --host-linker-sha256 <hex> --host-lld <absolute-lld-path> --host-lld-sha256 <hex> --host-lld-proxy <absolute-proxy-path> --host-lld-proxy-sha256 <hex> --cargo-vendor <absolute-versioned-directory> [--cargo-git-source <https://URL@40-hex-rev>]... [--provider <llvm-bitcode|llvm-ir|amdgpu-relocatable>:<sha256>:<absolute-path>] [--timeout-seconds <1..600>] [--max-output-bytes <bytes>] ",
+-        "[--mir-normalization <minimal-v1|optimized-inline-v1|optimized-inline-hint-16384-v1>] -- [Cargo package/feature args]",
++        "[--mir-normalization <minimal-v1|optimized-inline-v1|optimized-inline-hint-16384-v1>] [--diagnostic-semantic-dir </fresh/fe2o3-engineering-diagnostics-v1>] -- [Cargo package/feature args]",
+     )
+ }
+ 
+@@ -1317,6 +1337,153 @@
+     }
+ 
+     #[test]
++    fn diagnostic_semantic_directory_option_is_default_off_and_strict() {
++        let scratch = ScratchDirectory::new().unwrap();
++        let root = &scratch.path;
++        assert!(
++            parse(&base_args(root), root)
++                .unwrap()
++                .diagnostic_semantic_dir
++                .is_none()
++        );
++        let destination = root.join(DIAGNOSTIC_NAMESPACE);
++        let mut args = base_args(root);
++        let delimiter = args.iter().position(|value| value == "--").unwrap();
++        args.splice(
++            delimiter..delimiter,
++            [
++                "--diagnostic-semantic-dir".into(),
++                destination.clone().into_os_string(),
++            ],
++        );
++        let options = parse(&args, root).unwrap();
++        assert_eq!(
++            options.diagnostic_semantic_dir.as_deref(),
++            Some(destination.as_path())
++        );
++        assert!(!destination.exists(), "parsing must not create diagnostics");
++        assert!(usage().contains("--diagnostic-semantic-dir"));
++        for bad in [
++            PathBuf::from(DIAGNOSTIC_NAMESPACE),
++            root.join("wrong"),
++            root.join("..").join(DIAGNOSTIC_NAMESPACE),
++        ] {
++            args[delimiter + 1] = bad.into_os_string();
++            assert!(parse(&args, root).is_err());
++        }
++        args[delimiter + 1] = destination.clone().into_os_string();
++        args.splice(
++            delimiter..delimiter,
++            [
++                "--diagnostic-semantic-dir".into(),
++                destination.into_os_string(),
++            ],
++        );
++        assert!(parse(&args, root).is_err(), "duplicate selector");
++        let mut args = base_args(root);
++        args.push("--diagnostic-semantic-dir".into());
++        args.push(root.join(DIAGNOSTIC_NAMESPACE).into_os_string());
++        assert!(
++            parse(&args, root).is_err(),
++            "Cargo passthrough cannot select diagnostics"
++        );
++        let mut args = base_args(root);
++        args.truncate(delimiter);
++        args.push("--diagnostic-semantic-dir".into());
++        assert!(parse(&args, root).is_err(), "missing diagnostic value");
++    }
++
++    #[test]
++    fn diagnostic_capture_uses_only_explicit_pinned_directory_after_env_clear() {
++        let scratch = ScratchDirectory::new().unwrap();
++        let root = &scratch.path;
++        let options = parse(&base_args(root), root).unwrap();
++        let mut command = Command::new("/bin/true");
++        command
++            .env(SEMANTIC_CAPTURE_ENV, "/untrusted")
++            .env(SOURCE_MAP_CAPTURE_ENV, "/untrusted");
++        configure_isolated_build_std_cargo(&mut command, &options, root, root);
++        configure_diagnostic_semantic_capture(&mut command, None).unwrap();
++        assert!(
++            command
++                .get_envs()
++                .filter(|(name, _)| {
++                    *name == OsStr::new(SEMANTIC_CAPTURE_ENV)
++                        || *name == OsStr::new(SOURCE_MAP_CAPTURE_ENV)
++                })
++                .all(|(_, value)| value.is_none())
++        );
++        let directory =
++            prepare_diagnostic_semantic_directory(&root.join(DIAGNOSTIC_NAMESPACE)).unwrap();
++        configure_diagnostic_semantic_capture(&mut command, Some(&directory)).unwrap();
++        let selected: std::collections::BTreeMap<_, _> = command
++            .get_envs()
++            .filter_map(|(name, value)| value.map(|value| (name.to_owned(), value.to_owned())))
++            .collect();
++        assert_eq!(
++            selected.get(OsStr::new(SEMANTIC_CAPTURE_ENV)).unwrap(),
++            OsStr::new("/proc/self/fd/210/semantic-mir-v1.bin")
++        );
++        assert_eq!(
++            selected.get(OsStr::new(SOURCE_MAP_CAPTURE_ENV)).unwrap(),
++            OsStr::new("/proc/self/fd/210/semantic-source-map-v1.json")
++        );
++    }
++
++    #[test]
++    fn diagnostic_directory_refuses_aliases_and_keeps_existing_bytes() {
++        let scratch = ScratchDirectory::new().unwrap();
++        let destination = scratch.path.join(DIAGNOSTIC_NAMESPACE);
++        let directory = prepare_diagnostic_semantic_directory(&destination).unwrap();
++        assert_eq!(
++            directory.file().metadata().unwrap().permissions().mode() & 0o777,
++            0o700
++        );
++        fs::write(destination.join("partial"), b"original partial bytes").unwrap();
++        assert!(prepare_diagnostic_semantic_directory(&destination).is_err());
++        drop(directory);
++        assert_eq!(
++            fs::read(destination.join("partial")).unwrap(),
++            b"original partial bytes"
++        );
++        let alias = scratch.path.join("alias");
++        std::os::unix::fs::symlink(&scratch.path, &alias).unwrap();
++        assert!(prepare_diagnostic_semantic_directory(&alias.join(DIAGNOSTIC_NAMESPACE)).is_err());
++        let other = scratch.path.join("other");
++        fs::create_dir(&other).unwrap();
++        std::os::unix::fs::symlink(
++            scratch.path.join("missing"),
++            other.join(DIAGNOSTIC_NAMESPACE),
++        )
++        .unwrap();
++        assert!(prepare_diagnostic_semantic_directory(&other.join(DIAGNOSTIC_NAMESPACE)).is_err());
++    }
++
++    #[test]
++    fn diagnostic_child_writes_only_retained_directory_after_path_substitution() {
++        let scratch = ScratchDirectory::new().unwrap();
++        let destination = scratch.path.join(DIAGNOSTIC_NAMESPACE);
++        let directory = prepare_diagnostic_semantic_directory(&destination).unwrap();
++        let retained = scratch.path.join("retained");
++        fs::rename(&destination, &retained).unwrap();
++        fs::create_dir(&destination).unwrap();
++        let mut command = Command::new("/bin/sh");
++        command.env_clear().args(["-c", r#"/bin/sh -c 'printf semantic > "$FE2O3_DIAGNOSTIC_SEMANTIC_MIR_PATH_V1"; printf map > "$FE2O3_DIAGNOSTIC_SEMANTIC_SOURCE_MAP_PATH_V1"; exit 7'"#]);
++        configure_diagnostic_semantic_capture(&mut command, Some(&directory)).unwrap();
++        assert_eq!(command.status().unwrap().code(), Some(7));
++        drop(directory);
++        assert_eq!(
++            fs::read(retained.join("semantic-mir-v1.bin")).unwrap(),
++            b"semantic"
++        );
++        assert_eq!(
++            fs::read(retained.join("semantic-source-map-v1.json")).unwrap(),
++            b"map"
++        );
++        assert_eq!(fs::read_dir(&destination).unwrap().count(), 0);
++    }
++
++    #[test]
+     fn rejects_loader_and_cargo_selection_environment() {
+         for name in [
+             "LD_PRELOAD",
+--- a/crates/cargo-fe2o3/src/engineering_hsaco/execution.rs
++++ b/crates/cargo-fe2o3/src/engineering_hsaco/execution.rs
+@@ -218,6 +218,57 @@
+         .stdin(Stdio::null());
+ }
+ 
++pub(super) fn validate_diagnostic_semantic_directory(path: &Path) -> Result<(), String> {
++    if path.file_name() != Some(OsStr::new(DIAGNOSTIC_NAMESPACE)) {
++        return Err(format!(
++            "--diagnostic-semantic-dir basename must be exactly {DIAGNOSTIC_NAMESPACE}"
++        ));
++    }
++    validate_fresh_output_root(path)
++}
++
++pub(super) fn prepare_diagnostic_semantic_directory(
++    path: &Path,
++) -> Result<crate::project::PinnedDirectory, String> {
++    validate_diagnostic_semantic_directory(path)?;
++    let parent = crate::project::PinnedDirectory::open_existing(
++        path.parent()
++            .expect("validated diagnostic parent")
++            .to_owned(),
++        "engineering diagnostic parent",
++    )?;
++    rustix::fs::mkdirat(
++        parent.file(),
++        DIAGNOSTIC_NAMESPACE,
++        rustix::fs::Mode::RUSR | rustix::fs::Mode::WUSR | rustix::fs::Mode::XUSR,
++    )
++    .map_err(|error| format!("cannot create fresh engineering diagnostics: {error}"))?;
++    // Deliberately no cleanup guard: failed and partial diagnostics are retained.
++    parent
++        .open_child(DIAGNOSTIC_NAMESPACE, "engineering diagnostics")?
++        .ok_or_else(|| "created engineering diagnostic directory disappeared".to_owned())
++}
++
++pub(super) fn configure_diagnostic_semantic_capture(
++    command: &mut Command,
++    directory: Option<&crate::project::PinnedDirectory>,
++) -> Result<(), String> {
++    // Never accept caller environment as opt-in, even when this helper is used alone.
++    command
++        .env_remove(SEMANTIC_CAPTURE_ENV)
++        .env_remove(SOURCE_MAP_CAPTURE_ENV);
++    if let Some(directory) = directory {
++        let path = directory.fixed_child_path(DIAGNOSTIC_CHILD_FD)?;
++        directory.inherit_for_child_at(command, DIAGNOSTIC_CHILD_FD)?;
++        command.env(SEMANTIC_CAPTURE_ENV, path.join("semantic-mir-v1.bin"));
++        command.env(
++            SOURCE_MAP_CAPTURE_ENV,
++            path.join("semantic-source-map-v1.json"),
++        );
++    }
++    Ok(())
++}
++
+ #[allow(
+     clippy::too_many_arguments,
+     reason = "the extraction boundary keeps each independently pinned tool and custody path explicit"
+@@ -236,6 +287,11 @@
+ ) -> Result<(), String> {
+     rustc.revalidate_lib_tree()?;
+     validate_build_std_vendor_closure(rustc, cargo_vendor)?;
++    let diagnostic_directory = options
++        .diagnostic_semantic_dir
++        .as_deref()
++        .map(prepare_diagnostic_semantic_directory)
++        .transpose()?;
+     let cargo_home = scratch.join("cargo-home");
+     fs::DirBuilder::new()
+         .mode(0o700)
+@@ -282,6 +338,7 @@
+             .inherit_for_child_at(command.as_command_mut(), VENDOR_CHILD_FD)?;
+     }
+     configure_isolated_build_std_cargo(command.as_command_mut(), options, scratch, &cargo_home);
++    configure_diagnostic_semantic_capture(command.as_command_mut(), diagnostic_directory.as_ref())?;
+     command
+         .as_command_mut()
+         .env("RUSTC_WORKSPACE_WRAPPER", &extractor_path)

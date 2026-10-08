@@ -1,0 +1,16 @@
+
+running 11 tests
+test production_pipeline::diagnostic_semantic_capture_v1::tests::semantic_capture_absent_opt_in_is_inert ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::semantic_capture_byte_cap_is_inclusive_and_rejects_before_creation ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::semantic_capture_path_failures_are_bounded_and_do_not_create_parents ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::semantic_capture_preserves_exact_canonical_bytes_identity_and_admission ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::semantic_capture_receipt_write_failure_returns_without_panicking ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::semantic_capture_refuses_overwrite_and_symlink_without_changing_old_bytes ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::source_map_capture_absent_failed_or_mismatched_semantic_is_inert ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::source_map_capture_binds_exact_files_and_both_semantic_identities ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::source_map_encoding_has_inclusive_byte_and_file_bounds ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::source_map_publication_failure_keeps_semantic_and_existing_sidecar ... ok
+test production_pipeline::diagnostic_semantic_capture_v1::tests::source_map_receipt_write_failure_does_not_change_capture_outcome ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1341 filtered out; finished in 0.03s
+

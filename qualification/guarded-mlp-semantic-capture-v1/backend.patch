@@ -1,0 +1,373 @@
+--- a/crates/rustc-codegen-fe2o3/src/production_pipeline.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_pipeline.rs
+@@ -3717,6 +3717,7 @@
+         );
+         diagnostic_semantic_capture_v1::capture_before_pre_ranked_v1(
+             semantic_ssa.source_semantic(),
++            &bindings.debug_source_files,
+         );
+         let materialized =
+             fe2o3_lower_mir_kernel::ProductionPreRankedKirOwnerV1::try_materialize_with_budget(
+--- a/crates/rustc-codegen-fe2o3/src/production_pipeline/diagnostic_semantic_capture_v1.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_pipeline/diagnostic_semantic_capture_v1.rs
+@@ -9,6 +9,9 @@
+ 
+ const CAPTURE_PATH_ENV_V1: &str = "FE2O3_DIAGNOSTIC_SEMANTIC_MIR_PATH_V1";
+ const MAX_CAPTURE_BYTES_V1: usize = 16 * 1024 * 1024;
++const SOURCE_MAP_PATH_ENV_V1: &str = "FE2O3_DIAGNOSTIC_SEMANTIC_SOURCE_MAP_PATH_V1";
++const MAX_SOURCE_MAP_BYTES_V1: usize = 1024 * 1024;
++const MAX_SOURCE_MAP_FILES_V1: usize = 4096;
+ 
+ /// Captures existing canonical bytes without changing lowering or its result.
+ /// Neither snapshot is consumed by production admission or grants authority.
+@@ -47,14 +50,144 @@
+ 
+ /// The destination must be selected outside any temporary build directory by
+ /// the caller. This diagnostic is never consumed as compiler admission evidence.
+-pub(super) fn capture_before_pre_ranked_v1(semantic: &AdmittedInertSemanticMirV1) {
++pub(super) fn capture_before_pre_ranked_v1(
++    semantic: &AdmittedInertSemanticMirV1,
++    files: &[fe2o3_kernel_ir::DebugSourceMapFileV1],
++) {
+     let Some(destination) = std::env::var_os(CAPTURE_PATH_ENV_V1) else {
+         return;
+     };
+     if let Some(outcome) = capture_requested_semantic_v1(Some(Path::new(&destination)), semantic) {
+         // A failed snapshot or stderr write must not replace the compiler result.
+         let _ = write_capture_receipt_v1(&mut io::stderr().lock(), &outcome);
+-    }
++        if let Some(map) = capture_requested_source_map_v1(
++            std::env::var_os(SOURCE_MAP_PATH_ENV_V1)
++                .as_deref()
++                .map(Path::new),
++            semantic,
++            files,
++            &outcome,
++        ) {
++            let _ = write_source_map_receipt_v1(&mut io::stderr().lock(), &map);
++        }
++    }
++}
++
++#[derive(serde::Serialize)]
++struct SemanticSourceMapCaptureV1<'a> {
++    schema: &'static str,
++    stage: &'static str,
++    semantic_bytes: usize,
++    semantic_sha256: String,
++    semantic_file_sha256: String,
++    files: &'a [fe2o3_kernel_ir::DebugSourceMapFileV1],
++    execution_authority: bool,
++}
++
++struct BoundedSourceMapBytesV1 {
++    bytes: Vec<u8>,
++    maximum: usize,
++}
++
++impl Write for BoundedSourceMapBytesV1 {
++    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
++        let end = self
++            .bytes
++            .len()
++            .checked_add(bytes.len())
++            .filter(|end| *end <= self.maximum)
++            .ok_or(io::ErrorKind::InvalidInput)?;
++        self.bytes
++            .try_reserve(end - self.bytes.len())
++            .map_err(|_| io::ErrorKind::OutOfMemory)?;
++        self.bytes.extend_from_slice(bytes);
++        Ok(bytes.len())
++    }
++
++    fn flush(&mut self) -> io::Result<()> {
++        Ok(())
++    }
++}
++
++fn encode_source_map_v1(
++    semantic: &AdmittedInertSemanticMirV1,
++    files: &[fe2o3_kernel_ir::DebugSourceMapFileV1],
++    maximum: usize,
++) -> io::Result<Vec<u8>> {
++    use sha2::{Digest, Sha256};
++    if files.len() > MAX_SOURCE_MAP_FILES_V1
++        || files
++            .windows(2)
++            .any(|pair| pair[0].identity() >= pair[1].identity())
++    {
++        return Err(io::ErrorKind::InvalidInput.into());
++    }
++    let record = SemanticSourceMapCaptureV1 {
++        schema: "fe2o3-diagnostic-semantic-source-map-v1",
++        stage: "pre-ranked",
++        semantic_bytes: semantic.canonical_encoding().len(),
++        semantic_sha256: crate::encode_hex(semantic.semantic_sha256().as_bytes()),
++        semantic_file_sha256: crate::encode_hex(&Sha256::digest(semantic.canonical_encoding())),
++        files,
++        execution_authority: false,
++    };
++    let mut output = BoundedSourceMapBytesV1 {
++        bytes: Vec::new(),
++        maximum,
++    };
++    serde_json::to_writer(&mut output, &record)
++        .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
++    output.write_all(b"\n")?;
++    Ok(output.bytes)
++}
++
++fn capture_requested_source_map_v1(
++    destination: Option<&Path>,
++    semantic: &AdmittedInertSemanticMirV1,
++    files: &[fe2o3_kernel_ir::DebugSourceMapFileV1],
++    semantic_outcome: &SemanticCaptureOutcomeV1,
++) -> Option<SemanticCaptureOutcomeV1> {
++    let destination = destination?;
++    // A sidecar never upgrades an absent or partial semantic snapshot.
++    if semantic_outcome.result.is_err() {
++        return None;
++    }
++    let mut outcome = SemanticCaptureOutcomeV1 {
++        bytes: 0,
++        semantic_sha256: *semantic.semantic_sha256().as_bytes(),
++        result: Ok(()),
++    };
++    if semantic_outcome.bytes != semantic.canonical_encoding().len()
++        || semantic_outcome.semantic_sha256 != *semantic.semantic_sha256().as_bytes()
++    {
++        outcome.result = Err(io::ErrorKind::InvalidData);
++        return Some(outcome);
++    }
++    outcome.result = encode_source_map_v1(semantic, files, MAX_SOURCE_MAP_BYTES_V1)
++        .and_then(|bytes| {
++            outcome.bytes = bytes.len();
++            write_new_capture_bytes_v1(destination, &bytes, MAX_SOURCE_MAP_BYTES_V1)
++        })
++        .map_err(|error| error.kind());
++    Some(outcome)
++}
++
++fn write_source_map_receipt_v1(
++    output: &mut impl Write,
++    outcome: &SemanticCaptureOutcomeV1,
++) -> io::Result<()> {
++    let status = if outcome.result.is_ok() {
++        "complete"
++    } else {
++        "failed"
++    };
++    writeln!(
++        output,
++        "fe2o3 diagnostic semantic source map: stage=pre-ranked status={status} bytes={} semantic_sha256={} error_kind={:?}",
++        outcome.bytes,
++        crate::encode_hex(&outcome.semantic_sha256),
++        outcome.result.as_ref().err(),
++    )
+ }
+ 
+ fn capture_requested_semantic_v1(
+--- a/crates/rustc-codegen-fe2o3/src/production_pipeline/diagnostic_semantic_capture_v1_tests.rs
++++ b/crates/rustc-codegen-fe2o3/src/production_pipeline/diagnostic_semantic_capture_v1_tests.rs
+@@ -1,6 +1,201 @@
+ use super::*;
+ use fe2o3_mir_model::semantic_mir_v1::*;
+ use std::path::PathBuf;
++
++fn source_map_files() -> Vec<fe2o3_kernel_ir::DebugSourceMapFileV1> {
++    vec![fe2o3_kernel_ir::DebugSourceMapFileV1::new(
++        [42; 32],
++        123,
++        "/diagnostic/display-label.rs".to_owned(),
++    )
++    .unwrap()]
++}
++
++#[test]
++fn source_map_capture_absent_failed_or_mismatched_semantic_is_inert() {
++    let scratch = CaptureScratch::new();
++    let semantic = admitted_capture_fixture();
++    let path = scratch.0.join("sources.json");
++    let files = source_map_files();
++    let mut outcome =
++        capture_requested_semantic_v1(Some(&scratch.0.join("semantic.mir")), &semantic).unwrap();
++    assert!(capture_requested_source_map_v1(None, &semantic, &files, &outcome).is_none());
++    outcome.result = Err(io::ErrorKind::PermissionDenied);
++    assert!(capture_requested_source_map_v1(Some(&path), &semantic, &files, &outcome).is_none());
++    outcome.result = Ok(());
++    outcome.semantic_sha256 = [0; 32];
++    assert_eq!(
++        capture_requested_source_map_v1(Some(&path), &semantic, &files, &outcome)
++            .unwrap()
++            .result,
++        Err(io::ErrorKind::InvalidData)
++    );
++    outcome.semantic_sha256 = *semantic.semantic_sha256().as_bytes();
++    outcome.bytes += 1;
++    assert_eq!(
++        capture_requested_source_map_v1(Some(&path), &semantic, &files, &outcome)
++            .unwrap()
++            .result,
++        Err(io::ErrorKind::InvalidData)
++    );
++    assert!(!path.exists());
++}
++
++#[test]
++fn source_map_capture_binds_exact_files_and_both_semantic_identities() {
++    use sha2::{Digest, Sha256};
++    let scratch = CaptureScratch::new();
++    let semantic = admitted_capture_fixture();
++    let bytes = semantic.canonical_encoding().to_vec();
++    let files = source_map_files();
++    let outcome =
++        capture_requested_semantic_v1(Some(&scratch.0.join("semantic.mir")), &semantic).unwrap();
++    let path = scratch.0.join("sources.json");
++    let map = capture_requested_source_map_v1(Some(&path), &semantic, &files, &outcome).unwrap();
++    assert_eq!(map.result, Ok(()));
++    let raw = std::fs::read(path).unwrap();
++    assert_eq!(raw.len(), map.bytes);
++    assert_eq!(raw.last(), Some(&b'\n'));
++    assert_eq!(
++        serde_json::from_slice::<serde_json::Value>(&raw).unwrap(),
++        serde_json::json!({
++            "schema": "fe2o3-diagnostic-semantic-source-map-v1",
++            "stage": "pre-ranked",
++            "semantic_bytes": bytes.len(),
++            "semantic_sha256": crate::encode_hex(semantic.semantic_sha256().as_bytes()),
++            "semantic_file_sha256": crate::encode_hex(&Sha256::digest(&bytes)),
++            "files": files,
++            "execution_authority": false,
++        })
++    );
++    assert_eq!(semantic.canonical_encoding(), bytes);
++}
++
++#[test]
++fn source_map_encoding_has_inclusive_byte_and_file_bounds() {
++    let semantic = admitted_capture_fixture();
++    let files = source_map_files();
++    let raw = encode_source_map_v1(&semantic, &files, MAX_SOURCE_MAP_BYTES_V1).unwrap();
++    assert_eq!(
++        encode_source_map_v1(&semantic, &files, raw.len()).unwrap(),
++        raw
++    );
++    assert!(encode_source_map_v1(&semantic, &files, raw.len() - 1).is_err());
++    assert!(encode_source_map_v1(&semantic, &files, 0).is_err());
++    let second =
++        fe2o3_kernel_ir::DebugSourceMapFileV1::new([43; 32], 12, "/second.rs".to_owned()).unwrap();
++    assert!(encode_source_map_v1(
++        &semantic,
++        &[files[0].clone(), files[0].clone()],
++        MAX_SOURCE_MAP_BYTES_V1
++    )
++    .is_err());
++    assert!(encode_source_map_v1(
++        &semantic,
++        &[second, files[0].clone()],
++        MAX_SOURCE_MAP_BYTES_V1
++    )
++    .is_err());
++    let many: Vec<_> = (0..=MAX_SOURCE_MAP_FILES_V1)
++        .map(|index| {
++            let mut id = [1; 32];
++            id[..8].copy_from_slice(&(index as u64).to_be_bytes());
++            fe2o3_kernel_ir::DebugSourceMapFileV1::new(id, 1, "/file".to_owned()).unwrap()
++        })
++        .collect();
++    assert!(encode_source_map_v1(
++        &semantic,
++        &many[..MAX_SOURCE_MAP_FILES_V1],
++        MAX_SOURCE_MAP_BYTES_V1
++    )
++    .is_ok());
++    assert!(encode_source_map_v1(&semantic, &many, MAX_SOURCE_MAP_BYTES_V1).is_err());
++    let escaped =
++        fe2o3_kernel_ir::DebugSourceMapFileV1::new([44; 32], 1, "/escaped-\"\\\n.rs".to_owned())
++            .unwrap();
++    let escaped = vec![escaped];
++    let raw = encode_source_map_v1(&semantic, &escaped, MAX_SOURCE_MAP_BYTES_V1).unwrap();
++    assert_eq!(
++        encode_source_map_v1(&semantic, &escaped, raw.len()).unwrap(),
++        raw
++    );
++    assert!(encode_source_map_v1(&semantic, &escaped, raw.len() - 1).is_err());
++
++    let scratch = CaptureScratch::new();
++    let outcome =
++        capture_requested_semantic_v1(Some(&scratch.0.join("semantic.mir")), &semantic).unwrap();
++    let oversized: Vec<_> = many[..1024]
++        .iter()
++        .map(|file| {
++            fe2o3_kernel_ir::DebugSourceMapFileV1::new(file.identity(), 1, "x".repeat(1024))
++                .unwrap()
++        })
++        .collect();
++    let destination = scratch.0.join("oversized.json");
++    let refused =
++        capture_requested_source_map_v1(Some(&destination), &semantic, &oversized, &outcome)
++            .unwrap();
++    assert!(refused.result.is_err());
++    assert_eq!(refused.bytes, 0);
++    assert!(!destination.exists());
++}
++
++#[test]
++fn source_map_publication_failure_keeps_semantic_and_existing_sidecar() {
++    let scratch = CaptureScratch::new();
++    let semantic = admitted_capture_fixture();
++    let semantic_path = scratch.0.join("semantic.mir");
++    let outcome = capture_requested_semantic_v1(Some(&semantic_path), &semantic).unwrap();
++    let path = scratch.0.join("sources.json");
++    std::fs::write(&path, b"retained partial sidecar").unwrap();
++    let failed =
++        capture_requested_source_map_v1(Some(&path), &semantic, &source_map_files(), &outcome)
++            .unwrap();
++    assert_eq!(failed.result, Err(io::ErrorKind::AlreadyExists));
++    assert_eq!(std::fs::read(&path).unwrap(), b"retained partial sidecar");
++    assert_eq!(
++        std::fs::read(&semantic_path).unwrap(),
++        semantic.canonical_encoding()
++    );
++    assert_eq!(outcome.result, Ok(()));
++    let missing = scratch.0.join("missing").join("path\nnot-for-stderr.json");
++    let failed =
++        capture_requested_source_map_v1(Some(&missing), &semantic, &source_map_files(), &outcome)
++            .unwrap();
++    assert_eq!(failed.result, Err(io::ErrorKind::NotFound));
++    let mut receipt = Vec::new();
++    write_source_map_receipt_v1(&mut receipt, &failed).unwrap();
++    let receipt = String::from_utf8(receipt).unwrap();
++    assert_eq!(receipt.lines().count(), 1);
++    assert!(receipt.contains("status=failed") && receipt.len() < 256);
++    assert!(!receipt.contains("not-for-stderr"));
++    assert!(!missing.parent().unwrap().exists());
++}
++
++#[test]
++fn source_map_receipt_write_failure_does_not_change_capture_outcome() {
++    struct Broken;
++    impl Write for Broken {
++        fn write(&mut self, _: &[u8]) -> io::Result<usize> {
++            Err(io::ErrorKind::BrokenPipe.into())
++        }
++        fn flush(&mut self) -> io::Result<()> {
++            Ok(())
++        }
++    }
++    let outcome = SemanticCaptureOutcomeV1 {
++        bytes: 17,
++        semantic_sha256: [3; 32],
++        result: Ok(()),
++    };
++    assert_eq!(
++        write_source_map_receipt_v1(&mut Broken, &outcome)
++            .unwrap_err()
++            .kind(),
++        io::ErrorKind::BrokenPipe
++    );
++    assert_eq!(outcome.result, Ok(()));
++}
+ 
+ struct CaptureScratch(PathBuf);
+ 

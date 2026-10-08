@@ -1,0 +1,19 @@
+
+running 14 tests
+test production_ranked_projection_v1::tests::checked_scalar_helper_rejects_forged_carrier_shapes_and_projections ... ok
+test production_ranked_projection_v1::tests::defined_scalar_helper_admits_only_exact_fabs_compiler_intrinsic ... ok
+test production_ranked_projection_v1::tests::defined_scalar_helper_admits_only_proven_checked_scalar_carriers ... ok
+test production_ranked_projection_v1::tests::defined_scalar_helper_audits_unreachable_effects ... ok
+test production_ranked_projection_v1::tests::defined_scalar_helper_chain_has_an_exact_empty_effect_summary ... ok
+test production_ranked_projection_v1::tests::defined_scalar_helper_rejects_a_hidden_compiler_intrinsic ... ok
+test production_ranked_projection_v1::tests::defined_scalar_helper_rejects_a_transitive_memory_effect ... ok
+test production_ranked_projection_v1::tests::defined_scalar_helper_rejects_missing_function_ids_for_calls_and_tail_calls ... ok
+test production_ranked_projection_v1::tests::defined_scalar_helper_rejects_recursion ... ok
+test production_ranked_projection_v1::tests::defined_zero_sized_helper_requires_recursive_pointer_free_no_effect_body ... ok
+test production_ranked_projection_v1::tests::finite_join_ownership_cannot_hide_in_an_empty_scalar_helper ... ok
+test production_ranked_projection_v1::tests::finite_join_ownership_cannot_hide_in_an_empty_zero_sized_helper ... ok
+test production_ranked_projection_v1::tests::only_exact_deterministic_scalar_helpers_project_call_result_control ... ok
+test production_ranked_projection_v1::tests::wave_storage_ownership_rejects_ordinary_alias_and_empty_helper_shortcuts ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1338 filtered out; finished in 0.00s
+
