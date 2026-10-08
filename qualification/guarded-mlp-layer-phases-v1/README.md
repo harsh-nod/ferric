@@ -166,7 +166,19 @@ Two earlier failed attempts remain separate evidence:
   fresh retry restores it only for runtime parsing. The failed qualification
   is not relabeled as success.
 
-No layer-duration native result is established by this CPU checkpoint.
-A separately reviewed checker, source/ELF admission, preparation and retained
+## V2 Checker Qualification
+
+The [strict V2 checker](checker-cpu-v1/README.md) passes **178 tests** on MI350:
+32 new aggregate-layer cases and all 146 unchanged predecessor cases.
+The three supervised processes exited naturally in 78.007586 seconds, with
+unchanged sources, no cleanup and no failed, skipped or errored tests.
+The [original archive](checker-cpu-v1.tar.gz) retains all 30 source bodies,
+17 raw evidence files, input and terminal, plus the authoring seal and stager.
+These are synthetic CPU admission tests, not native inference measurements.
+Individual layer-return containment remains checked by the separately
+qualified Rust runtime and worker; the wire exposes only per-forward aggregates.
+
+No layer-duration native result is established by either CPU checkpoint.
+Source/ELF admission, preparation, retention workflow qualification and a retained
 native run are still required. Full2303 launch admission, independent generated
 outputs, sustained throughput and issue #42 M0-M7 remain open.
