@@ -6,7 +6,7 @@ are default-off experiments, not a new serving-performance result.
 
 | Lane | Implemented | Observed Qualification | Remaining |
 |---|---|---|---|
-| Decode down | Current-worker binding for the split-K8 native688 experiment; fresh three-block ABBA campaign | 24 adapter tests; all 14 native cells independently audited; median TPOT reduced 7.1586% | Matched HTTP integration measurement, then a fresh vendor comparison |
+| Decode down | Current-worker binding for the split-K8 native688 experiment; fresh three-block ABBA campaign | 24 adapter tests; all 14 native cells independently audited; median TPOT reduced 7.1586% | Same-day HTTP samples and fresh vLLM now retained; revised-observer Ferric rerun remains incomplete |
 | Checked loads | Explicit fe2o3 gfx950 API groups independent checked scalar loads, retaining original fallbacks | 19 focused tests and seven LLVM assembler fixtures passed; 112 baseline tests passed, 11 explicitly ignored; raw logs retained | Additive physical-profile integration; actual ISA, parity and timings |
 | Prefill down | Exact M32/N4096/K12288 control and paired-K16 roots in one opt-in Ferric crate | 18 API/source, 18 full-host default and 19 enabled-feature tests; strict Clippy passed in both full-host configurations; matching compiler tools and focused LLVM-worker checks passed | Genuine Git/vendor emission closure, image/ABI/ISA, native output parity and matched component timings |
 
@@ -111,7 +111,14 @@ including the default-off checked-load pass, do not relabel these binaries.
 
 ## Comparison Boundary
 
-The latest complete matched HTTP comparison is still the October 6 Width55c
+The [October 7 same-day HTTP review](down1736-vllm-20261007.md) records the
+split-K8 candidate at 399.043 ms median TTFT and 44.017 ms TPOT, versus fresh
+vLLM at 19.070 ms and 4.399 ms. These are individually admitted cohorts with
+distinct startup-monitor qualifications, not a completed source-identical
+three-arm comparison. The candidate is still about 20.93 times slower on TTFT
+and 10.01 times slower on TPOT. No competitive improvement is declared.
+
+The latest complete source-identical matched HTTP comparison remains October 6 Width55c:
 Qwen3-8B TP1/C1 128-input/128-output workload: Ferric 431.033 ms TTFT and
 53.119 ms TPOT versus vLLM 18.969 ms and 4.352 ms. This new within-Ferric
 native-ingress gain is not a new HTTP or vLLM comparison, and is not composed

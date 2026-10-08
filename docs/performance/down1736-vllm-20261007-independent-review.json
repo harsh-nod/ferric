@@ -1,0 +1,223 @@
+{
+  "arms": {
+    "candidate": {
+      "all_retained_member_hashes_verified": true,
+      "archive_bytes": 2098923,
+      "archive_sha256": "5e64390fc2df7d98a112f0f7fb2c82ee31d64cc2d1cfd1d9250ad38c454247f8",
+      "clean_unsignaled_lifecycle": true,
+      "e2e_ms": {
+        "mean": 5992.530641066666,
+        "median": 5999.5353190000005,
+        "p95": 6156.250743599999
+      },
+      "exact_internal_output_token_ids": 5376,
+      "excluded_warmups": 10,
+      "finite_output_tokens_per_second": 21.358560748177837,
+      "gpu_probe_phases": {
+        "active": 68,
+        "postflight": 1,
+        "preflight": 1,
+        "startup": 35
+      },
+      "measured_requests": 30,
+      "measured_window_seconds": 179.7873951,
+      "plan_sha256": "791af68e9dbf414bfc5a0af085f91bd6e42faa5286c7cb5773ba3bf973086a01",
+      "timed_vllm_token_ids_available": null,
+      "tpot_ms": {
+        "mean": 44.001070356692914,
+        "median": 44.01709724409449,
+        "p95": 45.07776273858267
+      },
+      "ttft_ms": {
+        "mean": 404.2553246,
+        "median": 399.04321200000004,
+        "p95": 439.8918792499999
+      }
+    },
+    "control": {
+      "all_retained_member_hashes_verified": true,
+      "archive_bytes": 2243934,
+      "archive_sha256": "4fa74b93f5d4e1cd8ecffa06de5b9dc7f71e1bb6b6eae70d02b049454967dd23",
+      "clean_unsignaled_lifecycle": true,
+      "e2e_ms": {
+        "mean": 6568.5028987333335,
+        "median": 6563.892344,
+        "p95": 6649.91446985
+      },
+      "exact_internal_output_token_ids": 5376,
+      "excluded_warmups": 10,
+      "finite_output_tokens_per_second": 19.48546474467828,
+      "gpu_probe_phases": {
+        "active": 75,
+        "postflight": 1,
+        "preflight": 1,
+        "startup": 35
+      },
+      "measured_requests": 30,
+      "measured_window_seconds": 197.069972429,
+      "plan_sha256": "49281540e4c8b7906954f9fab1b23a12059fecabb65a2003b4c7c94d91a98d13",
+      "timed_vllm_token_ids_available": null,
+      "tpot_ms": {
+        "mean": 48.5185546175853,
+        "median": 48.52488074803149,
+        "p95": 49.162451332677165
+      },
+      "ttft_ms": {
+        "mean": 406.2931314666667,
+        "median": 403.918926,
+        "p95": 407.12395655
+      }
+    },
+    "vllm": {
+      "all_retained_member_hashes_verified": true,
+      "archive_bytes": 1300747,
+      "archive_sha256": "dceb71b775f21d8d57f255e50f3f3c779a9f8950da56484b9f080835ef496202",
+      "clean_unsignaled_lifecycle": true,
+      "e2e_ms": {
+        "mean": 577.8417395333333,
+        "median": 577.745133,
+        "p95": 578.837795
+      },
+      "exact_internal_output_token_ids": 256,
+      "excluded_warmups": 10,
+      "finite_output_tokens_per_second": 221.43018068970883,
+      "gpu_probe_phases": {
+        "active": 9,
+        "postflight": 1,
+        "preflight": 1,
+        "startup": 20
+      },
+      "measured_requests": 30,
+      "measured_window_seconds": 17.34180945,
+      "plan_sha256": "e5346b24c18f3e38c4d7b053651649e9fb5250b72f85430176c711b47e0af1bc",
+      "timed_vllm_token_ids_available": false,
+      "tpot_ms": {
+        "mean": 4.399101937007874,
+        "median": 4.3989049685039365,
+        "p95": 4.403307838582677
+      },
+      "ttft_ms": {
+        "mean": 19.121630866666667,
+        "median": 19.070127,
+        "p95": 19.946753049999998
+      }
+    }
+  },
+  "candidate_vs_control": {
+    "tpot_ms_reduction_percent": 9.289633347774629,
+    "ttft_ms_reduction_percent": 1.2071021400962945
+  },
+  "candidate_vs_control_output_rate_increase_percent": 9.612785879336672,
+  "candidate_vs_vllm": {
+    "tpot_ms_ratio": 10.006376032047962,
+    "ttft_ms_ratio": 20.925042187710655
+  },
+  "competitive_improvement_declared": false,
+  "default_promotion": false,
+  "failed_sessions": [
+    {
+      "all_members_verified": true,
+      "archive_sha256": {
+        "candidate": "86f1f7e9ca05d7e57f7e19bb9eb8db848929824f84414fd2c292a334d8d6ff66",
+        "control": "4fa74b93f5d4e1cd8ecffa06de5b9dc7f71e1bb6b6eae70d02b049454967dd23"
+      },
+      "failed_cells_have_no_timing": true,
+      "session": "ferric-down1736-http-results-20261007-a001",
+      "session_sha256": "5337a7a559304f50c37fdbcca36193211381a14711ff0c3f6cda7e0300ea91f4"
+    },
+    {
+      "all_members_verified": true,
+      "archive_sha256": {
+        "candidate": "5e64390fc2df7d98a112f0f7fb2c82ee31d64cc2d1cfd1d9250ad38c454247f8",
+        "vllm": "f14b26e2882e2e91f469065b09fb8fb91fa321e523ccbd2e305f804bc831847e"
+      },
+      "failed_cells_have_no_timing": true,
+      "session": "ferric-down1736-http-results-20261007-a002",
+      "session_sha256": "bf9822e6e64d06453573e774f763d5572cc6f7df00eaf53a4772bb6ffbbc3497"
+    },
+    {
+      "all_members_verified": true,
+      "archive_sha256": {
+        "vllm": "3da7d0e39528054597353084f0b2f6823dab00723d24f53d045a89bb10a7d11b"
+      },
+      "failed_cells_have_no_timing": true,
+      "session": "ferric-down1736-http-results-20261007-a003",
+      "session_sha256": "442c49a340144953776ebb2560056e59a8aa45370d5bbc9b6571b74e287c3725"
+    },
+    {
+      "all_members_verified": true,
+      "archive_sha256": {
+        "control": "5d166ef35a3e6bf891429b9d2de5b592d21ebe9c7f53d1cc98bcd7fcb639f910",
+        "vllm": "dceb71b775f21d8d57f255e50f3f3c779a9f8950da56484b9f080835ef496202"
+      },
+      "failed_cells_have_no_timing": true,
+      "session": "ferric-down1736-http-results-20261007-a004",
+      "session_sha256": "042ffcd8cd33c647cc5798967a6c19ee45f33a15d30d36e75b9824ecd6718b16"
+    },
+    {
+      "all_members_verified": true,
+      "archive_sha256": {
+        "control": "ad17d62a296b38ce383b36a2af9ae52a2f98a062542e02f7e66530d39603b79b"
+      },
+      "failed_cells_have_no_timing": true,
+      "session": "ferric-down1736-http-results-20261007-a005",
+      "session_sha256": "c5719fcfd31cf6a49f9e58309cef4d9e38230cc69b8b7d571019f50c6a088224"
+    }
+  ],
+  "faster_than_vllm_in_both_observed_latency_metrics": false,
+  "individual_cohorts_verified": true,
+  "limits": [
+    "Descriptive same-day comparison of individually admitted cohorts, not a completed same-source-plan three-arm comparison.",
+    "Ferric uses the original observer qualification (312 tests); vLLM uses the startup-only reconciliation successor (316 tests). All driver/source differences are retained.",
+    "Client/server/scanner/active-attribution bytes and native observation/ownership functions are unchanged; this does not erase distinct source/plan identities.",
+    "Fresh revised-observer Ferric a004/a005 stopped before timing on nonowner CPU descriptor churn; no partial timing was admitted.",
+    "One sequential cohort per configuration, not interleaved cross-engine ABBA or statistical proof.",
+    "SSE-derived HTTP TTFT/TPOT; output rate is finite closed-loop throughput including drain.",
+    "One fixed prompt at TP1/C1 and 128/128; not general workload or TP8 competitiveness.",
+    "Both use BF16 decoder and configured FP32 head; vendor head weights remain BF16.",
+    "Clock, power and temperature equivalence are not established; root-visible GPU sampling is finite.",
+    "Exact frozen 1736eff worker and split-K8 candidate, not unmeasured checked-load or prefill changes."
+  ],
+  "measurement_order": [
+    "control",
+    "candidate",
+    "vllm"
+  ],
+  "monitor_source_differences": [
+    "http/gpu_probe.py",
+    "http/http_cpu.py",
+    "http/probe_cli.py"
+  ],
+  "same_source_plan_comparison_completed": false,
+  "schema": "FerricDown1736SameDayDescriptiveReviewV1",
+  "settings": {
+    "arrival": "closed-loop",
+    "completion_tokens": 128,
+    "concurrency": 1,
+    "context": 8192,
+    "dtype": "bfloat16",
+    "head_dtype": "float32",
+    "ignore_eos": true,
+    "prefix_cache": false,
+    "prompt_tokens": 128,
+    "request_timeout_seconds": 120,
+    "samples": 30,
+    "seed": 0,
+    "speculation": false,
+    "temperature": 0,
+    "tpot_slo_ms": 1000,
+    "ttft_slo_ms": 10000,
+    "warmups": 10
+  },
+  "unchanged_native_path_ast": {
+    "http/gpu_probe.py": [
+      "observe",
+      "NativeOwners",
+      "endpoint"
+    ],
+    "http/probe_cli.py": [
+      "perform",
+      "NativeDiscovery"
+    ]
+  }
+}
