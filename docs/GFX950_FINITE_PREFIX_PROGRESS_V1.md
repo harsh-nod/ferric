@@ -6,7 +6,21 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest candidate: the [Scoped active-pause experiment](../qualification/guarded-mlp-active-pause-v1/README.md)
+Latest investigation: the [MLP early-STOP compile experiment](../qualification/guarded-mlp-early-stop-v1/README.md)
+identifies 512 fixed scheduler rounds, including retired LDS work, in the
+currently selected MLP image. An isolated candidate calls the existing early
+STOP entry without changing arithmetic, launch geometry or host currentness.
+Eight actual compiler invocations on MI350 are retained across five attempts.
+All exited naturally with status 1, were reaped, and passed source/tool
+postchecks; these are unsuccessful compile attempts, not passing tests.
+After resolving command/lock compatibility and investigating a closure-origin
+rejection and Rust inliner ICE, both latest arms fail the same closed check:
+a potentially reachable panic path in core atomic compare-exchange.
+No new HSACO or GPU result exists, and neither kernel nor runtime is promoted.
+A separate default-off normalization profile matching the historical inlining
+threshold is the next proposed experiment, not an implemented fix.
+
+Previous candidate: the [Scoped active-pause experiment](../qualification/guarded-mlp-active-pause-v1/README.md)
 is retained as a qualification archive only; runtime production sources remain
 unchanged. Three private runtime paths differ from the qualified closed-layer
 source. The existing Scoped pause uses at most 4,096 spin hints toward the same

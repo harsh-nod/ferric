@@ -1,0 +1,71 @@
+   Compiling typenum v1.20.1
+   Compiling cfg-if v1.0.4
+   Compiling cpufeatures v0.3.1
+   Compiling libc v0.2.189
+   Compiling fe2o3-target-spec v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-target-spec)
+   Compiling fe2o3-amd-target v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-amd-target)
+   Compiling hybrid-array v0.4.14
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.2.2
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+   Compiling rustix v1.1.4
+   Compiling proc-macro2 v1.0.107
+   Compiling fe2o3-build-authority v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-build-authority)
+   Compiling fe2o3-kernel-descriptor v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-kernel-descriptor)
+   Compiling fe2o3-rustc-invocation v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-rustc-invocation)
+   Compiling fe2o3-compiler-lineage v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-compiler-lineage)
+   Compiling reserved-fe2o3-symbols v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/reserved-fe2o3-symbols)
+   Compiling hashbrown v0.17.1
+   Compiling winnow v1.0.4
+   Compiling unicode-ident v1.0.24
+   Compiling linux-raw-sys v0.12.1
+   Compiling bitflags v2.13.1
+   Compiling equivalent v1.0.2
+   Compiling quote v1.0.47
+   Compiling indexmap v2.14.1
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling fe2o3-compiler-ffi v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-compiler-ffi)
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_edit v0.25.13+spec-1.1.0
+   Compiling fe2o3-artifact-transaction v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-artifact-transaction)
+   Compiling compiler_builtins v0.1.160 (/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/compiler-builtins/compiler-builtins)
+   Compiling syn v2.0.119
+   Compiling fe2o3-artifacts v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-artifacts)
+   Compiling proc-macro-crate v3.5.0
+   Compiling fe2o3-rustc-front v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-rustc-front)
+   Compiling core v0.0.0 (/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core)
+   Compiling fe2o3-macros v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-macros)
+    Checking fe2o3-device v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-segment-cpu-v228-v5/fe2o3/crates/fe2o3-device)
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize32`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `wavefrontsize64`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: unknown and unstable feature specified for `-Ctarget-feature`: `xnack`
+  |
+  = note: it is still passed through to the codegen backend, but use of this feature might be unsound and the behavior of this feature can change in the future
+  = help: consider filing a feature request
+
+warning: `fe2o3-device` (lib) generated 3 warnings
+    Checking fe2o3-production-extraction-fixture v0.1.0 (/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v5/fixed)
+warning: unused import: `Bf16`
+  --> src/lib.rs:21:20
+   |
+21 | use fe2o3_device::{Bf16, Gfx950Subgroup, Math, WorkgroupLdsScope};
+   |                    ^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+fe2o3 rustc extraction: production extraction collection failed: fe2o3 device collection rejected a reachable call: device code reaches a panic path; reachable call chain: fe2o3_production_source_safety_fixture::__fe2o3_host_kernel_v1_bb8fa9d9d7d8a8157cde5c36a28e6d61f4b3785a23f56bf1166d9f36444002d9 [__fe2o3_host_kernel_v1_bb8fa9d9d7d8a8157cde5c36a28e6d61f4b3785a23f56bf1166d9f36444002d9] -> core::sync::atomic::atomic_compare_exchange [_RINvNtNtCsaPIgEi1TF9E_4core4sync6atomic23atomic_compare_exchangemECsi9VNVQBVwqI_38fe2o3_production_source_safety_fixture] -> core::panicking::panic_fmt
+warning: `fe2o3-production-extraction-fixture` (lib) generated 4 warnings (3 duplicates) (run `cargo fix --lib -p fe2o3-production-extraction-fixture` to apply 1 suggestion)
+error: could not compile `fe2o3-production-extraction-fixture` (lib); 4 warnings emitted
+
+Caused by:
+  process didn't exit successfully: `/proc/self/fd/205 /proc/self/fd/194 --crate-name fe2o3_production_source_safety_fixture --edition=2024 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata -C embed-bitcode=no -C debuginfo=2 --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' -C metadata=34f0f9a076532379 -C extra-filename=-ca6085507887d738 --out-dir /home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v5/fixed-run/tmp/fe2o3-engineering-hsaco-2647560-1791448078946673470-0/cargo-target/amdgcn-amd-amdhsa/debug/deps --target amdgcn-amd-amdhsa -C incremental=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v5/fixed-run/tmp/fe2o3-engineering-hsaco-2647560-1791448078946673470-0/cargo-target/amdgcn-amd-amdhsa/debug/incremental -L dependency=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v5/fixed-run/tmp/fe2o3-engineering-hsaco-2647560-1791448078946673470-0/cargo-target/amdgcn-amd-amdhsa/debug/deps -L dependency=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v5/fixed-run/tmp/fe2o3-engineering-hsaco-2647560-1791448078946673470-0/cargo-target/debug/deps --extern 'noprelude,nounused:compiler_builtins=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v5/fixed-run/tmp/fe2o3-engineering-hsaco-2647560-1791448078946673470-0/cargo-target/amdgcn-amd-amdhsa/debug/deps/libcompiler_builtins-5a51fb74b674540d.rlib' --extern 'noprelude,nounused:core=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v5/fixed-run/tmp/fe2o3-engineering-hsaco-2647560-1791448078946673470-0/cargo-target/amdgcn-amd-amdhsa/debug/deps/libcore-508ea4f37659b6ed.rlib' --extern fe2o3_device=/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-early-stop-compile-v228-v5/fixed-run/tmp/fe2o3-engineering-hsaco-2647560-1791448078946673470-0/cargo-target/amdgcn-amd-amdhsa/debug/deps/libfe2o3_device-7af0705a7c4ff60e.rmeta -Z unstable-options -Zalways-encode-mir -Zinline-mir=yes -Zmir-enable-passes=-JumpThreading -Copt-level=3 -Ctarget-cpu=gfx950 -Ctarget-feature=-wavefrontsize32,+wavefrontsize64,-xnack` (exit status: 1)
+cargo-fe2o3 engineering hsaco: Cargo engineering extraction failed with exit status: 101
