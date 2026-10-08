@@ -6,14 +6,31 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler diagnostic: [observed lowered helper-argument mismatch](../qualification/guarded-mlp-call-type-diagnostic-v1/README.md)
+Latest compiler checkpoint: [checked Index-to-U64 helper arguments](../qualification/guarded-mlp-call-index-transport-v1/README.md)
+uses the existing checked emitter for this exact one-way scalar bridge.
+All 1,336 compiler tests (24 unchanged ignores), 359 device tests, 125
+integration tests and 766 lowerer unit tests pass in 19 clean MI350 CPU
+phases. An inherited first-error assertion was reproduced on unchanged
+parent sources before its exact reverse-postorder coordinate was corrected;
+all failed attempts and the parent control are retained.
+
+Both actual V14 worker compilations clear the old argument-type boundary
+but still exit naturally with status1 and no HSACO. Ranked projection
+structural validation now rejects semantic-to-Kernel-IR correspondence
+with its exact owner. The specific failed predicate remains undiagnosed;
+no validation bypass, GPU run, model output, speedup or milestone closure
+is claimed. Original provider, helper ABI shapes and runtime paths remain
+unchanged; the device-completion hold is still unresolved.
+
+Previous compiler diagnostic: [observed lowered helper-argument mismatch](../qualification/guarded-mlp-call-type-diagnostic-v1/README.md)
 adds bounded actual/expected scalar facts to the existing rejection. All
 1,336 compiler tests (24 unchanged ignores), 359 device tests and 124
 semantic-lowering integration tests pass in 15 clean MI350 CPU phases.
 Both actual V13 attempts now report Index-to-U64 mismatch at source argument1,
 caller0/callee2, fixed block348 and early block629. Both remain clean exit1
-failures with no HSACO. A narrow conversion candidate is being reviewed and
-is not yet qualified; no GPU/model/performance or milestone credit is claimed.
+failures with no HSACO. The narrow conversion is now qualified by the
+checkpoint above; this diagnostic alone has no GPU/model/performance or
+milestone credit.
 
 Previous diagnostic checkpoint: [canonical defined-call diagnosis](../qualification/guarded-mlp-semantic-call-v1/README.md)
 adds a bounded call-site mode to the existing semantic inspector. All 14

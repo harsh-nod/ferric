@@ -1,0 +1,81 @@
+{
+  "attempts": {
+    "transport-v2": {
+      "archive": {
+        "bytes": 4048414,
+        "name": "failures/transport-v2.tar.gz",
+        "sha256": "49127e1ba1242c7fd799b32bcc4d965b348fd4fc6545a4d119dddb7f4a1187d3"
+      },
+      "backend_qualified": false,
+      "expanded_bytes": 25239960,
+      "members": 101,
+      "originals": 100,
+      "phases": 17,
+      "reason": "RuntimeError('complete lowerer library inventory with exact nonignored emission/refusal controls')",
+      "receipt": {
+        "bytes": 5507078,
+        "sha256": "5375d5ef018472bffb5bb92c62f862a3055f06947045477d227e7804972b2998"
+      },
+      "unit_executed": false,
+      "unit_outcomes": null,
+      "unit_qualified": false
+    },
+    "transport-v3": {
+      "archive": {
+        "bytes": 4065044,
+        "name": "failures/transport-v3.tar.gz",
+        "sha256": "d93f3a4660b3dd41e2d35a440603a2d09b422113fdd80118b5ca6158a710784a"
+      },
+      "backend_qualified": false,
+      "expanded_bytes": 25364895,
+      "members": 106,
+      "originals": 105,
+      "phases": 18,
+      "reason": "RuntimeError('lowerer-unit-tests did not finish naturally/reaped/successfully')",
+      "receipt": {
+        "bytes": 5510394,
+        "sha256": "d0af282850d0cfd73290bf3fa9e456189b564aee71add392f430e2714cf86621"
+      },
+      "unit_executed": true,
+      "unit_outcomes": {
+        "failed": 1,
+        "failing_test": "production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references",
+        "ignored": 0,
+        "passed": 765
+      },
+      "unit_qualified": false
+    },
+    "unchanged-parent": {
+      "archive": {
+        "bytes": 4063743,
+        "name": "failures/unchanged-parent.tar.gz",
+        "sha256": "812385959124cd60eddeb078f5b54e7e20273ed0ded2128a5b4b947ee763738e"
+      },
+      "backend_qualified": false,
+      "expanded_bytes": 25408019,
+      "members": 106,
+      "originals": 105,
+      "phases": 18,
+      "reason": "RuntimeError('lowerer-unit-tests did not finish naturally/reaped/successfully')",
+      "receipt": {
+        "bytes": 5532687,
+        "sha256": "2c837e1a1b344c7bb125f8fef6a0ab2759d445062fe00296b3e3fa6209124b6a"
+      },
+      "unit_executed": true,
+      "unit_outcomes": {
+        "failed": 1,
+        "failing_test": "production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::retained_fields::retained_nested_enum_referent_scalar_move_invalidates_saved_references",
+        "ignored": 0,
+        "passed": 764
+      },
+      "unit_qualified": false
+    }
+  },
+  "cpu": {
+    "bytes": 5748755,
+    "sha256": "fd40879fc85e939f527407ff77f6b7d3fe71ea6c784253f5505e0c4d4a6fd484"
+  },
+  "gpu_execution": false,
+  "production_authority": false,
+  "schema": "ferric-index-transport-failed-attempts-v1"
+}
