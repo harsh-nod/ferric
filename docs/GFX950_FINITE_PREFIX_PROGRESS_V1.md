@@ -1,7 +1,7 @@
 # Finite Qwen3 Prefix Progress
 
 This is an engineering checkpoint for [issue #42](https://github.com/harsh-nod/ferric/issues/42),
-updated on 2026-10-07 UTC. It is not a production admission, a sustained decode
+updated on 2026-10-08 UTC. It is not a production admission, a sustained decode
 benchmark, or a claim that the 700 tokens/s target has been reached. All issue #42 M0-M7
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
@@ -17,8 +17,11 @@ Both initial failed attempts remain retained. The separate parent builds now
 pass 584 selected tests in 68 phases with the feature off and 595 tests in
 69 phases with it on. Their four actual tested source files are integrated
 after original-data review and a complete 1,299-Ferric / 827-runtime postcheck,
-preserving all 236 worker bodies. Native admission qualification and an
-instrumented GPU run remain pending; no duration breakdown, numerical
+preserving all 236 worker bodies. The live CPU admission gate passes against
+37 real artifact inputs, and the separate synthetic native-workflow suite
+passes all 171 tests in 88.796 seconds with clean child retirement and
+independently reviewed originals. Actual request preparation, final observed
+deployment bindings and an instrumented GPU run remain pending; no duration breakdown, numerical
 acceptance or new inference performance result is claimed.
 
 The preceding [Full2303 scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)

@@ -12,7 +12,10 @@ Its runtime and worker sources are integrated after separate MI350 CPU
 qualifications with the feature off and on, and its strict checker passes
 126 synthetic tests. The separate parent builds also pass 584 selected tests
 with the feature off and 595 with it enabled; their tested source is integrated.
-Native admission qualification and the instrumented GPU run are still pending.
+The live CPU admission gate also passes against the real artifacts, and the
+synthetic native-workflow suite passes all 171 tests with independently
+reviewed originals. Actual request preparation, final deployment bindings and
+the instrumented GPU run are still pending.
 The demo below therefore continues to use only the previously
 retained native measurements; the new instrumentation has no measured result yet.
 

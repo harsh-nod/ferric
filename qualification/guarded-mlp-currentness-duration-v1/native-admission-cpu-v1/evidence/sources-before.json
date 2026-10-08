@@ -1,0 +1,927 @@
+{
+  "fixtures/tail-matched-v2/baseline/readiness-input.json": {
+    "bytes": 1639,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness-input.json",
+    "sha256": "710de3495afe1a03e8f9e1fbb06f25a62f74e6a9953301c212a426060e1c5f7a"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness-request.json": {
+    "bytes": 9173,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness-request.json",
+    "sha256": "d0ad15ae0ccb90109fe92da6fab8281745da479cf77e68af5a10abeb0988eee4"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-0-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-0-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-0/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-0/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-0/result.json": {
+    "bytes": 1662,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-0/result.json",
+    "sha256": "a4fefac1685f7034ae7839c7d415e4867831a27d0a6c8e843f456bedeccfee57"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-0/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-0/started.json",
+    "sha256": "c0267551b4b00958f2cecd684272b8972d1360867def223dae4cf4f6b016c521"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-0/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-0/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-0/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-0/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-1-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-1-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-1/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-1/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-1/result.json": {
+    "bytes": 1661,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-1/result.json",
+    "sha256": "5b02de52c18e2aeb59de46d7914fa194404678e1d67685ed344e740c2a8afe5c"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-1/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-1/started.json",
+    "sha256": "99352bdce864e8d9aae81439773881087c7516059554b5f66282eeb1a44775a4"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-1/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-1/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-1/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-1/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-2-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-2-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-2/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-2/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-2/result.json": {
+    "bytes": 1662,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-2/result.json",
+    "sha256": "4d360aa59401ef7f542b4e27095937d4ca169ef071628db56c1e52af0f87b894"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-2/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-2/started.json",
+    "sha256": "5184542fc6a8f60bc2e3cb5a901685ce1a42aa898aa2dbb410cb626bc48a354b"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-2/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-2/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/after-2/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/after-2/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-0-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-0-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-0/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-0/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-0/result.json": {
+    "bytes": 1666,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-0/result.json",
+    "sha256": "1e68767e7cf27adb03d9cc3a81c810a78faa0129077203bd301bde1f7e8f9b78"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-0/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-0/started.json",
+    "sha256": "a6dd9dfeaf8d33f0e3cb1483e116e085db4b988d4510bed1f2460d34cc1442c1"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-0/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-0/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-0/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-0/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-1-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-1-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-1/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-1/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-1/result.json": {
+    "bytes": 1665,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-1/result.json",
+    "sha256": "69c2ac442033a5f660585cccf83316b9641288016040777918cc5e3b62255166"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-1/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-1/started.json",
+    "sha256": "a7efb72174275b204bc84168bcea772233a89d04825318a970243514c1705fcc"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-1/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-1/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-1/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-1/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-2-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-2-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-2/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-2/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-2/result.json": {
+    "bytes": 1666,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-2/result.json",
+    "sha256": "94afb494fcfcec6da98c47ff6d420ea90d18268e329a51558a3465e4fa33df49"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-2/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-2/started.json",
+    "sha256": "51f68e81c94a369d6b953b73bf977d3f6d000fd8a5f08f82d232879a9e45a99e"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-2/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-2/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/before-2/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/before-2/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/complete.json": {
+    "bytes": 171456,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/complete.json",
+    "sha256": "5b9617aba0b588c33923c5cc458b013d0929828be5635ea75f3fd702a12c2cd9"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/initial-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/initial-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/native/capture-0.bin": {
+    "bytes": 849800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/native/capture-0.bin",
+    "sha256": "950709f4b1b3a8114ba3fdafc8431cb27b3ac954b9dc276567ca4ba78733f748"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/native/capture-16.bin": {
+    "bytes": 849800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/native/capture-16.bin",
+    "sha256": "1c53a1bcb33fce8667badbcdbff341f4a7a5bf2ba445ccdec40d4b47c187f541"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/native/capture-39.bin": {
+    "bytes": 849800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/native/capture-39.bin",
+    "sha256": "44cba4c5c203e2a17aa804257aa571611357da7d27a147df5cf356a6f08aa0a6"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/native/capture-5.bin": {
+    "bytes": 849800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/native/capture-5.bin",
+    "sha256": "f0fbe98f9b1c01fafd0f70fef346408d108cf2616e73690b7b3b697a6ebead3b"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/native/child-stderr.bin": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/native/child-stderr.bin",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/native/complete.json": {
+    "bytes": 21394,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/native/complete.json",
+    "sha256": "1ac8dda60bc2234fa640b5cb1c851868bebb1e44898ae4a76ea8cf45138f6078"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/native/frames.ndjson": {
+    "bytes": 134227,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/native/frames.ndjson",
+    "sha256": "24842304b8f67b82e46cf135cae1841c14765ec3482c0368bb77153e6666f9f2"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/observation.json": {
+    "bytes": 93706,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/observation.json",
+    "sha256": "2e466f2c0bdcaee6eaad16838d28aa91410dccb0ad4596442871f7fdd9690405"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-ldd/command.json": {
+    "bytes": 851,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-ldd/command.json",
+    "sha256": "2a52e881e5843d8138e9dff2a518150c6f9cf61d09120c4b6cb03953bc8e1f88"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-ldd/result.json": {
+    "bytes": 1673,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-ldd/result.json",
+    "sha256": "f4d8eace1d4f8a1049a9ee6e161b533aaa0bc625ae1042afe9b3382e7bed464e"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-ldd/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-ldd/started.json",
+    "sha256": "3e8cc81377595b8d2462c459cae50ce75654022c0dc52c2230120a6d904f2731"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-ldd/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-ldd/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-ldd/stdout": {
+    "bytes": 297,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-ldd/stdout",
+    "sha256": "c1d8bb44b0bcc2496ab9c0d167368463ace1fb5fa65514b3ca8aa3a38568ccff"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-readelf/command.json": {
+    "bytes": 875,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-readelf/command.json",
+    "sha256": "c1a846b709d5c5b8097b013d6857bd68c7f9044f7f6e9bf827d37c6275ed2cb8"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-readelf/result.json": {
+    "bytes": 1691,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-readelf/result.json",
+    "sha256": "24aceb9eb05204b8884156c0c34392bc70fef8be289688e8c7cc46e1f083080f"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-readelf/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-readelf/started.json",
+    "sha256": "879361d36de845956547fc925f9b5abba2f26a7a25fb2628c77073b34f30616d"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-readelf/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-readelf/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent-readelf/stdout": {
+    "bytes": 4713,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent-readelf/stdout",
+    "sha256": "9239a9a1edf00888cb204798280e181dde837c005f6db9ff9d08157647ea5595"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent/command.json": {
+    "bytes": 1090,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent/command.json",
+    "sha256": "39ecf3e4f113dbe725de5ab51ef7787e9d663558a92f882862d95930ad3c1927"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent/result.json": {
+    "bytes": 1938,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent/result.json",
+    "sha256": "20f84d5d6dea8e14d892f9ae9d9ed76f2b8c999507819b8b53bcde11070dbd97"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent/started.json",
+    "sha256": "c9d15fd384b4b0549bc6d5c47c7467fb2a756fb1151fadfca2a91b63730818d7"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent/stderr": {
+    "bytes": 2427,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent/stderr",
+    "sha256": "cf8749b00a09201306db2ded1fdfd04ae246ac3a009915469c85d041852b9a6a"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/parent/stdout": {
+    "bytes": 21394,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/parent/stdout",
+    "sha256": "1ac8dda60bc2234fa640b5cb1c851868bebb1e44898ae4a76ea8cf45138f6078"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-ldd/command.json": {
+    "bytes": 848,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-ldd/command.json",
+    "sha256": "9bb46cd65241f55c050c1c7cd91a3dfe32f38958f620a00998cc9ffe0471a411"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-ldd/result.json": {
+    "bytes": 1673,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-ldd/result.json",
+    "sha256": "6f91d718a2f49c1f5eae943f180d71514eaf8f28da6a68fba9a6c5107d82befd"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-ldd/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-ldd/started.json",
+    "sha256": "a8ba5a2938c0d16f32965836a2b45e219206bd668eb4acf41aec6cd7d3f0945a"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-ldd/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-ldd/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-ldd/stdout": {
+    "bytes": 230,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-ldd/stdout",
+    "sha256": "9b0e8c8207feb3d18f5cee77e5a5b3518f278bcacd3215bcdaea8f45c6c06331"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-readelf/command.json": {
+    "bytes": 872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-readelf/command.json",
+    "sha256": "2795997edb832a7994162f53cf3ad9e9bcf7ad259f114744de816123db92a8b6"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-readelf/result.json": {
+    "bytes": 1690,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-readelf/result.json",
+    "sha256": "4e5fa3789a3f8cb3d27ff709dd44224ac766fee72efc983ae5e7740632f52846"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-readelf/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-readelf/started.json",
+    "sha256": "a3c39ffcfb4c3d842c498521299e14533265ee2fb87649f4a758cc2bc400fbf0"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-readelf/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-readelf/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/baseline/readiness/worker-readelf/stdout": {
+    "bytes": 4310,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/baseline/readiness/worker-readelf/stdout",
+    "sha256": "d5ca8d1fc63a0f112c4fd62c224fe53426b963b37b21855251a8ee4c3239a23f"
+  },
+  "fixtures/tail-matched-v2/manifest.json": {
+    "bytes": 616896,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/manifest.json",
+    "sha256": "70dbc23f2fddd83bb5406e111954e544033a2c9168877fc976895f1f74d7ea65"
+  },
+  "fixtures/tail-matched-v2/prepared-inputs.json": {
+    "bytes": 15746,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/prepared-inputs.json",
+    "sha256": "d024042be1fc79f3fa630751a06d692542484bf365d361c1d6479d75720aa5ec"
+  },
+  "fixtures/tail-matched-v2/tail-input.json": {
+    "bytes": 1681,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail-input.json",
+    "sha256": "9c6eeb4259021879c82aae72e2c3f26359bbefc648f62829f3f24a739c49eefe"
+  },
+  "fixtures/tail-matched-v2/tail-request.json": {
+    "bytes": 9171,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail-request.json",
+    "sha256": "430c00268bd29dbd0861e0e75b5e4470f8041bc19849ec1d616f71f3864f0b11"
+  },
+  "fixtures/tail-matched-v2/tail/after-0-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-0-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/tail/after-0/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-0/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/tail/after-0/result.json": {
+    "bytes": 1758,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-0/result.json",
+    "sha256": "1205a5c7809a055f1c7b98b6e5876fb4802b638b45d22a3457203cff492d0784"
+  },
+  "fixtures/tail-matched-v2/tail/after-0/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-0/started.json",
+    "sha256": "269a51d12d1d97fe46a18991a7a22562828209bd4425bea35aae4d3646b10b40"
+  },
+  "fixtures/tail-matched-v2/tail/after-0/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-0/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/after-0/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-0/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/tail/after-1-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-1-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/tail/after-1/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-1/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/tail/after-1/result.json": {
+    "bytes": 1758,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-1/result.json",
+    "sha256": "66b0c3038b39a5b161651931b65f7106a6081cc40c617137f37e8fd755312a52"
+  },
+  "fixtures/tail-matched-v2/tail/after-1/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-1/started.json",
+    "sha256": "7bd08e17051279ff3a519035710fb30dd875b17ab715ebaf36bb0370b2a86b37"
+  },
+  "fixtures/tail-matched-v2/tail/after-1/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-1/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/after-1/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-1/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/tail/after-2-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-2-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/tail/after-2/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-2/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/tail/after-2/result.json": {
+    "bytes": 1758,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-2/result.json",
+    "sha256": "0354adbef0d539ee4c30194c7bbde02f28de3aec3311a96cd81a53598d00f418"
+  },
+  "fixtures/tail-matched-v2/tail/after-2/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-2/started.json",
+    "sha256": "cf4756da37eff0e4036f7417e34348a47f8b6966f7ddf84b9efb57d4f1e6f4e6"
+  },
+  "fixtures/tail-matched-v2/tail/after-2/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-2/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/after-2/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/after-2/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/tail/before-0-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-0-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/tail/before-0/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-0/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/tail/before-0/result.json": {
+    "bytes": 1762,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-0/result.json",
+    "sha256": "f9d4120692901254bf8a6254d0a2fbca119d9b338ac93ea926cbb6b37ddc9a2e"
+  },
+  "fixtures/tail-matched-v2/tail/before-0/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-0/started.json",
+    "sha256": "ccc0be6ebfc627b5dc5409bc3dd8fc7b3642c456ae9564561d7495d0045efd90"
+  },
+  "fixtures/tail-matched-v2/tail/before-0/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-0/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/before-0/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-0/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/tail/before-1-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-1-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/tail/before-1/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-1/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/tail/before-1/result.json": {
+    "bytes": 1762,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-1/result.json",
+    "sha256": "4b15014c828066e6755d974c812a9c4399957a3b22a61a456913b8f7cf823b1c"
+  },
+  "fixtures/tail-matched-v2/tail/before-1/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-1/started.json",
+    "sha256": "d50c5c2a58636970957cfbe253ed1006ed731e99cf56b57de390ee600da6a768"
+  },
+  "fixtures/tail-matched-v2/tail/before-1/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-1/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/before-1/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-1/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/tail/before-2-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-2-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/tail/before-2/command.json": {
+    "bytes": 695,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-2/command.json",
+    "sha256": "b0a6b5b327184f44f4f77797153cc68669d12483fd95b0cea0f4528d2e146ff2"
+  },
+  "fixtures/tail-matched-v2/tail/before-2/result.json": {
+    "bytes": 1762,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-2/result.json",
+    "sha256": "1ea25b76369bdec5f76c642cbbba7d6f64e8b2fe7e44ae60ce63fb617d0d2fc6"
+  },
+  "fixtures/tail-matched-v2/tail/before-2/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-2/started.json",
+    "sha256": "8b747cbf6ddb06989bf1cca365951a1734d00e8c11bbb8df5529d6f60377f45c"
+  },
+  "fixtures/tail-matched-v2/tail/before-2/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-2/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/before-2/stdout": {
+    "bytes": 1275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/before-2/stdout",
+    "sha256": "e70f2d7235dbd50455554f2a277613971e2fcdf117ec1bdcdf47644bcf49c422"
+  },
+  "fixtures/tail-matched-v2/tail/complete.json": {
+    "bytes": 665487,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/complete.json",
+    "sha256": "d43ed2c61c07c0714bf31cb258ca683a114458fd01f87ef32b398b43045ba9d6"
+  },
+  "fixtures/tail-matched-v2/tail/initial-topology.json": {
+    "bytes": 2872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/initial-topology.json",
+    "sha256": "63b2899b5d3d93df727ae82f0d98a750db686d30ac4a9844bd4f1be2ed7dd632"
+  },
+  "fixtures/tail-matched-v2/tail/matched.json": {
+    "bytes": 144200,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/matched.json",
+    "sha256": "eb7ef215eb516ed21de73da75d302ed3946bdcda0c53fc9cf48daeba26cdedb1"
+  },
+  "fixtures/tail-matched-v2/tail/native/capture-0.bin": {
+    "bytes": 849800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/native/capture-0.bin",
+    "sha256": "a3f0ffa92a0d956eba96c549ef8685f1ad87f7cb204c13ac9650a4ed4eb0437d"
+  },
+  "fixtures/tail-matched-v2/tail/native/capture-16.bin": {
+    "bytes": 849800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/native/capture-16.bin",
+    "sha256": "266080da1741b01ade48988f6f45b8ea9285a38a3ac770bd25780f1896e17ada"
+  },
+  "fixtures/tail-matched-v2/tail/native/capture-39.bin": {
+    "bytes": 849800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/native/capture-39.bin",
+    "sha256": "78c838e0689ab55bb469cd047c60747b2f8399dcee2b49a48c9ca3fb70e31f71"
+  },
+  "fixtures/tail-matched-v2/tail/native/capture-5.bin": {
+    "bytes": 849800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/native/capture-5.bin",
+    "sha256": "25685368677b843d7ad4994be25aceb130830e964a3cfce13df93d871e022612"
+  },
+  "fixtures/tail-matched-v2/tail/native/child-stderr.bin": {
+    "bytes": 2739,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/native/child-stderr.bin",
+    "sha256": "f0a378424dedde87302386da9fc1b807baad863506ee2ba3a162e731078fc51f"
+  },
+  "fixtures/tail-matched-v2/tail/native/complete.json": {
+    "bytes": 21522,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/native/complete.json",
+    "sha256": "8c44922659b3e0a0642f346da8c779d39ec5803584a14bff37dcebc006403743"
+  },
+  "fixtures/tail-matched-v2/tail/native/frames.ndjson": {
+    "bytes": 133961,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/native/frames.ndjson",
+    "sha256": "63fe7545c991d98291e9acb14b84f6d190cd7e82eb5b54dc560f2178db7a7b74"
+  },
+  "fixtures/tail-matched-v2/tail/native/host-timing.json": {
+    "bytes": 14517,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/native/host-timing.json",
+    "sha256": "54805736bd6658dfad5d189207b26ada066e1929a0b11850531717e439c905b1"
+  },
+  "fixtures/tail-matched-v2/tail/observation.json": {
+    "bytes": 99248,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/observation.json",
+    "sha256": "460a24eaa35ec6c90ec97218200db6b4a0fbeeb81cecb7cd0f3ba85c31f0c89d"
+  },
+  "fixtures/tail-matched-v2/tail/pair.json": {
+    "bytes": 144906,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/pair.json",
+    "sha256": "65f90d68193308b9703960c387a78042a4d778e31e47ed79706456f2b45a0ef8"
+  },
+  "fixtures/tail-matched-v2/tail/parent-ldd/command.json": {
+    "bytes": 865,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-ldd/command.json",
+    "sha256": "b18f6d9827aee0ecd153d1379a8d3b9d9d514f249c6ebbe96516e52beef4dc90"
+  },
+  "fixtures/tail-matched-v2/tail/parent-ldd/result.json": {
+    "bytes": 1770,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-ldd/result.json",
+    "sha256": "fde52606f0b44a63e2a41d5ebe0b5e6e694e9f57eccddd2b338dba34797b8163"
+  },
+  "fixtures/tail-matched-v2/tail/parent-ldd/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-ldd/started.json",
+    "sha256": "e50db1eb1a05dac08f37c7487c04fd2706b92b3e177a94db1757e3aa04df5e61"
+  },
+  "fixtures/tail-matched-v2/tail/parent-ldd/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-ldd/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/parent-ldd/stdout": {
+    "bytes": 297,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-ldd/stdout",
+    "sha256": "006967a260df0d794825a8f5b28cd902845500ac78f5184185e19b2b6dadb98d"
+  },
+  "fixtures/tail-matched-v2/tail/parent-readelf/command.json": {
+    "bytes": 889,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-readelf/command.json",
+    "sha256": "ccddc2326d215a9f80ad33b4ae299fadf33a5990777bbccff91af12195e7df93"
+  },
+  "fixtures/tail-matched-v2/tail/parent-readelf/result.json": {
+    "bytes": 1786,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-readelf/result.json",
+    "sha256": "c17d0b832ac9839817ed7c7e990777c64fab0deb53c3df597585741c4ffabe43"
+  },
+  "fixtures/tail-matched-v2/tail/parent-readelf/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-readelf/started.json",
+    "sha256": "efdcb36c948b7b50a77832f9c1c288eea94b5785d9d74770479bde15f55e30de"
+  },
+  "fixtures/tail-matched-v2/tail/parent-readelf/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-readelf/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/parent-readelf/stdout": {
+    "bytes": 4713,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent-readelf/stdout",
+    "sha256": "714aedd27317b3e8c08e66edc5afe8b1bea8e828d8b64c9f0015e35b855b1814"
+  },
+  "fixtures/tail-matched-v2/tail/parent/command.json": {
+    "bytes": 1167,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent/command.json",
+    "sha256": "d36d3351ce290493e94ba94a829dbf77c963f7375313f1af2b1a557bf09cebb6"
+  },
+  "fixtures/tail-matched-v2/tail/parent/result.json": {
+    "bytes": 2033,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent/result.json",
+    "sha256": "63f8a16a188ef2fa2cbe07992920273063998c974735fcba271b3334d22b31c4"
+  },
+  "fixtures/tail-matched-v2/tail/parent/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent/started.json",
+    "sha256": "169bb22f17851dcf3213cab510ab1f9b549cfc0852ef15381a3f937bdb1a3535"
+  },
+  "fixtures/tail-matched-v2/tail/parent/stderr": {
+    "bytes": 2427,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent/stderr",
+    "sha256": "b1e6e62704351dd2e8963ff49ae11511e98ee296a82b0c44a6f848d7ade7e678"
+  },
+  "fixtures/tail-matched-v2/tail/parent/stdout": {
+    "bytes": 24954,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parent/stdout",
+    "sha256": "bc3879e1504645d4671312c3928b6c280c433e53ce951a8b94b50e7c2be7f9e4"
+  },
+  "fixtures/tail-matched-v2/tail/parity.json": {
+    "bytes": 71501,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/parity.json",
+    "sha256": "ddbfd5d64812f5ad8122fc374e5ff9dd4c5e33bac277a93e8b4fe8218aa405fe"
+  },
+  "fixtures/tail-matched-v2/tail/worker-ldd/command.json": {
+    "bytes": 831,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-ldd/command.json",
+    "sha256": "438733307e77d980f6b98bdf14bb7edf45ade4895af2360113634759f9d515c7"
+  },
+  "fixtures/tail-matched-v2/tail/worker-ldd/result.json": {
+    "bytes": 1770,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-ldd/result.json",
+    "sha256": "572b82ab0062557bbde1ca290f7df69b8b91058197669eded232a6ac517681b2"
+  },
+  "fixtures/tail-matched-v2/tail/worker-ldd/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-ldd/started.json",
+    "sha256": "a8bdba8deedb4e79bb91149ddfb31b2fb1b8d0d0cc8703a1eca59a51307abc2e"
+  },
+  "fixtures/tail-matched-v2/tail/worker-ldd/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-ldd/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/worker-ldd/stdout": {
+    "bytes": 230,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-ldd/stdout",
+    "sha256": "65ab3d709cc43365d7caa65dbc8f87cf6d8faf6b785276f71ee48ddd86163ffa"
+  },
+  "fixtures/tail-matched-v2/tail/worker-readelf/command.json": {
+    "bytes": 855,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-readelf/command.json",
+    "sha256": "bde434578032549c882410bb343874f3c5c1e485e611e24d6469361927fd215d"
+  },
+  "fixtures/tail-matched-v2/tail/worker-readelf/result.json": {
+    "bytes": 1787,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-readelf/result.json",
+    "sha256": "ef7e00c2c226b44e87a8b33989d7ad0f82cd73fbdb1da26b81344227d9301eba"
+  },
+  "fixtures/tail-matched-v2/tail/worker-readelf/started.json": {
+    "bytes": 282,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-readelf/started.json",
+    "sha256": "78f96ae3125e443e7241895d3b9e0bb6e621366f6be4fe70792510060e2d959d"
+  },
+  "fixtures/tail-matched-v2/tail/worker-readelf/stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-readelf/stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "fixtures/tail-matched-v2/tail/worker-readelf/stdout": {
+    "bytes": 4311,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/fixtures/tail-matched-v2/tail/worker-readelf/stdout",
+    "sha256": "decd75a20afb4bd9eb1e7e6de34956b0615b3750b0d69f9b453900e34471cb04"
+  },
+  "frozen_owned.py": {
+    "bytes": 30433,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/frozen_owned.py",
+    "sha256": "ab41af455396322303bb8ebd4132e680affc3bdc5830608fad36736c92024583"
+  },
+  "library_audit.py": {
+    "bytes": 25872,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/library_audit.py",
+    "sha256": "b26d60ef6dbe24f2182b52b2e0eb44632848061b7a4a1735fc4e1d26b8ee638d"
+  },
+  "prepare_model_inputs.py": {
+    "bytes": 25356,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/prepare_model_inputs.py",
+    "sha256": "eb3369b70dec617372e4571038e3ad31a59c3a1dea309ce90d2d23030653ad77"
+  },
+  "readiness_announcement.py": {
+    "bytes": 3246,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/readiness_announcement.py",
+    "sha256": "b974ac6b6e936d8239639ac0c595c7db36700e3b1e2cff101224699fd789a9b1"
+  },
+  "retention_tool.py": {
+    "bytes": 45933,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/retention_tool.py",
+    "sha256": "d6761696a3cad5104baac7449e4af1292336d32e22c8ba1bb84b7bf8dfa751a2"
+  },
+  "run_cpu.py": {
+    "bytes": 51485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/run_cpu.py",
+    "sha256": "7f1c71302dd3e794887a3c0c44333ed34aa6e4a2c2c1b422d5e17410ee0f41dc"
+  },
+  "run_model_gpu.py": {
+    "bytes": 54215,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/run_model_gpu.py",
+    "sha256": "2803e5783d9afaf2b58c704b2bf7dddc053ee44aca29a5c1fbf1a845c887daba"
+  },
+  "supervisor.py": {
+    "bytes": 41485,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/supervisor.py",
+    "sha256": "8824478a6415dee39d28ccefb0881fc0687ac724f5a9c5a4540310fb5196b9bc"
+  },
+  "test_admission.py": {
+    "bytes": 38896,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_admission.py",
+    "sha256": "98d505bb5bf8b42cf955c76e47916094755f5687a0f9fa3a7a7d5071cb08bb4e"
+  },
+  "test_bank_scoped.py": {
+    "bytes": 14853,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_bank_scoped.py",
+    "sha256": "3ecc622e660cb6e0790a18ff8bb022a84535c91466d02d6fdbb8625ae080a99b"
+  },
+  "test_census.py": {
+    "bytes": 19688,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_census.py",
+    "sha256": "aca29934c68523dbc91b30439a2c7a5ae552b64a9faf077ddb99b97c861cb5b0"
+  },
+  "test_duration.py": {
+    "bytes": 13609,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_duration.py",
+    "sha256": "3f88f035e3f08644dadf393620557b84d7827876fb3e992e498fd6e2950d3fb5"
+  },
+  "test_matched.py": {
+    "bytes": 15400,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_matched.py",
+    "sha256": "d5a6b522a1effe29e1ee08430754163cc217cf34c3713ce234926b7c860f9647"
+  },
+  "test_readiness.py": {
+    "bytes": 17802,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_readiness.py",
+    "sha256": "4b644462a71120ee45b3351757ecb0d5867c9453daadb6a10c07bdbcd38e8bb5"
+  },
+  "test_retention_workflows.py": {
+    "bytes": 27102,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_retention_workflows.py",
+    "sha256": "281c5c50b077fcd702dbc763fb98cdc24eec9b5de069b6a64e82123ea59615b2"
+  },
+  "test_scoped.py": {
+    "bytes": 15936,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_scoped.py",
+    "sha256": "4c015cdfa072943960e0ffa1f25e0e604790e8dbe222875b4bed207be6563fdc"
+  },
+  "test_scoped_pair.py": {
+    "bytes": 3629,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_scoped_pair.py",
+    "sha256": "aa95ff79fd3c72ee3658d66e4117738a06f7984a2a77dcc6712b28a272e57f8f"
+  },
+  "test_shared.py": {
+    "bytes": 10737,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_shared.py",
+    "sha256": "a122f42f8a47a0213010f1812ef1f95fa7ff582db6a9ffa190356a35874f6b96"
+  },
+  "test_tail.py": {
+    "bytes": 19524,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_tail.py",
+    "sha256": "2235e1c4b97b396094df484ccaedb25619f70c757ed1656e5eaf6b92f8140c4a"
+  },
+  "test_timing.py": {
+    "bytes": 10433,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/test_timing.py",
+    "sha256": "630febf4d840081887692144cc570d70c1d67f9ad3bb5bab1fd6d7d1f61cedb1"
+  },
+  "validate_bank_pair.py": {
+    "bytes": 4428,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_bank_pair.py",
+    "sha256": "9d3f1470f6e9d7a17f3c91d1deb29a54c6fa7e8c766dc358e9d7d73e15c4e004"
+  },
+  "validate_bank_scoped.py": {
+    "bytes": 9534,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_bank_scoped.py",
+    "sha256": "2432fc14c0ba40fc934abcd7886459c12fc31ca6167ba4cf908a8c7974d26772"
+  },
+  "validate_census.py": {
+    "bytes": 10392,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_census.py",
+    "sha256": "090431e59a481d5b681311d5a015ddfd35705cc828c920118d4f0043b862ec9f"
+  },
+  "validate_census_pair.py": {
+    "bytes": 4730,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_census_pair.py",
+    "sha256": "d4f50afe412b68c4066e934a80b96b5a5c0f83ef8ea33c59c53380aa1ab819c4"
+  },
+  "validate_duration.py": {
+    "bytes": 9343,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_duration.py",
+    "sha256": "d7ed85d14191e735490170a606a06cefb331e17b07c36a4a4d34ef38a5cf19bd"
+  },
+  "validate_matched.py": {
+    "bytes": 9362,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_matched.py",
+    "sha256": "d31c94a4dd1f254d166be185fe1cca10bc4eed26e500a0cb1fc3c5a74a574437"
+  },
+  "validate_readiness.py": {
+    "bytes": 19800,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_readiness.py",
+    "sha256": "0c319e99142b19909350d9a81404948b494c2e3ea0defbbc165c2e5529be032a"
+  },
+  "validate_scoped.py": {
+    "bytes": 9184,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_scoped.py",
+    "sha256": "c2541e11e534cf1e5a4faade31fe4a734726552171fed9617d6ea938f680b6fd"
+  },
+  "validate_scoped_pair.py": {
+    "bytes": 3233,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_scoped_pair.py",
+    "sha256": "495fc476454e4052467810b55e177f9d2b91d86d3496a6b90876963f7f60ac62"
+  },
+  "validate_shared.py": {
+    "bytes": 8015,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_shared.py",
+    "sha256": "6557fe5c082b2c92bae15274dd0d19bba3da8c3c36b9fc74757b4c1b74a87eca"
+  },
+  "validate_tail.py": {
+    "bytes": 10447,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_tail.py",
+    "sha256": "696e55d4bebea97ab82e5b613a76978c5e191087789d299551c304527e598d49"
+  },
+  "validate_tail_pair.py": {
+    "bytes": 4883,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_tail_pair.py",
+    "sha256": "ab69bcafcc245b8eca05d7e625c42eec7aaec2de4084e719090de1894f4d6995"
+  },
+  "validate_timing.py": {
+    "bytes": 10104,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-currentness-duration-native-admission-cpu-v228-v1/validate_timing.py",
+    "sha256": "27c652f5452676b4cc08a634241aff89b2653e85ee111133c1f1c4ab13efd93f"
+  }
+}

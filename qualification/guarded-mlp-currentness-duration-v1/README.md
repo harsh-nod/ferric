@@ -58,10 +58,15 @@ The [live CPU-admission check](live-admission-cpu-v1/README.md) also passes
 against the actual diagnostic worker, parent and checker originals on MI350.
 It invokes the production admission functions without a native launch and
 rehashes all 37 inputs; it does not rerun the earlier qualification suites.
-The separate synthetic native-workflow suite is still pending.
+The [synthetic native-workflow qualification](native-admission-cpu-v1/README.md)
+also passed all 171 tests in 88.796 seconds: the 126 unchanged validator cases,
+14 existing admission cases, 18 additional admission/preparation workflows
+and 13 evidence-retention workflows. Both supervised leaves retired cleanly;
+all original evidence and source identities passed independent data review.
 
-Complete native admission qualification, actual instrumented GPU execution,
-original-evidence validation and a measured duration breakdown remain pending. No result from
+Actual request preparation, final observed deployment bindings, instrumented
+GPU execution, original-evidence validation and a measured duration breakdown
+remain pending. No result from
 this work is substituted for independent numerical acceptance or full-request
 feasibility. The [community demo](../../docs/GFX950_COMMUNITY_DEMO_V1.md) still
 reports the previously measured short prompt-forward experiments.
