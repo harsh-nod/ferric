@@ -69,8 +69,16 @@ on MI350, rehashing all 25 inputs and producing a fresh session and three
 original request/plan/receipt bodies. Their independent data review passed;
 the preparer launched no GPU work.
 
-Final observed deployment bindings, instrumented GPU execution,
-original-evidence validation and a measured duration breakdown remain pending. No result from
-this work is substituted for independent numerical acceptance or full-request
-feasibility. The [community demo](../../docs/GFX950_COMMUNITY_DEMO_V1.md) still
-reports the previously measured short prompt-forward experiments.
+The [instrumented GPU diagnostic](native-gpu-v1/README.md) now passes on its
+first attempt: 40 prompt forwards, four captures, eleven cleanly retired
+supervised phases and three successful postflight idle checks. All forty
+records and four complete payloads match the historical Ferric baseline.
+The final evidence tool revalidated and exported 167 original members.
+
+The measured callback categories total 21.242500713 seconds within
+68.571861417 seconds of warm parent-forward time. The bank-body interval
+contains its bank callbacks; those costs must not be double-counted. The
+reproducible report's CPU tests and real-archive invocation remain pending.
+No result from this work is substituted for independent numerical acceptance
+or full-request feasibility. The [community demo](../../docs/GFX950_COMMUNITY_DEMO_V1.md)
+distinguishes this instrumented attribution from the earlier matched ablations.

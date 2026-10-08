@@ -22,9 +22,14 @@ preserving all 236 worker bodies. The live CPU admission gate passes against
 passes all 171 tests in 88.796 seconds with clean child retirement and
 independently reviewed originals. Actual request preparation also passed on
 MI350 with all 25 inputs rehashed and the original prepared bodies independently
-reviewed. Final deployment bindings and an instrumented GPU run remain pending;
-no duration breakdown, numerical
-acceptance or new inference performance result is claimed.
+reviewed. The final bound diagnostic now passes its first MI350 GPU attempt:
+40 prompt forwards, zero generated tokens, eleven cleanly retired phases and
+three successful postflight idle checks. All forty records and four complete
+payloads match the historical Ferric baseline; the evidence tool revalidated
+167 original archive members. Measured callback categories account for
+21.242500713 seconds of 68.571861417 warm-forward seconds. The reproducible
+report still needs CPU execution and actual-archive qualification. This is
+host attribution, not numerical acceptance or a new inference speedup.
 
 The preceding [Full2303 scoped-tail worker](../qualification/guarded-mlp-full2303-scoped-tail-v1/README.md)
 passes all 27 MI350 CPU phases in 186.074 seconds: 1,180 runtime and 838 worker

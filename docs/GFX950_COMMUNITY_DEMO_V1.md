@@ -6,7 +6,7 @@ service, accepted full-model decode or a 700 tokens/s result. The measured
 workload is 40 authentic prompt forwards through all 36 layers, with **zero
 generated tokens**.
 
-The next measurement checkpoint is
+The latest measurement checkpoint is
 [optional currentness-duration instrumentation](../qualification/guarded-mlp-currentness-duration-v1/README.md).
 Its runtime and worker sources are integrated after separate MI350 CPU
 qualifications with the feature off and on, and its strict checker passes
@@ -15,9 +15,13 @@ with the feature off and 595 with it enabled; their tested source is integrated.
 The live CPU admission gate also passes against the real artifacts, and the
 synthetic native-workflow suite passes all 171 tests with independently
 reviewed originals. Actual data-only request preparation also passed on MI350.
-Final deployment bindings and the instrumented GPU run are still pending.
-The demo below therefore continues to use only the previously
-retained native measurements; the new instrumentation has no measured result yet.
+The [instrumented GPU run](../qualification/guarded-mlp-currentness-duration-v1/native-gpu-v1/README.md)
+now passes all forty forwards and four historical payload comparisons, with
+eleven cleanly retired phases. Its measured callback categories total
+21.242500713 seconds within 68.571861417 warm-forward seconds. This is one
+instrumented host attribution, not a matched speed comparison. The new report's
+CPU execution and original-archive qualification are pending; the plots below
+continue to show the earlier separately measured ablations.
 
 ## Show Now
 
