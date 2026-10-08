@@ -1,0 +1,102 @@
+--- a/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs
++++ b/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2.rs
+@@ -197,6 +197,7 @@
+         })
+     }
+ 
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     fn state(&self) -> &[AtomicU32; WAVE_STATE_WORDS] {
+         // SAFETY: construction retains genuine initialized atomic storage.
+         unsafe { &*self.state }
+@@ -707,6 +708,7 @@
+     }
+ 
+     /// Local observations are not a terminal graph-completion certificate.
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub fn observations(&self) -> FiniteJoinWorkerResult {
+         self.result
+     }
+--- a/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs
++++ b/crates/fe2o3-device/src/finite_join/wave_mlp_tiles_v2_tests.rs
+@@ -25,6 +25,20 @@
+         rounds: 0,
+         empty_probes: 0,
+     }
++}
++
++#[test]
++fn storage_state_accessor_retains_exact_atomic_root() {
++    let mut f = Fixture::new();
++    let before = snapshot(&f.state);
++    let expected = core::ptr::addr_of!(f.state);
++    {
++        let storage = f.storage();
++        assert!(core::ptr::eq(storage.state(), expected));
++        assert_eq!(snapshot(storage.state()), before);
++        assert_eq!(storage.state().as_ptr(), expected.cast::<AtomicU32>());
++    }
++    assert_eq!(snapshot(&f.state), before);
+ }
+ 
+ #[test]
+--- a/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs
++++ b/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs
+@@ -51,8 +51,8 @@
+ const WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1: &[u8] =
+     b"FE2O3/WORKGROUP-SYNC-PROVIDER-SOURCE-CLOSURE/V1\0";
+ const REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1: [u8; 32] = [
+-    0xf5, 0x8f, 0xbb, 0xbb, 0xcd, 0x00, 0x35, 0x46, 0x71, 0x9c, 0xdd, 0xc2, 0x01, 0x76, 0x81, 0x31,
+-    0x35, 0x3c, 0x21, 0x1f, 0x3c, 0xa5, 0x7f, 0xd3, 0x13, 0xd6, 0xb9, 0x43, 0xa0, 0x40, 0xa7, 0xe5,
++    0x91, 0xb3, 0xc5, 0x3f, 0xa4, 0x23, 0x5b, 0x47, 0x84, 0x27, 0xf4, 0x56, 0x9d, 0x1d, 0x0b, 0x77,
++    0xcc, 0xbf, 0x99, 0x6a, 0xc5, 0x09, 0xdb, 0xa8, 0xe5, 0x8f, 0xc3, 0x6a, 0xa8, 0x28, 0xf9, 0x50,
+ ];
+ 
+ const PROVIDER_SEMANTIC_DEFINITION_TRANSCRIPT_DOMAIN_V1: &[u8] =
+@@ -3732,7 +3732,7 @@
+         .unwrap();
+         assert_eq!(
+             closure,
+-            digest("f58fbbbbcd003546719cddc201768131353c211f3ca57fd313d6b943a040a7e5")
++            digest("91b3c53fa4235b478427f4569d1d0b77ccbf996ac509dba8e58fc36aa828f950")
+         );
+         assert_eq!(closure, super::REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1);
+     }
+@@ -3834,6 +3834,38 @@
+                 &source_path,
+                 WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
+                 digest("d6ac31898b9e4d594d3aa36d6c5ced378059a4ffff54881463f57c10eba0563c"),
++            )
++            .is_err()
++        );
++    }
++
++    #[test]
++    fn mlp_worker_accessors_inline_source_is_reviewed_and_previous_closure_is_refused() {
++        let source_path = Path::new(super::REVIEWED_FE2O3_DEVICE_SOURCE_ROOT)
++            .join("finite_join/wave_mlp_tiles_v2.rs");
++        let source = fs::read_to_string(&source_path).unwrap();
++        for body in [
++            "    fn state(&self) -> &[AtomicU32; WAVE_STATE_WORDS] {\n        // SAFETY: construction retains genuine initialized atomic storage.\n        unsafe { &*self.state }\n    }",
++            "    pub fn observations(&self) -> FiniteJoinWorkerResult {\n        self.result\n    }",
++        ] {
++            assert_eq!(source.matches(body).count(), 1);
++            let annotated =
++                format!("    #[cfg_attr(target_arch = \"amdgpu\", rustc_force_inline)]\n{body}");
++            assert_eq!(source.matches(&annotated).count(), 1);
++        }
++        assert!(
++            reviewed_provider_source_closure_from_definition(
++                &source_path,
++                WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
++                super::REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1,
++            )
++            .is_ok()
++        );
++        assert!(
++            reviewed_provider_source_closure_from_definition(
++                &source_path,
++                WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
++                digest("f58fbbbbcd003546719cddc201768131353c211f3ca57fd313d6b943a040a7e5"),
+             )
+             .is_err()
+         );

@@ -6,7 +6,20 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler checkpoint: [consistent MLP tile-view inlining](../qualification/guarded-mlp-force-inline-accessors-v1/README.md)
+Latest compiler checkpoint: [worker accessor inlining and callback boundary](../qualification/guarded-mlp-force-inline-worker-v1/README.md)
+adds the final two borrowed-self GPU-only annotations without body changes.
+The exact source pin and regressions pass 1,331 compiler tests (24 unchanged
+ignores) and 359 device tests (no ignores) in 11 clean MI350 CPU phases.
+
+Both fresh V11 compiler attempts still exit naturally with status 1 and no
+HSACO. Canonical source joins now identify `execute_task(WaveMlpTileTaskV2)`:
+the callback's by-value enum uses an indirect ABI. This is a different boundary
+from the previous accessor failures. The original evidence is retained; the
+next correction must preserve helper ownership and source provenance.
+No new GPU run, full-model correctness, performance result or milestone closure
+is claimed. Qwen target-only remains the immediate megakernel implementation task.
+
+Previous compiler checkpoint: [consistent MLP tile-view inlining](../qualification/guarded-mlp-force-inline-accessors-v1/README.md)
 adds 19 AMDGPU-only attributes without changing any method body or signature.
 All 25 methods of the five tile views now use the existing convention.
 The strict provider source pin and new boundary/refusal regressions pass

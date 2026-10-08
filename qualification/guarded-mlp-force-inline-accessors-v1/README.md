@@ -100,8 +100,10 @@ ELF products are hash-bound in receipts, not bundled as runnable authority.
 The CPU [terminal receipt](cpu/correction/complete.json),
 [compiler output](cpu/correction/compiler-tests.stdout), and
 [device output](cpu/correction/device-tests.stdout) are also directly readable.
-CPU work used cores 8/9, nice 10 and explicit Cargo jobs 2. GPU visibility
-was empty. Build and probe deadlines and resource bounds were unchanged.
+CPU qualification used cores 8/9, nice 10 and explicit Cargo jobs 2. GPU
+visibility was empty. Compile probes retain the frontend's unchanged job
+policy; outer jobs2 does not establish an inner Cargo job limit. Build and
+probe deadlines and resource bounds were unchanged.
 
 The next correction is the same GPU-only annotation for the two remaining
 borrowed-self provider accessors, `storage.state()` and
@@ -110,4 +112,3 @@ That successor receives no qualification credit from this packet.
 A checked HSACO and fresh native numerical validation remain necessary.
 No full 2,048/256 decode, independent model equivalence, throughput or
 700 tokens/s claim follows from these CPU results. Issue #42 M0-M7 stay open.
-
