@@ -1,0 +1,43 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-finite-predicate-inline-cpu-v228-v3/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+    "production_pipeline::tests::extraction_custody_cannot_enter_protected_publication",
+    "--exact",
+    "--test-threads=1"
+  ],
+  "command": {
+    "bytes": 2417,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/evidence/prior-gate-1.command.json",
+    "sha256": "2669b46681756d1f7d29136f6c26a3e021cb45569b85dfa4fb869515f88a36c4"
+  },
+  "elapsed_ns": 110693639,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "prior-gate-1",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 327718,
+  "pid": 327718,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/evidence/prior-gate-1.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 209,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/evidence/prior-gate-1.stdout",
+    "sha256": "07c5760665c2abc068329d97342047b1e4a87d03e05b2442282b57895a0f6d22"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

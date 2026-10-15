@@ -6,7 +6,28 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest selector component: [default-off inert semantic extraction](../qualification/guarded-mlp-inert-v3-selector-v1/README.md)
+Latest consumer component: [lossless inert V3 completion content](../qualification/guarded-mlp-inert-v3-consumer-v1/README.md)
+retains the original eligibility/parent borrow and complete outer handoff,
+revalidates the exact selected invocation before/after intake, and checks
+reported successful exit, independently expected outer identity and gfx950.
+It reuses the strict existing codec, retains opaque formal/proof preimages,
+and provides no bare-V2 or protected-publication conversion.
+
+Fresh mi350 CPU8/9 qualification passes 163 selected tests in 15 clean phases,
+including nine new completion tests, with all 5,814 source inputs and
+source/tool/dependency/artifact postchecks unchanged. Two gate tests reuse
+the prior qualified compiler ELF; full compiler/device/lowerer suites are
+not rebuilt or rerun. Successful content tests use schema-only fixtures,
+not actual conditional proof archives or a live-parent completion.
+
+Next is pinned inert output-file custody followed by a separate owned child
+lifecycle. Reported exit status and opaque byte retention do not establish
+those facts, authenticate compiler origin or discharge formal/runtime premises.
+The selector stays explicitly consumer-unqualified. No worker compile,
+HSACO/GPU/model/performance evidence, premise discharge or M0-M7 completion
+is claimed. Eight runtime conditions, early-stop CFG and GPU hold stay closed.
+
+Previous selector component: [default-off inert semantic extraction](../qualification/guarded-mlp-inert-v3-selector-v1/README.md)
 adds pre-attempt selector/injection/mode refusals to the real protected binding
 wrapper and staged exact-gfx950/normalization eligibility requiring retained
 sealed parent custody. The requested route remains explicitly disabled until

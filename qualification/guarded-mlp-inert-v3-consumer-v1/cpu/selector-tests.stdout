@@ -1,0 +1,15 @@
+
+running 10 tests
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::absent_selector_preserves_ordinary_preflight ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::caller_descriptor_is_never_adopted_even_without_selector ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::exact_gfx950_profile_prepares_only_inert_canonical_transport ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::exact_opt_in_is_held_before_attempt_not_publication_fallback ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::existing_extraction_modes_are_incompatible_with_opt_in ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::invalid_empty_duplicate_and_non_utf8_selectors_refuse ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::requested_eligibility_requires_live_parent_not_schema_fixture ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::source_keeps_selector_before_attempt_and_spawn_and_holds_consumer ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::split_options_work_but_cfg_values_cannot_supply_missing_flags ... ok
+test protected_compiler_handoff_v3::inert_semantic_extraction_v1::tests::wrong_target_missing_flags_changed_hint_and_duplicate_alias_refuse ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 418 filtered out; finished in 0.00s
+

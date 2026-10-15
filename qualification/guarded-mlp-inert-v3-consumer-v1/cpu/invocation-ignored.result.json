@@ -1,0 +1,43 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/target/debug/deps/fe2o3_rustc_invocation-5082435c83b20995",
+    "--ignored",
+    "--list",
+    "--format=terse"
+  ],
+  "command": {
+    "bytes": 2333,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/evidence/invocation-ignored.command.json",
+    "sha256": "408ee1b6dcca69fd23e4064308149fea8ca5d2ee26b4b02b1d79ed9d92be6343"
+  },
+  "elapsed_ns": 101478433,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "invocation-ignored",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 321411,
+  "pid": 321411,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/evidence/invocation-ignored.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/evidence/invocation-ignored.stdout",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

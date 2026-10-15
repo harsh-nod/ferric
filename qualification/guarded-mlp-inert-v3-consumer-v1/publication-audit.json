@@ -1,0 +1,23 @@
+{
+  "archive": {
+    "bytes": 3738415,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-publication-v228-v1/originals.tar.gz",
+    "sha256": "af916597e8cefc50d567c6de29a40eb81bde39a1e61f059158204efe538ac438"
+  },
+  "archive_expanded_bytes": 22613865,
+  "archive_members": 101,
+  "compiler_rebuilt": false,
+  "engineering_transport_integrated": false,
+  "gpu_execution": false,
+  "passed": true,
+  "production_authority": false,
+  "receipt": {
+    "bytes": 4744649,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/evidence/complete.json",
+    "sha256": "92e85faaf739ea2f9d45818223a4a8c55d1a8736d38ed0a3dee102dd1c3ca3c2"
+  },
+  "schema": "ferric-inert-semantic-consumer-data-audit-v1",
+  "verified_inputs": 5830,
+  "verified_originals": 100,
+  "verified_source_inputs": 5814
+}

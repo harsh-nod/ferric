@@ -1,0 +1,58 @@
+{
+  "archive": {
+    "bytes": 3738415,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-publication-v228-v1/originals.tar.gz",
+    "sha256": "af916597e8cefc50d567c6de29a40eb81bde39a1e61f059158204efe538ac438"
+  },
+  "audit": {
+    "bytes": 924,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-publication-v228-v1/publication-audit.json",
+    "sha256": "8ab883f9d85d18c3efa4766ec6bd690c49f863ff1a3045572043f840fc6071ca"
+  },
+  "exporter": {
+    "bytes": 5064,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-publication-v228-v1/export.py",
+    "sha256": "e30e1e8e5d5d9aaeab4d366347db996174ab4ee8b94907bca30b844f20b0895f"
+  },
+  "ledger": {
+    "bytes": 31587,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-publication-v228-v1/originals-ledger.json",
+    "sha256": "d9a75dc5a5e07b96e6d5fb223b89b19afc1e4d0d961f2f352e0fb1c02fa1813a"
+  },
+  "no_compiled_or_toolchain_tree_embedded": true,
+  "receipt": {
+    "bytes": 4744649,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-consumer-cpu-v228-v1/evidence/complete.json",
+    "sha256": "92e85faaf739ea2f9d45818223a4a8c55d1a8736d38ed0a3dee102dd1c3ca3c2"
+  },
+  "schema": "ferric-inert-semantic-consumer-publication-v1",
+  "source_delta": {
+    "fe2o3/crates/cargo-fe2o3/src/protected_compiler_handoff_v3.rs": {
+      "after": {
+        "bytes": 13093,
+        "sha256": "bfb925039792fb8081a176c2750236fdeb395a09a0fd8d208bb328790e85c7a5"
+      },
+      "before": {
+        "bytes": 13048,
+        "sha256": "756646cdd6acfc0d19c1dbfa90579d451365b601fb8c7f3e6c85746b7a3467ae"
+      }
+    },
+    "fe2o3/crates/cargo-fe2o3/src/protected_compiler_handoff_v3/inert_semantic_completion_v1.rs": {
+      "after": {
+        "bytes": 19592,
+        "sha256": "5b0a0861a708a060ddaa80f9646050df3174c2a7600b95f71c86f5205ddab69b"
+      },
+      "before": null
+    },
+    "fe2o3/crates/cargo-fe2o3/src/protected_compiler_handoff_v3/inert_semantic_extraction_v1.rs": {
+      "after": {
+        "bytes": 16487,
+        "sha256": "00a8127f38bdffc7c8bcfbe509ba0ab2dc911b15cfd2dfe4ff7a33c5b1ac766e"
+      },
+      "before": {
+        "bytes": 15757,
+        "sha256": "e551b8c4ed946123435225661703e1e93c93c5d193214e47fdc234954f8064bc"
+      }
+    }
+  }
+}

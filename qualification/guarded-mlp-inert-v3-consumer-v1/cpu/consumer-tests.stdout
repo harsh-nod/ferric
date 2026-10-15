@@ -1,0 +1,14 @@
+
+running 9 tests
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::canonical_other_target_is_refused_even_when_self_consistent ... ok
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::foreign_invocation_or_any_closure_role_is_not_the_selected_parent ... ok
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::inherited_codec_refuses_a_mismatched_final_commitment ... ok
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::nonzero_and_signalled_child_status_never_consume_even_valid_content ... ok
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::ordinary_v2_is_not_a_completion_and_malformed_outer_never_falls_back ... ok
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::owned_decode_retains_exact_outer_allocation_and_opaque_premises ... ok
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::production_api_retains_parent_and_full_outer_without_publication_transition ... ok
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::raw_capsule_tampering_is_rejected_by_existing_strict_codec ... ok
+test protected_compiler_handoff_v3::inert_semantic_completion_v1::tests::recomputed_capsule_mutation_cannot_replace_expected_outer_identity ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 419 filtered out; finished in 0.01s
+
