@@ -6,7 +6,23 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler diagnostic: [wave recipe local-effect refusal](../qualification/guarded-mlp-wave-effect-diagnostic-v1/README.md)
+Latest worker checkpoint: [coverage helper GPU inlining](../qualification/guarded-mlp-coverage-inline-v1/README.md)
+adds one AMDGPU-only attribute, preserving the helper body and all call-effect
+checks, with a refreshed exact provider identity. The full MI350 CPU run
+passes 1,340 compiler tests (24 existing ignores), 360 device tests, 125
+integration tests and 769 lowerer unit tests in 19 clean phases.
+New tests check independent coverage boundaries, real-claim failed-write
+retirement, exact annotated source, and refusal of the previous source identity.
+
+Both actual V17 worker compilations still exit naturally with status 1 and
+no HSACO. The local call-effect refusal now reports wave-replay root/body 0:
+Kernel IR block 486 (fixed) or 296 (early), operation 0. Changed coordinates
+alone do not establish the remaining callee or removal of a previous call;
+that exact diagnosis is next. CPU/probe services used CPU 8/9 and a 12 GiB
+memory cap with swap disabled, and retired before export. No GPU/model
+correctness, performance or milestone completion is inferred.
+
+Previous compiler diagnostic: [wave recipe local-effect refusal](../qualification/guarded-mlp-wave-effect-diagnostic-v1/README.md)
 preserves the existing predicate, traversal and budgets while identifying
 the failing Kernel IR block, operation ordinal and fixed operation kind.
 All 1,339 compiler tests (24 unchanged ignores), 359 device tests, 125
