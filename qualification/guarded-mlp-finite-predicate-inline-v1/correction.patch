@@ -1,0 +1,116 @@
+--- a/crates/fe2o3-device/src/half.rs
++++ b/crates/fe2o3-device/src/half.rs
+@@ -206,6 +206,7 @@
+         (self.0 & 0x7fff) == 0x7f80
+     }
+ 
++    #[cfg_attr(target_arch = "amdgpu", rustc_force_inline)]
+     pub const fn is_finite(self) -> bool {
+         (self.0 & 0x7f80) != 0x7f80
+     }
+@@ -467,6 +468,40 @@
+     }
+ 
+     #[test]
++    fn bf16_finiteness_matches_f32_for_every_encoding_without_mutation() {
++        const FINITE_CONST: bool = Bf16::ONE.is_finite();
++        const INFINITE_CONST: bool = Bf16::INFINITY.is_finite();
++        assert!(FINITE_CONST);
++        assert!(!INFINITE_CONST);
++
++        let mut finite_count = 0_u32;
++        let mut nonfinite_count = 0_u32;
++        for bits in 0_u16..=u16::MAX {
++            let value = Bf16::from_bits(bits);
++            // Use the host f32 classifier, independently of the BF16 mask.
++            let reference = f32::from_bits(u32::from(bits) << 16).is_finite();
++            assert_eq!(value.is_finite(), reference, "encoding {bits:#06x}");
++            assert_eq!(value.to_bits(), bits, "classification changed its input");
++            if reference {
++                finite_count += 1;
++            } else {
++                nonfinite_count += 1;
++            }
++        }
++        assert_eq!((finite_count, nonfinite_count), (65_280, 256));
++        for bits in [
++            0x0000, 0x8000, 0x0001, 0x8001, 0x007f, 0x807f, 0x0080, 0x8080, 0x7f7f, 0xff7f,
++        ] {
++            assert!(Bf16::from_bits(bits).is_finite());
++        }
++        for bits in [
++            0x7f80, 0xff80, 0x7f81, 0xff81, 0x7fc0, 0xffc0, 0x7fff, 0xffff,
++        ] {
++            assert!(!Bf16::from_bits(bits).is_finite());
++        }
++    }
++
++    #[test]
+     fn arithmetic_has_explicit_widen_then_narrow_semantics() {
+         let one = F16::ONE;
+         let two = F16::from_f32(2.0);
+--- a/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs
++++ b/crates/rustc-codegen-fe2o3/src/trusted_device_items.rs
+@@ -51,8 +51,8 @@
+ const WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1: &[u8] =
+     b"FE2O3/WORKGROUP-SYNC-PROVIDER-SOURCE-CLOSURE/V1\0";
+ const REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1: [u8; 32] = [
+-    0x9e, 0xea, 0x1b, 0x00, 0x4f, 0x06, 0x82, 0xc3, 0xa5, 0x85, 0x9e, 0xce, 0x38, 0xa9, 0x42, 0x4c,
+-    0x2d, 0xc2, 0xc0, 0xe3, 0x09, 0x6f, 0xf2, 0xe0, 0x39, 0x44, 0x07, 0x61, 0xeb, 0x71, 0xaf, 0xb7,
++    0x9d, 0x40, 0xf7, 0x3a, 0x5a, 0xfd, 0x4a, 0x4d, 0xbd, 0xc3, 0x6d, 0x5d, 0xfd, 0x77, 0x37, 0x85,
++    0x84, 0x25, 0x5f, 0xcd, 0x4a, 0x8d, 0xae, 0x06, 0xd0, 0xfc, 0xf0, 0x95, 0x8a, 0xf6, 0x2c, 0x81,
+ ];
+ 
+ const PROVIDER_SEMANTIC_DEFINITION_TRANSCRIPT_DOMAIN_V1: &[u8] =
+@@ -3732,7 +3732,7 @@
+         .unwrap();
+         assert_eq!(
+             closure,
+-            digest("9eea1b004f0682c3a5859ece38a9424c2dc2c0e3096ff2e039440761eb71afb7")
++            digest("9d40f73a5afd4a4dbdc36d5dfd77378584255fcd4a8dae06d0fcf0958af62c81")
+         );
+         assert_eq!(closure, super::REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1);
+     }
+@@ -3908,6 +3908,42 @@
+                 &source_path,
+                 WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
+                 digest("91b3c53fa4235b478427f4569d1d0b77ccbf996ac509dba8e58fc36aa828f950"),
++            )
++            .is_err()
++        );
++    }
++
++    #[test]
++    fn bf16_finite_predicate_inline_source_is_reviewed_and_previous_closure_is_refused() {
++        let source_path = Path::new(super::REVIEWED_FE2O3_DEVICE_SOURCE_ROOT).join("half.rs");
++        let source = fs::read_to_string(&source_path).unwrap();
++        let bf16_impl = source
++            .split_once("impl Bf16 {")
++            .unwrap()
++            .1
++            .split_once("pub struct Bf16x2")
++            .unwrap()
++            .0;
++        let body = r#"pub const fn is_finite(self) -> bool {
++        (self.0 & 0x7f80) != 0x7f80
++    }"#;
++        let annotated =
++            format!("#[cfg_attr(target_arch = \"amdgpu\", rustc_force_inline)]\n    {body}");
++        assert_eq!(bf16_impl.matches(body).count(), 1);
++        assert_eq!(bf16_impl.matches(&annotated).count(), 1);
++        assert!(
++            reviewed_provider_source_closure_from_definition(
++                &source_path,
++                WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
++                super::REVIEWED_SAFE_EXECUTION_SOURCE_CLOSURE_V1,
++            )
++            .is_ok()
++        );
++        assert!(
++            reviewed_provider_source_closure_from_definition(
++                &source_path,
++                WORKGROUP_SYNC_PROVIDER_SOURCE_CLOSURE_DOMAIN_V1,
++                digest("9eea1b004f0682c3a5859ece38a9424c2dc2c0e3096ff2e039440761eb71afb7"),
+             )
+             .is_err()
+         );

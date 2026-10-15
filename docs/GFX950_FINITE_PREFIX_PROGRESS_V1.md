@@ -6,7 +6,30 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest diagnostic checkpoint: [bounded canonical call census](../qualification/guarded-mlp-semantic-census-v1/README.md)
+Latest worker checkpoint: [BF16 finiteness GPU inlining](../qualification/guarded-mlp-finite-predicate-inline-v1/README.md)
+adds one AMDGPU-only inline attribute to the verified `Bf16::is_finite`
+body and refreshes the exact reviewed provider identity. Full mi350 CPU
+qualification passes 1,341 compiler tests (24 existing ignores), 361 device
+tests, 125 lowering integration tests and 769 lowerer unit tests in 19
+clean phases. New tests cover all 65,536 BF16 encodings against a host f32
+reference and exact source/old-identity refusal. Both earlier qualification
+failures and their original evidence remain retained.
+
+The original V18 fixed/early compile attempts still exit naturally with
+status1 and no HSACO, but both clear the prior incomplete defined-call
+local-effect refusal. A separate pinned-reader census confirms one root
+function and zero defined helper calls in each capture, down from 11.
+The fixed arm now reaches the deliberate V2-only conditional-premise
+extraction refusal; the early arm reaches uniform induction-region
+verification requiring one unique header exit. Neither gate is relaxed.
+
+Next is bounded actual-capture formal/archive/outer-lineage replay using
+the existing exact-version/digest test, before implementing a genuine
+lossless V3 invocation/handoff route for fixed rounds. Early-stop CFG
+diagnosis remains separate. No GPU/model/throughput result or milestone
+completion is claimed, and the device-completion hold remains closed.
+
+Previous diagnostic checkpoint: [bounded canonical call census](../qualification/guarded-mlp-semantic-census-v1/README.md)
 adds a read-only inventory mode with fixed function/block/call/output limits.
 On mi350 CPU8/9, all 18 tests and 15 owned phases pass; four historical
 helper/call stdout streams remain byte-identical. Both retained V17 captures
