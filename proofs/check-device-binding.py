@@ -358,6 +358,11 @@ def rust_build_tokens(source: str) -> list[str]:
 
 def fallback_binding_source(source: str) -> str:
     tokens = rust_build_tokens(source)
+    if any(token in {"use", "extern", "macro_rules", "macro_use"} for token in tokens):
+        raise ValueError("canonical emitter cannot import or shadow its standard macros")
+    if any(tokens[index:index + 2] in (["mod", "std"], ["r", "#"])
+           for index in range(len(tokens) - 1)):
+        raise ValueError("canonical emitter cannot shadow std or use raw identifiers")
     mains = [index for index in range(len(tokens) - 4)
              if tokens[index:index + 5] == ["fn", "main", "(", ")", "{"]]
     if len(mains) != 1 or (mains[0] and tokens[mains[0] - 1] not in (";", "}")):
@@ -634,6 +639,10 @@ def self_test() -> None:
         canonical.replace(guard, ""),
         canonical.replace(emitter, "#[cfg(any())] " + emitter),
         canonical.replace(emitter, 'let fake = "cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=' + golden + '";'),
+        "macro_rules! println { ($value:expr) => {} } " + canonical,
+        "use hostile::println; " + canonical,
+        "mod std {} " + canonical,
+        "mod r#std {} " + canonical,
     ]
     for index, source in enumerate(hostile_sources):
         try:
