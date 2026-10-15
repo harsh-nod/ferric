@@ -6,7 +6,28 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest transport component: [exact selected-invocation V3 transport](../qualification/guarded-mlp-inert-v3-invocation-v1/README.md)
+Latest selector component: [default-off inert semantic extraction](../qualification/guarded-mlp-inert-v3-selector-v1/README.md)
+adds pre-attempt selector/injection/mode refusals to the real protected binding
+wrapper and staged exact-gfx950/normalization eligibility requiring retained
+sealed parent custody. The requested route remains explicitly disabled until
+a separate lossless extraction-only consumer is qualified; no protected
+publication fallback is allowed.
+
+The first mi350 CPU8/9 harness stops after 146 passing tests because it asks
+for the wrong wrapper cohort name. Its original failure is retained. A fresh
+retained-ELF recovery passes only the six unsubmitted lifecycle tests and two
+prior-compiler gate tests. No Rust build or completed cohort is repeated.
+Combined evidence is 154 named passes across 14 clean leaves, not a relabeled
+successful first controller. The first 5,813 source inputs and all 5,889 recovery
+input pins remain unchanged. Full compiler/device/lowerer suites are not rerun.
+
+Next is a separate extraction-only parent completion/consumer that retains the
+exact invocation and conditional outer capsule/premises without adopting
+publication authority. The existing selector refusal stays until the complete
+route is qualified. No worker compile, GPU/model/performance result, runtime
+premise discharge or M0-M7 completion is claimed; the GPU hold remains closed.
+
+Previous transport component: [exact selected-invocation V3 transport](../qualification/guarded-mlp-inert-v3-invocation-v1/README.md)
 adds canonical byte production on the existing protected-wrapper capture path
 and an independent exact selected-process/six-role join. Fresh mi350 CPU8/9
 qualification passes 103 invocation tests, 25 preserved frontend tests and

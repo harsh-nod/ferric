@@ -1,0 +1,46 @@
+{
+  "adopted_reaped": [],
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/.rustup/toolchains/nightly-2026-04-03-x86_64-unknown-linux-gnu/bin/cargo",
+    "metadata",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-cpu-v228-v1/fe2o3/Cargo.toml",
+    "--format-version=1"
+  ],
+  "command": {
+    "bytes": 2215,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-cpu-v228-v1/evidence/metadata.command.json",
+    "sha256": "a65a5518e595ec30365137eebc91bea12eab6b8a2f9bc0e2de209b4ef1fd4f65"
+  },
+  "elapsed_ns": 201475875,
+  "exception": null,
+  "exit_code": 0,
+  "forced_cleanup": false,
+  "label": "metadata",
+  "natural_exit": true,
+  "observed_signals": [],
+  "pgid": 242911,
+  "pid": 242911,
+  "process_group_absent": true,
+  "reaped": true,
+  "stderr": {
+    "bytes": 0,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-cpu-v228-v1/evidence/metadata.stderr",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 2174275,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-cpu-v228-v1/evidence/metadata.stdout",
+    "sha256": "4401a796d0f65e3d64d3aee08b46b774f0aab3bcff7f410dfe0c5f7773c86690"
+  },
+  "storage_failure": null,
+  "timed_out": false
+}

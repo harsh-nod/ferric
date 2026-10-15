@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/usr/bin/prlimit",
+    "--as=12884901888",
+    "--cpu=1200",
+    "--fsize=1073741824",
+    "--core=0",
+    "--",
+    "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-cpu-v228-v1/target/debug/deps/cargo_fe2o3-183aee39e8aecbb6",
+    "inert_rustc_invocation_capture::tests::",
+    "--test-threads=1"
+  ],
+  "pgid": 253909,
+  "pid": 253909
+}

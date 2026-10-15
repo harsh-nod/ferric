@@ -1,0 +1,63 @@
+{
+  "archive": {
+    "bytes": 5156024,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-publication-v228-v1/originals.tar.gz",
+    "sha256": "7a9076b1dabc6890933821770866d4238a4919ba53cef66ecc5039e61f6d4561"
+  },
+  "audit": {
+    "bytes": 1321,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-publication-v228-v1/publication-audit.json",
+    "sha256": "dcac8e398000e9ee3d03c08b5a745bca486a04ada16159fddb3071fb746e0136"
+  },
+  "exporter": {
+    "bytes": 5473,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-publication-v228-v1/export_combined.py",
+    "sha256": "6d6f5ed5355aa122a38a7bf3934b03ff388319e3117bae170c2b8ecd88cf3fad"
+  },
+  "failed_receipt": {
+    "bytes": 4723662,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-cpu-v228-v1/evidence/failed.json",
+    "sha256": "927c4ccd1e5d82f1f1820dd0a8c804bc7e20d6be3f887cd40483f79f346d57f5"
+  },
+  "ledger": {
+    "bytes": 30322,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-publication-v228-v1/originals-ledger.json",
+    "sha256": "ea96f54e1ec80e576e4ec75585c5f3e67aa0fd3b837f59a7c9b5879b1af7b4bb"
+  },
+  "no_compiled_or_toolchain_tree_embedded": true,
+  "recovery_receipt": {
+    "bytes": 4770277,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-selector-recovery-cpu-v228-v1/evidence/complete.json",
+    "sha256": "26ce668bf3c759840c23582781131312f718209ab34405fad0ff4e1835f0cde5"
+  },
+  "schema": "ferric-inert-semantic-selector-combined-publication-v1",
+  "source_delta": {
+    "fe2o3/crates/cargo-fe2o3/src/binding_wrapper.rs": {
+      "after": {
+        "bytes": 109372,
+        "sha256": "5cc3e641ddcab6f4d9fe154ccb5cf3951661c0ce08118bc80655c64a31c798fc"
+      },
+      "before": {
+        "bytes": 109158,
+        "sha256": "9f2f24b35765c8b60ec8b402e049f6b24e7940ff3d12bc2bacbb69e7b70c91b4"
+      }
+    },
+    "fe2o3/crates/cargo-fe2o3/src/protected_compiler_handoff_v3.rs": {
+      "after": {
+        "bytes": 13048,
+        "sha256": "756646cdd6acfc0d19c1dbfa90579d451365b601fb8c7f3e6c85746b7a3467ae"
+      },
+      "before": {
+        "bytes": 13003,
+        "sha256": "af31c397e5dd17913b53b80863ca66089ae591e990d89c43ada294ea7a3a60ba"
+      }
+    },
+    "fe2o3/crates/cargo-fe2o3/src/protected_compiler_handoff_v3/inert_semantic_extraction_v1.rs": {
+      "after": {
+        "bytes": 15757,
+        "sha256": "e551b8c4ed946123435225661703e1e93c93c5d193214e47fdc234954f8064bc"
+      },
+      "before": null
+    }
+  }
+}

@@ -1,0 +1,11 @@
+
+running 6 tests
+test binding_wrapper::lifecycle_tests::observation_emission_failures_are_nonfatal_and_still_consume_the_sink ... ok
+test binding_wrapper::lifecycle_tests::observation_emission_is_one_shot_for_repeated_lifecycle_entries ... ok
+test binding_wrapper::lifecycle_tests::release_lifecycle_preserves_v1_and_nonselected_v2_ordering ... ok
+test binding_wrapper::lifecycle_tests::selected_v2_release_failure_revokes_the_real_managed_attempt ... ok
+test binding_wrapper::lifecycle_tests::selected_v2_release_is_deferred_and_exact_attempt_bound ... ok
+test binding_wrapper::lifecycle_tests::spawned_rustc_cleanup_kills_and_reaps_the_child ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 413 filtered out; finished in 0.01s
+
