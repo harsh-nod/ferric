@@ -1,0 +1,498 @@
+--- a/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1.rs
++++ b/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1.rs
+@@ -782,6 +782,27 @@
+ }
+ 
+ impl Error for ProductionMirPlironTranslationErrorV1 {}
++
++/// Fixed diagnostic vocabulary for an incomplete local wave-operation summary.
++#[derive(Clone, Copy, Debug, Eq, PartialEq)]
++pub enum ProductionWaveRecipeIncompleteEffectKindV1 {
++    /// A call without a registered complete local intrinsic contract.
++    Call,
++    /// Inline assembly without a complete local effect contract.
++    InlineAssembly,
++    /// A future operation kind that fails the same completeness predicate.
++    Other,
++}
++
++impl ProductionWaveRecipeIncompleteEffectKindV1 {
++    const fn label(self) -> &'static str {
++        match self {
++            Self::Call => "call",
++            Self::InlineAssembly => "inline-assembly",
++            Self::Other => "other",
++        }
++    }
++}
+ 
+ /// Fail-closed diagnostics from production target-neutral lowering.
+ #[derive(Debug)]
+@@ -960,6 +981,15 @@
+     CanonicalKernelIrV11(VerifiedCanonicalKernelIrErrorV11),
+     /// Independent semantic MIR to ranked PLIRON translation validation failed.
+     MirPlironTranslation(ProductionMirPlironTranslationErrorV1),
++    /// Wave replay refused an operation's incomplete local effect summary.
++    WaveRecipeIncompleteOperationEffects {
++        /// Actual Kernel IR block ID in the selected body.
++        block: u32,
++        /// Zero-based operation ordinal within that actual block.
++        operation: usize,
++        /// Bounded operation category, not an operation or callee dump.
++        kind: ProductionWaveRecipeIncompleteEffectKindV1,
++    },
+     /// Retained correspondence no longer matches the exact source owner.
+     CorrespondenceMismatch,
+ }
+@@ -1155,6 +1185,15 @@
+                     "MIR-to-PLIRON translation validation failed: {error}"
+                 )
+             }
++            Self::WaveRecipeIncompleteOperationEffects {
++                block,
++                operation,
++                kind,
++            } => write!(
++                formatter,
++                "wave recipe operation lacks a complete local effect summary: block {block}; operation {operation}; kind {}",
++                kind.label(),
++            ),
+             Self::CorrespondenceMismatch => formatter.write_str(
+                 "semantic-to-Kernel-IR correspondence no longer matches its exact owner",
+             ),
+@@ -1186,6 +1225,7 @@
+             | Self::CapabilityUnavailable { .. }
+             | Self::PlaceProjectionUnavailable { .. }
+             | Self::ScalarTypeUnavailable { .. }
++            | Self::WaveRecipeIncompleteOperationEffects { .. }
+             | Self::CorrespondenceMismatch => None,
+         }
+     }
+--- a/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_task_recipe_v1.rs
++++ b/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_task_recipe_v1.rs
+@@ -294,12 +294,25 @@
+         add(1)?;
+         add(block.parameters.len())?;
+         add(block.operations.len())?;
+-        for operation in &block.operations {
++        for (operation_index, operation) in block.operations.iter().enumerate() {
+             budget
+                 .charge_work(1)
+                 .map_err(|_| wave_access_resource_v1())?;
+             if !operation.has_complete_effect_summary() {
+-                return Err(wave_recipe_mismatch_v1());
++                let kind = match &operation.kind {
++                    OperationKind::Call { .. } => ProductionWaveRecipeIncompleteEffectKindV1::Call,
++                    OperationKind::InlineAssembly(_) => {
++                        ProductionWaveRecipeIncompleteEffectKindV1::InlineAssembly
++                    }
++                    _ => ProductionWaveRecipeIncompleteEffectKindV1::Other,
++                };
++                return Err(
++                    ProductionSemanticKirErrorV1::WaveRecipeIncompleteOperationEffects {
++                        block: block.id.0,
++                        operation: operation_index,
++                        kind,
++                    },
++                );
+             }
+             add(operation.results.len())?;
+         }
+--- a/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_task_recipe_v1_tests.rs
++++ b/crates/fe2o3-lower-mir-kernel/src/production_semantic_kir_v1/wave_task_recipe_v1_tests.rs
+@@ -1,5 +1,263 @@
+ fn wave_recipe_owner_floor(owner: &ProductionPreRankedKirOwnerV1) -> usize {
+     owner.executable_storage().retained_storage() + owner.assert_origin_storage().payload_storage()
++}
++
++fn wave_recipe_pure_scalar_helper_request() -> InertSemanticMirRequestV1 {
++    let seed = retained_request_with_store_role(true, 0, 4096, false, None)
++        .admit(SemanticMirLimitsV1::default())
++        .unwrap();
++    let old = &seed.functions()[0];
++    let source = old.source();
++    let mut types = seed.types().to_vec();
++    let ty = add_type(
++        &mut types,
++        scalar_layout(SemanticBackendPrimitiveV1::integer(false, 64, 8), 8),
++        SemanticTypeShapeV1::Scalar(SemanticScalarTypeV1::Integer {
++            signed: false,
++            bits: 64,
++        }),
++    );
++    let place =
++        |index| SemanticPlaceV1::new(SemanticLocalIdV1::from_index(index), vec![], ty).unwrap();
++    let assign = |destination, value| {
++        SemanticStatementV1::new(
++            source,
++            SemanticStatementKindV1::Assign(SemanticAssignmentV1::new(
++                place(destination),
++                SemanticRvalueV1::new(ty, value),
++            )),
++        )
++    };
++    let local = |identity, role| {
++        SemanticLocalDeclV1::new(
++            SemanticLocalIdentityV1::from_sha256([identity; 32]),
++            ty,
++            role,
++            source,
++        )
++    };
++    let mut locals = old.locals().to_vec();
++    let argument = u32::try_from(locals.len()).unwrap();
++    locals.push(local(230, SemanticLocalRoleV1::Temporary));
++    let output = u32::try_from(locals.len()).unwrap();
++    locals.push(local(231, SemanticLocalRoleV1::Temporary));
++    let mut statements = old.blocks()[0].statements().to_vec();
++    statements.push(assign(
++        argument,
++        SemanticRvalueKindV1::Use(SemanticOperandV1::Constant(SemanticConstantV1::new(
++            ty,
++            SemanticConstantValueV1::Scalar(SemanticScalarValueV1::new(7, 8).unwrap()),
++        ))),
++    ));
++    let root = SemanticFunctionDeclV1::new(
++        old.identity(),
++        old.role(),
++        old.item_definition_identity(),
++        old.monomorphization_identity(),
++        old.generic_type_arguments_identity(),
++        old.const_generic_arguments_identity(),
++        source,
++        old.abi().clone(),
++        locals,
++        old.entry(),
++        vec![
++            SemanticBasicBlockV1::new(
++                old.blocks()[0].identity(),
++                source,
++                statements,
++                SemanticTerminatorV1::new(
++                    source,
++                    SemanticTerminatorKindV1::Call(
++                        SemanticDirectCallV1::new_callable(
++                            SemanticCallableIdV1::from_index(1),
++                            vec![SemanticOperandV1::Copy(place(argument))],
++                            Some(SemanticCallDestinationV1::new(
++                                place(output),
++                                SemanticControlFlowEdgeV1::new(
++                                    SemanticEdgeRoleV1::CallReturn,
++                                    SemanticBlockIdV1::from_index(1),
++                                ),
++                            )),
++                            SemanticUnwindActionV1::Unreachable,
++                        )
++                        .unwrap(),
++                    ),
++                ),
++            )
++            .unwrap(),
++            SemanticBasicBlockV1::new(
++                SemanticBlockIdentityV1::from_sha256([232; 32]),
++                source,
++                vec![],
++                SemanticTerminatorV1::new(source, SemanticTerminatorKindV1::Return),
++            )
++            .unwrap(),
++        ],
++    )
++    .unwrap()
++    .with_kernel_entry(old.kernel_entry().unwrap().clone());
++    let value = SemanticAbiValueV1::new(
++        ty,
++        SemanticAbiPassModeV1::Direct(
++            SemanticAbiValueAttributesV1::new(
++                SemanticAbiRegularAttributesV1::new(false, None, false, false, false, true),
++                SemanticAbiExtensionV1::None,
++                0,
++                None,
++            )
++            .unwrap(),
++        ),
++    );
++    let abi = SemanticFunctionAbiV1::from_rustc(
++        SemanticAbiIdentityV1::from_sha256([241; 32]),
++        old.abi().layout_identity(),
++        SemanticCanonAbiV1::Rust,
++        SemanticExternAbiV1::Rust,
++        false,
++        false,
++        1,
++        vec![SemanticAbiArgumentV1::source(value.clone())],
++        value,
++    )
++    .unwrap()
++    .with_source_argument_ownership(vec![SemanticSourceArgumentOwnershipV1::ByValue])
++    .unwrap();
++    let helper = SemanticFunctionDeclV1::new(
++        SemanticFunctionIdentityV1::from_sha256([233; 32]),
++        SemanticFunctionRoleV1::InternalHelper,
++        SemanticItemDefinitionIdentityV1::from_sha256([234; 32]),
++        SemanticMonomorphizationIdentityV1::from_sha256([235; 32]),
++        SemanticGenericTypeArgumentsIdentityV1::from_sha256([236; 32]),
++        SemanticConstGenericArgumentsIdentityV1::from_sha256([237; 32]),
++        source,
++        abi,
++        vec![
++            local(238, SemanticLocalRoleV1::Return),
++            local(239, SemanticLocalRoleV1::Argument(0)),
++        ],
++        SemanticBlockIdV1::from_index(0),
++        vec![
++            SemanticBasicBlockV1::new(
++                SemanticBlockIdentityV1::from_sha256([240; 32]),
++                source,
++                vec![assign(
++                    0,
++                    SemanticRvalueKindV1::Use(SemanticOperandV1::Copy(place(1))),
++                )],
++                SemanticTerminatorV1::new(source, SemanticTerminatorKindV1::Return),
++            )
++            .unwrap(),
++        ],
++    )
++    .unwrap();
++    InertSemanticMirRequestV1::new_with_callables(
++        seed.target(),
++        types,
++        seed.allocations().to_vec(),
++        seed.statics().to_vec(),
++        seed.vtables().to_vec(),
++        vec![root, helper],
++        (0..2)
++            .map(|index| SemanticCallableDeclV1::defined(SemanticFunctionIdV1::from_index(index)))
++            .collect(),
++        seed.roots().to_vec(),
++    )
++    .unwrap()
++}
++
++#[test]
++fn wave_recipe_genuine_pure_helper_is_refused_by_local_effect_preflight() {
++    let owner = materialize_retained_request(wave_recipe_pure_scalar_helper_request()).unwrap();
++    assert!(!owner.grants_artifact_or_launch_authority());
++    let root = SemanticFunctionIdV1::from_index(0);
++    let rows = owner.correspondence.lowered_functions();
++    let entry = rows
++        .iter()
++        .find(|row| {
++            row.correspondence_owner() == root
++                && row.semantic_function() == root
++                && row.role() == SemanticKirFunctionRoleV1::KernelEntry
++        })
++        .unwrap();
++    let module = owner.executable().module();
++    let function = module
++        .functions
++        .iter()
++        .find(|function| &function.id == entry.kernel_ir_function())
++        .unwrap();
++    let body = function.body.as_ref().unwrap();
++    let calls = body
++        .blocks
++        .iter()
++        .flat_map(|block| {
++            block
++                .operations
++                .iter()
++                .enumerate()
++                .filter_map(move |(index, operation)| {
++                    matches!(operation.kind, OperationKind::Call { .. })
++                        .then_some((block.id.0, index, operation))
++                })
++        })
++        .collect::<Vec<_>>();
++    assert_eq!(calls.len(), 1);
++    let (block, operation, call) = calls[0];
++    let OperationKind::Call { callee, .. } = &call.kind else {
++        unreachable!()
++    };
++    let helper = module
++        .functions
++        .iter()
++        .find(|function| &function.id == callee)
++        .unwrap();
++    assert_eq!(helper.signature.parameters, [Type::Scalar(ScalarType::U64)]);
++    assert_eq!(helper.signature.results, [Type::Scalar(ScalarType::U64)]);
++    assert!(
++        owner
++            .empty_effect_helpers()
++            .iter()
++            .any(|row| row.correspondence_owner() == root
++                && row.semantic_function() == SemanticFunctionIdV1::from_index(1)
++                && row.kernel_ir_function() == callee)
++    );
++    // A complete transitive helper summary is not a local call contract.
++    let effects = fe2o3_kernel_ir::analyze_interprocedural_effects_v1(module).unwrap();
++    assert!(effects.function(callee).unwrap().is_complete_and_pure());
++    assert!(call.memory_effects().is_empty());
++    assert!(!call.has_complete_effect_summary());
++    assert!(
++        body.blocks
++            .iter()
++            .flat_map(|block| &block.operations)
++            .all(|candidate| std::ptr::eq(candidate, call)
++                || candidate.has_complete_effect_summary())
++    );
++    let floor = wave_recipe_owner_floor(&owner) + 11;
++    for public_replay in [false, true] {
++        let mut work = fe2o3_kernel_ir::CanonicalKernelIrWorkBudgetV1::new(4_000_000);
++        let mut budget = fe2o3_kernel_ir::CanonicalKernelIrVerificationResourceBudgetV1::new(
++            &mut work, 16_000_000,
++        );
++        budget.charge_work(7).unwrap();
++        budget.reserve_storage(floor).unwrap();
++        let error = if public_replay {
++            match owner.replay_wave_task_recipe_for_root_v1(root, &mut budget) {
++                Err(error) => error,
++                Ok(_) => panic!("the real pure helper must still fail local effect preflight"),
++            }
++        } else {
++            wave_recipe_index_storage_v1(&owner, body, &mut budget).unwrap_err()
++        };
++        assert!(
++            matches!(error, ProductionSemanticKirErrorV1::WaveRecipeIncompleteOperationEffects {
++            block: actual_block, operation: actual_operation,
++            kind: ProductionWaveRecipeIncompleteEffectKindV1::Call,
++        } if actual_block == block && actual_operation == operation)
++        );
++        assert_eq!(budget.storage(), floor);
++        assert!(budget.work() > 7 && budget.work() < 4_000_000);
++        assert_eq!(budget.remaining_work(), 4_000_000 - budget.work());
++    }
+ }
+ 
+ #[test]
+@@ -239,6 +497,13 @@
+         }),
+     ];
+     for kind in cases {
++        let expected_kind = match &kind {
++            OperationKind::Call { .. } => ProductionWaveRecipeIncompleteEffectKindV1::Call,
++            OperationKind::InlineAssembly(_) => {
++                ProductionWaveRecipeIncompleteEffectKindV1::InlineAssembly
++            }
++            _ => unreachable!("the negative fixture has two closed operation kinds"),
++        };
+         let operation = Operation::new(vec![], kind);
+         assert!(operation.memory_effects().is_empty());
+         assert!(!operation.has_complete_effect_summary());
+@@ -246,6 +511,8 @@
+             .body
+             .clone()
+             .unwrap();
++        let expected_block = body.blocks[0].id.0;
++        let expected_operation = body.blocks[0].operations.len();
+         body.blocks[0].operations.push(operation);
+         let mut work = fe2o3_kernel_ir::CanonicalKernelIrWorkBudgetV1::new(4_000_000);
+         let mut budget = fe2o3_kernel_ir::CanonicalKernelIrVerificationResourceBudgetV1::new(
+@@ -256,10 +523,107 @@
+         budget.reserve_storage(floor).unwrap();
+         assert!(matches!(
+             wave_recipe_index_storage_v1(&owner, &body, &mut budget),
+-            Err(ProductionSemanticKirErrorV1::CorrespondenceMismatch)
++            Err(ProductionSemanticKirErrorV1::WaveRecipeIncompleteOperationEffects {
++                block, operation, kind,
++            }) if block == expected_block && operation == expected_operation && kind == expected_kind
+         ));
+         assert_eq!(budget.storage(), floor);
+         assert!(budget.work() > 7);
++    }
++}
++
++#[test]
++fn wave_recipe_incomplete_effect_diagnostic_is_bounded_and_keeps_error_chain() {
++    use std::error::Error;
++    for (kind, label) in [
++        (ProductionWaveRecipeIncompleteEffectKindV1::Call, "call"),
++        (
++            ProductionWaveRecipeIncompleteEffectKindV1::InlineAssembly,
++            "inline-assembly",
++        ),
++        (ProductionWaveRecipeIncompleteEffectKindV1::Other, "other"),
++    ] {
++        let error = ProductionSemanticKirErrorV1::WaveRecipeIncompleteOperationEffects {
++            block: u32::MAX,
++            operation: usize::MAX,
++            kind,
++        };
++        assert_eq!(
++            error.to_string(),
++            format!(
++                "wave recipe operation lacks a complete local effect summary: block {}; operation {}; kind {label}",
++                u32::MAX,
++                usize::MAX,
++            )
++        );
++        assert!(error.to_string().len() < 160);
++        assert!(error.source().is_none());
++    }
++    assert_eq!(
++        ProductionSemanticKirErrorV1::CorrespondenceMismatch.to_string(),
++        "semantic-to-Kernel-IR correspondence no longer matches its exact owner",
++    );
++}
++
++#[test]
++fn wave_recipe_incomplete_effect_diagnostic_preserves_first_failure_and_work_limit() {
++    let owner = retained_owner(true);
++    let mut body = owner.executable().module().functions[0]
++        .body
++        .clone()
++        .unwrap();
++    let block = body.blocks[0].id.0;
++    let first = body.blocks[0].operations.len();
++    for name in ["first_unknown", "second_unknown"] {
++        body.blocks[0].operations.push(Operation::new(
++            vec![],
++            OperationKind::Call {
++                callee: FunctionId::new(name),
++                arguments: vec![],
++            },
++        ));
++    }
++    let floor = wave_recipe_owner_floor(&owner) + 11;
++    let mut work = fe2o3_kernel_ir::CanonicalKernelIrWorkBudgetV1::new(4_000_000);
++    let mut budget =
++        fe2o3_kernel_ir::CanonicalKernelIrVerificationResourceBudgetV1::new(&mut work, 16_000_000);
++    budget.charge_work(7).unwrap();
++    budget.reserve_storage(floor).unwrap();
++    let error = wave_recipe_index_storage_v1(&owner, &body, &mut budget).unwrap_err();
++    assert!(matches!(error,
++        ProductionSemanticKirErrorV1::WaveRecipeIncompleteOperationEffects {
++            block: actual_block, operation, kind: ProductionWaveRecipeIncompleteEffectKindV1::Call,
++        } if actual_block == block && operation == first
++    ));
++    let required_work = budget.work();
++    assert!(required_work > 7);
++    assert_eq!(budget.storage(), floor);
++    for (limit, diagnostic) in [(required_work, true), (required_work - 1, false)] {
++        let mut work = fe2o3_kernel_ir::CanonicalKernelIrWorkBudgetV1::new(limit);
++        let mut budget = fe2o3_kernel_ir::CanonicalKernelIrVerificationResourceBudgetV1::new(
++            &mut work, 16_000_000,
++        );
++        budget.charge_work(7).unwrap();
++        budget.reserve_storage(floor).unwrap();
++        let error = wave_recipe_index_storage_v1(&owner, &body, &mut budget).unwrap_err();
++        if diagnostic {
++            assert!(matches!(error,
++                ProductionSemanticKirErrorV1::WaveRecipeIncompleteOperationEffects {
++                    block: actual_block, operation,
++                    kind: ProductionWaveRecipeIncompleteEffectKindV1::Call,
++                } if actual_block == block && operation == first
++            ));
++        } else {
++            assert!(matches!(
++                error,
++                ProductionSemanticKirErrorV1::MirPlironTranslation(
++                    ProductionMirPlironTranslationErrorV1::ResourceLimit,
++                )
++            ));
++        }
++        assert_eq!(budget.storage(), floor);
++        assert!(budget.work() <= limit);
++        assert_eq!(budget.remaining_work(), limit - budget.work());
+     }
+ }
+ 

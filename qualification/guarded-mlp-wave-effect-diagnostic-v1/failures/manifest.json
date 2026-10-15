@@ -1,0 +1,36 @@
+{
+  "attempts": {
+    "wave-effect-v1": {
+      "archive": {
+        "bytes": 4062278,
+        "name": "failures/wave-effect-v1.tar.gz",
+        "sha256": "9d6dddf0577652f612464327aac6f96627d398f71f97194ea2511bae01f605c8"
+      },
+      "backend_qualified": false,
+      "expanded_bytes": 25401157,
+      "members": 105,
+      "originals": 104,
+      "phases": 18,
+      "reason": "RuntimeError('lowerer-unit-tests did not finish naturally/reaped/successfully')",
+      "receipt": {
+        "bytes": 5536785,
+        "sha256": "73b274fef2b97dcb4c1a69595794606a52396b71ab01fe7de881e00e2133447d"
+      },
+      "unit_executed": true,
+      "unit_outcomes": {
+        "failed": 1,
+        "failing_test": "production_semantic_kir_v1::wave_task_entry_parameter_tests::access_roots::wave_recipe_genuine_pure_helper_is_refused_by_local_effect_preflight",
+        "ignored": 0,
+        "passed": 768
+      },
+      "unit_qualified": false
+    }
+  },
+  "cpu": {
+    "bytes": 5775773,
+    "sha256": "c82f6e900aea71cb5e0b409371534fc70efb6b48b42e6675e52250f04f67a7fe"
+  },
+  "gpu_execution": false,
+  "production_authority": false,
+  "schema": "ferric-wave-effect-fixture-failed-attempts-v1"
+}

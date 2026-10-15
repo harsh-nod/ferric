@@ -6,7 +6,31 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest compiler diagnostic: [ranked validation boundary](../qualification/guarded-mlp-ranked-stage-diagnostic-v1/README.md)
+Latest compiler diagnostic: [wave recipe local-effect refusal](../qualification/guarded-mlp-wave-effect-diagnostic-v1/README.md)
+preserves the existing predicate, traversal and budgets while identifying
+the failing Kernel IR block, operation ordinal and fixed operation kind.
+All 1,339 compiler tests (24 unchanged ignores), 359 device tests, 125
+integration tests and 769 lowerer unit tests pass in 19 MI350 CPU phases.
+The three new tests include a genuinely admitted and materialized pure
+helper whose call still fails the existing local-effect preflight.
+
+The first fixture attempt failed ABI admission because its initialized U64
+declaration omitted `no_undef`; that original failure is retained. The fresh
+passing generation changes only that fixture constructor. No acceptance
+predicate, helper ABI support, provider body or runtime path was relaxed.
+This worker's first acceptance target is gfx950; a new gfx942 port is not a
+prerequisite. Existing dual-target LLVM tests remain, without GPU credit.
+The device-completion hold remains unresolved.
+
+Both actual V16 worker compilations still exit naturally with status 1 and
+no HSACO. They now identify the exact local-effect predicate at
+`wave-replay; root 1; body 1`: a call in Kernel IR block 213 (fixed) or 88
+(early), operation 0, lacks a complete local effect summary. This is not a
+decoded callee identity or proof that the production call is pure. Sources,
+tools and owned process cleanup checks pass; no GPU/model/performance or
+milestone credit is claimed.
+
+Previous compiler diagnostic: [ranked validation boundary](../qualification/guarded-mlp-ranked-stage-diagnostic-v1/README.md)
 preserves all acceptance predicates and original error chains while adding
 one of seven fixed stage tags and numeric root/body context. All 1,339
 compiler tests (24 unchanged ignores), 359 device tests, 125 integration
