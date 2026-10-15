@@ -1,0 +1,118 @@
+{
+  "archive": {
+    "bytes": 13363484,
+    "sha256": "4a3664fd69b15d953ac443bb72be64127e8dd1792ae36772627b79d06434e6d1"
+  },
+  "cpu": {
+    "artifacts": {
+      "reader": {
+        "cargo_artifact": {
+          "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/target/debug/fe2o3-semantic-capture-inspect",
+          "features": [],
+          "filenames": [
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/target/debug/fe2o3-semantic-capture-inspect"
+          ],
+          "fresh": false,
+          "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/fe2o3/crates/fe2o3-mir-model/Cargo.toml",
+          "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/fe2o3/crates/fe2o3-mir-model#0.1.0",
+          "profile": {
+            "debug_assertions": true,
+            "debuginfo": 0,
+            "opt_level": "0",
+            "overflow_checks": true,
+            "test": false
+          },
+          "reason": "compiler-artifact",
+          "target": {
+            "crate_types": [
+              "bin"
+            ],
+            "doc": true,
+            "doctest": false,
+            "edition": "2024",
+            "kind": [
+              "bin"
+            ],
+            "name": "fe2o3-semantic-capture-inspect",
+            "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/fe2o3/crates/fe2o3-mir-model/src/bin/fe2o3-semantic-capture-inspect.rs",
+            "test": true
+          }
+        },
+        "pin": {
+          "bytes": 5080072,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/target/debug/fe2o3-semantic-capture-inspect",
+          "sha256": "601bfbed7f0c7e9707b2d453739127abfeebfaa98a984f1546a036247a4c1d67"
+        }
+      },
+      "test": {
+        "cargo_artifact": {
+          "executable": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/target/debug/deps/fe2o3_semantic_capture_inspect-12a4cab1b5b494a3",
+          "features": [],
+          "filenames": [
+            "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/target/debug/deps/fe2o3_semantic_capture_inspect-12a4cab1b5b494a3"
+          ],
+          "fresh": false,
+          "manifest_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/fe2o3/crates/fe2o3-mir-model/Cargo.toml",
+          "package_id": "path+file:///home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/fe2o3/crates/fe2o3-mir-model#0.1.0",
+          "profile": {
+            "debug_assertions": true,
+            "debuginfo": 0,
+            "opt_level": "0",
+            "overflow_checks": true,
+            "test": true
+          },
+          "reason": "compiler-artifact",
+          "target": {
+            "crate_types": [
+              "bin"
+            ],
+            "doc": true,
+            "doctest": false,
+            "edition": "2024",
+            "kind": [
+              "bin"
+            ],
+            "name": "fe2o3-semantic-capture-inspect",
+            "src_path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/fe2o3/crates/fe2o3-mir-model/src/bin/fe2o3-semantic-capture-inspect.rs",
+            "test": true
+          }
+        },
+        "pin": {
+          "bytes": 6176408,
+          "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-semantic-call-census-cpu-v228-v2/target/debug/deps/fe2o3_semantic_capture_inspect-12a4cab1b5b494a3",
+          "sha256": "f0bc4232664895eb1b418985f7971e3b675b670b89d13bf9ced496657d0ce2ac"
+        }
+      }
+    },
+    "elapsed_seconds": 24.666518971091136,
+    "ignored_tests": 0,
+    "passed_tests": 18,
+    "phases": 15,
+    "receipt": {
+      "bytes": 5664630,
+      "sha256": "60898b32e9d93cdae3ec5359177055213898dc27c0e14e5bf68b5d727376a5a7"
+    }
+  },
+  "expanded_bytes": 94142186,
+  "failed_v1": {
+    "bytes": 4808107,
+    "sha256": "c789b43cbc42e30cef017fb810f2c5856c610d91492e429edacbb8636d4dadda"
+  },
+  "full_model_acceptance": false,
+  "gpu_execution": false,
+  "kir_binding_types_observed": false,
+  "members": 148,
+  "numerical_acceptance": false,
+  "originals": 147,
+  "performance_claim": false,
+  "production_authority": false,
+  "reader_patch": {
+    "bytes": 18587,
+    "sha256": "155091fbc1aa3a8e823f38a6790aedb101ac2366a308bfef40ba21e0a6cf63e2"
+  },
+  "schema": "ferric-semantic-census-publication-v1",
+  "source_join": {
+    "bytes": 241302,
+    "sha256": "8f9318ebc9136aab08eea1963b457e82ed243ef78e293e2822e0cc9e25c13a6e"
+  }
+}

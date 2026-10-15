@@ -1,0 +1,32 @@
+{
+  "affinity": [
+    8,
+    9
+  ],
+  "archive": {
+    "bytes": 13363484,
+    "sha256": "4a3664fd69b15d953ac443bb72be64127e8dd1792ae36772627b79d06434e6d1"
+  },
+  "archive_members_verified": 148,
+  "audit_source": {
+    "bytes": 4321,
+    "sha256": "d460192a1a622a45ad2a51a29527e7b4bb054ae7ed12d678ed947612efc87721"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "originals_verified": 147,
+  "passed": true,
+  "pid": 4070572,
+  "production_authority": false,
+  "project_code_executed": false,
+  "reader_source": {
+    "bytes": 59794,
+    "sha256": "d28f1efe055896f3c95a425217f7134136ccde572ce477ba8d0c094966bd464c"
+  },
+  "receipt": {
+    "bytes": 5664630,
+    "sha256": "60898b32e9d93cdae3ec5359177055213898dc27c0e14e5bf68b5d727376a5a7"
+  },
+  "schema": "ferric-semantic-census-data-audit-v1",
+  "source_inputs_verified": 5844
+}

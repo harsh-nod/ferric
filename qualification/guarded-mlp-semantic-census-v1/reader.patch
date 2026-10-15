@@ -1,0 +1,474 @@
+--- a/crates/fe2o3-mir-model/src/bin/fe2o3-semantic-capture-inspect.rs
++++ b/crates/fe2o3-mir-model/src/bin/fe2o3-semantic-capture-inspect.rs
+@@ -448,6 +448,169 @@
+     value.parse().map_err(|_| "expected canonical u32 index")
+ }
+ 
++#[derive(Clone, Copy)]
++struct CensusLimits {
++    functions: usize,
++    blocks: usize,
++    calls: usize,
++    output_bytes: usize,
++}
++
++const CENSUS_LIMITS: CensusLimits = CensusLimits {
++    functions: 128,
++    blocks: 131_072,
++    calls: 4096,
++    output_bytes: MAP_MAX - 1,
++};
++
++fn append_census_row(
++    rows: &mut Vec<Value>,
++    row: Value,
++    used: &mut usize,
++    maximum: usize,
++) -> Result<()> {
++    let bytes = serde_json::to_vec(&row)
++        .map_err(|_| "JSON output failed")?
++        .len()
++        .checked_add(usize::from(!rows.is_empty()))
++        .ok_or("census output limit")?;
++    let next = used.checked_add(bytes).ok_or("census output limit")?;
++    if next > maximum {
++        return Err("census output limit");
++    }
++    *used = next;
++    rows.push(row);
++    Ok(())
++}
++
++// Compiler maps can omit library files. Census rows retain their exact provenance,
++// but unresolved records never gain a path or a claim of source verification.
++fn census_origin(source: Option<SemanticSourceOriginV1>, map: &SourceMap) -> Result<Value> {
++    let Some(source) = source else {
++        return Ok(Value::Null);
++    };
++    let identity = hex(source.file().as_bytes());
++    if map.files.iter().any(|file| file.identity == identity) {
++        let mut value = origin(Some(source), map)?;
++        value["map_resolution"] = json!("RecordedFile");
++        return Ok(value);
++    }
++    let (start, end) = source.byte_range();
++    if start > end {
++        return Err("source origin reversed");
++    }
++    Ok(json!({
++        "file_identity": identity, "byte_range": [start, end],
++        "start": source.start_coordinate(), "end": source.end_coordinate(),
++        "map_resolution": "FileAbsent", "display_path": null, "file_bytes": null,
++        "source_file_contents_verified": false
++    }))
++}
++
++fn inspect_census(
++    raw: &[u8],
++    map_raw: &[u8],
++    mir_hash: &str,
++    map_hash: &str,
++    limits: CensusLimits,
++) -> Result<Value> {
++    if limits.functions > CENSUS_LIMITS.functions
++        || limits.blocks > CENSUS_LIMITS.blocks
++        || limits.calls > CENSUS_LIMITS.calls
++        || limits.output_bytes > CENSUS_LIMITS.output_bytes
++    {
++        return Err("census limits exceed fixed bounds");
++    }
++    let (semantic, map) = decode_capture(raw, map_raw, mir_hash, map_hash)?;
++    if semantic.functions().len() > limits.functions {
++        return Err("census function limit");
++    }
++    let mut block_count = 0;
++    let mut sites = Vec::new();
++    for (function_index, function) in semantic.functions().iter().enumerate() {
++        for (block_index, block) in function.blocks().iter().enumerate() {
++            if block_count == limits.blocks {
++                return Err("census block limit");
++            }
++            block_count += 1;
++            let (callable_id, kind) = match block.terminator().kind() {
++                SemanticTerminatorKindV1::Call(call) => (call.callee(), "Call"),
++                SemanticTerminatorKindV1::TailCall(call) => (call.callee(), "TailCall"),
++                _ => continue,
++            };
++            if sites.len() == limits.calls {
++                return Err("census call limit");
++            }
++            let callable = semantic
++                .callables()
++                .get(callable_id.index() as usize)
++                .ok_or("callable absent")?;
++            let callee = match callable {
++                SemanticCallableDeclV1::Defined { function } => Some(function.index()),
++                _ => None,
++            };
++            sites.push((
++                function_index,
++                block_index,
++                kind,
++                callable_id.index(),
++                callee,
++            ));
++        }
++    }
++    let mut result = inspection_record(
++        &semantic,
++        raw.len(),
++        mir_hash,
++        map_hash,
++        "fe2o3-semantic-call-census-v1",
++    );
++    result["kir_binding_types_observed"] = json!(false);
++    result["function_count"] = json!(semantic.functions().len());
++    result["block_count"] = json!(block_count);
++    result["call_count"] = json!(sites.len());
++    result["defined_call_count"] = json!(sites.iter().filter(|site| site.4.is_some()).count());
++    result["functions"] = json!([]);
++    result["calls"] = json!([]);
++    let mut used = serde_json::to_vec(&result)
++        .map_err(|_| "JSON output failed")?
++        .len();
++    if used > limits.output_bytes {
++        return Err("census output limit");
++    }
++    let mut functions = Vec::new();
++    for (index, function) in semantic.functions().iter().enumerate() {
++        let row = json!({
++            "function_index": index,
++            "identity": hex(function.identity().as_bytes()),
++            "item_definition_identity": hex(function.item_definition_identity().as_bytes()),
++            "role": format!("{:?}", function.role()),
++            "call_site": census_origin(function.source().call_site(), &map)?,
++            "expansion": census_origin(function.source().expansion(), &map)?,
++        });
++        append_census_row(&mut functions, row, &mut used, limits.output_bytes)?;
++    }
++    let mut calls = Vec::new();
++    for (function_index, block_index, kind, callable_index, callee) in sites {
++        let block = &semantic.functions()[function_index].blocks()[block_index];
++        let row = json!({
++            "function_index": function_index,
++            "block_index": block_index,
++            "block_identity": hex(block.identity().as_bytes()),
++            "terminator_kind": kind,
++            "callable_index": callable_index,
++            "callable_kind": if callee.is_some() { "Defined" } else { "NonDefined" },
++            "callee_function_index": callee,
++            "call_site": census_origin(block.terminator().source().call_site(), &map)?,
++            "expansion": census_origin(block.terminator().source().expansion(), &map)?,
++        });
++        append_census_row(&mut calls, row, &mut used, limits.output_bytes)?;
++    }
++    result["functions"] = json!(functions);
++    result["calls"] = json!(calls);
++    Ok(result)
++}
++
+ fn encode_output(value: &Value) -> Result<Vec<u8>> {
+     let output = serde_json::to_vec(value).map_err(|_| "JSON output failed")?;
+     if output.len() >= MAP_MAX {
+@@ -457,15 +620,21 @@
+ }
+ 
+ fn run(args: &[String]) -> Result<()> {
++    let census = args.len() == 6 && args[5] == "--census";
+     let call = match args.len() {
+         6 => None,
+         8 if args[5] == "--call" => Some((selector_index(&args[6])?, selector_index(&args[7])?)),
+-        _ => return Err("usage: MIR MAP MIR_SHA256 MAP_SHA256 HELPER_ID | --call FUNCTION BLOCK"),
++        _ => {
++            return Err(
++                "usage: MIR MAP MIR_SHA256 MAP_SHA256 HELPER_ID | --call FUNCTION BLOCK | --census",
++            );
++        }
+     };
+     let raw = read_bounded(Path::new(&args[1]), MIR_MAX)?;
+     let map = read_bounded(Path::new(&args[2]), MAP_MAX)?;
+     let value = match call {
+         Some((function, block)) => inspect_call(&raw, &map, &args[3], &args[4], function, block)?,
++        None if census => inspect_census(&raw, &map, &args[3], &args[4], CENSUS_LIMITS)?,
+         None => inspect(&raw, &map, &args[3], &args[4], &args[5])?,
+     };
+     let output = encode_output(&value)?;
+@@ -762,6 +931,278 @@
+             .unwrap()
+     }
+ 
++    fn inspect_census_fixture(raw: &[u8], map: &Value, limits: CensusLimits) -> Result<Value> {
++        let bytes = serde_json::to_vec(map).unwrap();
++        inspect_census(raw, &bytes, &digest(raw), &digest(&bytes), limits)
++    }
++
++    #[test]
++    fn census_reports_defined_and_nonbody_calls_without_authority() {
++        for (kind, functions, defined) in
++            [(CallFixture::Copy, 2, 1), (CallFixture::Intrinsic, 1, 0)]
++        {
++            let fixture = call_fixture(kind, SemanticSourceProvenanceV1::unavailable());
++            let raw = fixture.canonical_encoding();
++            let value = inspect_census_fixture(raw, &mapping(raw), CENSUS_LIMITS).unwrap();
++            assert_eq!(value["schema"], "fe2o3-semantic-call-census-v1");
++            assert_eq!(value["function_count"], functions);
++            assert_eq!(value["call_count"], 1);
++            assert_eq!(value["defined_call_count"], defined);
++            assert_eq!(value["functions"][0]["function_index"], 0);
++            assert_eq!(value["functions"][0]["identity"], hex(&[7; 32]));
++            let call = &value["calls"][0];
++            assert_eq!(call["function_index"], 0);
++            assert_eq!(call["block_index"], 0);
++            assert_eq!(call["block_identity"], hex(&[7; 32]));
++            assert_eq!(call["callable_index"], 1);
++            assert_eq!(call["terminator_kind"], "Call");
++            if defined == 1 {
++                assert_eq!(call["callee_function_index"], 1);
++                assert_eq!(call["callable_kind"], "Defined");
++                assert_eq!(value["functions"][1]["identity"], hex(&[8; 32]));
++            } else {
++                assert!(call["callee_function_index"].is_null());
++                assert_eq!(call["callable_kind"], "NonDefined");
++            }
++            assert_eq!(value["canonical_decode_verified"], true);
++            for field in [
++                "execution_authority",
++                "production_admission",
++                "kir_binding_types_observed",
++            ] {
++                assert_eq!(value[field], false);
++            }
++        }
++        let fixture = fixture();
++        let raw = fixture.canonical_encoding();
++        let value = inspect_census_fixture(raw, &mapping(raw), CENSUS_LIMITS).unwrap();
++        assert_eq!(value["function_count"], 1);
++        assert_eq!(value["block_count"], 1);
++        assert_eq!(value["call_count"], 0);
++        assert_eq!(value["calls"], json!([]));
++    }
++
++    #[test]
++    fn census_count_and_output_limits_are_inclusive() {
++        let fixture = call_fixture(CallFixture::Copy, SemanticSourceProvenanceV1::unavailable());
++        let raw = fixture.canonical_encoding();
++        let map = mapping(raw);
++        let exact = CensusLimits {
++            functions: 2,
++            blocks: 3,
++            calls: 1,
++            ..CENSUS_LIMITS
++        };
++        let value = inspect_census_fixture(raw, &map, exact).unwrap();
++        let length = encode_output(&value).unwrap().len();
++        assert_eq!(
++            inspect_census_fixture(
++                raw,
++                &map,
++                CensusLimits {
++                    output_bytes: length,
++                    ..exact
++                }
++            )
++            .unwrap(),
++            value
++        );
++        for (limits, error) in [
++            (
++                CensusLimits {
++                    functions: 1,
++                    ..exact
++                },
++                "census function limit",
++            ),
++            (CensusLimits { blocks: 2, ..exact }, "census block limit"),
++            (CensusLimits { calls: 0, ..exact }, "census call limit"),
++            (
++                CensusLimits {
++                    output_bytes: length - 1,
++                    ..exact
++                },
++                "census output limit",
++            ),
++            (
++                CensusLimits {
++                    output_bytes: 0,
++                    ..exact
++                },
++                "census output limit",
++            ),
++        ] {
++            assert_eq!(
++                inspect_census_fixture(raw, &map, limits).unwrap_err(),
++                error
++            );
++        }
++        for limits in [
++            CensusLimits {
++                functions: CENSUS_LIMITS.functions + 1,
++                ..CENSUS_LIMITS
++            },
++            CensusLimits {
++                blocks: CENSUS_LIMITS.blocks + 1,
++                ..CENSUS_LIMITS
++            },
++            CensusLimits {
++                calls: CENSUS_LIMITS.calls + 1,
++                ..CENSUS_LIMITS
++            },
++            CensusLimits {
++                output_bytes: MAP_MAX,
++                ..CENSUS_LIMITS
++            },
++        ] {
++            assert_eq!(
++                inspect_census_fixture(raw, &map, limits).unwrap_err(),
++                "census limits exceed fixed bounds"
++            );
++        }
++    }
++
++    #[test]
++    fn census_preserves_capture_and_source_identity_checks() {
++        let file = [0x42; 32];
++        let span = SemanticSourceOriginV1::new(
++            SemanticSourceFileIdentityV1::from_sha256(file),
++            3,
++            9,
++            2,
++            4,
++            2,
++            10,
++        )
++        .unwrap();
++        let fixture = call_fixture(
++            CallFixture::Copy,
++            SemanticSourceProvenanceV1::new(None, Some(span)),
++        );
++        let raw = fixture.canonical_encoding();
++        let mut map = mapping(raw);
++        let unresolved = inspect_census_fixture(raw, &map, CENSUS_LIMITS).unwrap();
++        let missing = &unresolved["calls"][0]["call_site"];
++        assert_eq!(missing["map_resolution"], "FileAbsent");
++        assert_eq!(missing["file_identity"], hex(&file));
++        assert_eq!(missing["byte_range"], json!([3, 9]));
++        assert_eq!(missing["display_path"], Value::Null);
++        assert_eq!(missing["file_bytes"], Value::Null);
++        assert_eq!(missing["source_file_contents_verified"], false);
++        assert!(inspect_call_fixture(raw, &map, 0, 0).is_err());
++        map["files"] =
++            json!([{"identity": hex(&file), "byte_len": 9, "display_path": "/display-only.rs"}]);
++        let value = inspect_census_fixture(raw, &map, CENSUS_LIMITS).unwrap();
++        assert_eq!(value["calls"][0]["call_site"]["file_identity"], hex(&file));
++        assert_eq!(value["calls"][0]["call_site"]["byte_range"], json!([3, 9]));
++        assert_eq!(
++            value["functions"][0]["call_site"]["file_identity"],
++            hex(&file)
++        );
++        assert_eq!(
++            value["calls"][0]["call_site"]["source_file_contents_verified"],
++            false
++        );
++        let bytes = serde_json::to_vec(&map).unwrap();
++        assert!(
++            inspect_census(raw, &bytes, &hex(&[0; 32]), &digest(&bytes), CENSUS_LIMITS).is_err()
++        );
++        assert!(inspect_census(raw, &bytes, &digest(raw), &hex(&[0; 32]), CENSUS_LIMITS).is_err());
++        for changed in [raw[..raw.len() - 1].to_vec(), [raw, &[0]].concat()] {
++            assert!(inspect_census_fixture(&changed, &mapping(&changed), CENSUS_LIMITS).is_err());
++        }
++        map["files"][0]["identity"] = json!(hex(&[0x43; 32]));
++        let unmatched = inspect_census_fixture(raw, &map, CENSUS_LIMITS).unwrap();
++        assert_eq!(
++            unmatched["calls"][0]["call_site"]["map_resolution"],
++            "FileAbsent"
++        );
++        assert_eq!(
++            unmatched["calls"][0]["call_site"]["file_identity"],
++            hex(&file)
++        );
++        assert_eq!(
++            unmatched["calls"][0]["call_site"]["display_path"],
++            Value::Null
++        );
++        map["files"][0]["identity"] = json!(hex(&file));
++        map["files"][0]["byte_len"] = json!(8);
++        assert!(inspect_census_fixture(raw, &map, CENSUS_LIMITS).is_err());
++    }
++
++    #[test]
++    fn census_cli_is_closed_and_admitted_tail_calls_are_reported() {
++        let base = call_fixture(CallFixture::Copy, SemanticSourceProvenanceV1::unavailable());
++        let old = &base.functions()[0];
++        let SemanticTerminatorKindV1::Call(call) = old.blocks()[0].terminator().kind() else {
++            unreachable!();
++        };
++        let tail = SemanticDirectTailCallV1::new_callable(
++            call.callee(),
++            call.arguments().to_vec(),
++            call.unwind(),
++        )
++        .unwrap();
++        let caller = SemanticFunctionDeclV1::new(
++            old.identity(),
++            old.role(),
++            old.item_definition_identity(),
++            old.monomorphization_identity(),
++            old.generic_type_arguments_identity(),
++            old.const_generic_arguments_identity(),
++            old.source(),
++            old.abi().clone(),
++            old.locals().to_vec(),
++            old.entry(),
++            vec![
++                SemanticBasicBlockV1::new(
++                    old.blocks()[0].identity(),
++                    old.source(),
++                    vec![],
++                    SemanticTerminatorV1::new(
++                        old.source(),
++                        SemanticTerminatorKindV1::TailCall(tail),
++                    ),
++                )
++                .unwrap(),
++            ],
++        )
++        .unwrap();
++        let fixture = InertSemanticMirRequestV1::new(
++            base.target(),
++            base.types().to_vec(),
++            base.allocations().to_vec(),
++            base.statics().to_vec(),
++            base.vtables().to_vec(),
++            vec![caller, base.functions()[1].clone()],
++            base.roots().to_vec(),
++        )
++        .unwrap()
++        .admit_current_production(SemanticMirLimitsV1::default())
++        .unwrap();
++        let raw = fixture.canonical_encoding();
++        let map = mapping(raw);
++        let value = inspect_census_fixture(raw, &map, CENSUS_LIMITS).unwrap();
++        assert_eq!(value["block_count"], 2);
++        assert_eq!(value["calls"][0]["terminator_kind"], "TailCall");
++        assert_eq!(value["calls"][0]["callee_function_index"], 1);
++        assert_eq!(
++            inspect_call_fixture(raw, &map, 0, 0).unwrap_err(),
++            "selected terminator is not a call"
++        );
++        for args in [
++            vec![
++                "reader", "/unused", "/unused", "x", "y", "--census", "extra",
++            ],
++            vec![
++                "reader", "/unused", "/unused", "x", "y", "--census", "0", "0",
++            ],
++        ] {
++            let args = args.into_iter().map(str::to_owned).collect::<Vec<_>>();
++            assert!(run(&args).unwrap_err().starts_with("usage:"));
++        }
++    }
++
+     fn inspect_call_fixture(raw: &[u8], map: &Value, function: u32, block: u32) -> Result<Value> {
+         let bytes = serde_json::to_vec(map).unwrap();
+         inspect_call(raw, &bytes, &digest(raw), &digest(&bytes), function, block)

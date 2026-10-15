@@ -6,6 +6,22 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
+Latest diagnostic checkpoint: [bounded canonical call census](../qualification/guarded-mlp-semantic-census-v1/README.md)
+adds a read-only inventory mode with fixed function/block/call/output limits.
+On mi350 CPU8/9, all 18 tests and 15 owned phases pass; four historical
+helper/call stdout streams remain byte-identical. Both retained V17 captures
+now independently show two functions and 11 defined calls, all targeting
+`Bf16::is_finite`. The exact compile source snapshots and byte/coordinate
+join verify its body at `half.rs:209-211`; `complete_coverage` is no longer
+a defined helper. Missing expansion-map origins remain explicitly unresolved,
+with no invented path, extent or execution authority.
+
+The census does not prove a Kernel-IR-to-semantic call mapping or clear
+the compiler refusal. Next is an independently tested GPU-only inline
+candidate for the exact BF16 predicate, followed by the original compile
+pair. No worker compile or GPU job was submitted in this diagnostic step;
+both V17 failures and all execution/model/milestone gates remain unchanged.
+
 Latest worker checkpoint: [coverage helper GPU inlining](../qualification/guarded-mlp-coverage-inline-v1/README.md)
 adds one AMDGPU-only attribute, preserving the helper body and all call-effect
 checks, with a refreshed exact provider identity. The full MI350 CPU run
@@ -18,7 +34,8 @@ Both actual V17 worker compilations still exit naturally with status 1 and
 no HSACO. The local call-effect refusal now reports wave-replay root/body 0:
 Kernel IR block 486 (fixed) or 296 (early), operation 0. Changed coordinates
 alone do not establish the remaining callee or removal of a previous call;
-that exact diagnosis is next. CPU/probe services used CPU 8/9 and a 12 GiB
+the subsequent canonical census and exact source join above supply that
+separate evidence without a KIR correspondence claim. CPU/probe services used CPU 8/9 and a 12 GiB
 memory cap with swap disabled, and retired before export. No GPU/model
 correctness, performance or milestone completion is inferred.
 
