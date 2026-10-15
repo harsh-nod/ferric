@@ -1599,8 +1599,14 @@ mod tests {
             assert_eq!(prompt.as_ptr(), owner);
         }
         assert_eq!(preparation.kind(), preparation_kind);
-        assert_eq!(core::ptr::from_ref(preparation.target()), preparation_target);
-        assert_eq!(preparation.draft().map(core::ptr::from_ref), preparation_draft);
+        assert_eq!(
+            core::ptr::from_ref(preparation.target()),
+            preparation_target
+        );
+        assert_eq!(
+            preparation.draft().map(core::ptr::from_ref),
+            preparation_draft
+        );
         assert_eq!(recipe.kind(), recipe_kind);
         assert_eq!(core::ptr::from_ref(recipe.target()), recipe_target);
         assert_eq!(recipe.draft().map(core::ptr::from_ref), recipe_draft);
@@ -1792,10 +1798,7 @@ mod tests {
                 policies,
                 preparation,
                 recipe,
-                M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::ContextExceeded {
-                    lane,
-                    output,
-                },
+                M1AuthenticatedS8T128PrefillBootstrapInputErrorV1::ContextExceeded { lane, output },
             );
         }
     }

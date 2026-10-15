@@ -9695,10 +9695,10 @@ mod tests {
         use ferric_engine::{
             execute_m1_authenticated_s8_t128_paired_prefill_v1,
             prepare_m1_authenticated_s8_t128_prefill_prepublication_v1,
-            M1AuthenticatedS8FirstRoundInputsV1,
-            M1AuthenticatedS8T128PrefillBootstrapInputV1, M1QueueWaitTimeoutV1,
-            M1SpeculativeCancellationReasonV1, M1SpeculativeGenerationPolicyV1,
-            M1SpeculativeMemberControlV1, M1SpeculativeMemberStatusV1,
+            M1AuthenticatedS8FirstRoundInputsV1, M1AuthenticatedS8T128PrefillBootstrapInputV1,
+            M1QueueWaitTimeoutV1, M1SpeculativeCancellationReasonV1,
+            M1SpeculativeGenerationPolicyV1, M1SpeculativeMemberControlV1,
+            M1SpeculativeMemberStatusV1,
         };
         use ferric_spec::completion::CompletionEpoch;
 
@@ -9832,7 +9832,10 @@ mod tests {
         assert_eq!(outcome.members().len(), 2);
         assert_eq!(outcome.members()[0].request(), requests[0]);
         assert_eq!(outcome.members()[1].request(), requests[1]);
-        assert_eq!(outcome.members()[0].status(), M1SpeculativeMemberStatusV1::Active);
+        assert_eq!(
+            outcome.members()[0].status(),
+            M1SpeculativeMemberStatusV1::Active
+        );
         assert_eq!(
             outcome.members()[0].physical_disposition(),
             M1DeviceKvCompletionDispositionV1::Continue

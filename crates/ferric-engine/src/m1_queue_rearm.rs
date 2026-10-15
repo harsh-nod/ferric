@@ -32,25 +32,23 @@ use fe2o3_service_host::{
 };
 use ferric_build::{AddresslessM1StepWorkspacePlan, M1StepWorkspaceRange};
 use ferric_spec::{
-    M1_KV_PAGE_TOKENS, M1_MAX_ACTIVE_SEQUENCES, Qwen3ExecutionMode, Qwen3PlanSelection, RequestId,
-    completion::CompletionEpoch, scheduling::RequestState,
+    completion::CompletionEpoch, scheduling::RequestState, Qwen3ExecutionMode, Qwen3PlanSelection,
+    RequestId, M1_KV_PAGE_TOKENS, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::physical_buffer_bindings::{
-    SpeculativeDiagnosticChoiceSourceRouteV1, speculative_diagnostic_choice_source_route,
+    speculative_diagnostic_choice_source_route, SpeculativeDiagnosticChoiceSourceRouteV1,
 };
 use crate::physical_fixed_batch::M1PhysicalQueueBatchRearmPartsV1;
 use crate::step_workspace_subleases::{
-    M1QueueReplacedWorkspaceBindingFailureV1, bind_queue_replaced_m1_step_workspace,
+    bind_queue_replaced_m1_step_workspace, M1QueueReplacedWorkspaceBindingFailureV1,
 };
 use crate::{
-    ActiveDeviceKvCache, AddresslessM1FullStepWorkspaceComposition,
-    AddresslessM1PhysicalBufferRecipeV1, BoundM1StepWorkspaceSubleases,
-    ContentBoundM1ProgramCatalogV1, Engine, EngineError, Gfx942DeviceBinding,
-    LogicalRunnerDeclaration, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1,
-    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
-    M1BoundPhysicalBufferRowV1, M1CompletedKvPageReleaseCountsV1, M1ExactDispatchErrorV1,
+    prepare_m1_scheduled_workspace_images_v1, ActiveDeviceKvCache,
+    AddresslessM1FullStepWorkspaceComposition, AddresslessM1PhysicalBufferRecipeV1,
+    BoundM1StepWorkspaceSubleases, ContentBoundM1ProgramCatalogV1, Engine, EngineError,
+    Gfx942DeviceBinding, LogicalRunnerDeclaration, M1BoundPhysicalBufferRowV1,
+    M1CompletedKvPageReleaseCountsV1, M1ExactDispatchErrorV1,
     M1FiniteSpeculativeRolloverOutputPortfolioStateV1, M1FullStepKvWorkspaceTablesV1,
     M1FullStepWorkspaceImagesV1, M1FullStepWorkspaceInputKind, M1FullStepWorkspacePlans,
     M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseOwners, M1InitializedWorkspaceSlotV1,
@@ -62,7 +60,9 @@ use crate::{
     M1PreparedScheduledWorkspaceImagesV1, M1PrepublicationStepCustodyV1, M1ReleasedCompletedStepV1,
     M1ReleasedDeviceKvMemberV1, M1ReleasedTerminalDeviceKvMemberV1, M1ScheduledDispatchV1,
     M1ServingBatchPlanV1, M1ServingPlanV1, M1ServingQueueActionV1,
-    M1ServingQueuedPairedPrefillNewWindowV1, prepare_m1_scheduled_workspace_images_v1,
+    M1ServingQueuedPairedPrefillNewWindowV1, M1_PAIRED_PREFILL_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K16_FIXED_BATCH_PACKETS_V1, M1_SPECULATIVE_K4_FIXED_BATCH_PACKETS_V1,
+    M1_SPECULATIVE_K8_FIXED_BATCH_PACKETS_V1, M1_TARGET_ONLY_FIXED_BATCH_PACKETS_V1,
 };
 
 /// Stable rejection before a fresh workspace replacement begins.
@@ -13173,8 +13173,8 @@ mod tests {
     use ferric_spec::{Identity, Qwen3ModelRole, Qwen3PlanBucket};
     use stats_alloc::Region;
     use std::sync::{
-        Arc,
         atomic::{AtomicUsize, Ordering},
+        Arc,
     };
 
     #[test]
@@ -14353,39 +14353,31 @@ mod tests {
                 let request = RearmRangeRequestV1::RetainedEngineeringFinalRms { workspace };
                 assert!(validate_engineering_final_rms_request(request, 4, target).is_ok());
                 assert!(validate_engineering_final_rms_request(request, 3, target).is_err());
-                assert!(
-                    validate_engineering_final_rms_request(
-                        request,
-                        4,
-                        Qwen3PlanSelection {
-                            role: Qwen3ModelRole::Draft06B,
-                            ..target
-                        }
-                    )
-                    .is_err()
-                );
-                assert!(
-                    validate_engineering_final_rms_request(
-                        request,
-                        4,
-                        selection(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128)
-                    )
-                    .is_err()
-                );
+                assert!(validate_engineering_final_rms_request(
+                    request,
+                    4,
+                    Qwen3PlanSelection {
+                        role: Qwen3ModelRole::Draft06B,
+                        ..target
+                    }
+                )
+                .is_err());
+                assert!(validate_engineering_final_rms_request(
+                    request,
+                    4,
+                    selection(Qwen3ExecutionMode::Prefill, Qwen3PlanBucket::PrefillS1T128)
+                )
+                .is_err());
                 let mut count = RearmRangeSelectionV1::new(&ordinary.semantic);
                 assert!(count.select_fresh(request, None, ordinary).is_err());
                 let mut count = RearmRangeSelectionV1::new(&extended.semantic);
-                assert!(
-                    count
-                        .select(request, Range::Capture(999), None, extended, extended)
-                        .is_err()
-                );
+                assert!(count
+                    .select(request, Range::Capture(999), None, extended, extended)
+                    .is_err());
             }
-            assert!(
-                RearmRangeSelectionV1::new(&extended.semantic)
-                    .validate()
-                    .is_err()
-            );
+            assert!(RearmRangeSelectionV1::new(&extended.semantic)
+                .validate()
+                .is_err());
         }
 
         #[test]
@@ -14482,11 +14474,9 @@ mod tests {
                                 &capture.semantic,
                             )
                             .unwrap();
-                            assert!(
-                                RearmRangeSelectionV1::new(&capture.semantic)
-                                    .select_fresh::<Range>(request, None, capture)
-                                    .is_err()
-                            );
+                            assert!(RearmRangeSelectionV1::new(&capture.semantic)
+                                .select_fresh::<Range>(request, None, capture)
+                                .is_err());
                         }
                         Range::Retained(key) => {
                             assert_eq!(key, source);
@@ -14545,14 +14535,12 @@ mod tests {
                     }
                 ) && *bound == choices[0].1
             }));
-            assert!(
-                requested_workspace_range(
-                    M1PhysicalBufferSourceV1::DraftCatchupChoices(choices[0].0),
-                    speculative.workspace_composition(),
-                    &ordinary.semantic,
-                )
-                .is_err()
-            );
+            assert!(requested_workspace_range(
+                M1PhysicalBufferSourceV1::DraftCatchupChoices(choices[0].0),
+                speculative.workspace_composition(),
+                &ordinary.semantic,
+            )
+            .is_err());
 
             // Maintenance omits target model/KV sources; restoration needs the saved roster.
             let missing_target = saved
@@ -14567,11 +14555,9 @@ mod tests {
                     )
                 })
                 .unwrap();
-            assert!(
-                !maintenance
-                    .iter()
-                    .any(|(source, _)| *source == missing_target.0)
-            );
+            assert!(!maintenance
+                .iter()
+                .any(|(source, _)| *source == missing_target.0));
             assert!(route(&speculative, &maintenance, &diagnostic, 13).is_err());
             let mut inconsistent = saved.clone();
             let duplicate = inconsistent
@@ -14716,17 +14702,15 @@ mod tests {
             .map(|(_, buffer)| buffer)
             .expect("direct choice source exists");
         hostile_choice.range = 999_999;
-        assert!(
-            rebuild_bound_row_ranges(
-                source_rows,
-                &hostile,
-                composition,
-                generation_one_capture,
-                generation_two_capture,
-                |workspace, _| Ok((workspace, 30_000)),
-            )
-            .is_err()
-        );
+        assert!(rebuild_bound_row_ranges(
+            source_rows,
+            &hostile,
+            composition,
+            generation_one_capture,
+            generation_two_capture,
+            |workspace, _| Ok((workspace, 30_000)),
+        )
+        .is_err());
     }
 
     #[test]
@@ -14981,61 +14965,54 @@ mod tests {
             }
         }
         assert!(substituted);
-        assert!(
-            rebuild_bound_row_ranges(
-                source_rows,
-                &hostile,
-                composition,
-                retained,
-                retained,
-                |workspace, _| Ok((workspace, 30_000)),
-            )
-            .is_err()
-        );
+        assert!(rebuild_bound_row_ranges(
+            source_rows,
+            &hostile,
+            composition,
+            retained,
+            retained,
+            |workspace, _| Ok((workspace, 30_000)),
+        )
+        .is_err());
 
         let mut substituted_role = false;
-        assert!(
-            rebuild_bound_row_ranges(
-                source_rows,
-                &generation_one,
-                composition,
-                retained,
-                retained,
-                |workspace, _| {
-                    substituted_role = true;
-                    let hostile = match workspace {
-                        M1FullStepWorkspaceRole::Draft => M1FullStepWorkspaceRole::Target,
-                        M1FullStepWorkspaceRole::Target => M1FullStepWorkspaceRole::Draft,
-                    };
-                    Ok((hostile, 40_000))
-                },
-            )
-            .is_err()
-        );
+        assert!(rebuild_bound_row_ranges(
+            source_rows,
+            &generation_one,
+            composition,
+            retained,
+            retained,
+            |workspace, _| {
+                substituted_role = true;
+                let hostile = match workspace {
+                    M1FullStepWorkspaceRole::Draft => M1FullStepWorkspaceRole::Target,
+                    M1FullStepWorkspaceRole::Target => M1FullStepWorkspaceRole::Draft,
+                };
+                Ok((hostile, 40_000))
+            },
+        )
+        .is_err());
         assert!(substituted_role);
 
         let mut retained_logits_seen = 0;
-        assert!(
-            rebuild_bound_row_ranges_with_requests(
-                source_rows,
-                &old_rows,
-                retained,
-                retained,
-                |source| {
-                    let request =
-                        requested_workspace_range(source, composition, &retained.semantic)?;
-                    if request == RearmRangeRequestV1::RetainedQualificationLogits {
-                        retained_logits_seen += 1;
-                        if retained_logits_seen == 2 {
-                            return Ok(RearmRangeRequestV1::Unchanged);
-                        }
+        assert!(rebuild_bound_row_ranges_with_requests(
+            source_rows,
+            &old_rows,
+            retained,
+            retained,
+            |source| {
+                let request = requested_workspace_range(source, composition, &retained.semantic)?;
+                if request == RearmRangeRequestV1::RetainedQualificationLogits {
+                    retained_logits_seen += 1;
+                    if retained_logits_seen == 2 {
+                        return Ok(RearmRangeRequestV1::Unchanged);
                     }
-                    Ok(request)
-                },
-                |workspace, _| Ok((workspace, 50_000)),
-            )
-            .is_err()
-        );
+                }
+                Ok(request)
+            },
+            |workspace, _| Ok((workspace, 50_000)),
+        )
+        .is_err());
         assert_eq!(retained_logits_seen, 2);
 
         let mut too_many_old = old_rows.clone();
@@ -15055,28 +15032,25 @@ mod tests {
         }
         assert!(rewrote_fresh_range);
         let mut injected_extra_logits = false;
-        assert!(
-            rebuild_bound_row_ranges_with_requests(
-                source_rows,
-                &too_many_old,
-                retained,
-                retained,
-                |source| {
-                    let request =
-                        requested_workspace_range(source, composition, &retained.semantic)?;
-                    if !injected_extra_logits
-                        && matches!(request, RearmRangeRequestV1::FreshWorkspace(_, _))
-                    {
-                        injected_extra_logits = true;
-                        Ok(RearmRangeRequestV1::RetainedQualificationLogits)
-                    } else {
-                        Ok(request)
-                    }
-                },
-                |workspace, _| Ok((workspace, 60_000)),
-            )
-            .is_err()
-        );
+        assert!(rebuild_bound_row_ranges_with_requests(
+            source_rows,
+            &too_many_old,
+            retained,
+            retained,
+            |source| {
+                let request = requested_workspace_range(source, composition, &retained.semantic)?;
+                if !injected_extra_logits
+                    && matches!(request, RearmRangeRequestV1::FreshWorkspace(_, _))
+                {
+                    injected_extra_logits = true;
+                    Ok(RearmRangeRequestV1::RetainedQualificationLogits)
+                } else {
+                    Ok(request)
+                }
+            },
+            |workspace, _| Ok((workspace, 60_000)),
+        )
+        .is_err());
         assert!(injected_extra_logits);
     }
 

@@ -9,15 +9,17 @@ use core::fmt;
 
 use ferric_build::AddresslessM1StepWorkspacePlan;
 use ferric_spec::{
-    Identity, M1_MAX_ACTIVE_SEQUENCES, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-    Qwen3PlanSelection, RequestId, StepPlan, ValidatedM1StepInputs,
+    Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId,
+    StepPlan, ValidatedM1StepInputs, M1_MAX_ACTIVE_SEQUENCES,
 };
 
 use crate::physical_fixed_batch::{
-    M1AuthenticatedPhysicalPacketBatchV1, build_m1_authenticated_physical_packet_batch_v1,
+    build_m1_authenticated_physical_packet_batch_v1, M1AuthenticatedPhysicalPacketBatchV1,
 };
 use crate::{
-    AddresslessM1PhysicalBufferRecipeV1, BoundM1CompletionOutputV1, BoundM1KvWorkspaceTableV1,
+    bind_m1_physical_buffer_ranges_v1, build_m1_physical_fixed_batch_v1,
+    compose_m1_step_workspace_image_v1, AddresslessM1PhysicalBufferRecipeV1,
+    BoundM1CompletionOutputV1, BoundM1KvWorkspaceTableV1,
     BoundM1SpeculativeDraftKvRoundWorkspaceTableV1, ComposedM1FullStepWorkspaceSetV1,
     ComposedM1StepWorkspaceImageV1, ContentBoundM1ProgramCatalogV1, Gfx942DeviceBinding,
     InitializedM1FullStepWorkspaceAllocationFailureV1,
@@ -29,8 +31,7 @@ use crate::{
     M1PhysicalFixedBatchBuildFailureV1, M1PhysicalFixedBatchShapeV1, M1PhysicalFixedBatchV1,
     M1ScheduledDispatchV1, M1SpeculativeDraftKvRoundReservationCustodyV1,
     M1StepWorkspaceImageCompositionFailureV1, M1StepWorkspaceImageCompositionOutcomeV1,
-    PendingDeviceKvStepWrite, bind_m1_physical_buffer_ranges_v1, build_m1_physical_fixed_batch_v1,
-    compose_m1_step_workspace_image_v1,
+    PendingDeviceKvStepWrite,
 };
 
 const MAX_LANES: usize = M1_MAX_ACTIVE_SEQUENCES as usize;
@@ -1996,7 +1997,7 @@ mod tests {
     };
     use ferric_spec::completion::CompletionEpoch;
     use ferric_spec::{
-        Identity, M1StepInputCandidate, M1StepInputValidationOutcome, validate_m1_step_inputs,
+        validate_m1_step_inputs, Identity, M1StepInputCandidate, M1StepInputValidationOutcome,
     };
 
     use super::*;
@@ -2225,14 +2226,12 @@ mod tests {
         let (draft, k) = speculative_draft_selection(speculative_target).unwrap();
         assert_eq!(draft.bucket, Qwen3PlanBucket::DecodeS1C8192);
         assert_eq!(k, 16);
-        assert!(
-            speculative_draft_selection(selection(
-                Qwen3ModelRole::Target8B,
-                Qwen3ExecutionMode::Decode,
-                Qwen3PlanBucket::DecodeS1C8192,
-            ))
-            .is_none()
-        );
+        assert!(speculative_draft_selection(selection(
+            Qwen3ModelRole::Target8B,
+            Qwen3ExecutionMode::Decode,
+            Qwen3PlanBucket::DecodeS1C8192,
+        ))
+        .is_none());
 
         let request = RequestId::new(0, 1);
         let epoch = CompletionEpoch::new(1);
