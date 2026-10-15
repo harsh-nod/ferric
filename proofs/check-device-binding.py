@@ -302,11 +302,100 @@ def canonical_invocation(
     return matches[0]
 
 
+def rust_build_tokens(source: str) -> list[str]:
+    """Tokenize the restricted build-script emitter form, excluding comments."""
+    tokens: list[str] = []
+    cursor = 0
+    while cursor < len(source):
+        if source[cursor].isspace():
+            cursor += 1
+        elif source.startswith("//", cursor):
+            end = source.find("\n", cursor)
+            cursor = len(source) if end < 0 else end + 1
+        elif source.startswith("/*", cursor):
+            depth = 1
+            cursor += 2
+            while depth and cursor < len(source):
+                if source.startswith("/*", cursor):
+                    depth += 1
+                    cursor += 2
+                elif source.startswith("*/", cursor):
+                    depth -= 1
+                    cursor += 2
+                else:
+                    cursor += 1
+            if depth:
+                raise ValueError("unterminated build-script comment")
+        elif match := re.match(r'r(#{0,255})"', source[cursor:]):
+            end = source.find('"' + match[1], cursor + len(match[0]))
+            if end < 0:
+                raise ValueError("unterminated raw build-script string")
+            end += 1 + len(match[1])
+            tokens.append(source[cursor:end])
+            cursor = end
+        elif source[cursor] == '"':
+            end = cursor + 1
+            while end < len(source):
+                if source[end] == "\\":
+                    end += 2
+                elif source[end] == '"':
+                    end += 1
+                    break
+                else:
+                    end += 1
+            else:
+                raise ValueError("unterminated build-script string")
+            tokens.append(source[cursor:end])
+            cursor = end
+        elif match := re.match(r"[A-Za-z_][A-Za-z_0-9]*", source[cursor:]):
+            tokens.append(match[0])
+            cursor += len(match[0])
+        else:
+            tokens.append(source[cursor])
+            cursor += 1
+    return tokens
+
+
+def fallback_binding_source(source: str) -> str:
+    tokens = rust_build_tokens(source)
+    mains = [index for index in range(len(tokens) - 4)
+             if tokens[index:index + 5] == ["fn", "main", "(", ")", "{"]]
+    if len(mains) != 1 or (mains[0] and tokens[mains[0] - 1] not in (";", "}")):
+        raise ValueError("expected one unconditional, unattributed main")
+    start = mains[0] + 5
+    depth, end = 1, start
+    while end < len(tokens) and depth:
+        depth += (tokens[end] == "{") - (tokens[end] == "}")
+        end += 1
+    if depth:
+        raise ValueError("unclosed build-script main")
+    body = tokens[start:end - 1]
+    key = "FE2O3_CRATE_BINDING_ID_V1"
+    keyed = [index for index, token in enumerate(tokens) if key in token]
+    if len(keyed) != 1:
+        raise ValueError(f"expected exactly one keyed binding literal, found {len(keyed)}")
+    index = keyed[0]
+    match = re.fullmatch(r'"cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=([0-9a-f]{64})"', tokens[index])
+    if match is None or not start + 3 <= index < end - 1:
+        raise ValueError("malformed or non-main binding emitter")
+    emitter = ["println", "!", "(", tokens[index], ")", ";"]
+    offset = index - start - 3
+    if body[offset:] != emitter:
+        raise ValueError("binding must be the final direct println statement")
+    guard = rust_build_tokens(
+        'if std::env::var_os("FE2O3_BINDING_CHECK_WRAPPER_MODE_V1").is_some()'
+        ' || std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1").is_some() { return; }'
+    )
+    if body[max(0, offset - len(guard)):offset] != guard or body.count("return") != 1:
+        raise ValueError("binding emitter lost its sole managed-wrapper suppression guard")
+    return match[1]
+
+
 def fallback_binding(workspace: Path) -> str:
-    matches = re.findall(r'"([0-9a-f]{64})"', (workspace / "build.rs").read_text())
-    if len(matches) != 1:
-        fail(f"expected one canonical fallback binding, found {len(matches)}")
-    return matches[0]
+    try:
+        return fallback_binding_source((workspace / "build.rs").read_text())
+    except ValueError as error:
+        fail(f"invalid canonical fallback emitter: {error}")
 
 
 def binding_parity_error(derived: str, fallback: str) -> str | None:
@@ -517,6 +606,44 @@ def self_test() -> None:
         == portable
     ):
         fail("target substitution did not change portable metadata")
+    guard = (
+        'if std::env::var_os("FE2O3_BINDING_CHECK_WRAPPER_MODE_V1").is_some()'
+        ' || std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1").is_some() { return; }'
+    )
+    emitter = f'println!("cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1={golden}");'
+    canonical = "fn main() {" + guard + emitter + "}"
+    if fallback_binding_source(canonical) != golden:
+        fail("actual keyed fallback emitter was not extracted")
+    if fallback_binding_source("/* retained comment */" + canonical) != golden:
+        fail("comments outside the real emitter changed extraction")
+    hostile_sources = [
+        "fn main() {}",
+        "fn main() {" + guard + emitter + emitter + "}",
+        canonical.replace(golden, "0" * 63),
+        canonical.replace(golden, "g" * 64),
+        canonical.replace("FE2O3_CRATE_BINDING_ID_V1=", "WRONG_BINDING_ID="),
+        "fn main() { //" + emitter + "\n}",
+        "fn main() { /*" + emitter + "*/ }",
+        "fn main() { /* outer /*" + emitter + "*/ */ }",
+        canonical.replace('println!("cargo:', 'println!(r"cargo:'),
+        canonical.replace(emitter, 'println!("{}", ' + emitter[len("println!("):-2] + ");"),
+        "fn main() {} fn fake() {" + guard + emitter + "}",
+        "#[cfg(any())] " + canonical,
+        "fn main() {" + guard + "if false {" + emitter + "}}",
+        canonical.replace("fn main() {", "fn main() {return;"),
+        canonical.replace(guard, ""),
+        canonical.replace(emitter, "#[cfg(any())] " + emitter),
+        canonical.replace(emitter, 'let fake = "cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=' + golden + '";'),
+    ]
+    for index, source in enumerate(hostile_sources):
+        try:
+            fallback_binding_source(source)
+        except ValueError:
+            continue
+        fail(f"fallback parser accepted hostile emitter {index}")
+    wrong_value = fallback_binding_source(canonical.replace(golden, hostile))
+    if binding_parity_error(golden, wrong_value) is None:
+        fail("a validly shaped wrong fallback escaped independent binding parity")
     print("PASS: device binding parser and portable derivation vectors matched")
 
 

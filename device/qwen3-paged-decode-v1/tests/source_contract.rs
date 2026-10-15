@@ -40,6 +40,293 @@ fn compact_tokens(tokens: impl quote::ToTokens) -> String {
         .collect()
 }
 
+fn local_expression<'a>(kernel: &'a ItemFn, name: &str) -> Result<(usize, &'a Expr), String> {
+    let found: Vec<_> = kernel
+        .block
+        .stmts
+        .iter()
+        .enumerate()
+        .filter_map(|(index, stmt)| {
+            let Stmt::Local(local) = stmt else {
+                return None;
+            };
+            let syn::Pat::Ident(pattern) = &local.pat else {
+                return None;
+            };
+            (pattern.ident == name)
+                .then_some((index, local.init.as_ref().map(|init| init.expr.as_ref())))
+        })
+        .collect();
+    match found.as_slice() {
+        [(index, Some(expr))] => Ok((*index, *expr)),
+        _ => Err(format!("missing/duplicate/uninitialized coordinate {name}")),
+    }
+}
+
+fn validate_literal_coordinates(kernel: &ItemFn) -> Result<(), String> {
+    let expected = [
+        (
+            "case_target_decode_s1",
+            "q.len() == 4_096 && pages.len() == 512 && committed.len() == 1",
+        ),
+        (
+            "case_target_decode_s8",
+            "q.len() == 32_768 && pages.len() == 4_096 && committed.len() == 8",
+        ),
+        (
+            "case_target_decode_s32",
+            "q.len() == 131_072 && pages.len() == 16_384 && committed.len() == 32",
+        ),
+        (
+            "case_target_spec_s1k4",
+            "q.len() == 20_480 && pages.len() == 512 && committed.len() == 1",
+        ),
+        (
+            "case_target_spec_s8k4",
+            "q.len() == 163_840 && pages.len() == 4_096 && committed.len() == 8",
+        ),
+        (
+            "case_target_spec_s1k8",
+            "q.len() == 36_864 && pages.len() == 512 && committed.len() == 1",
+        ),
+        (
+            "case_target_spec_s1k16",
+            "q.len() == 69_632 && pages.len() == 512 && committed.len() == 1",
+        ),
+        (
+            "case_draft_decode_s1",
+            "q.len() == 2_048 && pages.len() == 512 && committed.len() == 1",
+        ),
+        (
+            "case_draft_decode_s8",
+            "q.len() == 16_384 && pages.len() == 4_096 && committed.len() == 8",
+        ),
+        (
+            "case_draft_decode_s32",
+            "q.len() == 65_536 && pages.len() == 16_384 && committed.len() == 32",
+        ),
+        (
+            "case_draft_spec_s1k4",
+            "q.len() == 8_192 && pages.len() == 512 && committed.len() == 1",
+        ),
+        (
+            "case_draft_spec_s8k4",
+            "q.len() == 65_536 && pages.len() == 4_096 && committed.len() == 8",
+        ),
+        (
+            "case_draft_spec_s1k8",
+            "q.len() == 16_384 && pages.len() == 512 && committed.len() == 1",
+        ),
+        (
+            "case_draft_spec_s1k16",
+            "q.len() == 32_768 && pages.len() == 512 && committed.len() == 1",
+        ),
+        (
+            "target",
+            "case_target_decode_s1 || case_target_decode_s8 || case_target_decode_s32 || case_target_spec_s1k4 || case_target_spec_s8k4 || case_target_spec_s1k8 || case_target_spec_s1k16",
+        ),
+        (
+            "draft",
+            "case_draft_decode_s1 || case_draft_decode_s8 || case_draft_decode_s32 || case_draft_spec_s1k4 || case_draft_spec_s8k4 || case_draft_spec_s1k8 || case_draft_spec_s1k16",
+        ),
+        (
+            "sequences",
+            "if case_target_decode_s32 || case_draft_decode_s32 {32} else if case_target_decode_s8 || case_target_spec_s8k4 || case_draft_decode_s8 || case_draft_spec_s8k4 {8} else {1}",
+        ),
+        ("query_heads", "if target {32} else {16}"),
+        ("gqa_group_size", "if target {4} else {2}"),
+        (
+            "active_tokens",
+            "if case_target_decode_s1 || case_target_decode_s8 || case_target_decode_s32 || case_draft_decode_s1 || case_draft_decode_s8 || case_draft_decode_s32 {1} else if case_draft_spec_s1k4 || case_draft_spec_s8k4 {4} else if case_target_spec_s1k4 || case_target_spec_s8k4 {5} else if case_draft_spec_s1k8 {8} else if case_target_spec_s1k8 {9} else if case_draft_spec_s1k16 {16} else {17}",
+        ),
+        ("workitem", "thread::index_1d()"),
+        ("global", "workitem.get()"),
+        ("vector", "global / 64"),
+        ("local", "global % 64"),
+        ("query_head", "if target {vector % 32} else {vector % 16}"),
+        ("position", "if target {vector / 32} else {vector / 16}"),
+        (
+            "query_token",
+            "if active_tokens == 1 {0} else if active_tokens == 4 {position % 4} else if active_tokens == 5 {position % 5} else if active_tokens == 8 {position % 8} else if active_tokens == 9 {position % 9} else if active_tokens == 16 {position % 16} else {position % 17}",
+        ),
+        (
+            "sequence",
+            "if active_tokens == 1 {position} else if active_tokens == 4 {position / 4} else if active_tokens == 5 {position / 5} else if active_tokens == 8 {position / 8} else if active_tokens == 9 {position / 9} else if active_tokens == 16 {position / 16} else {position / 17}",
+        ),
+        (
+            "kv_head",
+            "if target {query_head / 4} else {query_head / 2}",
+        ),
+    ];
+    let mut previous = None;
+    for (name, expression) in expected {
+        let (index, actual) = local_expression(kernel, name)?;
+        let expected: Expr = syn::parse_str(expression).expect("fixed expression parses");
+        if compact_tokens(actual) != compact_tokens(expected)
+            || previous.is_some_and(|p| p >= index)
+        {
+            return Err(format!("closed coordinate expression/order drift: {name}"));
+        }
+        previous = Some(index);
+        if [
+            "workitem",
+            "global",
+            "vector",
+            "local",
+            "query_head",
+            "position",
+            "query_token",
+            "sequence",
+            "kv_head",
+        ]
+        .contains(&name)
+        {
+            for prior in &kernel.block.stmts[..index] {
+                let text = quote::ToTokens::to_token_stream(prior).to_string();
+                if text
+                    .split(|c: char| !c.is_ascii_alphanumeric() && c != '_')
+                    .any(|word| word == name)
+                {
+                    return Err(format!(
+                        "coordinate use precedes its guarded definition: {name}"
+                    ));
+                }
+            }
+        }
+    }
+    let guard = |expression: &str| -> Result<usize, String> {
+        let expected: Expr = syn::parse_str(expression).expect("fixed guard parses");
+        let expected = compact_tokens(expected);
+        let indices: Vec<_> = kernel
+            .block
+            .stmts
+            .iter()
+            .enumerate()
+            .filter_map(|(index, stmt)| {
+                let Stmt::Expr(expr, _) = stmt else {
+                    return None;
+                };
+                (compact_tokens(expr) == expected).then_some(index)
+            })
+            .collect();
+        if indices.len() != 1 {
+            return Err(format!("missing/duplicate guard {expected}"));
+        }
+        Ok(indices[0])
+    };
+    let shape = guard(
+        "if !(target || draft) || k.len() != QWEN3_PAGED_DECODE_CACHE_ELEMENTS_V1 || v.len() != QWEN3_PAGED_DECODE_CACHE_ELEMENTS_V1 || output.len() != q.len() {fe2o3_device::trap();}",
+    )?;
+    let heads = guard("if query_heads == 0 {fe2o3_device::trap();}")?;
+    let tokens = guard("if active_tokens == 0 {fe2o3_device::trap();}")?;
+    let gqa = guard("if gqa_group_size == 0 {fe2o3_device::trap();}")?;
+    let extent = guard("if global >= q.len() / 2 {fe2o3_device::trap();}")?;
+    if !(local_expression(kernel, "draft")?.0 < shape
+        && shape < local_expression(kernel, "sequences")?.0
+        && local_expression(kernel, "active_tokens")?.0 < heads
+        && heads < tokens
+        && tokens < gqa
+        && gqa < local_expression(kernel, "workitem")?.0
+        && local_expression(kernel, "global")?.0 < extent
+        && extent < local_expression(kernel, "vector")?.0)
+    {
+        return Err("profile/zero/extent guards do not dominate coordinate arithmetic".into());
+    }
+    for stmt in &kernel.block.stmts[..=gqa] {
+        let text = quote::ToTokens::to_token_stream(stmt).to_string();
+        if text
+            .split_whitespace()
+            .any(|token| token == "/" || token == "%")
+            || compact_tokens(stmt).contains("thread::index_1d(")
+        {
+            return Err(
+                "division/remainder/workitem before complete profile authentication".into(),
+            );
+        }
+    }
+    if !compact_tokens(&kernel.block).contains(
+        "letSome(output_pair)=workitem.checked_block::<1,2>()else{fe2o3_device::trap();};",
+    ) {
+        return Err("output pair checked extent drift".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn literal_coordinate_mutations_fail_closed() {
+    let original = kernel();
+    assert!(validate_literal_coordinates(&original).is_ok());
+    let mutations = [
+        ("query_head", "if target {vector % 16} else {vector % 32}"),
+        ("query_head", "if target {vector % 0} else {vector % 16}"),
+        ("query_head", "if draft {vector % 32} else {vector % 16}"),
+        ("position", "if target {vector % 32} else {vector / 16}"),
+        (
+            "kv_head",
+            "if target {query_head / 2} else {query_head / 4}",
+        ),
+        ("query_token", "position % 1"),
+        ("sequence", "position % 1"),
+        ("query_heads", "if target {0} else {16}"),
+        ("gqa_group_size", "if target {4} else {0}"),
+        ("active_tokens", "0"),
+        (
+            "case_target_decode_s1",
+            "q.len() == 1 && pages.len() == 512",
+        ),
+    ];
+    for (name, expression) in mutations {
+        let mut changed = original.clone();
+        let index = local_expression(&changed, name).unwrap().0;
+        let Stmt::Local(local) = &mut changed.block.stmts[index] else {
+            unreachable!();
+        };
+        local.init.as_mut().unwrap().expr = Box::new(syn::parse_str(expression).unwrap());
+        assert!(
+            validate_literal_coordinates(&changed).is_err(),
+            "accepted hostile {name}: {expression}"
+        );
+    }
+    let guard_text = compact_tokens(
+        syn::parse_str::<Expr>("if query_heads == 0 {fe2o3_device::trap();}").unwrap(),
+    );
+    let index = original
+        .block
+        .stmts
+        .iter()
+        .position(|stmt| compact_tokens(stmt) == guard_text)
+        .unwrap();
+    let mut missing = original.clone();
+    missing.block.stmts.remove(index);
+    assert!(validate_literal_coordinates(&missing).is_err());
+    let mut duplicate = original.clone();
+    duplicate
+        .block
+        .stmts
+        .insert(index, original.block.stmts[index].clone());
+    assert!(validate_literal_coordinates(&duplicate).is_err());
+    let mut late = original.clone();
+    let moved = late.block.stmts.remove(index);
+    let workitem = local_expression(&late, "workitem").unwrap().0;
+    late.block.stmts.insert(workitem + 1, moved);
+    assert!(validate_literal_coordinates(&late).is_err());
+    let mut early = original.clone();
+    early
+        .block
+        .stmts
+        .insert(0, syn::parse_str("let hostile = vector % 32;").unwrap());
+    assert!(validate_literal_coordinates(&early).is_err());
+    let extent = original
+        .block
+        .stmts
+        .iter()
+        .position(|stmt| compact_tokens(stmt) == "ifglobal>=q.len()/2{fe2o3_device::trap();}")
+        .unwrap();
+    let mut wrong_extent = original.clone();
+    wrong_extent.block.stmts[extent] =
+        syn::parse_str("if global > q.len() / 2 {fe2o3_device::trap();}").unwrap();
+    assert!(validate_literal_coordinates(&wrong_extent).is_err());
+}
 fn compact_type(argument: &FnArg) -> String {
     let FnArg::Typed(argument) = argument else {
         panic!("device roots cannot have a receiver");
@@ -772,49 +1059,8 @@ fn profile_guards_pin_all_fourteen_lengths_and_shared_cache_extents() {
 }
 
 #[test]
-fn coordinate_divisors_are_authenticated_before_workitem_arithmetic() {
-    let body = compact_tokens(kernel().block);
-    let derivation = body
-        .find("letactive_tokens=")
-        .expect("active-token profile derivation is present");
-    let query_heads_guard = body
-        .find("ifquery_heads==0{fe2o3_device::trap();}")
-        .expect("query-head divisor is authenticated");
-    let active_tokens_guard = body
-        .find("ifactive_tokens==0{fe2o3_device::trap();}")
-        .expect("active-token divisor is authenticated");
-    let gqa_guard = body
-        .find("ifgqa_group_size==0{fe2o3_device::trap();}")
-        .expect("GQA divisor is authenticated");
-    let workitem = body
-        .find("letworkitem=thread::index_1d();")
-        .expect("workitem arithmetic follows profile authentication");
-
-    assert!(derivation < query_heads_guard);
-    assert!(query_heads_guard < active_tokens_guard);
-    assert!(active_tokens_guard < gqa_guard && gqa_guard < workitem);
-    for use_marker in [
-        "%query_heads",
-        "/query_heads",
-        "%active_tokens",
-        "/active_tokens",
-        "/gqa_group_size",
-    ] {
-        let divisor_use = body
-            .find(use_marker)
-            .unwrap_or_else(|| panic!("missing divisor use {use_marker}"));
-        assert!(
-            gqa_guard < divisor_use,
-            "guard follows divisor use {use_marker}"
-        );
-    }
-    for guard in [
-        "ifquery_heads==0{fe2o3_device::trap();}",
-        "ifactive_tokens==0{fe2o3_device::trap();}",
-        "ifgqa_group_size==0{fe2o3_device::trap();}",
-    ] {
-        assert_eq!(body.matches(guard).count(), 1, "guard count for {guard}");
-    }
+fn closed_literal_divisors_and_profile_guards_dominate_arithmetic() {
+    validate_literal_coordinates(&kernel()).unwrap();
 }
 
 #[test]
@@ -825,11 +1071,11 @@ fn coordinates_preserve_committed_causality_gqa_and_global_p16_mapping() {
         "letgqa_group_size=iftarget{4}else{2}",
         "letvector=global/64",
         "letlocal=global%64",
-        "letquery_head=vector%query_heads",
-        "letposition=vector/query_heads",
-        "letquery_token=position%active_tokens",
-        "letsequence=position/active_tokens",
-        "letkv_head=query_head/gqa_group_size",
+        "letquery_head=iftarget{vector%32}else{vector%16}",
+        "letposition=iftarget{vector/32}else{vector/16}",
+        "letquery_token=ifactive_tokens==1{0}elseifactive_tokens==4{position%4}elseifactive_tokens==5{position%5}elseifactive_tokens==8{position%8}elseifactive_tokens==9{position%9}elseifactive_tokens==16{position%16}else{position%17}",
+        "letsequence=ifactive_tokens==1{position}elseifactive_tokens==4{position/4}elseifactive_tokens==5{position/5}elseifactive_tokens==8{position/8}elseifactive_tokens==9{position/9}elseifactive_tokens==16{position/16}else{position/17}",
+        "letkv_head=iftarget{query_head/4}else{query_head/2}",
         "letcommitted_tokens=memory::volatile_load(committed,sequence)asusize",
         "letactive_capacity=ifcommitted_tokens<=QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1{QWEN3_PAGED_DECODE_CONTEXT_CAPACITY_V1-committed_tokens}else{fe2o3_device::trap()}",
         "ifactive_tokens>active_capacity{fe2o3_device::trap();}",

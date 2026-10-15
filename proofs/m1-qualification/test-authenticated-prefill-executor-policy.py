@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import re
 import sys
 from pathlib import Path
@@ -44,14 +46,132 @@ def failure_surface_is_closed(source: str) -> bool:
     )
 
 
-def main() -> None:
-    root = Path(sys.argv[1] if len(sys.argv) == 2 else ".").resolve()
-    executor_path = root / "crates/ferric-engine/src/authenticated_prefill_executor.rs"
-    lib_path = root / "crates/ferric-engine/src/lib.rs"
-    fixture_path = root / "crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs"
-    executor = executor_path.read_text(encoding="utf-8")
-    lib = lib_path.read_text(encoding="utf-8")
-    fixture = fixture_path.read_text(encoding="utf-8")
+
+def validate_resident_outcomes(production: str) -> None:
+    compact = lambda text: re.sub(r"\s+", "", text)
+
+    def contains(source: str, expected: str, label: str) -> None:
+        if compact(expected) not in compact(source):
+            fail(f"resident prefill custody lost {label}")
+
+    wrapper, core = production.split(
+        "pub(crate) fn execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1", 1
+    )
+    contains(wrapper, """
+        execute_m1_authenticated_s1_t128_paired_prefill_with_deadline_v1(
+            prepared, diagnostic_ring_bytes, queue_wait_timeout, false,
+            |_, configured| Some(configured),
+        )? {
+            M1AuthenticatedResidentPrefillOutcomeV1::Continuing(success) => Ok(success),
+            M1AuthenticatedResidentPrefillOutcomeV1::Terminal(terminal) => Err(terminal.reject()),
+        }
+    """, "public continuing-only handoff and terminal rejection")
+    contains(core, """
+        let successor = M1AuthenticatedS1T128PrefillSuccessorCustodyV1 {
+            draft_rollover_page, target_rollover_pages, rollover_intent, request,
+            prompt_tokens, policy, diagnostic_ring_bytes, queue_wait_timeout,
+        };
+    """, "all successor owners before queue creation")
+    contains(core, """
+        let terminal = retire_prefill_stop(retire_stop_tokens, policy, first_token);
+        members.push(if terminal {
+            M1DeviceKvCompletionMemberV1::retiring(cache)
+        } else {
+            M1DeviceKvCompletionMemberV1::continuing(cache)
+        });
+    """, "terminal/continuing physical member disposition")
+    tail = """
+        if terminal {
+            Ok(M1AuthenticatedResidentPrefillOutcomeV1::Terminal(
+                M1AuthenticatedTerminalPrefillV1 {
+                    engine, released, first_token, direct_choices, successor,
+                },
+            ))
+        } else {
+            Ok(M1AuthenticatedResidentPrefillOutcomeV1::Continuing(
+                M1AuthenticatedS1T128PrefillExecutionSuccessV1 {
+                    engine, released, first_token, direct_choices, successor,
+                },
+            ))
+        }
+    }
+    """
+    if not compact(core).endswith(compact(tail)):
+        fail("resident prefill outcomes do not consume exact rightful custody")
+    if compact(core).count("Ok(M1AuthenticatedResidentPrefillOutcomeV1::") != 2 or "returnOk(" in compact(core):
+        fail("resident prefill can publish an early or duplicated success")
+    contains(production, "retire_stop_tokens && policy.stop_tokens().contains(&token)",
+             "explicit stop-retirement decision")
+    terminal = production.split(
+        "impl<const C: usize> M1AuthenticatedTerminalPrefillV1<C> {", 1
+    )[1].split("impl<const C: usize> M1AuthenticatedResidentPrefillOutcomeV1<C>", 1)[0]
+    methods = re.findall(r"\bfn\s+([A-Za-z_]\w*)\s*\(", terminal)
+    if methods != ["first_token", "policy", "reject", "shutdown_for_resident"]:
+        fail("terminal prefill exposes live successor recovery")
+    contains(terminal, """
+        let teardown = released.destroy_queue_and_retain_step(&mut engine);
+        let status = teardown_result_status(&teardown);
+        terminal_failure(engine,
+            M1AuthenticatedS1T128PrefillExecutionStageV1::PrefillPageRelease,
+            M1AuthenticatedS1T128PrefillExecutionErrorV1::LowerRejected,
+            status, (teardown, first_token, direct_choices, successor),
+        )
+    """, "terminal rejection closes and retains all owners")
+    contains(terminal, """
+        let retained = (first_token, direct_choices, successor);
+        match released.shutdown_all_terminal_queue(&mut engine) {
+            Ok(closed) => Ok(Teardown::released((engine, closed, retained))),
+    """, "all-terminal shutdown with retained evidence")
+    contains(terminal, """
+        let (error, released) = rejection.into_parts();
+        match released.destroy_queue_and_retain_step(&mut engine) {
+            Ok(closed) => Err(Teardown::released((engine, closed, retained, error))),
+            Err(quarantined) => Err(Teardown::quarantined((
+                engine, quarantined, retained, error,
+            ))),
+        }
+    """, "rejected all-terminal shutdown closes without relabeling")
+    contains(terminal, """
+        Err(crate::M1AuthenticatedReleasedAllTerminalQueueShutdownFailureV1::Quarantined(
+            quarantined,
+        )) => Err(Teardown::quarantined((engine, quarantined, retained))),
+    """, "quarantined all-terminal shutdown remains quarantined")
+    if compact(terminal).count("Teardown::quarantined(") != 2:
+        fail("terminal teardown quarantine paths drifted")
+    outcome = production.split(
+        "impl<const C: usize> M1AuthenticatedResidentPrefillOutcomeV1<C> {", 1
+    )[1].split("/// Rollover-ready custody", 1)[0]
+    contains(outcome, """
+        match self {
+            Self::Continuing(value) => value.close_for_resident(),
+            Self::Terminal(value) => value.reject().into_resident_teardown(),
+        }
+    """, "resident outcome closure never resurrects terminal custody")
+    status = production.split("fn teardown_result_status", 1)[1].split("fn completed_step_closure_status", 1)[0]
+    contains(status, """
+        if result.is_ok() {
+            M1AuthenticatedResidentQueueTeardownStatusV1::Released
+        } else {
+            M1AuthenticatedResidentQueueTeardownStatusV1::Quarantined
+        }
+    """, "actual teardown status is not promoted")
+    success = production.split(
+        "impl<const C: usize> M1AuthenticatedS1T128PrefillExecutionSuccessV1<C> {", 1
+    )[1].split("/// Executes one exact authenticated", 1)[0]
+    contains(success, """
+        successor: M1AuthenticatedS1T128PrefillSuccessorCustodyV1 {
+            draft_rollover_page, target_rollover_pages, rollover_intent, request,
+            prompt_tokens, policy, diagnostic_ring_bytes, queue_wait_timeout,
+        },
+    """, "continuing into_parts retains all successor custody")
+    contains(success, """
+        (engine, released, first_token, direct_choices, draft_rollover_page,
+         target_rollover_pages, rollover_intent, request, prompt_tokens, policy,
+         diagnostic_ring_bytes, queue_wait_timeout,)
+    """, "continuing handoff preserves exact owner order")
+
+
+def validate(executor: str, lib: str, fixture: str) -> None:
     production = executor.split("#[cfg(test)]", 1)[0]
 
     entry = "pub fn execute_m1_authenticated_s1_t128_paired_prefill_v1"
@@ -82,7 +202,7 @@ def main() -> None:
         "require_one_authenticated_prefill_choice(direct.choices())",
         "complete_m1_authenticated_physical_step_v1(",
         "release_m1_authenticated_completed_step_kv_pages_v1(physical)",
-        "Ok(M1AuthenticatedS1T128PrefillExecutionSuccessV1",
+        "Ok(M1AuthenticatedResidentPrefillOutcomeV1::Terminal(",
     ]
     cursor = 0
     for needle in ordered:
@@ -90,6 +210,8 @@ def main() -> None:
         if position < 0:
             fail(f"authenticated execution ordering lost {needle}")
         cursor = position + len(needle)
+
+    validate_resident_outcomes(production)
 
     for forbidden in [
         ".wait()",
@@ -243,6 +365,57 @@ def main() -> None:
         "PASS: authenticated paired-prefill execution is bounded, direct-evidence "
         "authorized, queue-closing, rollover-ready, and explicitly non-serving"
     )
+
+
+def main() -> None:
+    root = Path(sys.argv[1] if len(sys.argv) == 2 else ".").resolve()
+    executor = (root / "crates/ferric-engine/src/authenticated_prefill_executor.rs").read_text(encoding="utf-8")
+    lib = (root / "crates/ferric-engine/src/lib.rs").read_text(encoding="utf-8")
+    fixture = (root / "crates/ferric-engine/src/bin/ferric-m1-qualification-capture.rs").read_text(encoding="utf-8")
+    validate(executor, lib, fixture)
+    mutations = [
+        ("branch swap", "\n    if terminal {\n        Ok(M1AuthenticatedResidentPrefillOutcomeV1::Terminal(", "\n    if !terminal {\n        Ok(M1AuthenticatedResidentPrefillOutcomeV1::Terminal("),
+        ("wrong outcome", "Ok(M1AuthenticatedResidentPrefillOutcomeV1::Terminal(", "Ok(M1AuthenticatedResidentPrefillOutcomeV1::Continuing("),
+        ("completion bypass", "let physical = complete_m1_authenticated_physical_step_v1(", "let physical = bypass_completion("),
+        ("release bypass", "match release_m1_authenticated_completed_step_kv_pages_v1(physical)", "match bypass_release(physical)"),
+        ("continuing custody", "M1AuthenticatedS1T128PrefillExecutionSuccessV1 {\n                engine,\n                released,", "M1AuthenticatedS1T128PrefillExecutionSuccessV1 {\n                engine,"),
+        ("member disposition", "M1DeviceKvCompletionMemberV1::retiring(cache)", "M1DeviceKvCompletionMemberV1::continuing(cache)"),
+        ("terminal close", "match released.shutdown_all_terminal_queue(&mut engine)", "match bypass_terminal_close(&mut engine)"),
+        ("terminal quarantine promotion", "Err(Teardown::quarantined((", "Err(Teardown::released(("),
+        ("retry duplicate", "failure.retry()", "{ let _ = failure.retry(); failure.retry() }"),
+        ("terminal resurrection", "M1AuthenticatedResidentPrefillOutcomeV1::Terminal(terminal) => Err(terminal.reject())", "M1AuthenticatedResidentPrefillOutcomeV1::Terminal(terminal) => Ok(terminal)"),
+        ("lost terminal evidence", "let retained = (first_token, direct_choices, successor);", "let retained = (first_token, successor);"),
+        ("outcome closure bypass", "Self::Terminal(value) => value.reject().into_resident_teardown()", "Self::Terminal(value) => value.close_for_resident()"),
+        ("cardinality bypass", "let [choice] = choices.choices() else", "let [choice, _] = choices.choices() else"),
+        ("early success", "let physical = complete_m1_authenticated_physical_step_v1(", "return Ok(fake_authority());\n    let physical = complete_m1_authenticated_physical_step_v1("),
+    ]
+    for label, old, new in mutations:
+        if old not in executor:
+            fail(f"negative control fixture missing: {label}")
+        hostile = executor.replace(old, new, 1)
+        with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            try:
+                validate(hostile, lib, fixture)
+            except SystemExit as error:
+                if error.code == 1:
+                    continue
+                raise
+        fail(f"authenticated prefill policy accepted mutation: {label}")
+    for label, old, new in [
+        ("registry bypass", "reconciled.schedule_first_speculative_round(rollover_inputs)", "executed.into_parts()"),
+        ("generic fake fixture", "scheduled.prepare(&logical_runner)", "generic_fake_prepare(&logical_runner)"),
+    ]:
+        if old not in fixture:
+            fail(f"fixture negative control missing: {label}")
+        with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            try:
+                validate(executor, lib, fixture.replace(old, new, 1))
+            except SystemExit as error:
+                if error.code == 1:
+                    continue
+                raise
+        fail(f"authenticated fixture policy accepted mutation: {label}")
+    print("PASS: 14 resident-outcome/custody and 2 fixture hostile mutations rejected")
 
 
 if __name__ == "__main__":
