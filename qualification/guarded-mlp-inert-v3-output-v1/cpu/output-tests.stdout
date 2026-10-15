@@ -1,0 +1,13 @@
+
+running 8 tests
+test protected_compiler_handoff_v3::inert_semantic_output_v1::tests::captured_file_is_revalidated_before_transfer_and_alias_directory_is_refused ... ok
+test protected_compiler_handoff_v3::inert_semantic_output_v1::tests::empty_public_file_public_directory_and_changed_identity_are_refused ... ok
+test protected_compiler_handoff_v3::inert_semantic_output_v1::tests::fixed_slot_rejects_alias_names_and_unsupported_bounds_before_open ... ok
+test protected_compiler_handoff_v3::inert_semantic_output_v1::tests::private_file_capture_retains_original_objects_and_full_codec_content ... ok
+test protected_compiler_handoff_v3::inert_semantic_output_v1::tests::replaced_file_entry_is_not_adopted_even_if_bytes_are_identical ... ok
+test protected_compiler_handoff_v3::inert_semantic_output_v1::tests::substituted_directory_path_cannot_redirect_retained_directory_reads ... ok
+test protected_compiler_handoff_v3::inert_semantic_output_v1::tests::symlink_hardlink_and_nonregular_slots_are_refused_without_blocking ... ok
+test protected_compiler_handoff_v3::inert_semantic_output_v1::tests::truncate_grow_same_length_write_and_permission_change_fail_postread_check ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 428 filtered out; finished in 0.01s
+

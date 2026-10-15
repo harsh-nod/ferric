@@ -6,7 +6,28 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest consumer component: [lossless inert V3 completion content](../qualification/guarded-mlp-inert-v3-consumer-v1/README.md)
+Latest output component: [pinned inert output-file intake](../qualification/guarded-mlp-inert-v3-output-v1/README.md)
+adds fixed-slot descriptor-relative private file custody and requires typed
+captured output in Completion. It retains original directory/file objects
+through full outer decoding and serialization, with bounded reads,
+independent outer identity and file/path/slot revalidation.
+
+The first new negative-control run found a real hole: a same-length rewrite
+after reading escaped metadata-only checks (output cohort7 pass/1 fail).
+That failed run remains preserved. A fresh repaired V2 adds 64 KiB positioned
+byte comparison/EOF checks at capture, transfer, post-decode and serialization.
+All 171 selected CPU tests pass in 16 clean phases, with 5,815 source inputs
+and source/tool/dependency/artifact postchecks unchanged. Two gate tests reuse
+the prior compiler ELF; full compiler/device/lowerer suites are not rerun.
+
+This is repeated file/content observation, not atomic writer exclusion,
+compiler authentication, owned child wait/reaping or premise discharge.
+Next is a separately bounded owned child lifecycle using labeled CPU helper
+children before complete-route qualification. Selector, worker compilation,
+eight runtime conditions, early-stop CFG and GPU hold remain closed. No new
+HSACO/GPU/model/performance evidence or M0-M7 completion is claimed.
+
+Previous consumer component: [lossless inert V3 completion content](../qualification/guarded-mlp-inert-v3-consumer-v1/README.md)
 retains the original eligibility/parent borrow and complete outer handoff,
 revalidates the exact selected invocation before/after intake, and checks
 reported successful exit, independently expected outer identity and gfx950.
