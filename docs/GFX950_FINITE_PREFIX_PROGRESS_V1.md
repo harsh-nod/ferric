@@ -6,7 +6,26 @@ benchmark, or a claim that the 700 tokens/s target has been reached. All issue #
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest replay checkpoint: [actual fixed-capture formal replay](../qualification/guarded-mlp-fixed-formal-replay-v1/README.md)
+Latest transport component: [exact selected-invocation V3 transport](../qualification/guarded-mlp-inert-v3-invocation-v1/README.md)
+adds canonical byte production on the existing protected-wrapper capture path
+and an independent exact selected-process/six-role join. Fresh mi350 CPU8/9
+qualification passes 103 invocation tests, 25 preserved frontend tests and
+eight capture tests. Two ordinary V2/protected-publication gate tests also
+pass on the prior qualified compiler ELF, not a newly rebuilt compiler.
+All 5,812 source inputs and tool/dependency/artifact postchecks are unchanged.
+
+The engineering extractor remains **not integrated**: it runs rustc in-process,
+without a real backend argv selector or the two Cargo binding-wrapper roles
+required by frozen V3. A new negative test refuses to fabricate that process
+description. No inert fixture descriptor or invented role pins are used as
+production custody. Next is a default-off inert extraction route using the
+actual protected-wrapper child process, if it can preserve extraction-only
+custody; otherwise a separate versioned in-process schema is needed. No
+fresh worker compilation until a matching lossless V3 consumer is qualified.
+The eight runtime conditions, early-stop CFG issue and GPU hold remain closed.
+No new GPU/model/throughput result or milestone completion is claimed.
+
+Previous replay checkpoint: [actual fixed-capture formal replay](../qualification/guarded-mlp-fixed-formal-replay-v1/README.md)
 reuses the qualified compiler test ELF against the original fixed V18 capture,
 with no production source edit or worker compilation. Three bounded mi350
 CPU8/9 phases pass, including one exact opted-in ignored test (1 passed,

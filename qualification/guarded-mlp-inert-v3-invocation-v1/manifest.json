@@ -1,0 +1,101 @@
+{
+  "archive": {
+    "bytes": 3730111,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-invocation-publication-v228-v2/originals.tar.gz",
+    "sha256": "fff7d43618e80e7ac4b7e521e801f76b25b92b6e6b28cb2e41b8550ec9bc6bb7"
+  },
+  "audit": {
+    "bytes": 921,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-invocation-publication-v228-v2/publication-audit.json",
+    "sha256": "475ebc3aac139ddf45bd842bf845bc0f8a97f44675926ea972012d83e45d7c27"
+  },
+  "exporter": {
+    "bytes": 5159,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-invocation-publication-v228-v2/export.py",
+    "sha256": "fd676cef1d5bbbb51265ea7561e031f4c1d20ae24f2155be9b4b63b3c135378d"
+  },
+  "ledger": {
+    "bytes": 27939,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-invocation-publication-v228-v2/originals-ledger.json",
+    "sha256": "868190e3f01580ff0f104abe05dcc0718a0fa92814f3d5215b2ffb7daad85081"
+  },
+  "no_compiled_or_toolchain_tree_embedded": true,
+  "previous_failed_export": {
+    "archive": {
+      "bytes": 3730078,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-invocation-publication-v228-v1/originals.tar.gz",
+      "sha256": "503644b5326762a7137e5e1f86b02243d62b454aa82fda6c645c49343619fb0e"
+    },
+    "exporter": {
+      "bytes": 4818,
+      "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-invocation-publication-v228-v1/export.py",
+      "sha256": "2eb227d561aa3e3328382ba29d4f0a13ad138ddafb7056e75cb8268bfb2e93d2"
+    },
+    "reason": "archive member comparison used an unsorted expected roster; no CPU qualification failure"
+  },
+  "receipt": {
+    "bytes": 4749884,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-inert-v3-invocation-cpu-v228-v1/evidence/complete.json",
+    "sha256": "d8a386e5f83e565c2dbb106daf74e7e7f6cc5aef8206403c18438dd2fdb83e37"
+  },
+  "schema": "ferric-selected-transport-publication-v1",
+  "source_delta": {
+    "fe2o3/crates/cargo-fe2o3/src/engineering_hsaco.rs": {
+      "after": {
+        "bytes": 70470,
+        "sha256": "49f77ab94ce72b2e644befee5ff54e5e11f5917e7386f1ba98875507337924ed"
+      },
+      "before": {
+        "bytes": 55988,
+        "sha256": "061c6b6e2f34c2f86ec4d37f987bd0a47c72968fc917d8f51899de03a495b94c"
+      }
+    },
+    "fe2o3/crates/cargo-fe2o3/src/engineering_hsaco/execution.rs": {
+      "after": {
+        "bytes": 21137,
+        "sha256": "f3e6af7c73b66dd84375d53e8da4b6d9ef180fb9beadcc0d12981d4036f99f5c"
+      },
+      "before": {
+        "bytes": 18737,
+        "sha256": "c9deaaed38da78c4f95687d05f984feda2eac1924d2d9a3db8a45525d0c0be5c"
+      }
+    },
+    "fe2o3/crates/cargo-fe2o3/src/engineering_hsaco/support.rs": {
+      "after": {
+        "bytes": 18837,
+        "sha256": "84fed5510fe24c487b4ef38d58f6c2f91c25280f557c3e22e853f547026a21ea"
+      },
+      "before": {
+        "bytes": 18763,
+        "sha256": "abf7979e2988077f5aeddac10c5e4f561a7285bdd520736b61fab7971ef063d5"
+      }
+    },
+    "fe2o3/crates/cargo-fe2o3/src/inert_rustc_invocation_capture.rs": {
+      "after": {
+        "bytes": 19282,
+        "sha256": "849b73c38d4d31d6754a23b4ffb8c041f2a911d77f9f4bd9e0f27d197a415445"
+      },
+      "before": {
+        "bytes": 18840,
+        "sha256": "5225e7b45fe03c9559b132aea884066035284d9189cb07c243d18dd0ab66d3bb"
+      }
+    },
+    "fe2o3/crates/fe2o3-rustc-invocation/src/lib.rs": {
+      "after": {
+        "bytes": 2963,
+        "sha256": "b61cedb1d5b59208dbb8b9a8cf644163f2acfa0ebf0ebdbbad428233cd855a59"
+      },
+      "before": {
+        "bytes": 2829,
+        "sha256": "6b14e629ca09691b4f2e465a3da30cacba3fc01d16f13b6cea71a9ff9ea9dc9b"
+      }
+    },
+    "fe2o3/crates/fe2o3-rustc-invocation/src/selected_transport_v3.rs": {
+      "after": {
+        "bytes": 10897,
+        "sha256": "ce89cd888e4dc1aef6dbffacae02899601a6f76bef2a35432646aee0ad0906b3"
+      },
+      "before": null
+    }
+  }
+}

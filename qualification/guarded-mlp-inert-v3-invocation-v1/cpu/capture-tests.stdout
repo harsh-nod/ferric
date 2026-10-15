@@ -1,0 +1,13 @@
+
+running 8 tests
+test inert_rustc_invocation_capture::tests::argv_order_and_backend_path_mutations_change_the_capture ... ok
+test inert_rustc_invocation_capture::tests::captures_exact_scalar_worker_inputs_without_granting_authority ... ok
+test inert_rustc_invocation_capture::tests::cwd_target_output_verification_and_environment_mutations_are_bound ... ok
+test inert_rustc_invocation_capture::tests::pinned_object_digest_mutations_change_the_capture ... ok
+test inert_rustc_invocation_capture::tests::prepared_capture_selects_v2_or_v3_without_conflating_schemas ... ok
+test inert_rustc_invocation_capture::tests::protected_capture_rejects_closure_process_pin_mismatches ... ok
+test inert_rustc_invocation_capture::tests::protected_capture_upgrades_the_exact_v2_process_to_v3 ... ok
+test inert_rustc_invocation_capture::tests::rejects_non_utf8_and_noncanonical_process_inputs ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 401 filtered out; finished in 0.00s
+
