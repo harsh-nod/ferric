@@ -1,12 +1,33 @@
 # Finite Qwen3 Prefix Progress
 
 This is an engineering checkpoint for [issue #42](https://github.com/harsh-nod/ferric/issues/42),
-updated on 2026-10-08 UTC. It is not a production admission, a sustained decode
+updated on 2026-10-15 UTC. It is not a production admission, a sustained decode
 benchmark, or a claim that the 700 tokens/s target has been reached. All issue #42 M0-M7
 milestones remain open. The checkpoint is being published incrementally on an
 engineering branch; it does not change the production execution path.
 
-Latest worker checkpoint: [BF16 finiteness GPU inlining](../qualification/guarded-mlp-finite-predicate-inline-v1/README.md)
+Latest replay checkpoint: [actual fixed-capture formal replay](../qualification/guarded-mlp-fixed-formal-replay-v1/README.md)
+reuses the qualified compiler test ELF against the original fixed V18 capture,
+with no production source edit or worker compilation. Three bounded mi350
+CPU8/9 phases pass, including one exact opted-in ignored test (1 passed,
+1,364 filtered out; the default 24 ignored declarations remain unchanged).
+All 5,846 pinned inputs remain unchanged. This is separate from the earlier
+full-suite qualification.
+
+The actual capture passes exact V39/source-profile/eleven-root checks,
+ranked and conditional formal verification, and outer-lineage replay.
+Its 595,372-byte formal preimage is constructed and replayed in memory,
+not retained as a serialized formal archive file. Eight runtime requirements
+remain unresolved, signed-Verus proof custody is unavailable, and no
+artifact, launch or numerical refinement authority is granted.
+
+Next is a genuine lossless semantic V3 frontend/invocation/handoff route
+for fixed rounds, retaining the exact selected invocation and conditional
+capsule rather than bypassing the ordinary V2 refusal. Early-stop induction
+verification remains a separate gate. No new HSACO, GPU/model/throughput
+result or milestone completion is claimed; the completion hold remains closed.
+
+Previous worker checkpoint: [BF16 finiteness GPU inlining](../qualification/guarded-mlp-finite-predicate-inline-v1/README.md)
 adds one AMDGPU-only inline attribute to the verified `Bf16::is_finite`
 body and refreshes the exact reviewed provider identity. Full mi350 CPU
 qualification passes 1,341 compiler tests (24 existing ignores), 361 device
@@ -23,9 +44,9 @@ The fixed arm now reaches the deliberate V2-only conditional-premise
 extraction refusal; the early arm reaches uniform induction-region
 verification requiring one unique header exit. Neither gate is relaxed.
 
-Next is bounded actual-capture formal/archive/outer-lineage replay using
-the existing exact-version/digest test, before implementing a genuine
-lossless V3 invocation/handoff route for fixed rounds. Early-stop CFG
+The subsequent actual-capture formal/archive/outer-lineage replay above
+passes with the existing exact-version/digest assertions unchanged.
+A genuine lossless V3 invocation/handoff route remains next. Early-stop CFG
 diagnosis remains separate. No GPU/model/throughput result or milestone
 completion is claimed, and the device-completion hold remains closed.
 

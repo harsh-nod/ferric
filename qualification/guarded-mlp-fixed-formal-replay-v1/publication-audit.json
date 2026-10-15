@@ -1,0 +1,28 @@
+{
+  "affinity": [
+    8,
+    9
+  ],
+  "archive": {
+    "bytes": 4895606,
+    "sha256": "317fb541caeaa70d74f2869a77ea7fb74cd4e700206cbaf0132eb74449e52c34"
+  },
+  "archive_members_verified": 48,
+  "audit_source": {
+    "bytes": 4723,
+    "sha256": "b5112a84f70737760d3a1fae2b092ae21fc856eb161ba023232465566eb4dbac"
+  },
+  "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+  "gpu_execution": false,
+  "inputs_verified": 5846,
+  "originals_verified": 47,
+  "passed": true,
+  "pid": 92462,
+  "production_authority": false,
+  "project_code_executed": false,
+  "replay_receipt": {
+    "bytes": 6302926,
+    "sha256": "12e961aaf9a5bf4d2a1a4750517568ec7284a974b82a852674c678559ca2f507"
+  },
+  "schema": "ferric-fixed-formal-replay-data-audit-v1"
+}

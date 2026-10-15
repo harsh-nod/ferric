@@ -1,0 +1,72 @@
+{
+  "archive": {
+    "bytes": 4895606,
+    "sha256": "317fb541caeaa70d74f2869a77ea7fb74cd4e700206cbaf0132eb74449e52c34"
+  },
+  "archive_scope": "retained replay logs, captures, controllers, source ledgers and relevant source; excludes compiled ELF/toolchain/full source tree",
+  "compiled_test_artifact": {
+    "bytes": 132084760,
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-finite-predicate-inline-cpu-v228-v3/target/debug/deps/rustc_codegen_fe2o3-5db184f14eef1d1c",
+    "sha256": "b6b03b519e08c0ffb842508263fb24aadde2e450bd0d0d93e19171a80928ecf3"
+  },
+  "elapsed_seconds": 48.19372599408962,
+  "execution_scope": {
+    "affinity": [
+      8,
+      9
+    ],
+    "boot_id": "2dbbbc5a-d8b7-46ac-bd1f-236e5847e24a",
+    "cgroup": "/user.slice/user-9661.slice/user@9661.service/app.slice/ferric-mlp-fixed-formal-replay-cpu-v228-v1.service",
+    "memory_max": "12884901888",
+    "memory_swap_max": "0",
+    "pid": 77450,
+    "start_ticks": "145076523"
+  },
+  "expanded_bytes": 37564092,
+  "formal_preimage_bytes_observed": 595372,
+  "formal_preimage_constructed_and_replayed_in_memory": true,
+  "gpu_execution": false,
+  "input_count": 5846,
+  "members": 48,
+  "numerical_acceptance": false,
+  "originals": 47,
+  "performance_claim": false,
+  "phases": 3,
+  "prior_capture_publication_archive": {
+    "path": "/home/harmenon/ferric-asrock-42/evidence/finite-resident-integration-v220/guarded-mlp-finite-predicate-inline-publication-v228-v1/originals.tar.gz",
+    "sha256": "65008a7eb7aeb5435beac87a56a3138568ca6fdba18552a282b91894f6e4c68d"
+  },
+  "production_authority": false,
+  "replay_receipt": {
+    "bytes": 6302926,
+    "sha256": "12e961aaf9a5bf4d2a1a4750517568ec7284a974b82a852674c678559ca2f507"
+  },
+  "saved_leaf_pids_absent": [
+    77451,
+    77452,
+    77453
+  ],
+  "schema": "ferric-fixed-formal-replay-publication-v1",
+  "selected_test": "production_pipeline::conditional_formal_tests::actual_mlp_v39_reaches_formal_archive_and_outer_lineage_replay",
+  "serialized_formal_preimage_retained": false,
+  "signed_verus_proof_observed": false,
+  "stages": [
+    "stage=pre-ranked status=starting",
+    "stage=recipe status=complete roots=11 accesses=59 memory=221 effects=260",
+    "stage=ranked status=starting",
+    "stage=ranked status=complete roots=1 bytes=86551",
+    "stage=formal status=complete roots=11 unresolved=8",
+    "stage=outer-lineage-replay status=complete formal_bytes=595372"
+  ],
+  "tests": {
+    "failed": 0,
+    "filtered_out": 1364,
+    "ignored": 0,
+    "names": [
+      "production_pipeline::conditional_formal_tests::actual_mlp_v39_reaches_formal_archive_and_outer_lineage_replay"
+    ],
+    "passed": 1
+  },
+  "unresolved_runtime_requirements": 8,
+  "worker_compilation_replayed": false
+}

@@ -1,0 +1,6 @@
+stage=pre-ranked status=starting
+stage=recipe status=complete roots=11 accesses=59 memory=221 effects=260
+stage=ranked status=starting
+stage=ranked status=complete roots=1 bytes=86551
+stage=formal status=complete roots=11 unresolved=8
+stage=outer-lineage-replay status=complete formal_bytes=595372
