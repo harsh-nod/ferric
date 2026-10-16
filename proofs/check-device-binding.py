@@ -302,11 +302,128 @@ def canonical_invocation(
     return matches[0]
 
 
+def rust_build_tokens(source: str) -> list[str]:
+    """Tokenize the restricted build-script emitter form, excluding comments."""
+    tokens: list[str] = []
+    cursor = 0
+    while cursor < len(source):
+        if source[cursor].isspace():
+            cursor += 1
+        elif source.startswith("//", cursor):
+            end = source.find("\n", cursor)
+            cursor = len(source) if end < 0 else end + 1
+        elif source.startswith("/*", cursor):
+            depth = 1
+            cursor += 2
+            while depth and cursor < len(source):
+                if source.startswith("/*", cursor):
+                    depth += 1
+                    cursor += 2
+                elif source.startswith("*/", cursor):
+                    depth -= 1
+                    cursor += 2
+                else:
+                    cursor += 1
+            if depth:
+                raise ValueError("unterminated build-script comment")
+        elif match := re.match(r'r(#{0,255})"', source[cursor:]):
+            end = source.find('"' + match[1], cursor + len(match[0]))
+            if end < 0:
+                raise ValueError("unterminated raw build-script string")
+            end += 1 + len(match[1])
+            tokens.append(source[cursor:end])
+            cursor = end
+        elif source[cursor] == '"':
+            end = cursor + 1
+            while end < len(source):
+                if source[end] == "\\":
+                    end += 2
+                elif source[end] == '"':
+                    end += 1
+                    break
+                else:
+                    end += 1
+            else:
+                raise ValueError("unterminated build-script string")
+            tokens.append(source[cursor:end])
+            cursor = end
+        elif match := re.match(r"[A-Za-z_][A-Za-z_0-9]*", source[cursor:]):
+            tokens.append(match[0])
+            cursor += len(match[0])
+        else:
+            tokens.append(source[cursor])
+            cursor += 1
+    return tokens
+
+
+def fallback_binding_source(source: str) -> str:
+    tokens = rust_build_tokens(source)
+    key = "FE2O3_CRATE_BINDING_ID_V1"
+    keyed = [token for token in tokens if key in token]
+    if len(keyed) != 1:
+        raise ValueError(f"expected exactly one keyed binding literal, found {len(keyed)}")
+    match = re.fullmatch(
+        r'"cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=([0-9a-f]{64})"', keyed[0]
+    )
+    split = keyed[0] == '"cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1={}"'
+    literals = [token for token in tokens if re.fullmatch(r'"[0-9a-f]{64}"', token)]
+    if match is not None:
+        binding = match[1]
+        emitter = ["println", "!", "(", keyed[0], ")", ";"]
+    elif split and len(literals) == 1:
+        binding = literals[0][1:-1]
+        emitter = ["println", "!", "(", keyed[0], ",", literals[0], ")", ";"]
+    else:
+        raise ValueError("malformed binding emitter")
+    guard = rust_build_tokens(
+        'if std::env::var_os("FE2O3_BINDING_CHECK_WRAPPER_MODE_V1").is_some()'
+        ' || std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1").is_some() { return; }'
+    )
+    minimal = ["fn", "main", "(", ")", "{", *guard, *emitter, "}"]
+    family_prologue = rust_build_tokens(
+        'println!("cargo:rerun-if-env-changed=FE2O3_BINDING_CHECK_WRAPPER_MODE_V1");'
+        'println!("cargo:rerun-if-env-changed=FE2O3_BINDING_WRAPPER_MODE_V1");'
+    )
+    family = [
+        "fn", "main", "(", ")", "{", *family_prologue, *guard, *emitter, "}"
+    ]
+    # Only these reviewed module declarations and direct statements are supported.
+    # Unknown items/macros/attributes could expand or import a shadowed println.
+    prologue = rust_build_tokens(
+        """
+        #[allow(dead_code)]
+        #[path = "src/target.rs"]
+        mod target;
+        #[path = "build/target_contract.rs"]
+        mod target_contract;
+        fn main() {
+            println!("cargo:rerun-if-env-changed=CARGO_ENCODED_RUSTFLAGS");
+            println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ARCH");
+            let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH")
+                .expect("Cargo must identify the compilation target architecture");
+            let rustflags = std::env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
+            target_contract::validate_device_build(
+                &target_arch,
+                &rustflags,
+                target::QWEN3_DEVICE_CPU_V1,
+                target::QWEN3_DEVICE_RUSTC_FEATURES_V1,
+            )
+            .expect("Qwen3 aggregate compilation target does not match its source contract");
+            println!("cargo:rerun-if-env-changed=FE2O3_BINDING_CHECK_WRAPPER_MODE_V1");
+            println!("cargo:rerun-if-env-changed=FE2O3_BINDING_WRAPPER_MODE_V1");
+        """
+    )
+    supported = [*prologue, *guard, *emitter, "}"]
+    if tokens != family and (split or tokens not in (minimal, supported)):
+        raise ValueError("unsupported item, attribute, expansion or statement in canonical emitter")
+    return binding
+
+
 def fallback_binding(workspace: Path) -> str:
-    matches = re.findall(r'"([0-9a-f]{64})"', (workspace / "build.rs").read_text())
-    if len(matches) != 1:
-        fail(f"expected one canonical fallback binding, found {len(matches)}")
-    return matches[0]
+    try:
+        return fallback_binding_source((workspace / "build.rs").read_text())
+    except ValueError as error:
+        fail(f"invalid canonical fallback emitter: {error}")
 
 
 def binding_parity_error(derived: str, fallback: str) -> str | None:
@@ -517,6 +634,116 @@ def self_test() -> None:
         == portable
     ):
         fail("target substitution did not change portable metadata")
+    guard = (
+        'if std::env::var_os("FE2O3_BINDING_CHECK_WRAPPER_MODE_V1").is_some()'
+        ' || std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1").is_some() { return; }'
+    )
+    emitter = f'println!("cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1={golden}");'
+    canonical = "fn main() {" + guard + emitter + "}"
+    if fallback_binding_source(canonical) != golden:
+        fail("actual keyed fallback emitter was not extracted")
+    if fallback_binding_source("/* retained comment */" + canonical) != golden:
+        fail("comments outside the real emitter changed extraction")
+    hostile_sources = [
+        "fn main() {}",
+        "fn main() {" + guard + emitter + emitter + "}",
+        canonical.replace(golden, "0" * 63),
+        canonical.replace(golden, "g" * 64),
+        canonical.replace("FE2O3_CRATE_BINDING_ID_V1=", "WRONG_BINDING_ID="),
+        "fn main() { //" + emitter + "\n}",
+        "fn main() { /*" + emitter + "*/ }",
+        "fn main() { /* outer /*" + emitter + "*/ */ }",
+        canonical.replace('println!("cargo:', 'println!(r"cargo:'),
+        canonical.replace(emitter, 'println!("{}", ' + emitter[len("println!("):-2] + ");"),
+        "fn main() {} fn fake() {" + guard + emitter + "}",
+        "#[cfg(any())] " + canonical,
+        "fn main() {" + guard + "if false {" + emitter + "}}",
+        canonical.replace("fn main() {", "fn main() {return;"),
+        canonical.replace(guard, ""),
+        canonical.replace(emitter, "#[cfg(any())] " + emitter),
+        canonical.replace(emitter, 'let fake = "cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=' + golden + '";'),
+        "macro_rules! println { ($value:expr) => {} } " + canonical,
+        "use hostile::println; " + canonical,
+        "mod std {} " + canonical,
+        "mod r#std {} " + canonical,
+        'include!("shadow.rs"); ' + canonical,
+        canonical.replace("fn main() {", 'fn main() { include!("shadow.rs");'),
+        canonical + ' include!("shadow.rs");',
+        'mod shadow; ' + canonical,
+        'mod shadow { include!("shadow.rs"); } ' + canonical,
+        '#[macro_use] mod shadow; ' + canonical,
+        '#[hostile::generate] ' + canonical,
+        '#![feature(prelude_import)] ' + canonical,
+        'generate_items!(); ' + canonical,
+        '#[path = "shadow.rs"] mod target; ' + canonical,
+        canonical.replace("fn main() {", 'fn main() { #[allow(unused)] '),
+    ]
+    for index, source in enumerate(hostile_sources):
+        try:
+            fallback_binding_source(source)
+        except ValueError:
+            continue
+        fail(f"fallback parser accepted hostile emitter {index}")
+    wrong_value = fallback_binding_source(canonical.replace(golden, hostile))
+    if binding_parity_error(golden, wrong_value) is None:
+        fail("a validly shaped wrong fallback escaped independent binding parity")
+    corpus = {
+        "all-kernels": "423280f43dabf0a3eb2162b5b0779fa050960ec0b57cd7d6813ea967ee8273b4",
+        "gemm": "a52ad531cd94075e1ff72b61a63b7945df6612bd10208773a20fe1490c356a43",
+        "logits": "0201437ba8643ffa0323d97017836d7652f3dc721b216b49ff12c74a60228c87",
+        "paged-decode": "53f449de98c3bcc8dd84748dbe59306f3108b8761e8ae6e41c68c611bf90c45a",
+        "prefill": "fd68d93d9da0c6de96bfa13dbe58b79bbd93fbe0c3b5a13bc3553600bfcae872",
+        "rmsnorm": "ee76943e908e8ea532294339752203de1e707854f5993ebf2350a3d214c75fe2",
+        "rope-kv": "af7701f7bcd0493b21be9948d5978ee2efae438ba1d4c6ef06c4f1921857cc3f",
+        "swiglu": "5685a79ec473325481dbfc5b4fe422d6d8290fcc378d8cb4aed97eae14d134ad",
+    }
+    root = Path(__file__).resolve().parent.parent
+    corpus_negatives = 0
+    for family, expected in corpus.items():
+        source = (root / "device" / f"qwen3-{family}-v1" / "build.rs").read_text()
+        if fallback_binding_source(source) != expected:
+            fail(f"actual {family} emitter corpus differs from its enrolled literal")
+        ending = source.rfind("}")
+        mutations = [
+            'include!("shadow.rs");' + source,
+            source[:ending] + 'include!("shadow.rs");' + source[ending:],
+            "mod shadow;" + source,
+            "#[hostile::generate]" + source,
+            "macro_rules! println { ($($arg:tt)*) => {} }" + source,
+            source.replace("FE2O3_CRATE_BINDING_ID_V1=", "WRONG_BINDING_ID="),
+            source.replace(expected, expected[:-1]),
+            source.replace(expected, expected.upper()),
+            source.replace(expected, expected + expected),
+            source.replace('std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1")',
+                           'std::env::var_os("OTHER_MODE")'),
+            source.replace("return;", "return; return;"),
+            source.replace('println!("cargo:rerun-if-env-changed=FE2O3_BINDING_WRAPPER_MODE_V1");',
+                           'println!("cargo:rerun-if-env-changed=OTHER_MODE");'),
+        ]
+        if family not in ("all-kernels", "rmsnorm"):
+            mutations += [
+                source.replace("ID_V1={}", "ID_V1={:s}"),
+                source.replace("ID_V1={}", "ID_V1={}{}"),
+                source.replace(f'"{expected}"', f'"{expected}", 0'),
+                source.replace(f'"{expected}"', f'concat!("{expected}")'),
+                source.replace(f'"{expected}"', '""'),
+                source.replace(f'"{expected}"', f'"{expected}", "{expected}"'),
+            ]
+        else:
+            mutations += [
+                source.replace(f'ID_V1={expected}"', f'ID_V1={expected}", 0'),
+                source.replace(f'ID_V1={expected}"', f'ID_V1={expected}{{}}"'),
+            ]
+        for index, changed in enumerate(mutations):
+            if changed == source:
+                fail(f"ineffective {family} corpus mutation {index}")
+            try:
+                fallback_binding_source(changed)
+            except ValueError:
+                corpus_negatives += 1
+                continue
+            fail(f"accepted hostile {family} full emitter mutation {index}")
+    print(f"PASS: all eight actual emitters and {corpus_negatives} corpus negatives")
     print("PASS: device binding parser and portable derivation vectors matched")
 
 

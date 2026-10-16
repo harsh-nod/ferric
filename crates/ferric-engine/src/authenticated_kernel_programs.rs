@@ -44,17 +44,13 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     DeclaredKernelFamilyArtifact, M1PhysicalProgramStrategyV1, M1PhysicalProgramV1,
-    M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1,
 };
 
 const M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2: &[u8] =
     b"ferric.m1.authenticated-worker-v3-program-catalog.v2";
 const M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V2: &[u8] =
     b"ferric.m1.authenticated-worker-v3-program-map.v2";
-const M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1: [usize; M1_PHYSICAL_PROGRAM_COUNT_V1] =
-    [0, 9, 4, 11, 2, 7, 6, 5, 1, 10, 8, 3];
-const M1_MFMA_AGGREGATE_SERVICE_PROGRAM_INDICES_V1: [usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1] =
-    [0, 9, 4, 11, 2, 7, 6, 5, 1, 10, 8, 3, 12];
 
 /// Exact production target admitted by the M1 physical runner.
 pub const M1_AUTHENTICATED_PROGRAM_TARGET_V1: &str = "gfx942:xnack-";
@@ -611,6 +607,71 @@ const fn checked_service_program_index(
     }
 }
 
+fn typed_role_entry(
+    program: M1PhysicalProgramV1,
+) -> fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1 {
+    use fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1 as Entry;
+    match program {
+        M1PhysicalProgramV1::GemmReference => Entry::for_marker::<GemmReferenceMarkerV1>(),
+        M1PhysicalProgramV1::GemmVectorized => Entry::for_marker::<GemmVectorizedMarkerV1>(),
+        M1PhysicalProgramV1::TokenEmbedding => Entry::for_marker::<TokenEmbeddingMarkerV1>(),
+        M1PhysicalProgramV1::RmsNorm => Entry::for_marker::<RmsNormMarkerV1>(),
+        M1PhysicalProgramV1::Rope => Entry::for_marker::<RopeMarkerV1>(),
+        M1PhysicalProgramV1::PagedKvWrite => Entry::for_marker::<PagedKvWriteMarkerV1>(),
+        M1PhysicalProgramV1::GqaPrefill => Entry::for_marker::<PrefillMarkerV1>(),
+        M1PhysicalProgramV1::PagedGqaDecode => Entry::for_marker::<PagedDecodeMarkerV1>(),
+        M1PhysicalProgramV1::SwiGlu => Entry::for_marker::<SwiGluMarkerV1>(),
+        M1PhysicalProgramV1::LogitsArgmax => Entry::for_marker::<LogitsArgmaxMarkerV1>(),
+        M1PhysicalProgramV1::LogitsCompact => Entry::for_marker::<LogitsCompactMarkerV1>(),
+        M1PhysicalProgramV1::SpeculativeTokenAssembly => {
+            Entry::for_marker::<SpeculativeAssemblyMarkerV1>()
+        }
+        M1PhysicalProgramV1::GemmMfma => Entry::for_marker::<GemmMfmaMarkerV1>(),
+    }
+}
+
+fn source_program_indices(
+    entries: &[fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1],
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Option<[usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1]> {
+    if entries.len() != strategy.program_count()
+        || !entries
+            .windows(2)
+            .all(|pair| pair[0].kernel_binding_id() < pair[1].kernel_binding_id())
+    {
+        return None;
+    }
+    let mut indices = [usize::MAX; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1];
+    for program in strategy.program_roster().iter().copied() {
+        let expected = typed_role_entry(program);
+        if expected.logical_name() != program.kernel_symbol()
+            || expected.export_name() != program.kernel_symbol()
+        {
+            return None;
+        }
+        let mut matches = entries
+            .iter()
+            .enumerate()
+            .filter(|(_, entry)| entry.kernel_binding_id() == expected.kernel_binding_id());
+        let (index, entry) = matches.next()?;
+        if *entry != expected || matches.next().is_some() {
+            return None;
+        }
+        indices[program.program_index()] = index;
+    }
+    Some(indices)
+}
+
+fn selected_source_indices(
+    strategy: M1PhysicalProgramStrategyV1,
+) -> Option<[usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1]> {
+    let entries = match strategy {
+        M1PhysicalProgramStrategyV1::LegacyScalar12 => M1AllKernelsWorkerV3RosterV1::ENTRIES,
+        M1PhysicalProgramStrategyV1::AttributedMfma13 => M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES,
+    };
+    source_program_indices(entries, strategy)
+}
+
 fn authenticated_program_indices(
     programs: &AuthenticatedWorkerV3ProgramSetV1,
     strategy: M1PhysicalProgramStrategyV1,
@@ -630,12 +691,12 @@ fn authenticated_program_indices(
         programs.program_index::<SpeculativeAssemblyMarkerV1>().ok(),
         programs.program_index::<GemmMfmaMarkerV1>().ok(),
     ];
-    let expected: &[usize] = match strategy {
-        M1PhysicalProgramStrategyV1::LegacyScalar12 => &M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1,
-        M1PhysicalProgramStrategyV1::AttributedMfma13 => {
-            &M1_MFMA_AGGREGATE_SERVICE_PROGRAM_INDICES_V1
-        }
-    };
+    // Typed lookup retains the admitted contract/lineage join; no incoming sorting.
+    let expected = selected_source_indices(strategy).ok_or(
+        M1AuthenticatedProgramSetIntakeErrorV1::SourceIdentity {
+            axis: "typed-role-roster",
+        },
+    )?;
     let mut indices = [usize::MAX; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1];
     for ((program, actual), expected_service_index) in strategy
         .program_roster()
@@ -749,6 +810,17 @@ const fn kernel_family(family: M1KernelArtifactFamilyV1) -> KernelFamily {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::M1_PHYSICAL_PROGRAM_COUNT_V1;
+
+    fn legacy_indices() -> [usize; M1_PHYSICAL_PROGRAM_COUNT_V1] {
+        selected_source_indices(M1PhysicalProgramStrategyV1::LegacyScalar12).unwrap()[..12]
+            .try_into()
+            .unwrap()
+    }
+
+    fn mfma_indices() -> [usize; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1] {
+        selected_source_indices(M1PhysicalProgramStrategyV1::AttributedMfma13).unwrap()
+    }
 
     fn service_index<K: CompilerGeneratedKernelExpectationV1>() -> usize {
         M1AllKernelsWorkerV3RosterV1::ENTRIES
@@ -796,8 +868,13 @@ mod tests {
             service_index::<LogitsCompactMarkerV1>(),
             service_index::<SpeculativeAssemblyMarkerV1>(),
         ];
-        assert_eq!(actual, [0, 9, 4, 11, 2, 7, 6, 5, 1, 10, 8, 3]);
-        assert_eq!(actual, M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1);
+        for (program, index) in M1PhysicalProgramV1::ALL.into_iter().zip(actual) {
+            assert_eq!(
+                M1AllKernelsWorkerV3RosterV1::ENTRIES[index],
+                typed_role_entry(program)
+            );
+        }
+        assert_eq!(actual, legacy_indices());
     }
 
     #[test]
@@ -807,16 +884,14 @@ mod tests {
         assert!(entries
             .windows(2)
             .all(|pair| pair[0].kernel_binding_id() < pair[1].kernel_binding_id()));
-        for (program, &index) in M1PhysicalProgramV1::MFMA_ALL
-            .iter()
-            .zip(&M1_MFMA_AGGREGATE_SERVICE_PROGRAM_INDICES_V1)
-        {
+        for (program, &index) in M1PhysicalProgramV1::MFMA_ALL.iter().zip(&mfma_indices()) {
             assert_eq!(entries[index].export_name(), program.kernel_symbol());
             assert_eq!(entries[index].logical_name(), program.kernel_symbol());
             assert_ne!(entries[index].generated_host_contract_identity(), [0; 32]);
         }
         assert_eq!(
-            entries[12].kernel_binding_id(),
+            entries[mfma_indices()[M1PhysicalProgramV1::GemmMfma.program_index()]]
+                .kernel_binding_id(),
             GemmMfmaMarkerV1::KERNEL_BINDING_ID_V1
         );
         assert!(!M1AllKernelsWorkerV3RosterV1::ENTRIES
@@ -828,7 +903,7 @@ mod tests {
     fn legacy_program_map_hash_bytes_ignore_unused_capacity_and_mfma_is_separate() {
         let roster_id = Identity::new([41; 32]);
         let mut indices = [usize::MAX; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1];
-        indices[..12].copy_from_slice(&M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1);
+        indices[..12].copy_from_slice(&legacy_indices());
         let legacy = authenticated_catalog_id_with_program_map(
             roster_id,
             &indices,
@@ -837,10 +912,7 @@ mod tests {
         let mut previous = Sha256::new();
         previous.update(M1_AUTHENTICATED_PROGRAM_MAP_DOMAIN_V2);
         previous.update(roster_id.as_bytes());
-        for (program, index) in M1PhysicalProgramV1::ALL
-            .into_iter()
-            .zip(M1_AGGREGATE_SERVICE_PROGRAM_INDICES_V1)
-        {
+        for (program, index) in M1PhysicalProgramV1::ALL.into_iter().zip(legacy_indices()) {
             previous.update([program as u8]);
             previous.update((index as u64).to_le_bytes());
         }
@@ -867,42 +939,43 @@ mod tests {
     #[test]
     fn checked_service_lookup_never_exposes_absent_or_out_of_range_indices() {
         use M1PhysicalProgramStrategyV1::{AttributedMfma13, LegacyScalar12};
-        let mut indices = M1_MFMA_AGGREGATE_SERVICE_PROGRAM_INDICES_V1;
-        for program in M1PhysicalProgramV1::ALL {
+        let mut legacy = [usize::MAX; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1];
+        legacy[..12].copy_from_slice(&legacy_indices());
+        let mfma = mfma_indices();
+        for (strategy, indices, bound) in
+            [(LegacyScalar12, legacy, 12), (AttributedMfma13, mfma, 13)]
+        {
+            assert_eq!(strategy.program_count(), bound);
+            for program in M1PhysicalProgramV1::ALL {
+                assert!(indices[program.program_index()] < bound);
+                assert_eq!(
+                    checked_service_program_index(strategy, &indices, program),
+                    Some(indices[program.program_index()])
+                );
+            }
+            let expected_mfma = if strategy == LegacyScalar12 {
+                None
+            } else {
+                assert!(indices[M1PhysicalProgramV1::GemmMfma.program_index()] < bound);
+                Some(indices[M1PhysicalProgramV1::GemmMfma.program_index()])
+            };
             assert_eq!(
-                checked_service_program_index(LegacyScalar12, &indices, program),
-                Some(indices[program.program_index()])
+                checked_service_program_index(strategy, &indices, M1PhysicalProgramV1::GemmMfma),
+                expected_mfma
             );
+            for invalid in [bound, usize::MAX] {
+                let mut invalid_indices = indices;
+                invalid_indices[M1PhysicalProgramV1::GemmReference.program_index()] = invalid;
+                assert_eq!(
+                    checked_service_program_index(
+                        strategy,
+                        &invalid_indices,
+                        M1PhysicalProgramV1::GemmReference
+                    ),
+                    None
+                );
+            }
         }
-        assert_eq!(
-            checked_service_program_index(LegacyScalar12, &indices, M1PhysicalProgramV1::GemmMfma),
-            None
-        );
-        assert_eq!(
-            checked_service_program_index(
-                AttributedMfma13,
-                &indices,
-                M1PhysicalProgramV1::GemmMfma
-            ),
-            Some(12)
-        );
-        indices[0] = usize::MAX;
-        assert_eq!(
-            checked_service_program_index(
-                LegacyScalar12,
-                &indices,
-                M1PhysicalProgramV1::GemmReference
-            ),
-            None
-        );
-        assert_eq!(
-            checked_service_program_index(
-                AttributedMfma13,
-                &indices,
-                M1PhysicalProgramV1::GemmReference
-            ),
-            None
-        );
     }
 
     #[test]
@@ -910,12 +983,12 @@ mod tests {
         let entries = M1AllKernelsWorkerV3RosterV1::ENTRIES;
         for (ordinal, binding, contract) in [
             (
-                7,
+                service_index::<PagedKvWriteMarkerV1>(),
                 PagedKvWriteMarkerV1::KERNEL_BINDING_ID_V1,
                 PagedKvWriteMarkerV1::PROFILE.generated_host_contract_identity(),
             ),
             (
-                2,
+                service_index::<RopeMarkerV1>(),
                 RopeMarkerV1::KERNEL_BINDING_ID_V1,
                 RopeMarkerV1::PROFILE.generated_host_contract_identity(),
             ),
@@ -927,6 +1000,58 @@ mod tests {
             );
             assert_ne!(binding, [0; 32]);
         }
+    }
+
+    #[test]
+    fn typed_role_maps_roundtrip_and_refuse_untrusted_reordering_or_membership() {
+        for (strategy, entries) in [
+            (
+                M1PhysicalProgramStrategyV1::LegacyScalar12,
+                M1AllKernelsWorkerV3RosterV1::ENTRIES,
+            ),
+            (
+                M1PhysicalProgramStrategyV1::AttributedMfma13,
+                M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES,
+            ),
+        ] {
+            let indices = source_program_indices(entries, strategy).unwrap();
+            for program in strategy.program_roster().iter().copied() {
+                let index = checked_service_program_index(strategy, &indices, program).unwrap();
+                assert_eq!(entries[index], typed_role_entry(program));
+                assert_eq!(
+                    entries
+                        .iter()
+                        .position(|entry| *entry == typed_role_entry(program)),
+                    Some(index)
+                );
+            }
+            let mut swapped = entries.to_vec();
+            swapped.swap(0, 1);
+            assert!(source_program_indices(&swapped, strategy).is_none());
+            let mut duplicate = entries.to_vec();
+            duplicate[1] = duplicate[0];
+            assert!(source_program_indices(&duplicate, strategy).is_none());
+            assert!(source_program_indices(&entries[1..], strategy).is_none());
+            let mut wrong_member = entries.to_vec();
+            wrong_member[0] = if strategy == M1PhysicalProgramStrategyV1::LegacyScalar12 {
+                typed_role_entry(M1PhysicalProgramV1::GemmMfma)
+            } else {
+                entries[1]
+            };
+            wrong_member.sort_unstable_by_key(
+                fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::kernel_binding_id,
+            );
+            assert!(source_program_indices(&wrong_member, strategy).is_none());
+        }
+        let mfma = mfma_indices()[M1PhysicalProgramV1::GemmMfma.program_index()];
+        assert_ne!(
+            mfma, 12,
+            "current default namespace must exercise non-last MFMA"
+        );
+        assert_ne!(
+            M1AllKernelsWorkerV3RosterV1::ENTRIES,
+            &M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES[..12]
+        );
     }
 
     #[test]

@@ -80,7 +80,10 @@ def load_cpu_dependencies():
     if not isinstance(torch.version.hip, str) or not torch.version.hip.startswith("7.2"):
         raise Failure("pinned torch build does not report ROCm 7.2")
     torch.set_num_threads(1)
-    torch.set_num_interop_threads(1)
+    if torch.get_num_interop_threads() != 1:
+        torch.set_num_interop_threads(1)
+    if torch.get_num_interop_threads() != 1:
+        raise Failure("CPU interop thread count must be one")
     torch.set_default_device("cpu")
     qwen = importlib.import_module("transformers.models.qwen3.modeling_qwen3")
     identity = qwen_source_identity(qwen)

@@ -3,16 +3,20 @@
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import hashlib
 import importlib.util
+import io
 import json
 import os
+import shutil
 from pathlib import Path
 import stat
 import subprocess
 import sys
 import tempfile
+import unittest
 from types import ModuleType
 from typing import Any, NoReturn
 
@@ -58,18 +62,18 @@ ADAPTER_SOURCE_FILES = (
     "src/main.rs",
 )
 ADAPTER_RELATIVE = "adapters/qwen3-all-kernels-worker-v3-source-pin-v1"
-BINDING_RELATIVE = f"{ADAPTER_RELATIVE}/SOURCE_PIN_ADAPTER_BINDING_V1.json"
+BINDING_RELATIVE = f"{ADAPTER_RELATIVE}/SOURCE_PIN_ADAPTER_BINDING_20261016_V1.json"
 BINDING_NONCLAIM = (
     "This source-controlled record pre-binds one executable identity to the exact adapter "
     "source closure. It is not a reproducible-build proof, compiler-origin attestation, "
     "semantic-correctness proof, or runtime authority."
 )
-CHECKED_BINDING_GIT_BLOB = "9bf497faf10660a7ed0c8868a703fb112f01f5a8"
-CHECKED_BINDING_SHA256 = "ac77569d7c7073f9d8a65eb179705ecac57b1489dfd7ac62ad162b918bf2a223"
-CHECKED_BINARY_SHA256 = "a7d2f7a5f872e8b0e4093d870d5307907dbfd439c599866f6b47b62329972307"
-CHECKED_BINARY_SIZE_BYTES = 8_462_312
+CHECKED_BINDING_GIT_BLOB = "ac88abc3ce6781f1987aa4c23728fc7f81f5f993"
+CHECKED_BINDING_SHA256 = "42f11441fbea0c9a753957159803076e20be87131fb2e1d7ee7a17b2c68ca260"
+CHECKED_BINARY_SHA256 = "b3e93266133bdeebe9aa06fb95aa2f1cb2656cffd7393cafda8715076b452268"
+CHECKED_BINARY_SIZE_BYTES = 8_919_784
 CHECKED_SOURCE_CLOSURE_SHA256 = (
-    "daf8c8fe04499a6224074a9f0e80edd90be0fe80ec7ddbec03d091035a2d23e7"
+    "b9819167cff878b79689991aa463fd363a1728e664c3563c637fcd9fa9cc66fe"
 )
 
 
@@ -167,6 +171,73 @@ def validate_checked_binding(repo: Path) -> None:
         or binding["source_closure_sha256"] != closure
     ):
         fail("checked aggregate adapter source closure drifted")
+
+
+class CurrentPrebindingTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.repo = Path(__file__).resolve().parents[2]
+        temporary = tempfile.TemporaryDirectory(prefix="ferric-current-prebinding-")
+        self.addCleanup(temporary.cleanup)
+        self.fixture = Path(temporary.name)
+        for relative in ADAPTER_SOURCE_FILES:
+            source = self.repo / ADAPTER_RELATIVE / relative
+            destination = self.fixture / ADAPTER_RELATIVE / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+        self.current = json.loads((self.repo / BINDING_RELATIVE).read_bytes())
+        self.historical_raw = (
+            self.repo / ADAPTER_RELATIVE / "SOURCE_PIN_ADAPTER_BINDING_V1.json"
+        ).read_bytes()
+        self.historical = json.loads(self.historical_raw)
+        self.binding = self.fixture / BINDING_RELATIVE
+        self.binding.write_bytes(canonical(self.current))
+
+    def require_rejected(self, raw: bytes) -> None:
+        self.binding.write_bytes(raw)
+        output = io.StringIO()
+        with contextlib.redirect_stderr(output), self.assertRaises(SystemExit) as raised:
+            validate_checked_binding(self.fixture)
+        self.assertEqual(raised.exception.code, 1)
+        self.assertIn("FAIL:", output.getvalue())
+
+    def test_exact_current_canonical_binding_is_accepted(self) -> None:
+        validate_checked_binding(self.repo)
+        validate_checked_binding(self.fixture)
+        self.assertEqual(hashlib.sha256(canonical(self.current)).hexdigest(), CHECKED_BINDING_SHA256)
+        self.assertEqual(git_blob(canonical(self.current)), CHECKED_BINDING_GIT_BLOB)
+
+    def test_historical_binding_and_fingerprint_are_rejected_as_current(self) -> None:
+        self.assertEqual(
+            hashlib.sha256(self.historical_raw).hexdigest(),
+            "ac77569d7c7073f9d8a65eb179705ecac57b1489dfd7ac62ad162b918bf2a223",
+        )
+        self.assertNotEqual(git_blob(self.historical_raw), CHECKED_BINDING_GIT_BLOB)
+        self.require_rejected(self.historical_raw)
+
+    def test_stale_and_mixed_identity_tuples_are_rejected(self) -> None:
+        stale_binary = copy.deepcopy(self.current)
+        stale_binary["binary"] = self.historical["binary"]
+        stale_binary_digest = copy.deepcopy(self.current)
+        stale_binary_digest["binary"]["sha256"] = self.historical["binary"]["sha256"]
+        stale_sources = copy.deepcopy(self.current)
+        stale_sources["source_files"] = self.historical["source_files"]
+        stale_sources["source_closure_sha256"] = self.historical["source_closure_sha256"]
+        stale_closure = copy.deepcopy(self.current)
+        stale_closure["source_closure_sha256"] = self.historical["source_closure_sha256"]
+        mixed_source_blob = copy.deepcopy(self.current)
+        mixed_source_blob["source_files"][0]["git_blob"] = self.historical["source_files"][0]["git_blob"]
+        mixed_source_digest = copy.deepcopy(self.current)
+        mixed_source_digest["source_files"][0]["sha256"] = self.historical["source_files"][0]["sha256"]
+        for name, hostile in (
+            ("old-binary-new-source", stale_binary),
+            ("old-binary-digest-new-size", stale_binary_digest),
+            ("new-binary-old-source", stale_sources),
+            ("current-sources-old-closure", stale_closure),
+            ("old-source-blob-current-digest", mixed_source_blob),
+            ("current-source-blob-old-digest", mixed_source_digest),
+        ):
+            with self.subTest(name=name):
+                self.require_rejected(canonical(hostile))
 
 
 def inspection(

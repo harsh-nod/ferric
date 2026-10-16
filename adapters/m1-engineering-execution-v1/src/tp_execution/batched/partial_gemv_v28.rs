@@ -1,10 +1,13 @@
 //! Optional single-row partial GEMV over the unchanged composed execution schedule.
 
-use super::{AuthenticatedModelWeightLayout, EngineeringTpArgumentV1, EngineeringTpBatchExecutionV2,
+use super::{
+    AuthenticatedModelWeightLayout, EngineeringTpArgumentV1, EngineeringTpBatchExecutionV2,
     EngineeringTpDispatchV1, EngineeringTpPagedPoolV1, EngineeringTpRankTransportV1,
-    EngineeringTpWaveTargetArtifactsV17, ModelConfig, TpResult};
-use crate::tp_artifact::{ENGINEERING_TP_GEMV_PREFETCH_EXPORTS_V20, EngineeringTpArtifactV1,
-    GemvPrefetchBindingV20};
+    EngineeringTpWaveTargetArtifactsV17, ModelConfig, TpResult,
+};
+use crate::tp_artifact::{
+    ENGINEERING_TP_GEMV_PREFETCH_EXPORTS_V20, EngineeringTpArtifactV1, GemvPrefetchBindingV20,
+};
 
 /// Explicit single-row partial policy for the separately admitted V20 image.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -17,7 +20,11 @@ pub enum EngineeringTpPartialGemvModeV28 {
 
 impl From<bool> for EngineeringTpPartialGemvModeV28 {
     fn from(enabled: bool) -> Self {
-        if enabled { Self::Prefetch4 } else { Self::Baseline }
+        if enabled {
+            Self::Prefetch4
+        } else {
+            Self::Baseline
+        }
     }
 }
 
@@ -60,7 +67,8 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         split: &EngineeringTpArtifactV1,
         gemv: &EngineeringTpArtifactV1,
     ) -> TpResult<Self> {
-        let admitted = gemv.gemv_prefetch_binding_v20()
+        let admitted = gemv
+            .gemv_prefetch_binding_v20()
             .ok_or_else(|| String::from("partial GEMV requires its exact V20 image"))
             .and_then(|binding| admit(&mut transports, binding).map(|()| binding));
         let binding = match admitted {
@@ -94,16 +102,33 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
         packed: bool,
         mode: EngineeringTpPartialGemvModeV28,
     ) -> TpResult<()> {
-        let binding = gemv.gemv_prefetch_binding_v20()
+        let binding = gemv
+            .gemv_prefetch_binding_v20()
             .ok_or("partial GEMV requires its exact V20 image")?;
-        let copy = copy.prefill_kv_copy_binding_v27().ok_or("composition requires the exact V27 image")?;
-        let split = split.split_attention_binding_v21().ok_or("composition requires the exact V21 image")?;
-        let ((argmax, attention), rmsnorm) = artifacts.argmax.fp32_argmax_binding_v11()
+        let copy = copy
+            .prefill_kv_copy_binding_v27()
+            .ok_or("composition requires the exact V27 image")?;
+        let split = split
+            .split_attention_binding_v21()
+            .ok_or("composition requires the exact V21 image")?;
+        let ((argmax, attention), rmsnorm) = artifacts
+            .argmax
+            .fp32_argmax_binding_v11()
             .zip(artifacts.attention.query_hoist_binding_v14())
             .zip(artifacts.rmsnorm.wave_rmsnorm_binding_v15())
             .ok_or("composition requires all historical V17 images")?;
-        self.configure_partial_gemv_bindings_v28(argmax, attention, rmsnorm, copy, split,
-            binding, prefill_enabled, split_enabled, packed, mode)
+        self.configure_partial_gemv_bindings_v28(
+            argmax,
+            attention,
+            rmsnorm,
+            copy,
+            split,
+            binding,
+            prefill_enabled,
+            split_enabled,
+            packed,
+            mode,
+        )
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -122,14 +147,24 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchExecutionV2<R> {
     ) -> TpResult<()> {
         self.validate_partial_gemv_v28(binding)?;
         self.configure_prefill_decode_bindings_v28(
-            argmax, attention, rmsnorm, copy, split, prefill_enabled, split_enabled, packed,
+            argmax,
+            attention,
+            rmsnorm,
+            copy,
+            split,
+            prefill_enabled,
+            split_enabled,
+            packed,
         )?;
         let enabled = mode == EngineeringTpPartialGemvModeV28::Prefetch4;
         self.partial_gemv_v28 = Some(enabled);
         Ok(())
     }
 
-    pub(super) fn validate_partial_gemv_v28(&self, binding: GemvPrefetchBindingV20) -> TpResult<()> {
+    pub(super) fn validate_partial_gemv_v28(
+        &self,
+        binding: GemvPrefetchBindingV20,
+    ) -> TpResult<()> {
         if self.admitted_partial_gemv_v20 != Some(binding) || self.partial_gemv_v28.is_some() {
             return Err("partial GEMV requires its admitted image and fresh selection".into());
         }

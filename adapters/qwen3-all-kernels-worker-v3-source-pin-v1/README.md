@@ -37,6 +37,16 @@ verifier, publication, GPU load, or GPU launch authority. Ferric must still
 recover current publication custody, admit the compiler-generated roster, and
 obtain independent protected verification evidence before runtime admission.
 
+## CPU Byte Prebinding
+
+`SOURCE_PIN_ADAPTER_BINDING_20261016_V1.json` is the current CPU-only byte
+prebinding, from the reviewed Rust 1.97.1 release build at Ferric `e0dd5c5`.
+Its binary SHA-256 is
+`b3e93266133bdeebe9aa06fb95aa2f1cb2656cffd7393cafda8715076b452268`.
+The undated `SOURCE_PIN_ADAPTER_BINDING_V1.json` remains unchanged as historical
+evidence and is not accepted as the current record. Neither record grants
+reproducible-build, compiler-origin, semantic, proof, native, or runtime approval.
+
 ## Verification
 
 ```text

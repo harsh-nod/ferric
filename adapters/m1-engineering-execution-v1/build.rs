@@ -29,14 +29,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     generated.push_str("];\n");
     let output = std::path::PathBuf::from(std::env::var_os("OUT_DIR").ok_or("missing OUT_DIR")?);
     std::fs::write(output.join("v21_compiler_names.rs"), generated)?;
-    let roster = ferric_qwen3_tp_gemv_prefetch_kernels_device_v20::compiler_expectation_roster_v20();
-    let names = roster.iter().map(|entry| (entry.logical_name(), entry.export_name())).collect::<Vec<_>>();
+    let roster =
+        ferric_qwen3_tp_gemv_prefetch_kernels_device_v20::compiler_expectation_roster_v20();
+    let names = roster
+        .iter()
+        .map(|entry| (entry.logical_name(), entry.export_name()))
+        .collect::<Vec<_>>();
     assert_eq!(names.len(), 2);
-    assert!(names.iter().all(|(logical, export)| !logical.is_empty() && !export.is_empty()));
+    assert!(
+        names
+            .iter()
+            .all(|(logical, export)| !logical.is_empty() && !export.is_empty())
+    );
     assert_ne!(names[0].0, names[1].0);
     assert_ne!(names[0].1, names[1].1);
-    assert_eq!(names.iter().map(|(_, export)| *export).collect::<Vec<_>>(),
-        ferric_qwen3_tp_gemv_prefetch_kernels_device_v20::ROOTS_V20);
+    assert_eq!(
+        names.iter().map(|(_, export)| *export).collect::<Vec<_>>(),
+        ferric_qwen3_tp_gemv_prefetch_kernels_device_v20::ROOTS_V20
+    );
     let mut generated = String::from("const V20_COMPILER_NAMES: [(&str, &str); 2] = [\n");
     for (logical, export) in names {
         writeln!(generated, "    ({logical:?}, {export:?}),")?;

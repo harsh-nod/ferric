@@ -1,4 +1,5 @@
 use fe2o3_host::{
+    CompilerGeneratedKernelExpectationRosterEntryV1 as Entry,
     CompilerGeneratedKernelExpectationRosterV1, CompilerGeneratedKernelExpectationV1,
 };
 
@@ -26,40 +27,42 @@ fn aggregate_roster_has_exact_global_marker_order() {
         swiglu::qwen3_swiglu_bf16_f32_v1_gpu::Marker as SwiGlu,
     };
 
-    let expected = [
-        GemmReference::KERNEL_BINDING_ID_V1,
-        SwiGlu::KERNEL_BINDING_ID_V1,
-        Rope::KERNEL_BINDING_ID_V1,
-        SpeculativeAssembly::KERNEL_BINDING_ID_V1,
-        TokenEmbedding::KERNEL_BINDING_ID_V1,
-        PagedDecode::KERNEL_BINDING_ID_V1,
-        Prefill::KERNEL_BINDING_ID_V1,
-        PagedKvWrite::KERNEL_BINDING_ID_V1,
-        CompactCompletion::KERNEL_BINDING_ID_V1,
-        GemmVectorized::KERNEL_BINDING_ID_V1,
-        LowestIdArgmax::KERNEL_BINDING_ID_V1,
-        RmsNorm::KERNEL_BINDING_ID_V1,
-        GemmMfma::KERNEL_BINDING_ID_V1,
+    let mut expected = [
+        Entry::for_marker::<GemmReference>(),
+        Entry::for_marker::<SwiGlu>(),
+        Entry::for_marker::<Rope>(),
+        Entry::for_marker::<SpeculativeAssembly>(),
+        Entry::for_marker::<TokenEmbedding>(),
+        Entry::for_marker::<PagedDecode>(),
+        Entry::for_marker::<Prefill>(),
+        Entry::for_marker::<PagedKvWrite>(),
+        Entry::for_marker::<CompactCompletion>(),
+        Entry::for_marker::<GemmVectorized>(),
+        Entry::for_marker::<LowestIdArgmax>(),
+        Entry::for_marker::<RmsNorm>(),
+        Entry::for_marker::<GemmMfma>(),
     ];
+    expected.sort_unstable_by_key(Entry::kernel_binding_id);
     let entries = M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES;
     let legacy = M1AllKernelsWorkerV3RosterV1::ENTRIES;
     assert_eq!(legacy.len(), 12);
-    for (retained, current) in legacy.iter().zip(entries) {
-        assert_eq!(retained.kernel_binding_id(), current.kernel_binding_id());
+    for retained in legacy {
         assert_eq!(
-            retained.generated_host_contract_identity(),
-            current.generated_host_contract_identity()
+            entries
+                .iter()
+                .filter(|current| *current == retained)
+                .count(),
+            1
         );
-        assert_eq!(retained.export_name(), current.export_name());
+        assert_ne!(retained.kernel_binding_id(), GemmMfma::KERNEL_BINDING_ID_V1);
     }
-    assert_eq!(entries.len(), expected.len());
-    assert_eq!(
-        entries
-            .iter()
-            .map(|entry| entry.kernel_binding_id())
-            .collect::<Vec<_>>(),
-        expected
+    assert!(
+        legacy
+            .windows(2)
+            .all(|pair| pair[0].kernel_binding_id() < pair[1].kernel_binding_id())
     );
+    assert_eq!(entries.len(), expected.len());
+    assert_eq!(entries, expected);
     assert!(entries.iter().all(|entry| {
         entry.kernel_binding_id() != [0; 32] && entry.generated_host_contract_identity() != [0; 32]
     }));
@@ -85,20 +88,22 @@ fn aggregate_roster_has_exact_global_marker_order() {
             .iter()
             .map(|entry| entry.export_name())
             .collect::<Vec<_>>(),
-        vec![
-            "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
-            "qwen3_swiglu_bf16_f32_v1",
-            "qwen3_rope_v1",
-            "ferric_qwen3_speculative_token_assembly_v1",
-            "ferric_qwen3_token_embedding_bf16_copy_v1",
-            "qwen3_paged_gqa_decode_bf16_f32_v1",
-            "qwen3_gqa_prefill_causal_bf16_f32_v1",
-            "qwen3_paged_kv_write_v1",
-            "ferric_qwen3_compact_completion_v1",
-            "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
-            "ferric_qwen3_lowest_id_argmax_bf16_v1",
-            "qwen3_rmsnorm_v1",
-            "ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1",
-        ]
+        expected.iter().map(Entry::export_name).collect::<Vec<_>>()
     );
+}
+
+#[cfg(feature = "gfx942")]
+#[test]
+fn current_default_namespace_exercises_nonprefix_and_nonlast_mfma() {
+    use ferric_qwen3_all_kernels_device_v1::{
+        M1AllKernelsMfmaWorkerV3RosterV1, M1AllKernelsWorkerV3RosterV1,
+        gemm::ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker,
+    };
+    let mfma = M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES;
+    let index = mfma
+        .iter()
+        .position(|entry| *entry == Entry::for_marker::<Marker>())
+        .unwrap();
+    assert!(index < 12);
+    assert_ne!(M1AllKernelsWorkerV3RosterV1::ENTRIES, &mfma[..12]);
 }

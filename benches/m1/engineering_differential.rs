@@ -1152,6 +1152,7 @@ mod tests {
             "old-engineering-reference",
             "unmatched-runner",
         ] {
+            eprintln!("engineering suite negative case {failure}: fixture");
             let fixture = fixture_for_kind("prefill-s8-t128");
             let output = fixture.reference.join(FILES[1]);
             match failure {
@@ -1213,6 +1214,7 @@ mod tests {
                 }),
                 _ => unreachable!(),
             }
+            eprintln!("engineering suite negative case {failure}: compare");
             assert!(
                 compare_all(&fixture).is_err(),
                 "accepted suite failure {failure}"

@@ -1,9 +1,9 @@
 use ferric_qwen3_rope_kv_device_v1::{
-    qwen3_paged_kv_write_profile_is_admitted_v1, qwen3_rope_profile_is_admitted_v1,
     QWEN3_KV_CACHE_ELEMENTS_V1, QWEN3_KV_PAGE_TABLE_ENTRIES_V1, QWEN3_KV_PAGE_TOKENS_V1,
     QWEN3_KV_PHYSICAL_PAGE_SLOTS_V1, QWEN3_PAGED_KV_WRITE_GRID_WORKGROUPS_V1,
     QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1, QWEN3_ROPE_KV_MAX_PROFILE_ROWS_V1,
-    QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1,
+    QWEN3_ROPE_MAX_GRID_WORKGROUPS_V1, qwen3_paged_kv_write_profile_is_admitted_v1,
+    qwen3_rope_profile_is_admitted_v1,
 };
 
 fn widen_bf16(bits: u16) -> f32 {

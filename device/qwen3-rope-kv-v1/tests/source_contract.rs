@@ -709,7 +709,9 @@ fn launch_and_numerical_source_contracts_are_explicit() {
             .count(),
         1
     );
-    assert!(SOURCE.contains("thread::launch_extent_1d() != QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1"));
+    assert!(
+        SOURCE.contains("thread::launch_extent_1d() != QWEN3_PAGED_KV_WRITE_GRID_WORKITEMS_V1")
+    );
     for required in [
         "let first_cos = first_value * cos;",
         "let second_sin = second_value * sin;",

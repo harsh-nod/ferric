@@ -16,15 +16,15 @@ use fe2o3_service_host::{
 use ferric_spec::Identity;
 
 use crate::{
-    AddresslessM1PhysicalBufferRecipeV1, AddresslessM1PhysicalKernargRecipeV1,
-    BoundM1CompletionOutputV1, BoundM1FullStepWorkspaceSubleases, M1CompletionOutputErrorV1,
-    M1CompletionOutputShapeV1, M1DirectDiagnosticChoicesErrorV1,
-    M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceSubleaseBindingError,
-    M1FullStepWorkspaceSubleaseOwners, M1PartitionedModelMemoryKvPoolV1,
-    M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1,
-    M1PhysicalBufferSourceV1, M1PhysicalProgramV1, M1QualificationLogitsErrorV1,
-    M1SpeculativeDiagnosticChoicesErrorV1, M1StepDispatchIntent, ModelMemoryDispatchRangeErrorV1,
-    m1_completion_output_shape_v1,
+    m1_completion_output_shape_v1, AddresslessM1PhysicalBufferRecipeV1,
+    AddresslessM1PhysicalKernargRecipeV1, BoundM1CompletionOutputV1,
+    BoundM1FullStepWorkspaceSubleases, M1CompletionOutputErrorV1, M1CompletionOutputShapeV1,
+    M1DirectDiagnosticChoicesErrorV1, M1FullStepWorkspaceDispatchRangeError,
+    M1FullStepWorkspaceSubleaseBindingError, M1FullStepWorkspaceSubleaseOwners,
+    M1PartitionedModelMemoryKvPoolV1, M1PhysicalBufferRecipeErrorV1, M1PhysicalBufferRecipeRowV1,
+    M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1, M1PhysicalProgramV1,
+    M1QualificationLogitsErrorV1, M1SpeculativeDiagnosticChoicesErrorV1, M1StepDispatchIntent,
+    ModelMemoryDispatchRangeErrorV1,
 };
 
 /// Owner-checked physical-buffer binding format.
@@ -1808,28 +1808,27 @@ mod tests {
     use fe2o3_service_host::ServiceAllocationErrorV1;
     use ferric_build::{KvCacheComponent, M1StepWorkspaceRangeRole};
     use ferric_spec::{
-        Identity, QWEN3_NO_LAYER, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket,
-        Qwen3TensorKind,
+        Identity, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3TensorKind,
+        QWEN3_NO_LAYER,
     };
 
     use super::{
-        BindingRowMetadata, M1PhysicalBufferBindingErrorV1, M1PhysicalBufferResolutionBackendV1,
-        SpeculativeDiagnosticChoiceSourceRouteV1, direct_diagnostic_choice_source_isolation,
-        first_materialization_requirement, qualification_logits_source_isolation,
-        resolve_rows_with_backend, sentinel_geometry,
+        direct_diagnostic_choice_source_isolation, first_materialization_requirement,
+        qualification_logits_source_isolation, resolve_rows_with_backend, sentinel_geometry,
         speculative_diagnostic_choice_source_isolation,
         speculative_diagnostic_draft_choice_geometry, validate_argument_ordinal,
         validate_completion_output_intent, validate_completion_output_shape,
-        validate_row_metadata_entry,
+        validate_row_metadata_entry, BindingRowMetadata, M1PhysicalBufferBindingErrorV1,
+        M1PhysicalBufferResolutionBackendV1, SpeculativeDiagnosticChoiceSourceRouteV1,
     };
     use crate::physical_buffer_recipe::tests::{complete_intents, exact_inputs};
     use crate::{
-        AddresslessM1PhysicalBufferRecipeV1, M1FullStepWorkspaceDispatchRangeError,
-        M1FullStepWorkspaceRole, M1PhysicalBufferAccessV1, M1PhysicalBufferRecipeRowV1,
-        M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1, M1PhysicalProgramV1,
-        M1StepDispatchIntent, M1StepDispatchStage, M1StepWorkspaceDispatchRangeError,
         derive_m1_physical_buffer_recipe_v1, m1_completion_output_shape_v1,
-        m1_speculative_diagnostic_choices_shape_v1,
+        m1_speculative_diagnostic_choices_shape_v1, AddresslessM1PhysicalBufferRecipeV1,
+        M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceRole, M1PhysicalBufferAccessV1,
+        M1PhysicalBufferRecipeRowV1, M1PhysicalBufferSentinelV1, M1PhysicalBufferSourceV1,
+        M1PhysicalProgramV1, M1StepDispatchIntent, M1StepDispatchStage,
+        M1StepWorkspaceDispatchRangeError,
     };
 
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -2356,11 +2355,9 @@ mod tests {
                 })
                 .collect::<Vec<_>>();
             assert_eq!(routed_choices.len(), 2);
-            assert!(
-                routed_choices
-                    .iter()
-                    .all(|buffer| buffer.route == TestResolutionRouteV1::HostVisible)
-            );
+            assert!(routed_choices
+                .iter()
+                .all(|buffer| buffer.route == TestResolutionRouteV1::HostVisible));
             assert_eq!(
                 backend.diagnostic_routes,
                 vec![SpeculativeDiagnosticChoiceSourceRouteV1::DirectTargetWholeHost; 2]

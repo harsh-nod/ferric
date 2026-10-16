@@ -25,6 +25,59 @@ def fail(message: str) -> NoReturn:
     raise SystemExit(1)
 
 
+def check_model_bundle_topology(model_bundle: list[dict[str, Any]]) -> None:
+    if any(
+        slot["binding"]["obligation_class"] != "Assurance"
+        or slot["binding"]["obligation_id"] != "model_bundle_well_formed"
+        for slot in model_bundle
+    ):
+        fail("model_bundle_well_formed allocation topology drifted")
+    model_bundle_topology = [
+        (
+            slot["binding"]["profile_id"],
+            slot["binding"]["evidence_kind"],
+            slot["binding"]["path_id"],
+            tuple(slot["foundation_selectors"]),
+        )
+        for slot in model_bundle
+    ]
+    if model_bundle_topology != [
+        (
+            "admission",
+            "negative-mutation",
+            "model-bundle-proof",
+            (
+                "model-bundle-manifest-canonical-bytes",
+                "model-bundle-manifest-layout",
+                "model-bundle-record-binding",
+            ),
+        ),
+        (
+            "admission",
+            "verus-theorem",
+            "model-bundle-proof",
+            ("model-bundle-composition",),
+        ),
+        (
+            "authentication",
+            "negative-mutation",
+            "weight-stream",
+            ("canonical-weight-role-byte",),
+        ),
+        ("admission", "artifact-identity", "bundle-auth", ()),
+        ("admission", "canonical-structure-check", "bundle-parser", ()),
+        ("authentication", "artifact-identity", "model-admission", ()),
+        (
+            "authentication",
+            "canonical-structure-check",
+            "tokenizer-admission",
+            (),
+        ),
+        ("authentication", "independent-validator", "bundle-auth", ()),
+    ]:
+        fail("model_bundle_well_formed allocation topology drifted")
+
+
 def load_planner(path: Path) -> Any:
     spec = importlib.util.spec_from_file_location("ferric_m1_evidence_planner", path)
     if spec is None or spec.loader is None:
@@ -120,6 +173,79 @@ def replace_once(path: Path, before: str, after: str) -> None:
     if source.count(before) != 1:
         fail(f"integration mutation has no unique anchor: {path}: {before!r}")
     path.write_text(source.replace(before, after, 1), encoding="utf-8")
+
+
+def exercise_hsaco_topology_boundaries(repo: Path, planner: Any) -> None:
+    workspace = planner.read_toml(repo / "Cargo.toml", "current workspace")
+    positive = planner.validate_fe2o3_topology(repo, workspace)
+    if len(positive) != 22 or {
+        "owner": "ferric-engine",
+        "scope": "dependencies",
+        "name": "fe2o3-hsaco",
+    } not in positive:
+        fail("current HSACO topology did not retain its exact 22-edge graph")
+    topology_error = "dependency topology does not equal the admitted root graph"
+    declaration_error = "dependency edge is not an exact workspace edge"
+    engine = "crates/ferric-engine/Cargo.toml"
+    edge = "fe2o3-hsaco.workspace = true\n"
+    cases = (
+        ("missing", ((engine, edge, ""),), topology_error),
+        (
+            "old-dev-scope",
+            ((engine, edge, ""), (engine, "[dev-dependencies]\n",
+              "[dev-dependencies]\n" + edge)),
+            topology_error,
+        ),
+        (
+            "both-scopes",
+            ((engine, "[dev-dependencies]\n", "[dev-dependencies]\n" + edge),),
+            topology_error,
+        ),
+        (
+            "wrong-owner",
+            ((engine, edge, ""), ("crates/ferric-build/Cargo.toml",
+              "[dependencies]\n", "[dependencies]\n" + edge)),
+            topology_error,
+        ),
+        (
+            "alias",
+            ((engine, edge,
+              'hsaco-alias = { package = "fe2o3-hsaco", workspace = true }\n'),),
+            declaration_error,
+        ),
+        (
+            "optional",
+            ((engine, edge,
+              "fe2o3-hsaco = { workspace = true, optional = true }\n"),),
+            declaration_error,
+        ),
+        (
+            "target-substitution",
+            ((engine, edge, ""), (engine, "[dependencies]\n",
+              '[target.\'cfg(target_os = "linux")\'.dependencies]\n' + edge
+              + "\n[dependencies]\n")),
+            topology_error,
+        ),
+    )
+    with tempfile.TemporaryDirectory(prefix="ferric-hsaco-topology-") as raw:
+        for name, mutations, expected in cases:
+            fixture = Path(raw) / name
+            for relative in workspace["workspace"]["members"]:
+                manifest = fixture / relative / "Cargo.toml"
+                manifest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(repo / relative / "Cargo.toml", manifest)
+            for relative, old, new in mutations:
+                replace_once(fixture / relative, old, new)
+            rejected = io.StringIO()
+            try:
+                with contextlib.redirect_stderr(rejected):
+                    planner.validate_fe2o3_topology(fixture, workspace)
+            except SystemExit as error:
+                if error.code != 1 or expected not in rejected.getvalue():
+                    fail(f"HSACO topology control {name} rejected for the wrong reason")
+            else:
+                fail(f"HSACO topology control {name} accepted a forbidden graph")
+    print("PASS: current 22-edge graph rejected seven HSACO scope/identity substitutions")
 
 
 def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) -> None:
@@ -1012,46 +1138,51 @@ def main() -> None:
         for slot in assurance
         if slot["binding"]["obligation_id"] == "model_bundle_well_formed"
     ]
-    model_bundle_topology = [
-        (
-            slot["binding"]["profile_id"],
-            slot["binding"]["evidence_kind"],
-            slot["binding"]["path_id"],
-            tuple(slot["foundation_selectors"]),
-        )
-        for slot in model_bundle
-    ]
-    if model_bundle_topology != [
-        (
-            "admission",
-            "negative-mutation",
-            "model-bundle-proof",
-            ("model-bundle-record-binding",),
-        ),
-        (
-            "admission",
-            "verus-theorem",
-            "model-bundle-proof",
-            ("model-bundle-composition",),
-        ),
-        (
-            "authentication",
-            "negative-mutation",
-            "weight-stream",
-            ("canonical-weight-role-byte",),
-        ),
-        ("admission", "artifact-identity", "bundle-auth", ()),
-        ("admission", "canonical-structure-check", "bundle-parser", ()),
-        ("authentication", "artifact-identity", "model-admission", ()),
-        (
-            "authentication",
-            "canonical-structure-check",
-            "tokenizer-admission",
-            (),
-        ),
-        ("authentication", "independent-validator", "bundle-auth", ()),
-    ]:
-        fail("model_bundle_well_formed allocation topology drifted")
+    check_model_bundle_topology(model_bundle)
+    hostile_topologies = []
+    selectors = model_bundle[0]["foundation_selectors"]
+    for index in range(3):
+        hostile = copy.deepcopy(model_bundle)
+        del hostile[0]["foundation_selectors"][index]
+        hostile_topologies.append(hostile)
+    for changed in (
+        selectors + ["unexpected-selector"],
+        selectors + [selectors[0]],
+        list(reversed(selectors)),
+    ):
+        hostile = copy.deepcopy(model_bundle)
+        hostile[0]["foundation_selectors"] = changed
+        hostile_topologies.append(hostile)
+    for field, value in (
+        ("obligation_class", "Roadmap"),
+        ("obligation_id", "graph_refined"),
+        ("path_id", "weight-stream"),
+        ("profile_id", "authentication"),
+        ("evidence_kind", "verus-theorem"),
+    ):
+        hostile = copy.deepcopy(model_bundle)
+        hostile[0]["binding"][field] = value
+        hostile_topologies.append(hostile)
+    hostile_topologies.extend(
+        [
+            copy.deepcopy(model_bundle[:-1]),
+            copy.deepcopy(model_bundle + [model_bundle[-1]]),
+            copy.deepcopy([model_bundle[1], model_bundle[0], *model_bundle[2:]]),
+        ]
+    )
+    for index, hostile in enumerate(hostile_topologies):
+        rejected = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(rejected):
+                check_model_bundle_topology(hostile)
+        except SystemExit as error:
+            if error.code != 1 or rejected.getvalue().strip() != (
+                "FAIL: model_bundle_well_formed allocation topology drifted"
+            ):
+                fail(f"model bundle topology control {index} failed for the wrong reason")
+        else:
+            fail(f"model bundle topology control {index} accepted hostile data")
+    print("PASS: exact eight model bundle tuples rejected 14 hostile topologies")
     graph = [
         slot
         for slot in assurance
@@ -1744,6 +1875,7 @@ def main() -> None:
     if refusal.returncode == 0 or expected not in refusal.stdout:
         fail("M1 planner did not categorically refuse closure output")
 
+    exercise_hsaco_topology_boundaries(repo, planner)
     exercise_prepare_boundaries(repo, fe2o3_source, planner)
     if set(planner_path.parent.rglob("*.pyc")) != bytecode_before:
         fail("M1 planner policy created Python bytecode in the Ferric worktree")

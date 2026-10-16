@@ -85,7 +85,7 @@ ADAPTER_FILES = (
 )
 ADAPTER_BINDING = (
     "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/"
-    "SOURCE_PIN_ADAPTER_BINDING_V1.json"
+    "SOURCE_PIN_ADAPTER_BINDING_20261016_V1.json"
 )
 TOP_KEYS = {
     "artifact",

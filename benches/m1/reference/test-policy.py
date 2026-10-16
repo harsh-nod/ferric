@@ -25,6 +25,30 @@ EXPECTED_FILES = {
     "test_engineering_reference.py",
     "uv.lock",
 }
+# Package presence only; this never extends either reference implementation closure.
+ENGINEERING_AUXILIARY_FILES = {
+    "README.md",
+    "engineering_m5_final_rms_reference.py",
+    "engineering_m5_rank_diagnostic.py",
+    "engineering_m5_reference.py",
+    "engineering_rmsnorm_ablation.py",
+    "engineering_tp1_arithmetic_final_stage_reference.py",
+    "engineering_tp1_final_stage_reference.py",
+    "engineering_tp1_layer0_residual_ablation.py",
+    "engineering_tp1_lm_head_ablation.py",
+    "engineering_tp1_retained_final_stage_reference.py",
+    "engineering_tp1_rmsnorm_ablation.py",
+    "test_engineering_m5_final_rms_reference.py",
+    "test_engineering_m5_rank_diagnostic.py",
+    "test_engineering_m5_reference.py",
+    "test_engineering_rmsnorm_ablation.py",
+    "test_engineering_tp1_final_stage_reference.py",
+    "test_engineering_tp1_layer0_residual_ablation.py",
+    "test_engineering_tp1_lm_head_ablation.py",
+    "test_engineering_tp1_retained_final_stage_reference.py",
+    "test_engineering_tp1_rmsnorm_ablation.py",
+}
+
 DIRECT_PINS = {
     "accelerate": "1.14.0",
     "numpy": "1.26.4",
@@ -202,9 +226,13 @@ def source_policy() -> None:
 
 
 def main() -> None:
-    actual = {path.name for path in ROOT.iterdir()}
-    if actual != EXPECTED_FILES:
-        fail(f"package file roster drifted: {sorted(actual ^ EXPECTED_FILES)}")
+    entries = list(ROOT.iterdir())
+    actual = {path.name for path in entries}
+    expected = EXPECTED_FILES | ENGINEERING_AUXILIARY_FILES
+    if actual != expected:
+        fail(f"package file roster drifted: {sorted(actual ^ expected)}")
+    if any(path.is_symlink() or not path.is_file() for path in entries):
+        fail("package entries must be regular non-symlink files")
     dependency_policy()
     implementation_policy()
     protocol_policy()

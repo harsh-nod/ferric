@@ -26,19 +26,19 @@
 use crate::bound_step_workspaces::bind_addressless_m1_full_step_workspace_subleases;
 use crate::initialized_step_workspaces::allocate_initialized_m1_full_step_workspaces_v1;
 use crate::{
+    allocate_m1_completion_output_v1, allocate_m1_guarded_completion_output_v1,
+    direct_diagnostic_choices::attach_m1_direct_diagnostic_choices_v1,
+    qualification_logits::attach_m1_qualification_logits_v1,
+    speculative_diagnostic_choices::{
+        attach_m1_speculative_diagnostic_choices_v1, attach_m1_speculative_k4_diagnostic_choices_v1,
+    },
     AddresslessM1FullStepWorkspaceComposition, BoundM1CompletionOutputV1,
     BoundM1FullStepWorkspaceSubleases, BoundModelMemoryAllocationsV1, ExactCompletion,
     InitializedM1FullStepWorkspaceAllocationFailureV1, M1CompletionOutputErrorV1,
     M1DeviceBoundModelMemoryV1, M1FullStepWorkspaceDispatchRangeError, M1FullStepWorkspaceImagesV1,
     M1FullStepWorkspacePlans, M1FullStepWorkspaceRole, M1FullStepWorkspaceSubleaseBindingFailure,
     M1FullStepWorkspaceSubleaseOwners, ModelMemoryAllocationBindingErrorV1,
-    ModelMemoryDispatchRangeErrorV1, allocate_m1_completion_output_v1,
-    allocate_m1_guarded_completion_output_v1,
-    direct_diagnostic_choices::attach_m1_direct_diagnostic_choices_v1,
-    qualification_logits::attach_m1_qualification_logits_v1,
-    speculative_diagnostic_choices::{
-        attach_m1_speculative_diagnostic_choices_v1, attach_m1_speculative_k4_diagnostic_choices_v1,
-    },
+    ModelMemoryDispatchRangeErrorV1,
 };
 use core::fmt;
 use fe2o3_service_host::{
@@ -51,19 +51,19 @@ use ferric_build::{
 };
 use ferric_spec::completion::CompletionEpoch;
 use ferric_spec::paged_kv_refinement::{
-    PhysicalKvCatchupCommitError, PhysicalKvRetiredPageMetadataV1,
-    PhysicalKvRetirementMetadataBatchV1, commit_initialized_draft_catchup_kv,
-    initialize_draft_catchup_kv, preflight_retired_page_metadata_batch_v1,
+    commit_initialized_draft_catchup_kv, initialize_draft_catchup_kv,
+    preflight_retired_page_metadata_batch_v1, PhysicalKvCatchupCommitError,
+    PhysicalKvRetiredPageMetadataV1, PhysicalKvRetirementMetadataBatchV1,
 };
 use ferric_spec::{
-    Identity, LogicalKvState, M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS,
-    M1_KV_PHYSICAL_PAGE_SLOTS, M1_MAX_ACTIVE_SEQUENCES, M1QualificationLaneExecutionBinding,
-    M1QualificationLaneGrouping, PhysicalKvError, PhysicalKvLifecycle, PhysicalKvLocation,
-    PhysicalKvReselectionPermit, PhysicalKvState, PhysicalPageId, Qwen3ExecutionMode,
-    Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection, RequestId, Target, append_physical_page,
-    apply_preflighted_physical_kv_reselection, cancel_physical_kv, commit_physical_kv,
-    map_initialized_token, preflight_physical_kv_reselection, retire_cancelled_tail,
-    rollback_physical_token, write_physical_token,
+    append_physical_page, apply_preflighted_physical_kv_reselection, cancel_physical_kv,
+    commit_physical_kv, map_initialized_token, preflight_physical_kv_reselection,
+    retire_cancelled_tail, rollback_physical_token, write_physical_token, Identity, LogicalKvState,
+    M1QualificationLaneExecutionBinding, M1QualificationLaneGrouping, PhysicalKvError,
+    PhysicalKvLifecycle, PhysicalKvLocation, PhysicalKvReselectionPermit, PhysicalKvState,
+    PhysicalPageId, Qwen3ExecutionMode, Qwen3ModelRole, Qwen3PlanBucket, Qwen3PlanSelection,
+    RequestId, Target, M1_KV_PAGE_TABLE_ENTRIES, M1_KV_PAGE_TOKENS, M1_KV_PHYSICAL_PAGE_SLOTS,
+    M1_MAX_ACTIVE_SEQUENCES,
 };
 use vstd::prelude::*;
 
@@ -8315,17 +8315,17 @@ impl SettledQuiescentDeviceKvCache {
 mod tests {
     use super::test_support::bind_gfx942_device;
     use super::*;
-    use M1CompletionOutputAttachmentProjectionV1::{
-        Bare, CompletionCanary, DirectDiagnostic, EngineeringS1K4Logits, Mixed,
-        QualificationLogits, SpeculativeDiagnostic,
-    };
     use ferric_build::qwen3_kv_arena_bytes;
     use ferric_spec::{
-        M1_KV_PHYSICAL_PAGE_SLOTS, M1QualificationContextPlan,
+        m1_qualification_context_plan, validate_m1_step_inputs, M1QualificationContextPlan,
         M1QualificationExecutionBindingDeclaration, M1QualificationLaneExecutionBinding,
         M1QualificationLaneGrouping, M1StepInputCandidate, M1StepInputValidationOutcome,
         Qwen3ExecutionMode, Qwen3PlanBucket, StepPlan, ValidatedM1StepInputs,
-        m1_qualification_context_plan, validate_m1_step_inputs,
+        M1_KV_PHYSICAL_PAGE_SLOTS,
+    };
+    use M1CompletionOutputAttachmentProjectionV1::{
+        Bare, CompletionCanary, DirectDiagnostic, EngineeringS1K4Logits, Mixed,
+        QualificationLogits, SpeculativeDiagnostic,
     };
 
     #[test]
@@ -8788,30 +8788,26 @@ mod tests {
             for invalid_request in [RequestId::new(32, 1), RequestId::new(3, 0)] {
                 assert!(draft_catchup_page_lane(parent, invalid_request, 32, 33).is_err());
             }
-            assert!(
-                draft_catchup_page_lane(
-                    Qwen3PlanSelection {
-                        role: Qwen3ModelRole::Draft06B,
-                        ..parent
-                    },
-                    request(),
-                    32,
-                    33
-                )
-                .is_err()
-            );
-            assert!(
-                draft_catchup_page_lane(
-                    Qwen3PlanSelection {
-                        bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
-                        ..parent
-                    },
-                    request(),
-                    32,
-                    33
-                )
-                .is_err()
-            );
+            assert!(draft_catchup_page_lane(
+                Qwen3PlanSelection {
+                    role: Qwen3ModelRole::Draft06B,
+                    ..parent
+                },
+                request(),
+                32,
+                33
+            )
+            .is_err());
+            assert!(draft_catchup_page_lane(
+                Qwen3PlanSelection {
+                    bucket: Qwen3PlanBucket::SpeculativeS8K4C8192,
+                    ..parent
+                },
+                request(),
+                32,
+                33
+            )
+            .is_err());
         }
     }
 
@@ -8968,9 +8964,7 @@ mod tests {
         let source = include_str!("device_cache.rs");
         let production = source.split("#[cfg(test)]\nmod tests").next().unwrap();
         assert!(!production.contains("lease_preflighted_authenticated_new_window_page"));
-        assert!(
-            production.contains("pub(crate) struct M1AuthenticatedNewWindowPageSetAdmissionV1")
-        );
+        assert!(production.contains("pub(crate) struct M1AuthenticatedNewWindowPageSetAdmissionV1"));
 
         let commit_start = production
             .find("pub(crate) fn commit_authenticated_new_window_page_set")
@@ -10651,12 +10645,10 @@ mod tests {
             assert_eq!(aborted.page_count(), page_count);
             let recovered = aborted.into_page_leases();
             assert_eq!(recovered.len(), page_count);
-            assert!(
-                recovered
-                    .iter()
-                    .enumerate()
-                    .all(|(index, lease)| lease.page().index() == u32::try_from(index).unwrap())
-            );
+            assert!(recovered
+                .iter()
+                .enumerate()
+                .all(|(index, lease)| lease.page().index() == u32::try_from(index).unwrap()));
             let projection = cache.projection();
             assert!(!projection.target_write_pending);
             assert_eq!(projection.target.resident_tokens, 0);
@@ -12701,11 +12693,9 @@ mod tests {
             },
         );
         assert_eq!(second, Err((3, 41, ())));
-        assert!(
-            pages_by_lane[..3]
-                .iter()
-                .all(|pages| pages.len() == M1_QUALIFICATION_TARGET_PAGE_COUNT_V1)
-        );
+        assert!(pages_by_lane[..3]
+            .iter()
+            .all(|pages| pages.len() == M1_QUALIFICATION_TARGET_PAGE_COUNT_V1));
         assert_eq!(pages_by_lane[3].len(), 41);
         assert!(pages_by_lane[4..].iter().all(Vec::is_empty));
 
@@ -12713,11 +12703,9 @@ mod tests {
             Ok::<_, ()>(qualification_page_lease(request, page, 76))
         })
         .unwrap();
-        assert!(
-            pages_by_lane
-                .iter()
-                .all(|pages| pages.len() == M1_QUALIFICATION_TARGET_PAGE_COUNT_V1)
-        );
+        assert!(pages_by_lane
+            .iter()
+            .all(|pages| pages.len() == M1_QUALIFICATION_TARGET_PAGE_COUNT_V1));
         for (lane, pages) in pages_by_lane.iter().enumerate() {
             assert!(pages.iter().enumerate().all(|(page, lease)| {
                 lease.request() == RequestId::new(u32::try_from(lane).unwrap(), 12)
@@ -12975,11 +12963,9 @@ mod tests {
                 .collect::<Vec<_>>(),
             before
         );
-        assert!(
-            caches
-                .iter()
-                .all(|cache| cache.qualification_target_page_reserve().is_none())
-        );
+        assert!(caches
+            .iter()
+            .all(|cache| cache.qualification_target_page_reserve().is_none()));
     }
 
     #[test]

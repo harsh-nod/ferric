@@ -125,11 +125,7 @@ impl M1AuthenticatedS8CloseV1 {
         Self {
             queue_released: teardown.is_ok(),
             engine_quarantined,
-            retained: OpaqueExecutionCustody(Box::new((
-                before_teardown,
-                teardown,
-                after_teardown,
-            ))),
+            retained: OpaqueExecutionCustody(Box::new((before_teardown, teardown, after_teardown))),
         }
     }
 
@@ -1487,11 +1483,8 @@ mod tests {
                     };
                     M1AuthenticatedS8CloseV1::from_disposition(disposition, true, before, after)
                 } else {
-                    let teardown: Result<OrderedDrop, OrderedDrop> = if released {
-                        Ok(lower)
-                    } else {
-                        Err(lower)
-                    };
+                    let teardown: Result<OrderedDrop, OrderedDrop> =
+                        if released { Ok(lower) } else { Err(lower) };
                     M1AuthenticatedS8CloseV1::from_teardown(teardown, true, before, after)
                 };
                 assert!(trace.borrow().is_empty());

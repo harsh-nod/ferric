@@ -21,7 +21,11 @@ pub trait EngineeringTpBatchRunnerV2 {
     /// Optional scheduler-phase binding to the exact prepared pool batch, before preflight.
     /// # Errors
     /// Rejects stale or inconsistent explicit experimental dispatch selection.
-    fn bind_dispatch_rows(&mut self, _batch: &EngineeringTpPreparedBatchV1, _rows: &[TpBatchRowV1]) -> TpResult<()> {
+    fn bind_dispatch_rows(
+        &mut self,
+        _batch: &EngineeringTpPreparedBatchV1,
+        _rows: &[TpBatchRowV1],
+    ) -> TpResult<()> {
         Ok(())
     }
     /// Clears an unsubmitted phase binding after preflight rollback or submitted failure.
@@ -99,7 +103,11 @@ pub trait EngineeringTpBatchRunnerV2 {
 impl<R: EngineeringTpRankTransportV1> EngineeringTpBatchRunnerV2
     for EngineeringTpBatchExecutionV2<R>
 {
-    fn bind_dispatch_rows(&mut self, batch: &EngineeringTpPreparedBatchV1, rows: &[TpBatchRowV1]) -> TpResult<()> {
+    fn bind_dispatch_rows(
+        &mut self,
+        batch: &EngineeringTpPreparedBatchV1,
+        rows: &[TpBatchRowV1],
+    ) -> TpResult<()> {
         self.bind_dispatch_rows(batch, rows)
     }
     fn abandon_dispatch_rows(&mut self) {
@@ -384,8 +392,10 @@ impl<G: EngineeringTpBatchRunnerV2> EngineeringTpBatchRuntimeV2<G> {
         let expected_counts = match self
             .gpu
             .bind_dispatch_rows(&prepared, scheduled.rows())
-            .and_then(|()| self.gpu.expected_dispatch_counts_for_selection(&prepared, &output_rows))
-        {
+            .and_then(|()| {
+                self.gpu
+                    .expected_dispatch_counts_for_selection(&prepared, &output_rows)
+            }) {
             Ok(counts) => counts,
             Err(error) => {
                 self.gpu.abandon_dispatch_rows();

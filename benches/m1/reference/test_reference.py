@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
+import shutil
 import struct
 import sys
 import tempfile
@@ -20,6 +22,13 @@ assert SPEC is not None and SPEC.loader is not None
 reference = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = reference
 SPEC.loader.exec_module(reference)
+
+POLICY_SPEC = importlib.util.spec_from_file_location(
+    "ferric_m1_reference_policy", MODULE_PATH.with_name("test-policy.py")
+)
+assert POLICY_SPEC is not None and POLICY_SPEC.loader is not None
+policy = importlib.util.module_from_spec(POLICY_SPEC)
+POLICY_SPEC.loader.exec_module(policy)
 
 
 def identities() -> dict[str, str]:
@@ -694,5 +703,68 @@ class PublicationTests(unittest.TestCase):
             )
 
 
+class ReferencePackagePolicyTests(unittest.TestCase):
+    @staticmethod
+    def package_copy(temporary: str) -> Path:
+        root = Path(temporary) / "reference"
+        shutil.copytree(MODULE_PATH.parent, root)
+        return root
+
+    def test_exact_package_roster_preserves_separate_non_authority_auxiliaries(self) -> None:
+        self.assertEqual(len(policy.EXPECTED_FILES), 11)
+        self.assertEqual(len(policy.ENGINEERING_AUXILIARY_FILES), 20)
+        self.assertFalse(policy.EXPECTED_FILES & policy.ENGINEERING_AUXILIARY_FILES)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.package_copy(temporary)
+            with mock.patch.object(policy, "ROOT", root), mock.patch("builtins.print"):
+                self.assertIsNone(policy.main())
+
+    def test_package_roster_rejects_unknown_missing_and_nonregular_entries(self) -> None:
+        for mutation in ("extra-python", "extra-directory", "cache-directory",
+                         "missing-auxiliary", "missing-runner", "auxiliary-directory",
+                         "auxiliary-symlink"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = self.package_copy(temporary)
+                if mutation == "extra-python":
+                    (root / "arbitrary.py").write_text("pass\n")
+                elif mutation == "extra-directory":
+                    (root / "arbitrary").mkdir()
+                elif mutation == "cache-directory":
+                    (root / "__pycache__").mkdir()
+                elif mutation == "missing-auxiliary":
+                    (root / "engineering_m5_rank_diagnostic.py").unlink()
+                elif mutation == "missing-runner":
+                    (root / "run.py").unlink()
+                else:
+                    (root / "README.md").unlink()
+                    if mutation == "auxiliary-directory":
+                        (root / "README.md").mkdir()
+                    else:
+                        (root / "README.md").symlink_to("run.py")
+                with mock.patch.object(policy, "ROOT", root), self.assertRaises(SystemExit):
+                    policy.main()
+
+    def test_canonical_implementation_dependency_and_protocol_guards_remain_strict(self) -> None:
+        for mutation in ("implementation-bytes", "implementation-hash", "dependency", "protocol"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = self.package_copy(temporary)
+                if mutation == "implementation-bytes":
+                    path = root / "run.py"
+                    path.write_bytes(path.read_bytes() + b"\n# changed canonical bytes\n")
+                elif mutation == "implementation-hash":
+                    path = root / "implementation.json"
+                    value = json.loads(path.read_text())
+                    value["files"][1]["sha256"] = "0" * 64
+                    path.write_bytes(policy.canonical_bytes(value))
+                elif mutation == "dependency":
+                    path = root / "pyproject.toml"
+                    path.write_text(path.read_text().replace("==3.12.*", "==3.11.*"))
+                else:
+                    path = root / "protocol.json"
+                    value = json.loads(path.read_text())
+                    value["execution"]["network"] = "online"
+                    path.write_bytes(policy.canonical_bytes(value))
+                with mock.patch.object(policy, "ROOT", root), self.assertRaises(SystemExit):
+                    policy.main()
 if __name__ == "__main__":
     unittest.main()

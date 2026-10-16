@@ -240,7 +240,9 @@ fn decode_roster(bytes: &[u8], expected: [u8; 32]) -> Result<Roster, String> {
         })
         || roster[0].logical_name == roster[1].logical_name
     {
-        return Err("packed down requires the exact ordered projection/pack compiler roster".into());
+        return Err(
+            "packed down requires the exact ordered projection/pack compiler roster".into(),
+        );
     }
     Ok(roster)
 }
@@ -354,9 +356,7 @@ mod tests {
 
     #[test]
     fn packed_down_live_metadata_keeps_same_images_storage_and_36_source_order_in_both_arms() {
-        let sources = (0..36)
-            .map(|layer| (layer, 2, [5; 32]))
-            .collect::<Vec<_>>();
+        let sources = (0..36).map(|layer| (layer, 2, [5; 32])).collect::<Vec<_>>();
         for enabled in [false, true] {
             let input = PackedDown {
                 enabled,
@@ -370,7 +370,10 @@ mod tests {
             assert_eq!(value["c1_only"], true);
             assert_eq!(value["max_simultaneous_selected_requests"], 1);
             assert_eq!(value["mixed_request_batches"], "rejected_before_submission");
-            assert_eq!(value["multirow_decode_batches"], "rejected_before_submission");
+            assert_eq!(
+                value["multirow_decode_batches"],
+                "rejected_before_submission"
+            );
             assert_eq!(value["prefill_unchanged"], true);
             assert_eq!(value["same_image_set_in_both_arms"], true);
             assert_eq!(value["additional_weight_bytes"], 3_623_878_656_u64);
@@ -504,14 +507,18 @@ mod tests {
                 ExecutionMode::PackedDown(&input),
             )
             .unwrap_err();
-            assert_eq!(error, "packed down excludes V19, prefill32 and all instrumentation");
+            assert_eq!(
+                error,
+                "packed down excludes V19, prefill32 and all instrumentation"
+            );
         }
     }
 
     #[test]
     #[ignore = "requires qualified packed-down R1 image and independently reviewed producer-roster pins"]
     fn packed_down_live_actual_image_reopens_with_exact_profile_identity_in_both_arms() {
-        let value = |key: &str| std::env::var(key).expect("explicit actual packed-down R1 test input");
+        let value =
+            |key: &str| std::env::var(key).expect("explicit actual packed-down R1 test input");
         let digest = |key: &str| super::super::packed_digest_argument(&value(key)).unwrap();
         let input = PackedDown {
             artifact: value("FERRIC_TEST_PACKED_DOWN_R1_ARTIFACT").into(),
@@ -530,9 +537,7 @@ mod tests {
             "artifact_manifest_id":hex(&input.image_ids.manifest),
             "artifact_handoff_id":hex(&input.image_ids.handoff),
         });
-        let sources = (0..36)
-            .map(|layer| (layer, 2, [5; 32]))
-            .collect::<Vec<_>>();
+        let sources = (0..36).map(|layer| (layer, 2, [5; 32])).collect::<Vec<_>>();
         for enabled in [false, true] {
             let selection = PackedDown {
                 enabled,

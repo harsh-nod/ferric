@@ -185,7 +185,9 @@ mod tests {
     #[test]
     fn packed_down_cli_requires_explicit_selection_without_changing_v28_parser() {
         let args = arguments();
-        assert!(prefill_kv_copy_v28_live_contract::Options::parse(args.clone().into_iter()).is_err());
+        assert!(
+            prefill_kv_copy_v28_live_contract::Options::parse(args.clone().into_iter()).is_err()
+        );
         assert_eq!(
             Options::parse(args.into_iter()).is_ok(),
             cfg!(all(

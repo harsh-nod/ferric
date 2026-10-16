@@ -13,11 +13,46 @@ import stat
 import subprocess
 import sys
 import tempfile
+import unittest
 from types import ModuleType
 from typing import Any, Callable, NoReturn
 
 
 Mutation = Callable[[dict[str, Any]], None]
+
+STRATEGY_CATALOG_CALL = "let roster_catalog_id = authenticated_catalog_id(&roster, strategy);"
+
+
+def strategy_catalog_call_matches(engine_source: str) -> bool:
+    return STRATEGY_CATALOG_CALL in engine_source
+
+
+class StrategyCatalogCustodyTests(unittest.TestCase):
+    def setUp(self) -> None:
+        repo = Path(__file__).resolve().parents[2]
+        self.source = (
+            repo / "crates/ferric-engine/src/authenticated_kernel_programs.rs"
+        ).read_text(encoding="ascii")
+
+    def test_actual_strategy_call_is_required(self) -> None:
+        self.assertEqual(self.source.count(STRATEGY_CATALOG_CALL), 1)
+        self.assertTrue(strategy_catalog_call_matches(self.source))
+
+    def test_legacy_call_is_rejected(self) -> None:
+        legacy = "let roster_catalog_id = authenticated_catalog_id(&roster);"
+        self.assertFalse(
+            strategy_catalog_call_matches(self.source.replace(STRATEGY_CATALOG_CALL, legacy))
+        )
+
+    def test_wrong_strategy_calls_are_rejected(self) -> None:
+        for strategy in ("other_strategy", "M1PhysicalProgramStrategyV1::LegacyScalar12"):
+            with self.subTest(strategy=strategy):
+                hostile = f"let roster_catalog_id = authenticated_catalog_id(&roster, {strategy});"
+                self.assertFalse(
+                    strategy_catalog_call_matches(
+                        self.source.replace(STRATEGY_CATALOG_CALL, hostile)
+                    )
+                )
 
 
 def fail(message: str) -> NoReturn:
@@ -376,11 +411,13 @@ def main() -> None:
         "verification.retains_current_compiler_and_signed_verus_evidence()",
         "verification.validated_compiler_proof_inputs().is_none()",
         "verification.validated_compiler_target_lineage().is_none()",
-        "let roster_catalog_id = authenticated_catalog_id(&roster);",
+        STRATEGY_CATALOG_CALL,
     ]
     for required in required_engine_custody:
         if required not in engine_source:
             fail(f"private engine selection custody drifted: missing {required}")
+    if not strategy_catalog_call_matches(engine_source):
+        fail("private engine selection custody drifted: missing exact strategy catalog call")
     forbidden_engine_overrides = [
         "struct M1AggregatePublicationSelectionV1",
         "pub struct M1AggregatePublicationSelectionV1",

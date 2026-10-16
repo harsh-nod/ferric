@@ -21,6 +21,7 @@ jobs:
           toolchain: "1.97.1"
           components: rustfmt, clippy
       - run: cargo fmt --all --check
+      - run: cargo fmt --manifest-path adapters/m1-engineering-execution-v1/Cargo.toml -- --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
       - run: cargo fmt --manifest-path adapters/qwen3-swiglu-worker-v3-envelope-v2/Cargo.toml -- --check
@@ -34,7 +35,9 @@ jobs:
       - run: cargo test --manifest-path adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.toml --all-targets --locked
       - run: python3 -I benches/m1/test-policy.py .
       - run: python3 -I -B benches/m1/reference/test-policy.py
-      - run: python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
+      - run: python3 -I -B -m unittest discover -s adapters/m1-engineering-execution-v1/tools -p 'test_qwen_stock_c1_report.py'
+      - run: python3 -I -B -m unittest discover -s adapters/m1-engineering-execution-v1/tools -p 'test_qwen_stock_c8_report.py'
+      - run: python3 -I -B -m unittest discover -s adapters/m1-engineering-execution-v1/tools -p 'test_competitive_benchmark.py'
       - run: python3 -I -B proofs/m1/evidence/test-source-closure-mode-policy.py
       - run: python3 -I -B proofs/m1/evidence/test-r29-differential-evidence-policy.py
       - run: python3 -I -B proofs/m1-qualification/test-authenticated-bounded-queue-wait-policy.py .
@@ -53,6 +56,33 @@ jobs:
           test "$(git -C "$RUNNER_TEMP/fe2o3" rev-parse HEAD)" = "$FE2O3_REVISION"
           python3 -I -B proofs/m1-qualification/test-policy.py . "$RUNNER_TEMP/fe2o3"
           rm -rf "$RUNNER_TEMP/fe2o3"
+
+  reference-cpu:
+    name: Pinned Reference CPU (Full Suite)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check Fresh Runner Capacity Before Package Downloads
+        run: >-
+          /usr/bin/python3.12 -I -B tools/reference_cpu_ci.py preflight
+          --source "$GITHUB_WORKSPACE" --root "$RUNNER_TEMP/ferric-reference-cpu"
+      - name: Install Python 3.12 Bootstrap Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends python3.12-venv python3-pip
+          /usr/bin/python3.12 -I -B -m pip --version
+      - name: Check Locked Profile Negative Controls
+        run: /usr/bin/python3.12 -I -B -m unittest discover -s tools -p 'test_reference_cpu_ci.py'
+      - name: Fresh Capacity Check and Hash-Locked Installation
+        run: >-
+          nice -n 19 /usr/bin/python3.12 -I -B tools/reference_cpu_ci.py prepare
+          --source "$GITHUB_WORKSPACE" --root "$RUNNER_TEMP/ferric-reference-cpu"
+      - name: Full Unfiltered Offline CPU Reference
+        run: >-
+          /usr/bin/python3.12 -I -B tools/reference_cpu_ci.py run
+          --source "$GITHUB_WORKSPACE" --root "$RUNNER_TEMP/ferric-reference-cpu"
+          -- python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
 
   qwen3-aggregate-device:
     runs-on: ubuntu-latest
@@ -127,3 +157,70 @@ jobs:
       - run: cargo fmt --all -- --check
       - name: Test non-authoritative family compatibility wrapper
         run: cargo test --locked --all-targets
+
+  reference-cpu-capacity-diagnostic:
+    name: Reference CPU Capacity (Diagnostic Only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Record Capacity Without Reference Qualification
+        shell: bash
+        run: |
+          python3 -I -B - <<'PY'
+          import json
+          import os
+          import platform
+          import sys
+
+          minimum_free_bytes = 40 * 1024**3
+          filesystems = {}
+          for name in ("GITHUB_WORKSPACE", "RUNNER_TEMP"):
+              path = os.environ[name]
+              volume = os.statvfs(path)
+              filesystems[name] = {
+                  "path": os.path.realpath(path),
+                  "device": os.stat(path).st_dev,
+                  "available_bytes": volume.f_bavail * volume.f_frsize,
+                  "total_bytes": volume.f_blocks * volume.f_frsize,
+              }
+          sufficient = all(
+              volume["available_bytes"] >= minimum_free_bytes
+              for volume in filesystems.values()
+          )
+          record = {
+              "diagnostic_only": True,
+              "reference_qualification_passed": False,
+              "arithmetic_tests_executed": 0,
+              "minimum_free_bytes": minimum_free_bytes,
+              "capacity_sufficient": sufficient,
+              "filesystems": filesystems,
+              "shared_filesystem": len({
+                  volume["device"] for volume in filesystems.values()
+              }) == 1,
+              "physical_ram_bytes": (
+                  os.sysconf("SC_PHYS_PAGES") * os.sysconf("SC_PAGE_SIZE")
+              ),
+              "logical_cpu_count": os.cpu_count(),
+              "affinity_cpu_count": len(os.sched_getaffinity(0)),
+              "runner": {
+                  name: os.environ.get(name)
+                  for name in (
+                      "RUNNER_OS", "RUNNER_ARCH", "RUNNER_ENVIRONMENT",
+                      "ImageOS", "ImageVersion", "GITHUB_SHA",
+                      "GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT",
+                  )
+              },
+              "python": {
+                  "version": sys.version,
+                  "implementation": platform.python_implementation(),
+                  "executable": sys.executable,
+              },
+          }
+          print(json.dumps(record, sort_keys=True), flush=True)
+          if not sufficient:
+              raise SystemExit(
+                  "Capacity diagnostic only: at least 40 GiB free is required on "
+                  "both workspace and temporary filesystems; reference arithmetic "
+                  "has not been qualified."
+              )
+          PY

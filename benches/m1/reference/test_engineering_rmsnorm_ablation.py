@@ -2,10 +2,13 @@
 """Pinned CPU-only RMSNorm regressions; no checkpoint or full-model execution."""
 
 import importlib.util
+from contextlib import ExitStack
 from pathlib import Path
 import struct
 import sys
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock, patch
 
 
 spec = importlib.util.spec_from_file_location(
@@ -16,6 +19,96 @@ if spec is None or spec.loader is None:
 ablation = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = ablation
 spec.loader.exec_module(ablation)
+
+
+class CpuThreadConfigurationTests(unittest.TestCase):
+    def loader(self, count, setter_error=None, silent_setter=False):
+        state = {"count": count}
+
+        def set_interop(value):
+            if setter_error is not None:
+                raise setter_error
+            if not silent_setter:
+                state["count"] = value
+
+        modules = {
+            name: SimpleNamespace(__version__=version)
+            for name, version in ablation.core.DEPENDENCY_VERSIONS.items()
+        }
+        torch = modules["torch"]
+        torch.version = SimpleNamespace(hip="7.2.test")
+        torch.get_num_interop_threads = Mock(side_effect=lambda: state["count"])
+        torch.set_num_interop_threads = Mock(side_effect=set_interop)
+        torch.set_num_threads = Mock()
+        torch.set_default_device = Mock()
+        qwen = SimpleNamespace()
+        imports = {"triton" if name == "triton-rocm" else name: module
+                   for name, module in modules.items()}
+        imports["transformers.models.qwen3.modeling_qwen3"] = qwen
+        stack = ExitStack()
+        self.addCleanup(stack.close)
+        checks = {
+            name: stack.enter_context(patch.object(ablation.core, name))
+            for name in ("require_isolated_python", "require_virtual_environment",
+                         "validate_dependency_provenance")
+        }
+        checks["qwen"] = stack.enter_context(
+            patch.object(ablation, "qwen_source_identity", return_value={}))
+        checks["version"] = stack.enter_context(
+            patch("importlib.metadata.version",
+                  return_value=ablation.core.DEPENDENCY_VERSIONS["triton-rocm"]))
+        stack.enter_context(patch.object(ablation.importlib, "import_module",
+                                        side_effect=imports.__getitem__))
+        return torch, state, checks
+
+    def test_already_one_is_not_reset_on_repeated_loads(self):
+        torch, _, checks = self.loader(1)
+        for _ in range(2):
+            self.assertIs(ablation.load_cpu_dependencies()[0], torch)
+        torch.set_num_interop_threads.assert_not_called()
+        self.assertEqual(torch.get_num_interop_threads.call_count, 4)
+        for check in checks.values():
+            self.assertEqual(check.call_count, 2)
+        self.assertEqual(torch.set_default_device.call_args_list,
+                         [unittest.mock.call("cpu"), unittest.mock.call("cpu")])
+
+    def test_other_count_is_configured_and_verified(self):
+        torch, state, _ = self.loader(4)
+        ablation.load_cpu_dependencies()
+        torch.set_num_interop_threads.assert_called_once_with(1)
+        self.assertEqual(state["count"], 1)
+        self.assertEqual(torch.get_num_interop_threads.call_count, 2)
+
+    def test_setter_failure_propagates(self):
+        error = RuntimeError("interop configuration locked")
+        torch, _, checks = self.loader(4, setter_error=error)
+        with self.assertRaises(RuntimeError) as caught:
+            ablation.load_cpu_dependencies()
+        self.assertIs(caught.exception, error)
+        torch.set_num_interop_threads.assert_called_once_with(1)
+        checks["qwen"].assert_not_called()
+
+    def test_silent_setter_with_wrong_count_is_rejected(self):
+        torch, _, checks = self.loader(4, silent_setter=True)
+        with self.assertRaisesRegex(ablation.Failure, "interop thread count"):
+            ablation.load_cpu_dependencies()
+        torch.set_num_interop_threads.assert_called_once_with(1)
+        self.assertEqual(torch.get_num_interop_threads.call_count, 2)
+        checks["qwen"].assert_not_called()
+
+    def test_repeated_load_rechecks_provenance_and_propagates_drift(self):
+        torch, _, checks = self.loader(1)
+        error = ablation.Failure("dependency provenance drift")
+        checks["validate_dependency_provenance"].side_effect = [None, error]
+        ablation.load_cpu_dependencies()
+        with self.assertRaises(ablation.Failure) as caught:
+            ablation.load_cpu_dependencies()
+        self.assertIs(caught.exception, error)
+        for name in ("require_isolated_python", "require_virtual_environment",
+                     "validate_dependency_provenance", "version"):
+            self.assertEqual(checks[name].call_count, 2)
+        checks["qwen"].assert_called_once()
+        torch.set_num_interop_threads.assert_not_called()
 
 
 class AblationTests(unittest.TestCase):
