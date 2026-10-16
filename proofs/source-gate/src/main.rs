@@ -7802,6 +7802,67 @@ mod tests {
         assert!(validate_aggregate_runtime_roster_file(&file).is_err());
     }
 
+    #[test]
+    fn current_unverified_admissions_reject_missing_duplicate_stale_and_verified_status() {
+        let root = std::env::temp_dir().join(format!(
+            "ferric4094-admission-controls-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        std::fs::create_dir(root.join("proofs")).unwrap();
+        let source = "crates/ferric-engine/src/authenticated_kernel_programs.rs";
+        let mut inventory = super::Inventory::default();
+        let mut rows = Vec::new();
+        for name in [
+            "selected_source_indices",
+            "source_program_indices",
+            "typed_role_entry",
+        ] {
+            let compiler_path = format!("ferric_engine::authenticated_kernel_programs::{name}");
+            inventory.functions.insert(super::Function {
+                package: "ferric-engine".to_owned(),
+                source: source.to_owned(),
+                compiler_path: compiler_path.clone(),
+                verified: false,
+            });
+            rows.push(format!("unverified=ferric-engine|{source}|{compiler_path}|pending-verus|compiler-rooted-body-proof-pending"));
+        }
+        inventory.functions.insert(super::Function {
+            package: "fixture".to_owned(),
+            source: "fixture.rs".to_owned(),
+            compiler_path: "fixture::already_verified".to_owned(),
+            verified: true,
+        });
+        let exact = format!("format=FERRIC-UNVERIFIED-BODIES-V1\n{}\n", rows.join("\n"));
+        let path = root.join("proofs/UNVERIFIED_BODIES");
+        std::fs::write(&path, &exact).unwrap();
+        assert_eq!(
+            super::validate_unverified_admissions(&root, &inventory),
+            Ok(())
+        );
+        for (label, text) in [
+            ("missing", exact.replace(&format!("{}\n", rows[0]), "")),
+            ("duplicate", format!("{exact}{}\n", rows[0])),
+            (
+                "stale",
+                format!(
+                    "{exact}{}\n",
+                    rows[0].replace("selected_source_indices", "stale_helper")
+                ),
+            ),
+            (
+                "verified-status",
+                exact.replacen("|pending-verus|", "|verified|", 1),
+            ),
+        ] {
+            std::fs::write(&path, text).unwrap();
+            assert!(
+                super::validate_unverified_admissions(&root, &inventory).is_err(),
+                "accepted {label}"
+            );
+        }
+        std::fs::remove_dir_all(&root).unwrap();
+    }
     fn validate_aggregate_source(source: &str) -> super::GateResult<()> {
         let file = verus_syn::parse_file(source).expect("aggregate runtime source parses");
         validate_aggregate_runtime_roster_file(&file)
