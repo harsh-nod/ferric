@@ -4951,6 +4951,140 @@ fn aggregate_use_path(tree: &verus_syn::UseTree, output: &mut Vec<String>) -> Ga
     }
 }
 
+const SORTED_ROSTER_HELPERS: &str = r#"
+use fe2o3_host::{
+    CompilerGeneratedKernelExpectationRosterEntryV1 as Entry,
+    CompilerGeneratedKernelExpectationRosterV1,
+};
+const fn binding_less(left: [u8; 32], right: [u8; 32]) -> bool {
+    let mut byte = 0;
+    while byte < 32 {
+        if left[byte] != right[byte] {
+            return left[byte] < right[byte];
+        }
+        byte += 1;
+    }
+    false
+}
+const fn canonical_entries<const N: usize>(mut entries: [Entry; N]) -> [Entry; N] {
+    let mut next = 1;
+    while next < N {
+        let mut current = next;
+        while current > 0
+            && binding_less(
+                entries[current].kernel_binding_id(),
+                entries[current - 1].kernel_binding_id(),
+            )
+        {
+            let previous = entries[current - 1];
+            entries[current - 1] = entries[current];
+            entries[current] = previous;
+            current -= 1;
+        }
+        next += 1;
+    }
+    let mut index = 1;
+    while index < N {
+        assert!(
+            binding_less(
+                entries[index - 1].kernel_binding_id(),
+                entries[index].kernel_binding_id(),
+            ),
+            "duplicate generated kernel binding in producer roster"
+        );
+        index += 1;
+    }
+    entries
+}
+"#;
+
+// Compare complete parsed-item serializations, ignoring spans but no token-tree
+// content or delimiters. The pinned Syn printing re-export avoids a new TCB edge.
+fn exact_roster_ast_tokens(
+    left: proc_macro2::TokenStream,
+    right: proc_macro2::TokenStream,
+) -> bool {
+    use proc_macro2::TokenTree;
+    let mut left = left.into_iter();
+    let mut right = right.into_iter();
+    loop {
+        match (left.next(), right.next()) {
+            (None, None) => return true,
+            (Some(TokenTree::Group(a)), Some(TokenTree::Group(b)))
+                if a.delimiter() == b.delimiter()
+                    && exact_roster_ast_tokens(a.stream(), b.stream()) => {}
+            (Some(TokenTree::Ident(a)), Some(TokenTree::Ident(b))) if a == b => {}
+            (Some(TokenTree::Punct(a)), Some(TokenTree::Punct(b)))
+                if a.as_char() == b.as_char() && a.spacing() == b.spacing() => {}
+            (Some(TokenTree::Literal(a)), Some(TokenTree::Literal(b)))
+                if a.to_string() == b.to_string() => {}
+            _ => return false,
+        }
+    }
+}
+
+fn exact_sorted_roster_item(actual: &Item, expected: &Item) -> GateResult<()> {
+    use verus_syn::__private::ToTokens;
+    if std::mem::discriminant(actual) != std::mem::discriminant(expected) {
+        return Err("aggregate sorted roster item kind drifted".to_owned());
+    }
+    let mut actual = actual.clone();
+    if let Item::Struct(item) = &mut actual {
+        validate_attributes(&item.attrs, false)?;
+        item.attrs.retain(|attr| path_name(attr.path()) != "doc");
+    }
+    if !exact_roster_ast_tokens(actual.to_token_stream(), expected.to_token_stream()) {
+        return Err("aggregate sorted roster complete item AST drifted".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_sorted_roster_items(items: &[Item]) -> GateResult<()> {
+    // Seven exact production items followed by one release-absent inline test module.
+    if items.len() != 8 {
+        return Err("aggregate sorted roster item count drifted".to_owned());
+    }
+    let helpers = verus_syn::parse_file(SORTED_ROSTER_HELPERS)
+        .map_err(|error| format!("internal sorted roster helper grammar: {error}"))?;
+    for (actual, expected) in items[..3].iter().zip(&helpers.items) {
+        exact_sorted_roster_item(actual, expected)?;
+    }
+    for (offset, (name, markers)) in [
+        (AGGREGATE_ROSTER_NAME, AGGREGATE_ROSTER_MARKERS),
+        (AGGREGATE_MFMA_ROSTER_NAME, AGGREGATE_MFMA_ROSTER_MARKERS),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let constructors = markers
+            .iter()
+            .map(|marker| format!("Entry::for_marker::<{marker}>(),"))
+            .collect::<String>();
+        let grammar = format!(
+            "pub struct {name}; impl CompilerGeneratedKernelExpectationRosterV1 for {name} {{
+                const ENTRIES: &'static [Entry] = &canonical_entries([{constructors}]);
+            }}"
+        );
+        let expected = verus_syn::parse_file(&grammar)
+            .map_err(|error| format!("internal sorted roster declaration grammar: {error}"))?;
+        exact_sorted_roster_item(&items[3 + offset * 2], &expected.items[0])?;
+        exact_sorted_roster_item(&items[4 + offset * 2], &expected.items[1])?;
+    }
+    let Item::Mod(tests) = &items[7] else {
+        return Err("aggregate sorted roster final test module absent".to_owned());
+    };
+    if !cfg_test_item(&items[7])
+        || tests.attrs.len() != 1
+        || tests.ident != "tests"
+        || !matches!(tests.vis, Visibility::Inherited)
+        || tests.unsafety.is_some()
+        || tests.semi.is_some()
+        || tests.content.is_none()
+    {
+        return Err("aggregate sorted roster test module release boundary drifted".to_owned());
+    }
+    Ok(())
+}
 fn validate_aggregate_host_roster_module(item: &verus_syn::ItemMod) -> GateResult<()> {
     validate_aggregate_host_cfg(&item.attrs)?;
     if !matches!(&item.vis, Visibility::Inherited)
@@ -4963,7 +5097,9 @@ fn validate_aggregate_host_roster_module(item: &verus_syn::ItemMod) -> GateResul
     let Some((_, items)) = &item.content else {
         return Err("aggregate host roster module body is absent".to_owned());
     };
-    if items.len() != AGGREGATE_ROSTER_ALIASES.len() + 2 {
+    if items.len() != AGGREGATE_ROSTER_ALIASES.len() + 2
+        && items.len() != AGGREGATE_ROSTER_ALIASES.len() + 8
+    {
         return Err("aggregate host roster module item count drifted".to_owned());
     }
     for (item, (expected_alias, expected_path)) in items.iter().zip(AGGREGATE_ROSTER_ALIASES.iter())
@@ -4976,6 +5112,9 @@ fn validate_aggregate_host_roster_module(item: &verus_syn::ItemMod) -> GateResul
                 "aggregate roster alias or marker path drifted: {expected_alias}"
             ));
         }
+    }
+    if items.len() == AGGREGATE_ROSTER_ALIASES.len() + 8 {
+        return validate_sorted_roster_items(&items[AGGREGATE_ROSTER_ALIASES.len()..]);
     }
     for (item, (name, markers)) in items[AGGREGATE_ROSTER_ALIASES.len()..].iter().zip([
         (AGGREGATE_ROSTER_NAME, AGGREGATE_ROSTER_MARKERS),
@@ -6025,7 +6164,8 @@ mod tests {
     use verus_syn::visit::Visit;
     use verus_syn::Item;
 
-    const AGGREGATE_RUNTIME_SOURCE: &str =
+    const AGGREGATE_RUNTIME_SOURCE: &str = include_str!("aggregate-legacy.rs.txt");
+    const SORTED_AGGREGATE_RUNTIME_SOURCE: &str =
         include_str!("../../../device/qwen3-all-kernels-v1/src/lib.rs");
     const VERIFIER_LOCK: &str =
         include_str!("../../../adapters/qwen3-all-kernels-worker-v3-verifier-v1/Cargo.lock");
@@ -7511,6 +7651,135 @@ mod tests {
         assert!(canonical_verifier_target_path(&exact_package, &escaped_target).is_err());
     }
 
+    #[test]
+    fn aggregate_sorted_current_source_and_historical_grammar_are_complete_positives() {
+        assert_eq!(
+            validate_aggregate_source(SORTED_AGGREGATE_RUNTIME_SOURCE),
+            Ok(())
+        );
+        assert_eq!(validate_aggregate_source(AGGREGATE_RUNTIME_SOURCE), Ok(()));
+        let formatted = SORTED_AGGREGATE_RUNTIME_SOURCE
+            .replace("let mut byte = 0;", "let /* lexical only */ mut byte=0;");
+        assert_eq!(validate_aggregate_source(&formatted), Ok(()));
+    }
+
+    #[test]
+    fn aggregate_sorted_helpers_reject_every_comparator_swap_and_duplicate_guard_drift() {
+        for (from, to) in [
+            ("while byte < 32", "while byte <= 32"),
+            ("while byte < 32", "while byte < 31"),
+            ("let mut byte = 0;", "let mut byte = 1;"),
+            (
+                "return left[byte] < right[byte];",
+                "return right[byte] < left[byte];",
+            ),
+            (
+                "return left[byte] < right[byte];",
+                "return left[byte] <= right[byte];",
+            ),
+            ("return left[byte] < right[byte];", "return true;"),
+            ("byte += 1;", "byte += 2;"),
+            ("let mut next = 1;", "let mut next = 2;"),
+            ("while current > 0", "while current > 1"),
+            (
+                "entries[current - 1] = entries[current];",
+                "entries[current - 1] = previous;",
+            ),
+            (
+                "entries[current] = previous;",
+                "entries[current] = entries[current - 1];",
+            ),
+            (
+                "let previous = entries[current - 1];",
+                "let previous = entries[current];",
+            ),
+            ("current -= 1;", "current -= 2;"),
+            ("next += 1;", "next += 2;"),
+            ("let mut index = 1;", "let mut index = 2;"),
+            ("while index < N", "while index < 0"),
+            (
+                "entries[index - 1].kernel_binding_id()",
+                "entries[index].kernel_binding_id()",
+            ),
+            ("index += 1;", "index += 2;"),
+            (
+                "duplicate generated kernel binding in producer roster",
+                "different assertion",
+            ),
+            (
+                "entries[current] = previous;",
+                "entries[current] = previous; entries[current - 1] = previous;",
+            ),
+            ("const fn binding_less", "fn binding_less"),
+            (
+                "const fn canonical_entries",
+                "const unsafe fn canonical_entries",
+            ),
+        ] {
+            assert!(
+                SORTED_AGGREGATE_RUNTIME_SOURCE.contains(from),
+                "missing mutation {from}"
+            );
+            let hostile = SORTED_AGGREGATE_RUNTIME_SOURCE.replacen(from, to, 1);
+            let parsed = verus_syn::parse_file(&hostile).expect("hostile helper must parse");
+            assert!(
+                validate_aggregate_runtime_roster_file(&parsed).is_err(),
+                "accepted {from} -> {to}"
+            );
+        }
+    }
+
+    #[test]
+    fn aggregate_sorted_declarations_reject_forgery_membership_hybrids_and_extra_items() {
+        for (from, to) in [
+            ("CompilerGeneratedKernelExpectationRosterEntryV1 as Entry,", "CompilerGeneratedKernelExpectationRosterEntryV1 as Forged,"),
+            ("    use fe2o3_host::{", "    use ::fe2o3_host::{"),
+            ("CompilerGeneratedKernelExpectationRosterEntryV1 as Entry,", "CompilerGeneratedKernelExpectationRosterEntryV1 as Entry, Forged,"),
+            ("Entry::for_marker::<GemmReference>()", "Entry::from_parts()"),
+            ("Entry::for_marker::<GemmReference>()", "Entry { kernel_binding_id: [0; 32] }"),
+            ("Entry::for_marker::<GemmReference>()", "unsafe { core::mem::zeroed() }"),
+            ("Entry::for_marker::<GemmReference>()", "Entry::for_marker::<GemmReference>(0)"),
+            ("Entry::for_marker::<GemmReference>()", "Entry::for_marker::<GemmMfma>()"),
+            ("Entry::for_marker::<GemmReference>()", "Entry::for_marker::<RmsNorm>()"),
+            ("            Entry::for_marker::<GemmReference>(),", ""),
+            ("            Entry::for_marker::<GemmReference>(),", "            Entry::for_marker::<GemmReference>(), Entry::for_marker::<GemmReference>(),"),
+            ("&canonical_entries([", "&identity(["),
+            ("const ENTRIES: &'static [Entry]", "const ENTRIES: &'static [Forged]"),
+            ("pub struct M1AllKernelsWorkerV3RosterV1;", "pub struct M1AllKernelsWorkerV3RosterV1(u8);"),
+            ("pub struct M1AllKernelsWorkerV3RosterV1;", "#[repr(C)] pub struct M1AllKernelsWorkerV3RosterV1;"),
+            ("impl CompilerGeneratedKernelExpectationRosterV1 for M1AllKernelsWorkerV3RosterV1", "unsafe impl CompilerGeneratedKernelExpectationRosterV1 for M1AllKernelsWorkerV3RosterV1"),
+            ("impl CompilerGeneratedKernelExpectationRosterV1 for M1AllKernelsWorkerV3RosterV1", "impl CompilerGeneratedKernelExpectationRosterV1 for Forged"),
+            ("const ENTRIES: &'static [Entry]", "const EXTRA: usize = 0; const ENTRIES: &'static [Entry]"),
+            ("    #[cfg(test)]", "    #[cfg(any(test, feature = \"escape\"))]"),
+            ("    #[cfg(test)]", "    #[cfg_attr(test, allow(dead_code))] #[cfg(test)]"),
+            ("    mod tests {", "    pub mod tests {"),
+            ("    mod tests {", "    mod renamed {"),
+            ("    mod tests {", "    fn extra() {} mod tests {"),
+            ("    const fn binding_less", "    #[allow(dead_code)] const fn binding_less"),
+            ("    const fn binding_less", "    include!(\"escape.rs\"); const fn binding_less"),
+            ("    const fn binding_less", "    impl Forged for Entry {} const fn binding_less"),
+            ("    const fn binding_less", "    macro_rules! escape { () => {} } const fn binding_less"),
+            ("    const fn binding_less", "    fe2o3_host::compiler_generated_kernel_expectation_roster_v1! { pub struct Extra = [Rope]; } const fn binding_less"),
+            ("type GemmReference = super::gemm::ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker;", "type GemmReference = super::gemm::ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker;"),
+            ("#[cfg(not(target_arch = \"amdgpu\"))]", "#[cfg(any(test, not(target_arch = \"amdgpu\")))]"),
+        ] {
+            assert!(SORTED_AGGREGATE_RUNTIME_SOURCE.contains(from), "missing mutation {from}");
+            let hostile = SORTED_AGGREGATE_RUNTIME_SOURCE.replacen(from, to, 1);
+            assert!(validate_aggregate_source(&hostile).is_err(), "accepted {from} -> {to}");
+        }
+        let mut file = verus_syn::parse_file(SORTED_AGGREGATE_RUNTIME_SOURCE).unwrap();
+        let host = file
+            .items
+            .iter_mut()
+            .find_map(|item| match item {
+                Item::Mod(item) if item.ident == "host_roster" => Some(item),
+                _ => None,
+            })
+            .unwrap();
+        let items = &mut host.content.as_mut().unwrap().1;
+        items.swap(17, 19);
+        assert!(validate_aggregate_runtime_roster_file(&file).is_err());
+    }
     fn validate_aggregate_source(source: &str) -> super::GateResult<()> {
         let file = verus_syn::parse_file(source).expect("aggregate runtime source parses");
         validate_aggregate_runtime_roster_file(&file)
