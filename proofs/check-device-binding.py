@@ -365,14 +365,28 @@ def fallback_binding_source(source: str) -> str:
     match = re.fullmatch(
         r'"cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=([0-9a-f]{64})"', keyed[0]
     )
-    if match is None:
+    split = keyed[0] == '"cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1={}"'
+    literals = [token for token in tokens if re.fullmatch(r'"[0-9a-f]{64}"', token)]
+    if match is not None:
+        binding = match[1]
+        emitter = ["println", "!", "(", keyed[0], ")", ";"]
+    elif split and len(literals) == 1:
+        binding = literals[0][1:-1]
+        emitter = ["println", "!", "(", keyed[0], ",", literals[0], ")", ";"]
+    else:
         raise ValueError("malformed binding emitter")
-    emitter = ["println", "!", "(", keyed[0], ")", ";"]
     guard = rust_build_tokens(
         'if std::env::var_os("FE2O3_BINDING_CHECK_WRAPPER_MODE_V1").is_some()'
         ' || std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1").is_some() { return; }'
     )
     minimal = ["fn", "main", "(", ")", "{", *guard, *emitter, "}"]
+    family_prologue = rust_build_tokens(
+        'println!("cargo:rerun-if-env-changed=FE2O3_BINDING_CHECK_WRAPPER_MODE_V1");'
+        'println!("cargo:rerun-if-env-changed=FE2O3_BINDING_WRAPPER_MODE_V1");'
+    )
+    family = [
+        "fn", "main", "(", ")", "{", *family_prologue, *guard, *emitter, "}"
+    ]
     # Only these reviewed module declarations and direct statements are supported.
     # Unknown items/macros/attributes could expand or import a shadowed println.
     prologue = rust_build_tokens(
@@ -400,9 +414,9 @@ def fallback_binding_source(source: str) -> str:
         """
     )
     supported = [*prologue, *guard, *emitter, "}"]
-    if tokens != minimal and tokens != supported:
+    if tokens != family and (split or tokens not in (minimal, supported)):
         raise ValueError("unsupported item, attribute, expansion or statement in canonical emitter")
-    return match[1]
+    return binding
 
 
 def fallback_binding(workspace: Path) -> str:
@@ -673,6 +687,63 @@ def self_test() -> None:
     wrong_value = fallback_binding_source(canonical.replace(golden, hostile))
     if binding_parity_error(golden, wrong_value) is None:
         fail("a validly shaped wrong fallback escaped independent binding parity")
+    corpus = {
+        "all-kernels": "423280f43dabf0a3eb2162b5b0779fa050960ec0b57cd7d6813ea967ee8273b4",
+        "gemm": "a52ad531cd94075e1ff72b61a63b7945df6612bd10208773a20fe1490c356a43",
+        "logits": "0201437ba8643ffa0323d97017836d7652f3dc721b216b49ff12c74a60228c87",
+        "paged-decode": "53f449de98c3bcc8dd84748dbe59306f3108b8761e8ae6e41c68c611bf90c45a",
+        "prefill": "fd68d93d9da0c6de96bfa13dbe58b79bbd93fbe0c3b5a13bc3553600bfcae872",
+        "rmsnorm": "ee76943e908e8ea532294339752203de1e707854f5993ebf2350a3d214c75fe2",
+        "rope-kv": "af7701f7bcd0493b21be9948d5978ee2efae438ba1d4c6ef06c4f1921857cc3f",
+        "swiglu": "5685a79ec473325481dbfc5b4fe422d6d8290fcc378d8cb4aed97eae14d134ad",
+    }
+    root = Path(__file__).resolve().parent.parent
+    corpus_negatives = 0
+    for family, expected in corpus.items():
+        source = (root / "device" / f"qwen3-{family}-v1" / "build.rs").read_text()
+        if fallback_binding_source(source) != expected:
+            fail(f"actual {family} emitter corpus differs from its enrolled literal")
+        ending = source.rfind("}")
+        mutations = [
+            'include!("shadow.rs");' + source,
+            source[:ending] + 'include!("shadow.rs");' + source[ending:],
+            "mod shadow;" + source,
+            "#[hostile::generate]" + source,
+            "macro_rules! println { ($($arg:tt)*) => {} }" + source,
+            source.replace("FE2O3_CRATE_BINDING_ID_V1=", "WRONG_BINDING_ID="),
+            source.replace(expected, expected[:-1]),
+            source.replace(expected, expected.upper()),
+            source.replace(expected, expected + expected),
+            source.replace('std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1")',
+                           'std::env::var_os("OTHER_MODE")'),
+            source.replace("return;", "return; return;"),
+            source.replace('println!("cargo:rerun-if-env-changed=FE2O3_BINDING_WRAPPER_MODE_V1");',
+                           'println!("cargo:rerun-if-env-changed=OTHER_MODE");'),
+        ]
+        if family not in ("all-kernels", "rmsnorm"):
+            mutations += [
+                source.replace("ID_V1={}", "ID_V1={:s}"),
+                source.replace("ID_V1={}", "ID_V1={}{}"),
+                source.replace(f'"{expected}"', f'"{expected}", 0'),
+                source.replace(f'"{expected}"', f'concat!("{expected}")'),
+                source.replace(f'"{expected}"', '""'),
+                source.replace(f'"{expected}"', f'"{expected}", "{expected}"'),
+            ]
+        else:
+            mutations += [
+                source.replace(f'ID_V1={expected}"', f'ID_V1={expected}", 0'),
+                source.replace(f'ID_V1={expected}"', f'ID_V1={expected}{{}}"'),
+            ]
+        for index, changed in enumerate(mutations):
+            if changed == source:
+                fail(f"ineffective {family} corpus mutation {index}")
+            try:
+                fallback_binding_source(changed)
+            except ValueError:
+                corpus_negatives += 1
+                continue
+            fail(f"accepted hostile {family} full emitter mutation {index}")
+    print(f"PASS: all eight actual emitters and {corpus_negatives} corpus negatives")
     print("PASS: device binding parser and portable derivation vectors matched")
 
 
