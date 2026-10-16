@@ -18,7 +18,6 @@ use fe2o3_host::{
 use ferric_build::M1KernelArtifactFamilyV1;
 use ferric_kernels::KernelFamily;
 use ferric_qwen3_all_kernels_device_v1::{
-    M1AllKernelsMfmaWorkerV3RosterV1, M1AllKernelsWorkerV3RosterV1,
     gemm::{
         ferric_qwen3_gemm_mfma_bf16_f32_bf16_v1_gpu::Marker as GemmMfmaMarkerV1,
         ferric_qwen3_gemm_reference_bf16_f32_bf16_v1_gpu::Marker as GemmReferenceMarkerV1,
@@ -38,13 +37,14 @@ use ferric_qwen3_all_kernels_device_v1::{
         qwen3_rope_v1_gpu::Marker as RopeMarkerV1,
     },
     swiglu::qwen3_swiglu_bf16_f32_v1_gpu::Marker as SwiGluMarkerV1,
+    M1AllKernelsMfmaWorkerV3RosterV1, M1AllKernelsWorkerV3RosterV1,
 };
 use ferric_spec::Identity;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    DeclaredKernelFamilyArtifact, M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1, M1_PHYSICAL_PROGRAM_COUNT_V1,
-    M1PhysicalProgramStrategyV1, M1PhysicalProgramV1,
+    DeclaredKernelFamilyArtifact, M1PhysicalProgramStrategyV1, M1PhysicalProgramV1,
+    M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1, M1_PHYSICAL_PROGRAM_COUNT_V1,
 };
 
 const M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2: &[u8] =
@@ -880,11 +880,9 @@ mod tests {
     fn mfma_roster_has_separate_exact_markers_and_service_order() {
         let entries = M1AllKernelsMfmaWorkerV3RosterV1::ENTRIES;
         assert_eq!(entries.len(), M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1);
-        assert!(
-            entries
-                .windows(2)
-                .all(|pair| pair[0].kernel_binding_id() < pair[1].kernel_binding_id())
-        );
+        assert!(entries
+            .windows(2)
+            .all(|pair| pair[0].kernel_binding_id() < pair[1].kernel_binding_id()));
         for (program, &index) in M1PhysicalProgramV1::MFMA_ALL.iter().zip(&mfma_indices()) {
             assert_eq!(entries[index].export_name(), program.kernel_symbol());
             assert_eq!(entries[index].logical_name(), program.kernel_symbol());
@@ -895,11 +893,9 @@ mod tests {
                 .kernel_binding_id(),
             GemmMfmaMarkerV1::KERNEL_BINDING_ID_V1
         );
-        assert!(
-            !M1AllKernelsWorkerV3RosterV1::ENTRIES
-                .iter()
-                .any(|entry| entry.kernel_binding_id() == GemmMfmaMarkerV1::KERNEL_BINDING_ID_V1)
-        );
+        assert!(!M1AllKernelsWorkerV3RosterV1::ENTRIES
+            .iter()
+            .any(|entry| entry.kernel_binding_id() == GemmMfmaMarkerV1::KERNEL_BINDING_ID_V1));
     }
 
     #[test]
