@@ -10010,8 +10010,8 @@ mod tests {
         let mut positions = vec![0; physical_lanes * width];
         let mut active = vec![0; physical_lanes];
         let context = vec![0; physical_lanes];
-        for lane in 0..requests.len() {
-            active[lane] = width as u32;
+        for (lane, active_length) in active[..requests.len()].iter_mut().enumerate() {
+            *active_length = u32::try_from(width).expect("fixture width fits");
             let row = lane * width;
             for column in 0..width {
                 tokens[row + column] = TokenId::try_from(17 + lane).expect("fixture token fits");
@@ -10047,12 +10047,12 @@ mod tests {
         let mut positions = vec![0; 8 * 128];
         let mut active = vec![0; 8];
         let context = vec![0; 8];
-        for lane in 0..requests.len() {
-            active[lane] = 128;
+        for (lane, active_length) in active[..requests.len()].iter_mut().enumerate() {
+            *active_length = 128;
             let row = lane * 128;
             for column in 0..128 {
                 tokens[row + column] = 17;
-                positions[row + column] = column as u32;
+                positions[row + column] = u32::try_from(column).expect("fixture position fits");
             }
         }
         active[requests.len()] = 1;

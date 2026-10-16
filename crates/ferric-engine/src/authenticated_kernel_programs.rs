@@ -44,7 +44,7 @@ use sha2::{Digest, Sha256};
 
 use crate::{
     DeclaredKernelFamilyArtifact, M1PhysicalProgramStrategyV1, M1PhysicalProgramV1,
-    M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1, M1_PHYSICAL_PROGRAM_COUNT_V1,
+    M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1,
 };
 
 const M1_AUTHENTICATED_PROGRAM_CATALOG_DOMAIN_V2: &[u8] =
@@ -810,6 +810,7 @@ const fn kernel_family(family: M1KernelArtifactFamilyV1) -> KernelFamily {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::M1_PHYSICAL_PROGRAM_COUNT_V1;
 
     fn legacy_indices() -> [usize; M1_PHYSICAL_PROGRAM_COUNT_V1] {
         selected_source_indices(M1PhysicalProgramStrategyV1::LegacyScalar12).unwrap()[..12]

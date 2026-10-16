@@ -780,7 +780,10 @@ mod tests {
         for selection in [DRAFT_PREFILL, TARGET_PREFILL] {
             let inputs = padded_prefill_inputs(&runner, &requests, epoch, selection, &prompts)
                 .expect("two-member S8 rows validate");
-            assert_eq!(inputs.live_lane_count(), LIVE_MEMBERS as u32);
+            assert_eq!(
+                inputs.live_lane_count(),
+                u32::try_from(LIVE_MEMBERS).expect("fixture live count fits")
+            );
             assert_eq!(inputs.lanes().len(), PHYSICAL_LANES);
             assert_eq!(inputs.active_lengths(), &[128, 128, 0, 0, 0, 0, 0, 0]);
             assert_eq!(inputs.context_lengths(), &[0; PHYSICAL_LANES]);
