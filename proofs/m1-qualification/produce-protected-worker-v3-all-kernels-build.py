@@ -61,7 +61,7 @@ SOURCE_PIN_ADAPTER = "ferric-qwen3-all-kernels-worker-v3-source-pin-v1"
 SOURCE_PIN_BINDING_FORMAT = "FERRIC-M1-ALL-KERNELS-SOURCE-PIN-ADAPTER-BINDING-V1"
 SOURCE_PIN_BINDING_RELATIVE = PurePosixPath(
     "adapters/qwen3-all-kernels-worker-v3-source-pin-v1/"
-    "SOURCE_PIN_ADAPTER_BINDING_V1.json"
+    "SOURCE_PIN_ADAPTER_BINDING_20261016_V1.json"
 )
 SOURCE_PIN_BINDING_AUTHORITY = "binary-identity-prebinding-only"
 SOURCE_PIN_BINDING_NONCLAIM = (
