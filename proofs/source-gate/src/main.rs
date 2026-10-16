@@ -5075,6 +5075,9 @@ fn validate_sorted_roster_items(items: &[Item]) -> GateResult<()> {
     };
     if !cfg_test_item(&items[7])
         || tests.attrs.len() != 1
+        || !exact_path_segments(tests.attrs[0].path(), &["cfg"])
+        || !matches!(&tests.attrs[0].meta, Meta::List(cfg)
+            if matches!(&cfg.delimiter, verus_syn::MacroDelimiter::Paren(_)))
         || tests.ident != "tests"
         || !matches!(tests.vis, Visibility::Inherited)
         || tests.unsafety.is_some()
@@ -7751,6 +7754,8 @@ mod tests {
             ("impl CompilerGeneratedKernelExpectationRosterV1 for M1AllKernelsWorkerV3RosterV1", "impl CompilerGeneratedKernelExpectationRosterV1 for Forged"),
             ("const ENTRIES: &'static [Entry]", "const EXTRA: usize = 0; const ENTRIES: &'static [Entry]"),
             ("    #[cfg(test)]", "    #[cfg(any(test, feature = \"escape\"))]"),
+            ("    #[cfg(test)]", "    #[::cfg(test)]"),
+            ("    #[cfg(test)]", "    #[cfg[test]]"),
             ("    #[cfg(test)]", "    #[cfg_attr(test, allow(dead_code))] #[cfg(test)]"),
             ("    mod tests {", "    pub mod tests {"),
             ("    mod tests {", "    mod renamed {"),
@@ -7780,6 +7785,23 @@ mod tests {
         items.swap(17, 19);
         assert!(validate_aggregate_runtime_roster_file(&file).is_err());
     }
+    #[test]
+    fn aggregate_sorted_rejects_opaque_item_even_with_identical_printed_tokens() {
+        use verus_syn::__private::ToTokens;
+        let mut file = verus_syn::parse_file(SORTED_AGGREGATE_RUNTIME_SOURCE).unwrap();
+        let host = file
+            .items
+            .iter_mut()
+            .find_map(|item| match item {
+                Item::Mod(item) if item.ident == "host_roster" => Some(item),
+                _ => None,
+            })
+            .unwrap();
+        let items = &mut host.content.as_mut().unwrap().1;
+        items[14] = Item::Verbatim(items[14].to_token_stream());
+        assert!(validate_aggregate_runtime_roster_file(&file).is_err());
+    }
+
     fn validate_aggregate_source(source: &str) -> super::GateResult<()> {
         let file = verus_syn::parse_file(source).expect("aggregate runtime source parses");
         validate_aggregate_runtime_roster_file(&file)
