@@ -25,6 +25,59 @@ def fail(message: str) -> NoReturn:
     raise SystemExit(1)
 
 
+def check_model_bundle_topology(model_bundle: list[dict[str, Any]]) -> None:
+    if any(
+        slot["binding"]["obligation_class"] != "Assurance"
+        or slot["binding"]["obligation_id"] != "model_bundle_well_formed"
+        for slot in model_bundle
+    ):
+        fail("model_bundle_well_formed allocation topology drifted")
+    model_bundle_topology = [
+        (
+            slot["binding"]["profile_id"],
+            slot["binding"]["evidence_kind"],
+            slot["binding"]["path_id"],
+            tuple(slot["foundation_selectors"]),
+        )
+        for slot in model_bundle
+    ]
+    if model_bundle_topology != [
+        (
+            "admission",
+            "negative-mutation",
+            "model-bundle-proof",
+            (
+                "model-bundle-manifest-canonical-bytes",
+                "model-bundle-manifest-layout",
+                "model-bundle-record-binding",
+            ),
+        ),
+        (
+            "admission",
+            "verus-theorem",
+            "model-bundle-proof",
+            ("model-bundle-composition",),
+        ),
+        (
+            "authentication",
+            "negative-mutation",
+            "weight-stream",
+            ("canonical-weight-role-byte",),
+        ),
+        ("admission", "artifact-identity", "bundle-auth", ()),
+        ("admission", "canonical-structure-check", "bundle-parser", ()),
+        ("authentication", "artifact-identity", "model-admission", ()),
+        (
+            "authentication",
+            "canonical-structure-check",
+            "tokenizer-admission",
+            (),
+        ),
+        ("authentication", "independent-validator", "bundle-auth", ()),
+    ]:
+        fail("model_bundle_well_formed allocation topology drifted")
+
+
 def load_planner(path: Path) -> Any:
     spec = importlib.util.spec_from_file_location("ferric_m1_evidence_planner", path)
     if spec is None or spec.loader is None:
@@ -1012,46 +1065,51 @@ def main() -> None:
         for slot in assurance
         if slot["binding"]["obligation_id"] == "model_bundle_well_formed"
     ]
-    model_bundle_topology = [
-        (
-            slot["binding"]["profile_id"],
-            slot["binding"]["evidence_kind"],
-            slot["binding"]["path_id"],
-            tuple(slot["foundation_selectors"]),
-        )
-        for slot in model_bundle
-    ]
-    if model_bundle_topology != [
-        (
-            "admission",
-            "negative-mutation",
-            "model-bundle-proof",
-            ("model-bundle-record-binding",),
-        ),
-        (
-            "admission",
-            "verus-theorem",
-            "model-bundle-proof",
-            ("model-bundle-composition",),
-        ),
-        (
-            "authentication",
-            "negative-mutation",
-            "weight-stream",
-            ("canonical-weight-role-byte",),
-        ),
-        ("admission", "artifact-identity", "bundle-auth", ()),
-        ("admission", "canonical-structure-check", "bundle-parser", ()),
-        ("authentication", "artifact-identity", "model-admission", ()),
-        (
-            "authentication",
-            "canonical-structure-check",
-            "tokenizer-admission",
-            (),
-        ),
-        ("authentication", "independent-validator", "bundle-auth", ()),
-    ]:
-        fail("model_bundle_well_formed allocation topology drifted")
+    check_model_bundle_topology(model_bundle)
+    hostile_topologies = []
+    selectors = model_bundle[0]["foundation_selectors"]
+    for index in range(3):
+        hostile = copy.deepcopy(model_bundle)
+        del hostile[0]["foundation_selectors"][index]
+        hostile_topologies.append(hostile)
+    for changed in (
+        selectors + ["unexpected-selector"],
+        selectors + [selectors[0]],
+        list(reversed(selectors)),
+    ):
+        hostile = copy.deepcopy(model_bundle)
+        hostile[0]["foundation_selectors"] = changed
+        hostile_topologies.append(hostile)
+    for field, value in (
+        ("obligation_class", "Roadmap"),
+        ("obligation_id", "graph_refined"),
+        ("path_id", "weight-stream"),
+        ("profile_id", "authentication"),
+        ("evidence_kind", "verus-theorem"),
+    ):
+        hostile = copy.deepcopy(model_bundle)
+        hostile[0]["binding"][field] = value
+        hostile_topologies.append(hostile)
+    hostile_topologies.extend(
+        [
+            copy.deepcopy(model_bundle[:-1]),
+            copy.deepcopy(model_bundle + [model_bundle[-1]]),
+            copy.deepcopy([model_bundle[1], model_bundle[0], *model_bundle[2:]]),
+        ]
+    )
+    for index, hostile in enumerate(hostile_topologies):
+        rejected = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(rejected):
+                check_model_bundle_topology(hostile)
+        except SystemExit as error:
+            if error.code != 1 or rejected.getvalue().strip() != (
+                "FAIL: model_bundle_well_formed allocation topology drifted"
+            ):
+                fail(f"model bundle topology control {index} failed for the wrong reason")
+        else:
+            fail(f"model bundle topology control {index} accepted hostile data")
+    print("PASS: exact eight model bundle tuples rejected 14 hostile topologies")
     graph = [
         slot
         for slot in assurance
