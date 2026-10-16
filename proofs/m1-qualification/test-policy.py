@@ -175,6 +175,79 @@ def replace_once(path: Path, before: str, after: str) -> None:
     path.write_text(source.replace(before, after, 1), encoding="utf-8")
 
 
+def exercise_hsaco_topology_boundaries(repo: Path, planner: Any) -> None:
+    workspace = planner.read_toml(repo / "Cargo.toml", "current workspace")
+    positive = planner.validate_fe2o3_topology(repo, workspace)
+    if len(positive) != 22 or {
+        "owner": "ferric-engine",
+        "scope": "dependencies",
+        "name": "fe2o3-hsaco",
+    } not in positive:
+        fail("current HSACO topology did not retain its exact 22-edge graph")
+    topology_error = "dependency topology does not equal the admitted root graph"
+    declaration_error = "dependency edge is not an exact workspace edge"
+    engine = "crates/ferric-engine/Cargo.toml"
+    edge = "fe2o3-hsaco.workspace = true\n"
+    cases = (
+        ("missing", ((engine, edge, ""),), topology_error),
+        (
+            "old-dev-scope",
+            ((engine, edge, ""), (engine, "[dev-dependencies]\n",
+              "[dev-dependencies]\n" + edge)),
+            topology_error,
+        ),
+        (
+            "both-scopes",
+            ((engine, "[dev-dependencies]\n", "[dev-dependencies]\n" + edge),),
+            topology_error,
+        ),
+        (
+            "wrong-owner",
+            ((engine, edge, ""), ("crates/ferric-build/Cargo.toml",
+              "[dependencies]\n", "[dependencies]\n" + edge)),
+            topology_error,
+        ),
+        (
+            "alias",
+            ((engine, edge,
+              'hsaco-alias = { package = "fe2o3-hsaco", workspace = true }\n'),),
+            declaration_error,
+        ),
+        (
+            "optional",
+            ((engine, edge,
+              "fe2o3-hsaco = { workspace = true, optional = true }\n"),),
+            declaration_error,
+        ),
+        (
+            "target-substitution",
+            ((engine, edge, ""), (engine, "[dependencies]\n",
+              '[target.\'cfg(target_os = "linux")\'.dependencies]\n' + edge
+              + "\n[dependencies]\n")),
+            topology_error,
+        ),
+    )
+    with tempfile.TemporaryDirectory(prefix="ferric-hsaco-topology-") as raw:
+        for name, mutations, expected in cases:
+            fixture = Path(raw) / name
+            for relative in workspace["workspace"]["members"]:
+                manifest = fixture / relative / "Cargo.toml"
+                manifest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(repo / relative / "Cargo.toml", manifest)
+            for relative, old, new in mutations:
+                replace_once(fixture / relative, old, new)
+            rejected = io.StringIO()
+            try:
+                with contextlib.redirect_stderr(rejected):
+                    planner.validate_fe2o3_topology(fixture, workspace)
+            except SystemExit as error:
+                if error.code != 1 or expected not in rejected.getvalue():
+                    fail(f"HSACO topology control {name} rejected for the wrong reason")
+            else:
+                fail(f"HSACO topology control {name} accepted a forbidden graph")
+    print("PASS: current 22-edge graph rejected seven HSACO scope/identity substitutions")
+
+
 def exercise_prepare_boundaries(repo: Path, fe2o3_source: Path, planner: Any) -> None:
     with tempfile.TemporaryDirectory(prefix="ferric-m1-planner-policy-") as raw:
         temporary = Path(raw)
@@ -1802,6 +1875,7 @@ def main() -> None:
     if refusal.returncode == 0 or expected not in refusal.stdout:
         fail("M1 planner did not categorically refuse closure output")
 
+    exercise_hsaco_topology_boundaries(repo, planner)
     exercise_prepare_boundaries(repo, fe2o3_source, planner)
     if set(planner_path.parent.rglob("*.pyc")) != bytecode_before:
         fail("M1 planner policy created Python bytecode in the Ferric worktree")
