@@ -228,11 +228,22 @@ def prepare(source, root, cache=None):
     audit(source, root)
 
 
+def site_inventory_files(site):
+    site = Path(site).absolute()
+    for path in (site, *site.parents):
+        require(not path.is_symlink(), "symlink site directory/ancestor")
+    entries = list(site.rglob("*"))
+    for path in entries:
+        require(not path.is_symlink(), "symlink installed site entry")
+    return {path for path in entries if not path.is_dir()}
+
+
 def audit(source, root):
     source, root = Path(source), Path(root)
     wheels = selected_wheels(source)
     prefix = root / "venv"
     site = prefix / "lib/python3.12/site-packages"
+    site_inventory_files(site)
     # Exact distlib-generated entry point bytes, from the actual installer source.
     import pip._vendor.distlib.scripts as scripts
     template = scripts.SCRIPT_TEMPLATE
@@ -305,7 +316,7 @@ def audit(source, root):
                 required_rows[os.path.relpath(path, site)] = ["sha256=" + encoded, str(len(content))]
         required_rows[os.path.relpath(record, site)] = ["", ""]
         require(actual_rows == required_rows, "unexplained installed RECORD rewrite")
-    actual = {p for p in site.rglob("*") if not p.is_dir()}
+    actual = site_inventory_files(site)
     require(actual == {p for p in expected if p.is_relative_to(site)}
             | {p for p in generated if p.is_relative_to(site)}, "unexplained/missing site file")
     require({p.name for p in (prefix / "bin").iterdir()} == {

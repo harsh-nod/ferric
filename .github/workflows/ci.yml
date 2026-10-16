@@ -69,7 +69,7 @@ jobs:
       - name: Install Python 3.12 Bootstrap Tools
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends python3.12-venv python3-pip
+          sudo apt-get install --yes --no-install-recommends python3.12-venv python3-pip
           /usr/bin/python3.12 -I -B -m pip --version
       - name: Check Locked Profile Negative Controls
         run: /usr/bin/python3.12 -I -B -m unittest discover -s tools -p 'test_reference_cpu_ci.py'

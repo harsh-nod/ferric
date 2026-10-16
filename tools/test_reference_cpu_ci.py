@@ -18,6 +18,33 @@ spec.loader.exec_module(ci)
 
 
 class ProfileTests(unittest.TestCase):
+    def test_site_inventory_rejects_all_symlink_entries_and_ancestors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            site = root / "venv/lib/python3.12/site-packages"
+            site.mkdir(parents=True)
+            payload = site / "payload.py"
+            payload.write_text("pass\n")
+            outside = root / "outside"
+            outside.mkdir()
+            foreign = outside / "foreign.py"
+            foreign.write_text("pass\n")
+            self.assertEqual(ci.site_inventory_files(site), {payload})
+            for target in (foreign, root / "missing", outside):
+                link = site / "extra"
+                link.symlink_to(target, target_is_directory=target == outside)
+                with self.subTest(target=target), self.assertRaisesRegex(ValueError, "symlink"):
+                    ci.site_inventory_files(site)
+                link.unlink()
+            linked_site = root / "linked-site"
+            linked_site.symlink_to(site, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "ancestor"):
+                ci.site_inventory_files(linked_site)
+            linked_prefix = root / "linked-prefix"
+            linked_prefix.symlink_to(root / "venv", target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "ancestor"):
+                ci.site_inventory_files(linked_prefix / "lib/python3.12/site-packages")
+
     def test_known_unlisted_vendor_payloads_do_not_repair_record(self):
         names = ["triton/backends/amd/lib/" + n for n in ("libelf.so", "libnuma.so", "libtinfo.so")]
         old = [["triton/backends/amd/lib/libelf.so.1", "sha256=known-defective", "123"]]
@@ -149,6 +176,7 @@ class ProfileTests(unittest.TestCase):
         self.assertNotIn("if:", job)
         self.assertIn("-- python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'", job)
         self.assertIn("reference_cpu_ci.py prepare", job)
+        self.assertIn("sudo apt-get install --yes --no-install-recommends python3.12-venv python3-pip", job)
         self.assertLess(job.index("reference_cpu_ci.py preflight"), job.index("sudo apt-get"))
         self.assertIn("test_reference_cpu_ci.py", job)
         rust = workflow.split("\n  rust:\n", 1)[1].split("\n  reference-cpu:", 1)[0]
