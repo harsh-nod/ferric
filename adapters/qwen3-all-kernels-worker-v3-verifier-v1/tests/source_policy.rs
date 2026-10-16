@@ -51,12 +51,12 @@ const REVIEWED_FILE_SHA256: [[u8; 32]; 7] = [
         4, 53, 9, 149, 204, 198, 78, 167, 240, 54, 180, 86,
     ],
     [
-        181, 39, 242, 25, 206, 35, 204, 87, 209, 150, 136, 120, 160, 141, 69, 40, 40, 101, 198,
-        116, 86, 168, 76, 125, 124, 229, 75, 67, 69, 133, 172, 220,
+        19, 125, 138, 47, 96, 175, 179, 149, 205, 206, 55, 222, 189, 36, 112, 238, 154, 43, 215,
+        234, 56, 169, 197, 8, 150, 51, 100, 151, 229, 207, 108, 167,
     ],
     [
-        21, 96, 252, 204, 122, 72, 153, 79, 42, 183, 219, 191, 2, 117, 149, 229, 244, 221, 228, 37,
-        100, 164, 213, 250, 82, 200, 57, 251, 122, 158, 212, 147,
+        175, 144, 2, 38, 85, 183, 189, 109, 31, 243, 94, 112, 228, 123, 225, 15, 197, 123, 127,
+        254, 96, 145, 44, 7, 125, 227, 231, 24, 88, 2, 156, 79,
     ],
 ];
 const REVIEWED_LIB_NODE_FINGERPRINTS: [[u8; 32]; 23] = [
@@ -1757,18 +1757,18 @@ fn roster_is_the_exact_twelve_entry_aggregate() {
             .map(fe2o3_host::CompilerGeneratedKernelExpectationRosterEntryV1::export_name)
             .collect::<Vec<_>>(),
         [
-            "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
-            "qwen3_swiglu_bf16_f32_v1",
-            "qwen3_rope_v1",
             "ferric_qwen3_speculative_token_assembly_v1",
-            "ferric_qwen3_token_embedding_bf16_copy_v1",
-            "qwen3_paged_gqa_decode_bf16_f32_v1",
-            "qwen3_gqa_prefill_causal_bf16_f32_v1",
-            "qwen3_paged_kv_write_v1",
+            "qwen3_swiglu_bf16_f32_v1",
             "ferric_qwen3_compact_completion_v1",
-            "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
-            "ferric_qwen3_lowest_id_argmax_bf16_v1",
             "qwen3_rmsnorm_v1",
+            "ferric_qwen3_lowest_id_argmax_bf16_v1",
+            "qwen3_paged_kv_write_v1",
+            "qwen3_paged_gqa_decode_bf16_f32_v1",
+            "qwen3_rope_v1",
+            "qwen3_gqa_prefill_causal_bf16_f32_v1",
+            "ferric_qwen3_gemm_reference_bf16_f32_bf16_v1",
+            "ferric_qwen3_gemm_vector_a4_bf16_f32_bf16_v1",
+            "ferric_qwen3_token_embedding_bf16_copy_v1",
         ]
     );
 }
