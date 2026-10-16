@@ -130,3 +130,70 @@ jobs:
       - run: cargo fmt --all -- --check
       - name: Test non-authoritative family compatibility wrapper
         run: cargo test --locked --all-targets
+
+  reference-cpu-capacity-diagnostic:
+    name: Reference CPU Capacity (Diagnostic Only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Record Capacity Without Reference Qualification
+        shell: bash
+        run: |
+          python3 -I -B - <<'PY'
+          import json
+          import os
+          import platform
+          import sys
+
+          minimum_free_bytes = 40 * 1024**3
+          filesystems = {}
+          for name in ("GITHUB_WORKSPACE", "RUNNER_TEMP"):
+              path = os.environ[name]
+              volume = os.statvfs(path)
+              filesystems[name] = {
+                  "path": os.path.realpath(path),
+                  "device": os.stat(path).st_dev,
+                  "available_bytes": volume.f_bavail * volume.f_frsize,
+                  "total_bytes": volume.f_blocks * volume.f_frsize,
+              }
+          sufficient = all(
+              volume["available_bytes"] >= minimum_free_bytes
+              for volume in filesystems.values()
+          )
+          record = {
+              "diagnostic_only": True,
+              "reference_qualification_passed": False,
+              "arithmetic_tests_executed": 0,
+              "minimum_free_bytes": minimum_free_bytes,
+              "capacity_sufficient": sufficient,
+              "filesystems": filesystems,
+              "shared_filesystem": len({
+                  volume["device"] for volume in filesystems.values()
+              }) == 1,
+              "physical_ram_bytes": (
+                  os.sysconf("SC_PHYS_PAGES") * os.sysconf("SC_PAGE_SIZE")
+              ),
+              "logical_cpu_count": os.cpu_count(),
+              "affinity_cpu_count": len(os.sched_getaffinity(0)),
+              "runner": {
+                  name: os.environ.get(name)
+                  for name in (
+                      "RUNNER_OS", "RUNNER_ARCH", "RUNNER_ENVIRONMENT",
+                      "ImageOS", "ImageVersion", "GITHUB_SHA",
+                      "GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT",
+                  )
+              },
+              "python": {
+                  "version": sys.version,
+                  "implementation": platform.python_implementation(),
+                  "executable": sys.executable,
+              },
+          }
+          print(json.dumps(record, sort_keys=True), flush=True)
+          if not sufficient:
+              raise SystemExit(
+                  "Capacity diagnostic only: at least 40 GiB free is required on "
+                  "both workspace and temporary filesystems; reference arithmetic "
+                  "has not been qualified."
+              )
+          PY
