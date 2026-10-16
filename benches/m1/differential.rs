@@ -18,7 +18,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::{OsStr, OsString};
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{BufReader, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::ExitCode;
 #[allow(unused_imports)]
@@ -180,8 +180,10 @@ struct AcceptanceThreshold {
     maximum_token_mismatches: u64,
 }
 
+const CHECKED_READ_BUFFER_BYTES: usize = 64 * 1024;
+
 struct CheckedReader<R> {
-    inner: R,
+    inner: BufReader<R>,
     sha256: Sha256,
     bytes: u64,
 }
@@ -206,7 +208,8 @@ impl<T: AsRef<[u8]>> SnapshotRead for std::io::Cursor<T> {
 impl<R: SnapshotRead> CheckedReader<R> {
     fn new(inner: R) -> Self {
         Self {
-            inner,
+            // Keep the original retained input; only physical reads are batched.
+            inner: BufReader::with_capacity(CHECKED_READ_BUFFER_BYTES, inner),
             sha256: Sha256::new(),
             bytes: 0,
         }
@@ -214,7 +217,7 @@ impl<R: SnapshotRead> CheckedReader<R> {
 
     fn read_exact(&mut self, buffer: &mut [u8], description: &str) -> BenchResult<()> {
         if let Err(error) = self.inner.read_exact(buffer) {
-            self.inner.validate_snapshot(description)?;
+            self.inner.get_ref().validate_snapshot(description)?;
             return Err(format!("cannot read {description}: {error}"));
         }
         self.sha256.update(&*buffer);
@@ -238,15 +241,15 @@ impl<R: SnapshotRead> CheckedReader<R> {
         let trailing_bytes = match self.inner.read(&mut trailing) {
             Ok(bytes) => bytes,
             Err(error) => {
-                self.inner.validate_snapshot(description)?;
+                self.inner.get_ref().validate_snapshot(description)?;
                 return Err(format!("cannot finish {description}: {error}"));
             }
         };
         if trailing_bytes != 0 || self.bytes != expected_bytes {
-            self.inner.validate_snapshot(description)?;
+            self.inner.get_ref().validate_snapshot(description)?;
             return Err(format!("{description} length drifted"));
         }
-        self.inner.validate_snapshot(description)?;
+        self.inner.get_ref().validate_snapshot(description)?;
         let actual = hex_digest(self.sha256.finalize().as_slice());
         if actual != expected_sha256 {
             return Err(format!("{description} SHA-256 drifted"));
@@ -2977,6 +2980,124 @@ mod tests {
             },
         )
         .is_err());
+    }
+
+    struct CountingRead {
+        source: Cursor<Vec<u8>>,
+        calls: usize,
+        maximum_chunk: usize,
+    }
+
+    impl Read for CountingRead {
+        fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+            self.calls += 1;
+            let length = buffer.len().min(self.maximum_chunk);
+            self.source.read(&mut buffer[..length])
+        }
+    }
+
+    impl SnapshotRead for CountingRead {
+        fn validate_snapshot(&self, _description: &str) -> BenchResult<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn buffered_reader_batches_physical_reads_without_changing_logical_hash() {
+        let bytes = vec![0_u8; 2 * CHECKED_READ_BUFFER_BYTES];
+        let expected_sha256 = sha256_identity(&bytes);
+        let source = CountingRead {
+            source: Cursor::new(bytes),
+            calls: 0,
+            maximum_chunk: usize::MAX,
+        };
+        let mut reader = CheckedReader::new(source);
+        for _ in 0..CHECKED_READ_BUFFER_BYTES {
+            assert_eq!(read_bf16(&mut reader, "batched payload").unwrap(), 0);
+        }
+        assert_eq!(reader.inner.get_ref().calls, 2);
+        assert_eq!(
+            hex_digest(reader.sha256.clone().finalize().as_slice()),
+            expected_sha256
+        );
+        reader
+            .finish(
+                u64::try_from(2 * CHECKED_READ_BUFFER_BYTES).unwrap(),
+                &expected_sha256,
+                "batched payload",
+            )
+            .unwrap();
+    }
+
+    #[test]
+    fn buffered_reader_rejects_trailing_byte_already_inside_prefetch_window() {
+        let mut reader = CheckedReader::new(Cursor::new(vec![0x80, 0x3f, 0xaa]));
+        assert_eq!(read_bf16(&mut reader, "trailing payload").unwrap(), 0x3f80);
+        assert_eq!(reader.inner.buffer(), &[0xaa]);
+        assert_eq!(reader.bytes, 2);
+        assert_eq!(
+            hex_digest(reader.sha256.clone().finalize().as_slice()),
+            sha256_identity(&[0x80, 0x3f])
+        );
+        assert!(reader
+            .finish(2, &sha256_identity(&[0x80, 0x3f]), "trailing payload")
+            .unwrap_err()
+            .contains("length drifted"));
+    }
+
+    #[test]
+    fn buffered_reader_handles_short_reads_and_rejects_odd_or_truncated_bf16() {
+        let bytes = bf16(&[0x3f80, 0x4000]);
+        let mut reader = CheckedReader::new(CountingRead {
+            source: Cursor::new(bytes.clone()),
+            calls: 0,
+            maximum_chunk: 1,
+        });
+        assert_eq!(read_bf16(&mut reader, "short reads").unwrap(), 0x3f80);
+        assert_eq!(read_bf16(&mut reader, "short reads").unwrap(), 0x4000);
+        reader
+            .finish(4, &sha256_identity(&bytes), "short reads")
+            .unwrap();
+        for truncated in [vec![], vec![0x80], vec![0x80, 0x3f, 0x00]] {
+            let mut reader = CheckedReader::new(Cursor::new(truncated));
+            let first = read_bf16(&mut reader, "truncated payload");
+            assert!(first.is_err() || read_bf16(&mut reader, "truncated payload").is_err());
+        }
+    }
+
+    #[test]
+    fn buffered_reader_keeps_original_fd_binding_and_final_snapshot_checks() {
+        for mutation in ["replace", "shrink-held", "add-alias"] {
+            let temporary = TestDirectory::new();
+            let path = temporary.0.join("payload.bin");
+            let bytes = bf16(&[0x3f80, 0x4000]);
+            fs::write(&path, &bytes).unwrap();
+            let descriptor = open_pairs_parent(&temporary.0).unwrap();
+            let root = duplicate_secure_input_directory(&descriptor, "buffered fixture").unwrap();
+            let relative = Path::new("payload.bin");
+            let held = root.open_exact(relative, 4, "buffered fixture").unwrap();
+            let mut reader = CheckedReader::new(held);
+            assert_eq!(read_bf16(&mut reader, "buffered fixture").unwrap(), 0x3f80);
+            assert_eq!(reader.inner.buffer().len(), 2);
+            match mutation {
+                "replace" => {
+                    fs::rename(&path, temporary.0.join("original.bin")).unwrap();
+                    fs::write(&path, &bytes).unwrap();
+                }
+                "shrink-held" => fs::write(&path, &bytes[..2]).unwrap(),
+                "add-alias" => fs::hard_link(&path, temporary.0.join("alias.bin")).unwrap(),
+                _ => unreachable!(),
+            }
+            assert!(root
+                .validate_binding(relative, reader.inner.get_ref(), "buffered fixture")
+                .is_err());
+            assert_eq!(read_bf16(&mut reader, "buffered fixture").unwrap(), 0x4000);
+            if mutation != "replace" {
+                assert!(reader
+                    .finish(4, &sha256_identity(&bytes), "buffered fixture")
+                    .is_err());
+            }
+        }
     }
 
     #[test]
