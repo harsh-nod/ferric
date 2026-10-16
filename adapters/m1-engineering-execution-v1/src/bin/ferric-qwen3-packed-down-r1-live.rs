@@ -13,15 +13,14 @@ mod wave_target_v17_live_contract;
 mod wave_target_v17_runner;
 
 fn main() -> std::process::ExitCode {
-    let result = packed_down_live_contract::Options::parse(std::env::args().skip(1)).and_then(
-        |options| {
+    let result =
+        packed_down_live_contract::Options::parse(std::env::args().skip(1)).and_then(|options| {
             wave_target_v17_runner::run_packed_down(
                 &options.base.base,
                 options.variant(),
                 &options.selection,
             )
-        },
-    );
+        });
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(error) => {

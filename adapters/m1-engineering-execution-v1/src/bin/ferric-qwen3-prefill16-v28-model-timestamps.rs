@@ -27,7 +27,10 @@ fn parse_output(
                 return Err("invalid model timestamp output".into());
             }
             output = Some(std::path::PathBuf::from(path));
-        } else if matches!(argument.as_str(), "--split-attention-artifact" | "--split-attention-mode" | "--c1-packet-mode") {
+        } else if matches!(
+            argument.as_str(),
+            "--split-attention-artifact" | "--split-attention-mode" | "--c1-packet-mode"
+        ) {
             return Err("model timestamps exclude V28 decode composition".into());
         } else if matches!(
             argument.as_str(),
@@ -85,9 +88,21 @@ mod tests {
 
     #[test]
     fn model_timestamp_parser_rejects_composition_flags_but_not_path_values() {
-        for flag in ["--split-attention-artifact", "--split-attention-mode", "--c1-packet-mode"] {
-            assert!(parse_output(["--model-timestamps-output", "raw.json", flag, "baseline"].map(str::to_owned)).is_err());
-            let parsed = parse_output(["--model-timestamps-output", "raw.json", "--source", flag].map(str::to_owned)).unwrap();
+        for flag in [
+            "--split-attention-artifact",
+            "--split-attention-mode",
+            "--c1-packet-mode",
+        ] {
+            assert!(
+                parse_output(
+                    ["--model-timestamps-output", "raw.json", flag, "baseline"].map(str::to_owned)
+                )
+                .is_err()
+            );
+            let parsed = parse_output(
+                ["--model-timestamps-output", "raw.json", "--source", flag].map(str::to_owned),
+            )
+            .unwrap();
             assert_eq!(parsed.1, ["--source", flag]);
         }
     }

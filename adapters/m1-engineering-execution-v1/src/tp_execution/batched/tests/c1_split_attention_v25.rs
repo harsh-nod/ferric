@@ -133,22 +133,48 @@ fn c1_split_attention_v25_prefill_composition_preserves_fallback_and_scratch_acr
     driver.inner.transports[0].rollover_supported = true;
     let scratch = driver.split_attention_workspace_v25.unwrap();
     for (ordinal, (context, rows, packets, copies, splits)) in [
-        (127, 1, 616, 0, 0), (128, 1, 652, 0, 36), (192, 16, 616, 36, 0),
-        (257, 1, 616, 0, 0), (192, 32, 616, 0, 0),
-    ].into_iter().enumerate() {
-        driver.inner.transports[0].queue_packets = fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1 - 600;
+        (127, 1, 616, 0, 0),
+        (128, 1, 652, 0, 36),
+        (192, 16, 616, 36, 0),
+        (257, 1, 616, 0, 0),
+        (192, 32, 616, 0, 0),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        driver.inner.transports[0].queue_packets =
+            fe2o3_kfd::engineering_wire::MAX_UNRETIRED_RING_PACKETS_V1 - 600;
         let batch = prepare_at(&mut pool, context, rows);
         let before = driver.inner.transports[0].commands.len();
         pool.begin_submission(&batch).unwrap();
-        let output = driver.execute_selected(&batch, &[rows as usize - 1]).unwrap();
+        let output = driver
+            .execute_selected(&batch, &[rows as usize - 1])
+            .unwrap();
         pool.commit_batch(&batch, output.completion).unwrap();
-        pool.retire_sequence(batch.rows()[0].sequence(), false, 0).unwrap();
+        pool.retire_sequence(batch.rows()[0].sequence(), false, 0)
+            .unwrap();
         let commands = &driver.inner.transports[0].commands[before..];
         assert_eq!(commands.len(), packets);
-        assert_eq!(commands.iter().filter(|command| command.kernel == crate::tp_artifact::ENGINEERING_TP_PREFILL_KV_COPY_EXPORTS_V27[0]).count(), copies);
-        assert_eq!(commands.iter().filter(|command| command.kernel == ENGINEERING_TP_SPLIT_ATTENTION_EXPORTS_V21[0]).count(), splits);
+        assert_eq!(
+            commands
+                .iter()
+                .filter(|command| command.kernel
+                    == crate::tp_artifact::ENGINEERING_TP_PREFILL_KV_COPY_EXPORTS_V27[0])
+                .count(),
+            copies
+        );
+        assert_eq!(
+            commands
+                .iter()
+                .filter(|command| command.kernel == ENGINEERING_TP_SPLIT_ATTENTION_EXPORTS_V21[0])
+                .count(),
+            splits
+        );
         let current = driver.split_attention_workspace_v25.unwrap();
-        assert_eq!((current.stats.id, current.numerators.id), (scratch.stats.id, scratch.numerators.id));
+        assert_eq!(
+            (current.stats.id, current.numerators.id),
+            (scratch.stats.id, scratch.numerators.id)
+        );
         assert!(driver.inner.packed_c1.is_none());
         assert!(driver.inner.ordered_batches.as_ref().unwrap().is_empty());
         assert_eq!(driver.inner.collective.expected().epoch, ordinal as u64 + 1);
@@ -162,11 +188,16 @@ fn c1_split_attention_v25_prefill_composition_preserves_fallback_and_scratch_acr
 fn c1_split_attention_v25_prefill_composition_failures_poison_without_committing() {
     use super::prefill_kv_copy_v28::{composition_configured, select_composition};
     for (rows, failure) in [
-        (16, Failure::KvCopySubmit), (16, Failure::KvCopyWait),
-        (1, Failure::SplitSubmit(0)), (1, Failure::SplitWait(0)),
-        (1, Failure::SplitSubmit(1)), (1, Failure::SplitWait(1)),
-        (1, Failure::OrderedSubmitAt(2)), (1, Failure::OrderedWaitAt(2)),
-        (16, Failure::PreparePackets), (1, Failure::BadChoice),
+        (16, Failure::KvCopySubmit),
+        (16, Failure::KvCopyWait),
+        (1, Failure::SplitSubmit(0)),
+        (1, Failure::SplitWait(0)),
+        (1, Failure::SplitSubmit(1)),
+        (1, Failure::SplitWait(1)),
+        (1, Failure::OrderedSubmitAt(2)),
+        (1, Failure::OrderedWaitAt(2)),
+        (16, Failure::PreparePackets),
+        (1, Failure::BadChoice),
     ] {
         let mut pool = wide_context_pool();
         let mut driver = composition_configured(&pool);
@@ -174,11 +205,20 @@ fn c1_split_attention_v25_prefill_composition_failures_poison_without_committing
         let batch = prepare_at(&mut pool, 192, rows);
         pool.begin_submission(&batch).unwrap();
         driver.inner.transports[0].failure = Some(failure);
-        assert!(driver.execute_selected(&batch, &[rows as usize - 1]).is_err(), "{failure:?}");
+        assert!(
+            driver
+                .execute_selected(&batch, &[rows as usize - 1])
+                .is_err(),
+            "{failure:?}"
+        );
         assert!(driver.poisoned);
         assert_eq!(driver.completed_batches, 0);
         let count = driver.dispatch_counts();
-        assert!(driver.execute_selected(&batch, &[rows as usize - 1]).is_err());
+        assert!(
+            driver
+                .execute_selected(&batch, &[rows as usize - 1])
+                .is_err()
+        );
         assert_eq!(driver.dispatch_counts(), count);
         pool.quarantine_batch(&batch).unwrap();
         assert!(pool.check_invariants().is_err());
