@@ -41,6 +41,13 @@ pub(super) enum FeedForwardProducerSchedule {
 }
 
 impl FeedForwardProducerSchedule {
+    #[cfg_attr(
+        not(feature = "tp-batch-engineering"),
+        expect(
+            clippy::unnecessary_wraps,
+            reason = "Feature-enabled packed schedules must retain their None result"
+        )
+    )]
     pub(super) const fn native_packets(self) -> Option<usize> {
         match self {
             Self::Baseline => Some(652),
@@ -518,5 +525,33 @@ impl<R: EngineeringTpRankTransportV1> EngineeringTpExecutionV1<R> {
             .map_err(|error| format!("host collective advance: {error:?}"))?;
         self.hidden.copy_from_slice(&workspace.output[..elements]);
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod native_packet_schedule_tests {
+    use super::FeedForwardProducerSchedule;
+
+    #[test]
+    fn baseline_native_packets_preserve_optional_api() {
+        assert_eq!(
+            FeedForwardProducerSchedule::Baseline.native_packets(),
+            Some(652)
+        );
+    }
+
+    #[cfg(feature = "tp-batch-engineering")]
+    #[test]
+    fn packed_and_split_native_packet_schedules_are_distinct() {
+        assert_eq!(
+            FeedForwardProducerSchedule::SplitKDownR1.native_packets(),
+            Some(688)
+        );
+        for schedule in [
+            FeedForwardProducerSchedule::PackedGateUpR2,
+            FeedForwardProducerSchedule::PackedDownR1,
+        ] {
+            assert_eq!(schedule.native_packets(), None);
+        }
     }
 }
