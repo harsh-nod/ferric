@@ -34,7 +34,6 @@ jobs:
       - run: cargo test --manifest-path adapters/qwen3-all-kernels-worker-v3-source-pin-v1/Cargo.toml --all-targets --locked
       - run: python3 -I benches/m1/test-policy.py .
       - run: python3 -I -B benches/m1/reference/test-policy.py
-      - run: python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
       - run: python3 -I -B -m unittest discover -s adapters/m1-engineering-execution-v1/tools -p 'test_qwen_stock_c1_report.py'
       - run: python3 -I -B -m unittest discover -s adapters/m1-engineering-execution-v1/tools -p 'test_qwen_stock_c8_report.py'
       - run: python3 -I -B -m unittest discover -s adapters/m1-engineering-execution-v1/tools -p 'test_competitive_benchmark.py'
@@ -56,6 +55,33 @@ jobs:
           test "$(git -C "$RUNNER_TEMP/fe2o3" rev-parse HEAD)" = "$FE2O3_REVISION"
           python3 -I -B proofs/m1-qualification/test-policy.py . "$RUNNER_TEMP/fe2o3"
           rm -rf "$RUNNER_TEMP/fe2o3"
+
+  reference-cpu:
+    name: Pinned Reference CPU (Full Suite)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check Fresh Runner Capacity Before Package Downloads
+        run: >-
+          /usr/bin/python3.12 -I -B tools/reference_cpu_ci.py preflight
+          --source "$GITHUB_WORKSPACE" --root "$RUNNER_TEMP/ferric-reference-cpu"
+      - name: Install Python 3.12 Bootstrap Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends python3.12-venv python3-pip
+          /usr/bin/python3.12 -I -B -m pip --version
+      - name: Check Locked Profile Negative Controls
+        run: /usr/bin/python3.12 -I -B -m unittest discover -s tools -p 'test_reference_cpu_ci.py'
+      - name: Fresh Capacity Check and Hash-Locked Installation
+        run: >-
+          nice -n 19 /usr/bin/python3.12 -I -B tools/reference_cpu_ci.py prepare
+          --source "$GITHUB_WORKSPACE" --root "$RUNNER_TEMP/ferric-reference-cpu"
+      - name: Full Unfiltered Offline CPU Reference
+        run: >-
+          /usr/bin/python3.12 -I -B tools/reference_cpu_ci.py run
+          --source "$GITHUB_WORKSPACE" --root "$RUNNER_TEMP/ferric-reference-cpu"
+          -- python3 -I -B -m unittest discover -s benches/m1/reference -p 'test*.py'
 
   qwen3-aggregate-device:
     runs-on: ubuntu-latest
