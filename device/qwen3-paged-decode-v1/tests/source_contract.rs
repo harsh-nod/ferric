@@ -40,6 +40,118 @@ fn compact_tokens(tokens: impl quote::ToTokens) -> String {
         .collect()
 }
 
+fn protected_identifier(ident: &syn::Ident, names: &[&str]) -> bool {
+    let text = ident.to_string();
+    names.contains(&text.strip_prefix("r#").unwrap_or(&text))
+}
+
+fn mentions_coordinate(expr: &Expr, names: &[&str]) -> bool {
+    struct Uses<'a> {
+        names: &'a [&'a str],
+        found: bool,
+    }
+    impl<'ast> syn::visit::Visit<'ast> for Uses<'_> {
+        fn visit_ident(&mut self, ident: &'ast syn::Ident) {
+            self.found |= protected_identifier(ident, self.names);
+        }
+    }
+    let mut uses = Uses {
+        names,
+        found: false,
+    };
+    syn::visit::Visit::visit_expr(&mut uses, expr);
+    uses.found
+}
+
+fn validate_coordinate_bindings(kernel: &ItemFn, names: &[&str]) -> Result<(), String> {
+    struct Audit<'a> {
+        names: &'a [&'a str],
+        counts: Vec<usize>,
+        unsupported: bool,
+    }
+    impl<'ast> syn::visit::Visit<'ast> for Audit<'_> {
+        fn visit_pat_ident(&mut self, pat: &'ast syn::PatIdent) {
+            for (index, name) in self.names.iter().enumerate() {
+                if protected_identifier(&pat.ident, &[*name]) {
+                    self.counts[index] += 1;
+                    self.unsupported |=
+                        pat.mutability.is_some() || pat.by_ref.is_some() || pat.subpat.is_some();
+                }
+            }
+            syn::visit::visit_pat_ident(self, pat);
+        }
+        fn visit_pat(&mut self, pat: &'ast syn::Pat) {
+            self.unsupported |= matches!(pat, syn::Pat::Verbatim(_));
+            syn::visit::visit_pat(self, pat);
+        }
+        fn visit_expr_assign(&mut self, expr: &'ast syn::ExprAssign) {
+            self.unsupported |= mentions_coordinate(&expr.left, self.names);
+            syn::visit::visit_expr_assign(self, expr);
+        }
+        fn visit_expr_binary(&mut self, expr: &'ast syn::ExprBinary) {
+            if matches!(
+                expr.op,
+                syn::BinOp::AddAssign(_)
+                    | syn::BinOp::SubAssign(_)
+                    | syn::BinOp::MulAssign(_)
+                    | syn::BinOp::DivAssign(_)
+                    | syn::BinOp::RemAssign(_)
+                    | syn::BinOp::BitXorAssign(_)
+                    | syn::BinOp::BitAndAssign(_)
+                    | syn::BinOp::BitOrAssign(_)
+                    | syn::BinOp::ShlAssign(_)
+                    | syn::BinOp::ShrAssign(_)
+            ) {
+                self.unsupported |= mentions_coordinate(&expr.left, self.names);
+            }
+            syn::visit::visit_expr_binary(self, expr);
+        }
+        fn visit_expr_reference(&mut self, expr: &'ast syn::ExprReference) {
+            self.unsupported |=
+                expr.mutability.is_some() && mentions_coordinate(&expr.expr, self.names);
+            syn::visit::visit_expr_reference(self, expr);
+        }
+        fn visit_expr_method_call(&mut self, expr: &'ast syn::ExprMethodCall) {
+            if mentions_coordinate(&expr.receiver, self.names) {
+                let text = compact_tokens(expr);
+                self.unsupported |=
+                    text != "workitem.get()" && text != "workitem.checked_block::<1,2>()";
+            }
+            syn::visit::visit_expr_method_call(self, expr);
+        }
+        // These opaque/expanding forms are outside the closed coordinate grammar.
+        fn visit_macro(&mut self, _: &'ast syn::Macro) {
+            self.unsupported = true;
+        }
+        fn visit_item(&mut self, _: &'ast Item) {
+            self.unsupported = true;
+        }
+        fn visit_attribute(&mut self, _: &'ast syn::Attribute) {
+            self.unsupported = true;
+        }
+        fn visit_expr_unsafe(&mut self, _: &'ast syn::ExprUnsafe) {
+            self.unsupported = true;
+        }
+        fn visit_expr_raw_addr(&mut self, _: &'ast syn::ExprRawAddr) {
+            self.unsupported = true;
+        }
+        fn visit_expr(&mut self, expr: &'ast Expr) {
+            self.unsupported |= matches!(expr, Expr::Verbatim(_));
+            syn::visit::visit_expr(self, expr);
+        }
+    }
+    let mut audit = Audit {
+        names,
+        counts: vec![0; names.len()],
+        unsupported: false,
+    };
+    syn::visit::Visit::visit_block(&mut audit, &kernel.block);
+    if audit.unsupported || audit.counts.iter().any(|count| *count != 1) {
+        return Err("coordinate binding shadow, mutation or unsupported expansion".into());
+    }
+    Ok(())
+}
+
 fn local_expression<'a>(kernel: &'a ItemFn, name: &str) -> Result<(usize, &'a Expr), String> {
     let found: Vec<_> = kernel
         .block
@@ -158,6 +270,8 @@ fn validate_literal_coordinates(kernel: &ItemFn) -> Result<(), String> {
             "if target {query_head / 4} else {query_head / 2}",
         ),
     ];
+    let protected: Vec<_> = expected.iter().map(|(name, _)| *name).collect();
+    validate_coordinate_bindings(kernel, &protected)?;
     let mut previous = None;
     for (name, expression) in expected {
         let (index, actual) = local_expression(kernel, name)?;
@@ -250,6 +364,80 @@ fn validate_literal_coordinates(kernel: &ItemFn) -> Result<(), String> {
         return Err("output pair checked extent drift".into());
     }
     Ok(())
+}
+
+#[test]
+fn coordinate_shadow_and_mutation_forms_fail_closed() {
+    let original = kernel();
+    assert!(validate_literal_coordinates(&original).is_ok());
+    let mut harmless = original.clone();
+    harmless
+        .block
+        .stmts
+        .push(syn::parse_str("let unrelated = 0;").unwrap());
+    assert!(validate_literal_coordinates(&harmless).is_ok());
+    let after_draft = local_expression(&original, "draft").unwrap().0 + 1;
+    let mut reported = original.clone();
+    reported.block.stmts.insert(
+        after_draft,
+        syn::parse_str("let target: bool = target || draft;").unwrap(),
+    );
+    assert!(validate_literal_coordinates(&reported).is_err());
+    let after_coordinates = local_expression(&original, "kv_head").unwrap().0 + 1;
+    let hostile = [
+        "let draft: bool = target;",
+        "let position: usize = 0;",
+        "let query_head: usize = 0;",
+        "let r#target: bool = draft;",
+        "let (target, _) = (draft, false);",
+        "let [target, ..] = [draft];",
+        "let Shadow { target, .. } = value;",
+        "let ref target = draft;",
+        "let target @ _ = draft;",
+        "let Some(target) = maybe else { return; };",
+        "{ let target = draft; consume(target); }",
+        "{ let draft: bool = target; consume(draft); }",
+        "let callback = |target: bool| target;",
+        "match maybe { Some(target) => consume(target), _ => {} };",
+        "for target in values { consume(target); }",
+        "if let Some(target) = maybe { consume(target); }",
+        "target = draft;",
+        "(target, draft) = (draft, target);",
+        "position += 1;",
+        "{ query_head /= 2; }",
+        "let alias = &mut position;",
+        "let alias = &raw mut position;",
+        "unsafe { mutate(position); }",
+        "target.replace(draft);",
+        "include!(\"shadow.rs\");",
+        "const target: bool = false;",
+        "#[cfg(any())] let unrelated = 0;",
+    ];
+    for statement in hostile {
+        let mut changed = original.clone();
+        changed
+            .block
+            .stmts
+            .insert(after_coordinates, syn::parse_str(statement).unwrap());
+        assert!(
+            validate_literal_coordinates(&changed).is_err(),
+            "accepted coordinate shadow/mutation: {statement}"
+        );
+    }
+    let mut mutable = original.clone();
+    let target = local_expression(&mutable, "target").unwrap().0;
+    let Stmt::Local(local) = &mut mutable.block.stmts[target] else {
+        unreachable!()
+    };
+    let syn::Pat::Ident(pat) = &mut local.pat else {
+        unreachable!()
+    };
+    pat.mutability = Some(Default::default());
+    mutable
+        .block
+        .stmts
+        .insert(after_draft, syn::parse_str("target = draft;").unwrap());
+    assert!(validate_literal_coordinates(&mutable).is_err());
 }
 
 #[test]

@@ -358,41 +358,50 @@ def rust_build_tokens(source: str) -> list[str]:
 
 def fallback_binding_source(source: str) -> str:
     tokens = rust_build_tokens(source)
-    if any(token in {"use", "extern", "macro_rules", "macro_use"} for token in tokens):
-        raise ValueError("canonical emitter cannot import or shadow its standard macros")
-    if any(tokens[index:index + 2] in (["mod", "std"], ["r", "#"])
-           for index in range(len(tokens) - 1)):
-        raise ValueError("canonical emitter cannot shadow std or use raw identifiers")
-    mains = [index for index in range(len(tokens) - 4)
-             if tokens[index:index + 5] == ["fn", "main", "(", ")", "{"]]
-    if len(mains) != 1 or (mains[0] and tokens[mains[0] - 1] not in (";", "}")):
-        raise ValueError("expected one unconditional, unattributed main")
-    start = mains[0] + 5
-    depth, end = 1, start
-    while end < len(tokens) and depth:
-        depth += (tokens[end] == "{") - (tokens[end] == "}")
-        end += 1
-    if depth:
-        raise ValueError("unclosed build-script main")
-    body = tokens[start:end - 1]
     key = "FE2O3_CRATE_BINDING_ID_V1"
-    keyed = [index for index, token in enumerate(tokens) if key in token]
+    keyed = [token for token in tokens if key in token]
     if len(keyed) != 1:
         raise ValueError(f"expected exactly one keyed binding literal, found {len(keyed)}")
-    index = keyed[0]
-    match = re.fullmatch(r'"cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=([0-9a-f]{64})"', tokens[index])
-    if match is None or not start + 3 <= index < end - 1:
-        raise ValueError("malformed or non-main binding emitter")
-    emitter = ["println", "!", "(", tokens[index], ")", ";"]
-    offset = index - start - 3
-    if body[offset:] != emitter:
-        raise ValueError("binding must be the final direct println statement")
+    match = re.fullmatch(
+        r'"cargo:rustc-env=FE2O3_CRATE_BINDING_ID_V1=([0-9a-f]{64})"', keyed[0]
+    )
+    if match is None:
+        raise ValueError("malformed binding emitter")
+    emitter = ["println", "!", "(", keyed[0], ")", ";"]
     guard = rust_build_tokens(
         'if std::env::var_os("FE2O3_BINDING_CHECK_WRAPPER_MODE_V1").is_some()'
         ' || std::env::var_os("FE2O3_BINDING_WRAPPER_MODE_V1").is_some() { return; }'
     )
-    if body[max(0, offset - len(guard)):offset] != guard or body.count("return") != 1:
-        raise ValueError("binding emitter lost its sole managed-wrapper suppression guard")
+    minimal = ["fn", "main", "(", ")", "{", *guard, *emitter, "}"]
+    # Only these reviewed module declarations and direct statements are supported.
+    # Unknown items/macros/attributes could expand or import a shadowed println.
+    prologue = rust_build_tokens(
+        """
+        #[allow(dead_code)]
+        #[path = "src/target.rs"]
+        mod target;
+        #[path = "build/target_contract.rs"]
+        mod target_contract;
+        fn main() {
+            println!("cargo:rerun-if-env-changed=CARGO_ENCODED_RUSTFLAGS");
+            println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ARCH");
+            let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH")
+                .expect("Cargo must identify the compilation target architecture");
+            let rustflags = std::env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
+            target_contract::validate_device_build(
+                &target_arch,
+                &rustflags,
+                target::QWEN3_DEVICE_CPU_V1,
+                target::QWEN3_DEVICE_RUSTC_FEATURES_V1,
+            )
+            .expect("Qwen3 aggregate compilation target does not match its source contract");
+            println!("cargo:rerun-if-env-changed=FE2O3_BINDING_CHECK_WRAPPER_MODE_V1");
+            println!("cargo:rerun-if-env-changed=FE2O3_BINDING_WRAPPER_MODE_V1");
+        """
+    )
+    supported = [*prologue, *guard, *emitter, "}"]
+    if tokens != minimal and tokens != supported:
+        raise ValueError("unsupported item, attribute, expansion or statement in canonical emitter")
     return match[1]
 
 
@@ -643,6 +652,17 @@ def self_test() -> None:
         "use hostile::println; " + canonical,
         "mod std {} " + canonical,
         "mod r#std {} " + canonical,
+        'include!("shadow.rs"); ' + canonical,
+        canonical.replace("fn main() {", 'fn main() { include!("shadow.rs");'),
+        canonical + ' include!("shadow.rs");',
+        'mod shadow; ' + canonical,
+        'mod shadow { include!("shadow.rs"); } ' + canonical,
+        '#[macro_use] mod shadow; ' + canonical,
+        '#[hostile::generate] ' + canonical,
+        '#![feature(prelude_import)] ' + canonical,
+        'generate_items!(); ' + canonical,
+        '#[path = "shadow.rs"] mod target; ' + canonical,
+        canonical.replace("fn main() {", 'fn main() { #[allow(unused)] '),
     ]
     for index, source in enumerate(hostile_sources):
         try:
