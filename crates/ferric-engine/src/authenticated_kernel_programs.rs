@@ -938,42 +938,43 @@ mod tests {
     #[test]
     fn checked_service_lookup_never_exposes_absent_or_out_of_range_indices() {
         use M1PhysicalProgramStrategyV1::{AttributedMfma13, LegacyScalar12};
-        let mut indices = mfma_indices();
-        for program in M1PhysicalProgramV1::ALL {
+        let mut legacy = [usize::MAX; M1_MFMA_PHYSICAL_PROGRAM_COUNT_V1];
+        legacy[..12].copy_from_slice(&legacy_indices());
+        let mfma = mfma_indices();
+        for (strategy, indices, bound) in
+            [(LegacyScalar12, legacy, 12), (AttributedMfma13, mfma, 13)]
+        {
+            assert_eq!(strategy.program_count(), bound);
+            for program in M1PhysicalProgramV1::ALL {
+                assert!(indices[program.program_index()] < bound);
+                assert_eq!(
+                    checked_service_program_index(strategy, &indices, program),
+                    Some(indices[program.program_index()])
+                );
+            }
+            let expected_mfma = if strategy == LegacyScalar12 {
+                None
+            } else {
+                assert!(indices[M1PhysicalProgramV1::GemmMfma.program_index()] < bound);
+                Some(indices[M1PhysicalProgramV1::GemmMfma.program_index()])
+            };
             assert_eq!(
-                checked_service_program_index(LegacyScalar12, &indices, program),
-                Some(indices[program.program_index()])
+                checked_service_program_index(strategy, &indices, M1PhysicalProgramV1::GemmMfma),
+                expected_mfma
             );
+            for invalid in [bound, usize::MAX] {
+                let mut invalid_indices = indices;
+                invalid_indices[M1PhysicalProgramV1::GemmReference.program_index()] = invalid;
+                assert_eq!(
+                    checked_service_program_index(
+                        strategy,
+                        &invalid_indices,
+                        M1PhysicalProgramV1::GemmReference
+                    ),
+                    None
+                );
+            }
         }
-        assert_eq!(
-            checked_service_program_index(LegacyScalar12, &indices, M1PhysicalProgramV1::GemmMfma),
-            None
-        );
-        assert_eq!(
-            checked_service_program_index(
-                AttributedMfma13,
-                &indices,
-                M1PhysicalProgramV1::GemmMfma
-            ),
-            Some(indices[M1PhysicalProgramV1::GemmMfma.program_index()])
-        );
-        indices[0] = usize::MAX;
-        assert_eq!(
-            checked_service_program_index(
-                LegacyScalar12,
-                &indices,
-                M1PhysicalProgramV1::GemmReference
-            ),
-            None
-        );
-        assert_eq!(
-            checked_service_program_index(
-                AttributedMfma13,
-                &indices,
-                M1PhysicalProgramV1::GemmReference
-            ),
-            None
-        );
     }
 
     #[test]
